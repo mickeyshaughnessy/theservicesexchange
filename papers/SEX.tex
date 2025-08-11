@@ -330,7 +330,7 @@ Organizations implementing SEX exchanges should consider:
 
 \subsubsection{Technical Requirements}
 \begin{itemize}
-    \item Redis or equivalent for data persistence
+    \item AWS S3 for data persistence
     \item Access to LLM API for matching (e.g., Anthropic, OpenAI)
     \item Geographic coding service for address resolution
     \item SSL/TLS for production deployments
@@ -477,7 +477,8 @@ pip install -r requirements.txt
 
 # Configure environment
 export ANTHROPIC_API_KEY="your-key"
-export REDIS_HOST="localhost"
+export AWS_ACCESS_KEY_ID="your-aws-key"
+export AWS_SECRET_ACCESS_KEY="your-aws-secret"
 
 # Run server
 python api_server.py
