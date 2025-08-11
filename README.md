@@ -30,7 +30,7 @@ The Service Exchange (SEX) is an open marketplace protocol that connects service
 
 ### Prerequisites
 - Python 3.8+
-- Redis server
+- AWS account with S3 access
 - Anthropic API key (for LLM matching)
 
 ### Installation
@@ -45,8 +45,10 @@ pip install -r requirements.txt
 
 # Set up environment variables
 export ANTHROPIC_API_KEY="your-api-key"
-export REDIS_HOST="localhost"
-export REDIS_PORT="6379"
+export AWS_ACCESS_KEY_ID="your-aws-key"
+export AWS_SECRET_ACCESS_KEY="your-aws-secret"
+export S3_BUCKET="mithrilmedia"
+export S3_PREFIX="theservicesexchange"
 
 # Run the server
 python api_server.py
@@ -115,10 +117,10 @@ Create a `config.py` file with your settings:
 API_PORT = 5000
 API_HOST = '0.0.0.0'
 
-# Redis Configuration
-REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
-REDIS_DB = 0
+# AWS S3 Configuration
+S3_BUCKET = 'mithrilmedia'
+S3_PREFIX = 'theservicesexchange'
+AWS_REGION = 'us-east-1'
 
 # Anthropic API for matching
 ANTHROPIC_API_KEY = 'your-key-here'
@@ -127,6 +129,8 @@ ANTHROPIC_API_KEY = 'your-key-here'
 SSL_CERT = '/path/to/cert.pem'
 SSL_KEY = '/path/to/key.pem'
 ```
+
+Or use environment variables as shown in the `.env` file.
 
 ## Testing
 

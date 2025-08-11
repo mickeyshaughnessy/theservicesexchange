@@ -1,0 +1,31 @@
+# Service Exchange Dependencies
+
+# Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+Werkzeug==3.0.1
+
+# AWS S3
+boto3==1.34.0
+botocore==1.34.0
+
+# Authentication
+bcrypt==4.1.2
+
+# AI/LLM
+anthropic==0.18.1
+
+# Geographic Services
+geopy==2.4.1
+geographiclib==2.0
+
+# Utilities
+python-dotenv==1.0.0
+requests==2.31.0
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+
+# Production Server
+gunicorn==21.2.0
