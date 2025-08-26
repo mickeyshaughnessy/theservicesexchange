@@ -10,6 +10,7 @@
             --primary: #6366f1;
             --dark: #1e293b;
             --light: #f8fafc;
+            --silver: #94a3b8;
         }
         
         body {
@@ -69,6 +70,51 @@
         .modal-content {
             border-radius: 12px;
         }
+        
+        .exchange-rate-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 15px 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 250px;
+        }
+        
+        .exchange-rate-box h6 {
+            margin: 0 0 8px 0;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .exchange-rate-box .rate {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .exchange-rate-box .coin {
+            color: #f59e0b;
+            font-weight: 700;
+        }
+        
+        .exchange-rate-box .seat-badge {
+            background: var(--silver);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .exchange-rate-box small {
+            display: block;
+            margin-top: 8px;
+            color: #64748b;
+        }
     </style>
 </head>
 <body>
@@ -77,11 +123,24 @@
         <div class="container">
             <a class="navbar-brand fw-bold" href="https://theservicesexchange.com">The Service Exchange</a>
             <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="https://theservicesexchange.com/about.html">About</a>
+                <a class="nav-link" href="https://theservicesexchange.com/seats.html">Seats</a>
                 <a class="nav-link" href="https://theservicesexchange.com/api_docs.html">API Docs</a>
                 <button class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
             </div>
         </div>
     </nav>
+    
+    <!-- Exchange Rate Box -->
+    <div class="exchange-rate-box">
+        <h6>$THERSX Exchange Rate</h6>
+        <div class="rate">
+            <span class="coin">1,000 $THERSX</span>
+            <span>=</span>
+            <span class="seat-badge">1 SILVER SEAT</span>
+        </div>
+        <small>Silver seats valid for 1 year</small>
+    </div>
 
     <!-- Hero -->
     <section class="hero">
@@ -222,7 +281,17 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong>Note:</strong> Finding jobs requires a valid seat. If you don't have a seat, visit the <a href="/seats.html">Seats page</a> to learn how to obtain one.
+                    </div>
                     <form id="providerForm">
+                        <div class="mb-3">
+                            <h6>Seat Credentials</h6>
+                            <input type="text" class="form-control mb-2" placeholder="Seat ID" id="seatId" required>
+                            <input type="text" class="form-control mb-2" placeholder="Seat Owner" id="seatOwner" required>
+                            <input type="password" class="form-control" placeholder="Seat Secret (MD5 hash)" id="seatSecret" required>
+                        </div>
+                        <hr>
                         <div class="mb-3">
                             <textarea class="form-control" rows="3" placeholder="Your capabilities and services" id="capabilities" required></textarea>
                         </div>
@@ -361,11 +430,16 @@
             }
         });
         
-        // Find job
+        // Find job (with seat verification)
         document.getElementById('providerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const data = {
+                seat: {
+                    id: document.getElementById('seatId').value,
+                    owner: document.getElementById('seatOwner').value,
+                    secret: document.getElementById('seatSecret').value
+                },
                 capabilities: document.getElementById('capabilities').value,
                 location_type: document.getElementById('providerLocationType').value
             };
@@ -390,6 +464,9 @@
                 bootstrap.Modal.getInstance(document.getElementById('providerModal')).hide();
             } else if (response.status === 204) {
                 alert('No matching jobs available');
+            } else if (response.status === 403) {
+                const error = await response.json();
+                alert(`Seat verification failed: ${error.error}`);
             } else {
                 alert('Failed to find job');
             }
