@@ -28,20 +28,44 @@ logger = logging.getLogger(__name__)
 app = flask.Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+@app.before_request
+def log_request():
+    logger.info(f"Incoming request - Method: {flask.request.method}, Route: {flask.request.path}, Endpoint: {flask.request.endpoint}, Remote Addr: {flask.request.remote_addr}")
+    if flask.request.is_json:
+        try:
+            data = flask.request.get_json()
+            logger.info(f"Request data: {json.dumps(data)}")
+        except Exception as e:
+            logger.warning(f"Failed to parse request data: {str(e)}")
+
+@app.after_request
+def log_response(response):
+    logger.info(f"Response for route {flask.request.path} - Status: {response.status_code}")
+    if response.content_type and 'application/json' in response.content_type:
+        try:
+            resp_data = json.loads(response.get_data(as_text=True))
+            logger.info(f"Response data: {json.dumps(resp_data)}")
+        except Exception as e:
+            logger.warning(f"Failed to parse response data: {str(e)}")
+    return response
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth_header = flask.request.headers.get('Authorization')
         if not auth_header:
+            logger.warning(f"Token missing for route {flask.request.path}")
             return flask.jsonify({'error': 'Token is missing'}), 401
         
         try:
             token = auth_header.split(" ")[-1]
         except:
+            logger.warning(f"Invalid token format for route {flask.request.path}")
             return flask.jsonify({'error': 'Invalid token format'}), 401
             
         username = get_token_username(token)
         if not username:
+            logger.warning(f"Invalid or expired token for route {flask.request.path}")
             return flask.jsonify({'error': 'Token is invalid or expired'}), 401
             
         return f(username, *args, **kwargs)
@@ -50,7 +74,11 @@ def token_required(f):
 # System endpoints
 @app.route('/ping', methods=['GET', 'POST'])
 def ping():
-    return flask.jsonify({"message": "Service Exchange API is operational"}), 200
+    try:
+        return flask.jsonify({"message": "Service Exchange API is operational"}), 200
+    except Exception as e:
+        logger.error(f"Ping error: {str(e)}")
+        return flask.jsonify({"error": "Internal server error"}), 500
 
 # Authentication
 @app.route('/register', methods=['POST'])
