@@ -6,6 +6,7 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 import logging
+from config import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +14,12 @@ logger = logging.getLogger(__name__)
 S3_BUCKET = "mithrilmedia"
 S3_PREFIX = "theservicesexchange"
 
-# Initialize S3 client
-s3_client = boto3.client('s3')
+# Initialize S3 client with credentials from config
+s3_client = boto3.client(
+    's3',
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+)
 
 def s3_key(path):
     """Generate S3 key from path"""
