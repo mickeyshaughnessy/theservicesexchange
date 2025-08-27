@@ -56,9 +56,15 @@
             display: inline-block;
             padding: 6px 14px;
             background: var(--light);
+            color: var(--dark);
             border-radius: 20px;
             margin: 4px;
             font-size: 14px;
+        }
+        
+        .service-examples {
+            color: var(--dark);
+            font-weight: 500;
         }
         
         .stats {
@@ -251,6 +257,19 @@
         .logout-btn:hover {
             background: #b91c1c;
         }
+        
+        .duration-input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .duration-input-group input {
+            flex: 1;
+        }
+        
+        .duration-input-group select {
+            width: 100px;
+        }
     </style>
 </head>
 <body>
@@ -325,11 +344,11 @@
     <div class="exchange-rate-box">
         <h6>$THERSX Exchange Rate</h6>
         <div class="rate">
-            <span class="coin">1,000 $THERSX</span>
+            <span class="coin">1,000,000 $THERSX</span>
             <span>=</span>
             <span class="seat-badge">1 SILVER SEAT</span>
         </div>
-        <small>Silver seats valid for 1 year</small>
+        <small>Silver seats valid for 30 days</small>
     </div>
 
     <!-- Hero -->
@@ -438,12 +457,33 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="mb-3">
+                        <p class="text-muted mb-2">Popular services:</p>
+                        <div class="service-examples">
+                            <span class="service-tag">House Cleaning</span>
+                            <span class="service-tag">Web Development</span>
+                            <span class="service-tag">Tutoring</span>
+                            <span class="service-tag">Graphic Design</span>
+                            <span class="service-tag">Home Repairs</span>
+                            <span class="service-tag">Photography</span>
+                        </div>
+                    </div>
                     <form id="bidForm">
                         <div class="mb-3">
                             <textarea class="form-control" rows="3" placeholder="Describe the service you need" id="bidService" required></textarea>
                         </div>
                         <div class="mb-3">
                             <input type="number" class="form-control" placeholder="Price (USD)" id="bidPrice" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Good Until</label>
+                            <div class="duration-input-group">
+                                <input type="number" class="form-control" placeholder="Duration" id="bidDuration" value="24" required min="1">
+                                <select class="form-control" id="bidDurationUnit">
+                                    <option value="hours">Hours</option>
+                                    <option value="days">Days</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <select class="form-control" id="bidLocationType">
@@ -808,10 +848,14 @@
         document.getElementById('bidForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const duration = parseInt(document.getElementById('bidDuration').value);
+            const durationUnit = document.getElementById('bidDurationUnit').value;
+            const durationInSeconds = durationUnit === 'hours' ? duration * 3600 : duration * 86400;
+            
             const data = {
                 service: document.getElementById('bidService').value,
                 price: parseFloat(document.getElementById('bidPrice').value),
-                end_time: Math.floor(Date.now() / 1000) + 86400, // 24 hours
+                end_time: Math.floor(Date.now() / 1000) + durationInSeconds,
                 location_type: document.getElementById('bidLocationType').value
             };
             
@@ -834,6 +878,9 @@
                 bootstrap.Modal.getInstance(document.getElementById('bidModal')).hide();
                 // Clear the form
                 document.getElementById('bidForm').reset();
+                // Reset duration to default
+                document.getElementById('bidDuration').value = '24';
+                document.getElementById('bidDurationUnit').value = 'hours';
                 // Refresh outstanding bids if user is logged in
                 if (authToken) {
                     loadOutstandingBids();
