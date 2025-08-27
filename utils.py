@@ -173,6 +173,16 @@ def get_all_bids():
     """Get all active bids"""
     return s3_list_json_objects("bids")
 
+def get_user_bids(username):
+    """Get all bids for a specific user"""
+    try:
+        all_bids = get_all_bids()
+        user_bids = [bid for bid in all_bids if bid.get('username') == username]
+        return user_bids
+    except Exception as e:
+        logger.error(f"Get user bids error: {str(e)}")
+        return []
+
 # Job management
 def save_job(job_id, job_data):
     """Save job data"""
@@ -185,6 +195,19 @@ def get_job(job_id):
 def get_all_jobs():
     """Get all jobs"""
     return s3_list_json_objects("jobs")
+
+def get_user_jobs(username):
+    """Get all jobs for a specific user (as either buyer or provider)"""
+    try:
+        all_jobs = get_all_jobs()
+        user_jobs = [
+            job for job in all_jobs 
+            if job.get('buyer_username') == username or job.get('provider_username') == username
+        ]
+        return user_jobs
+    except Exception as e:
+        logger.error(f"Get user jobs error: {str(e)}")
+        return []
 
 # Message management
 def save_message(username, message_id, message_data):

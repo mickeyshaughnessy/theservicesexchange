@@ -253,6 +253,8 @@
                     <a href="#register">Register</a>
                     <a href="#login">Login</a>
                     <a href="#account">Account</a>
+                    <a href="#my-bids">My Bids</a>
+                    <a href="#my-jobs">My Jobs</a>
                     <a href="#submit-bid">Submit Bid</a>
                     <a href="#grab-job">Grab Job (Seat Required)</a>
                     <a href="#sign-job">Sign Job</a>
@@ -487,6 +489,130 @@ echo -n "your-seat-phrase" | md5sum</div>
   "total_ratings": 12,
   "completed_jobs": 10,
   "reputation_score": 4.2
+}</div>
+                </div>
+
+                <!-- My Bids -->
+                <div id="my-bids" class="endpoint">
+                    <h3><span class="method get">GET</span> <span class="path">/my_bids</span></h3>
+                    <p>Get your outstanding (active) service requests. Requires authentication.</p>
+                    
+                    <h4>Example Request</h4>
+                    <div class="code-block">curl https://rse-api.com:5003/my_bids \
+  -H "Authorization: Bearer your_access_token"</div>
+
+                    <h4>Example Response</h4>
+                    <div class="code-block">{
+  "bids": [
+    {
+      "bid_id": "b1234567-89ab-cdef-0123-456789abcdef",
+      "service": "House cleaning, 3 bedrooms, 2 bathrooms",
+      "price": 150,
+      "end_time": 1703088000,
+      "location_type": "physical",
+      "address": "123 Main St, Denver, CO 80202",
+      "created_at": 1703001600,
+      "status": "active"
+    },
+    {
+      "bid_id": "b7654321-89ab-cdef-0123-456789abcdef",
+      "service": "Website redesign for restaurant",
+      "price": 800,
+      "end_time": 1703174400,
+      "location_type": "remote",
+      "address": null,
+      "created_at": 1703002000,
+      "status": "active"
+    }
+  ]
+}</div>
+                </div>
+
+                <!-- My Jobs -->
+                <div id="my-jobs" class="endpoint">
+                    <h3><span class="method get">GET</span> <span class="path">/my_jobs</span></h3>
+                    <p>Get your job history including completed jobs and active jobs. Requires authentication.</p>
+                    
+                    <h4>Example Request</h4>
+                    <div class="code-block">curl https://rse-api.com:5003/my_jobs \
+  -H "Authorization: Bearer your_access_token"</div>
+
+                    <h4>Response Structure</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>completed_jobs</code></td>
+                                <td>array</td>
+                                <td>Last 10 completed jobs</td>
+                            </tr>
+                            <tr>
+                                <td><code>active_jobs</code></td>
+                                <td>array</td>
+                                <td>Currently active jobs (accepted but not completed)</td>
+                            </tr>
+                            <tr>
+                                <td><code>role</code></td>
+                                <td>string</td>
+                                <td>"buyer" or "provider" for this job</td>
+                            </tr>
+                            <tr>
+                                <td><code>counterparty</code></td>
+                                <td>string</td>
+                                <td>Username of the other party</td>
+                            </tr>
+                            <tr>
+                                <td><code>my_rating</code></td>
+                                <td>integer</td>
+                                <td>Rating you gave (1-5, null if not rated)</td>
+                            </tr>
+                            <tr>
+                                <td><code>their_rating</code></td>
+                                <td>integer</td>
+                                <td>Rating they gave you (1-5, null if not rated)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Example Response</h4>
+                    <div class="code-block">{
+  "completed_jobs": [
+    {
+      "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
+      "service": "Kitchen deep cleaning",
+      "price": 180,
+      "location_type": "physical",
+      "address": "123 Main St, Denver, CO 80202",
+      "accepted_at": 1703001600,
+      "status": "completed",
+      "completed_at": 1703088000,
+      "role": "buyer",
+      "counterparty": "alice_cleaner",
+      "my_rating": 5,
+      "their_rating": 4
+    }
+  ],
+  "active_jobs": [
+    {
+      "job_id": "j1234567-89ab-cdef-0123-456789abcdef",
+      "service": "Logo design for startup",
+      "price": 300,
+      "location_type": "remote",
+      "address": null,
+      "accepted_at": 1703002000,
+      "status": "accepted",
+      "role": "provider",
+      "counterparty": "startup_founder",
+      "my_rating": null,
+      "their_rating": null
+    }
+  ]
 }</div>
                 </div>
 

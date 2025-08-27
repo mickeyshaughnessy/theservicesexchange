@@ -292,6 +292,17 @@
                         </div>
                         
                         <div class="account-section">
+                            <h6>Active Jobs</h6>
+                            <div class="loading-spinner" id="activeJobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading active jobs...</span>
+                            </div>
+                            <div id="activeJobs">
+                                <p class="text-muted mb-0">No active jobs</p>
+                            </div>
+                        </div>
+                        
+                        <div class="account-section">
                             <h6>Recent Completed Jobs</h6>
                             <div class="loading-spinner" id="jobsLoading">
                                 <div class="spinner-border spinner-border-sm" role="status"></div>
@@ -501,6 +512,7 @@
         let currentUser = null;
         let outstandingBids = [];
         let completedJobs = [];
+        let activeJobs = [];
         
         // Initialize the page
         window.addEventListener('load', () => {
@@ -564,37 +576,23 @@
             loadingSpinner.style.display = 'block';
             
             try {
-                // Since the API docs don't show an endpoint for getting user's bids,
-                // we'll simulate this data or show a message
-                // In a real implementation, you'd call something like /my_bids
+                const response = await fetch(`${API_URL}/my_bids`, {
+                    headers: {'Authorization': `Bearer ${authToken}`}
+                });
                 
-                setTimeout(() => {
-                    loadingSpinner.style.display = 'none';
-                    
-                    // Simulate some outstanding bids
-                    outstandingBids = [
-                        {
-                            bid_id: 'bid123',
-                            service: 'Web development for small business',
-                            price: 500,
-                            end_time: Date.now() / 1000 + 3600,
-                            status: 'pending'
-                        },
-                        {
-                            bid_id: 'bid456', 
-                            service: 'House cleaning service',
-                            price: 120,
-                            end_time: Date.now() / 1000 + 7200,
-                            status: 'pending'
-                        }
-                    ];
-                    
+                loadingSpinner.style.display = 'none';
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    outstandingBids = data.bids || [];
                     updateBidsDisplay();
-                }, 1000);
+                } else {
+                    bidsContainer.innerHTML = '<p class="text-danger">Error loading bids</p>';
+                }
                 
             } catch (error) {
                 loadingSpinner.style.display = 'none';
-                bidsContainer.innerHTML = '<p class="text-danger">Error loading bids</p>';
+                bidsContainer.innerHTML = '<p class="text-danger">Network error loading bids</p>';
             }
         }
         
@@ -609,7 +607,8 @@
             container.innerHTML = outstandingBids.map(bid => `
                 <div class="bid-item">
                     <h6>${bid.service}</h6>
-                    <p>Price: $${bid.price} • Expires: ${new Date(bid.end_time * 1000).toLocaleString()}</p>
+                    <p>Price: ${bid.price} • Expires: ${new Date(bid.end_time * 1000).toLocaleString()}</p>
+                    ${bid.location_type !== 'remote' ? `<p class="text-muted">Location: ${bid.address || 'Physical service'}</p>` : '<p class="text-muted">Remote service</p>'}
                     <div class="bid-actions">
                         <button class="btn btn-danger btn-xs" onclick="cancelBid('${bid.bid_id}')">Cancel</button>
                     </div>
@@ -619,41 +618,56 @@
         
         async function loadCompletedJobs() {
             const jobsContainer = document.getElementById('completedJobs');
-            const loadingSpinner = document.getElementById('jobsLoading');
+            const jobsLoadingSpinner = document.getElementById('jobsLoading');
+            const activeJobsContainer = document.getElementById('activeJobs');
+            const activeJobsLoadingSpinner = document.getElementById('activeJobsLoading');
             
-            loadingSpinner.style.display = 'block';
+            jobsLoadingSpinner.style.display = 'block';
+            activeJobsLoadingSpinner.style.display = 'block';
             
             try {
-                // Simulate completed jobs data
-                setTimeout(() => {
-                    loadingSpinner.style.display = 'none';
-                    
-                    completedJobs = [
-                        {
-                            job_id: 'job789',
-                            service: 'Kitchen deep cleaning',
-                            price: 180,
-                            completed_at: Date.now() / 1000 - 86400,
-                            rating_given: 5,
-                            rating_received: 4
-                        },
-                        {
-                            job_id: 'job321',
-                            service: 'Logo design',
-                            price: 250,
-                            completed_at: Date.now() / 1000 - 172800,
-                            rating_given: 4,
-                            rating_received: 5
-                        }
-                    ];
-                    
+                const response = await fetch(`${API_URL}/my_jobs`, {
+                    headers: {'Authorization': `Bearer ${authToken}`}
+                });
+                
+                jobsLoadingSpinner.style.display = 'none';
+                activeJobsLoadingSpinner.style.display = 'none';
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    completedJobs = data.completed_jobs || [];
+                    activeJobs = data.active_jobs || [];
                     updateJobsDisplay();
-                }, 1200);
+                    updateActiveJobsDisplay();
+                } else {
+                    jobsContainer.innerHTML = '<p class="text-danger">Error loading jobs</p>';
+                    activeJobsContainer.innerHTML = '<p class="text-danger">Error loading active jobs</p>';
+                }
                 
             } catch (error) {
-                loadingSpinner.style.display = 'none';
-                jobsContainer.innerHTML = '<p class="text-danger">Error loading jobs</p>';
+                jobsLoadingSpinner.style.display = 'none';
+                activeJobsLoadingSpinner.style.display = 'none';
+                jobsContainer.innerHTML = '<p class="text-danger">Network error loading jobs</p>';
+                activeJobsContainer.innerHTML = '<p class="text-danger">Network error loading active jobs</p>';
             }
+        }
+        
+        function updateActiveJobsDisplay() {
+            const container = document.getElementById('activeJobs');
+            
+            if (activeJobs.length === 0) {
+                container.innerHTML = '<p class="text-muted mb-0">No active jobs</p>';
+                return;
+            }
+            
+            container.innerHTML = activeJobs.map(job => `
+                <div class="job-item">
+                    <h6>${job.service}</h6>
+                    <p>Price: ${job.price} • Accepted: ${new Date(job.accepted_at * 1000).toLocaleDateString()} • Role: ${job.role}</p>
+                    <p class="text-muted">Partner: ${job.counterparty}</p>
+                    ${job.location_type !== 'remote' ? `<small class="text-muted">Location: ${job.address || 'Physical service'}</small>` : '<small class="text-muted">Remote service</small>'}
+                </div>
+            `).join('');
         }
         
         function updateJobsDisplay() {
@@ -667,10 +681,10 @@
             container.innerHTML = completedJobs.map(job => `
                 <div class="job-item">
                     <h6>${job.service}</h6>
-                    <p>Price: $${job.price} • Completed: ${new Date(job.completed_at * 1000).toLocaleDateString()}</p>
+                    <p>Price: ${job.price} • Completed: ${new Date(job.completed_at * 1000).toLocaleDateString()} • Role: ${job.role}</p>
                     <div class="d-flex justify-content-between">
-                        <small>You rated: ${'★'.repeat(job.rating_given)}${'☆'.repeat(5 - job.rating_given)}</small>
-                        <small>They rated: ${'★'.repeat(job.rating_received)}${'☆'.repeat(5 - job.rating_received)}</small>
+                        <small>You rated: ${job.my_rating ? '★'.repeat(job.my_rating) + '☆'.repeat(5 - job.my_rating) : 'Not rated'}</small>
+                        <small>They rated: ${job.their_rating ? '★'.repeat(job.their_rating) + '☆'.repeat(5 - job.their_rating) : 'Not rated'}</small>
                     </div>
                 </div>
             `).join('');
@@ -818,8 +832,12 @@
                 const result = await response.json();
                 alert(`Service request submitted! ID: ${result.bid_id}`);
                 bootstrap.Modal.getInstance(document.getElementById('bidModal')).hide();
-                // Refresh outstanding bids
-                loadOutstandingBids();
+                // Clear the form
+                document.getElementById('bidForm').reset();
+                // Refresh outstanding bids if user is logged in
+                if (authToken) {
+                    loadOutstandingBids();
+                }
             } else {
                 alert('Failed to submit request');
             }

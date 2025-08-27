@@ -18,7 +18,9 @@ from handlers import (
     grab_job,
     get_account_info,
     nearby_services,
-    sign_job
+    sign_job,
+    get_my_bids,
+    get_my_jobs
 )
 from utils import get_token_username
 
@@ -109,6 +111,27 @@ def account(current_user):
         return flask.jsonify(response), status
     except Exception as e:
         logger.error(f"Account error: {str(e)}")
+        return flask.jsonify({"error": "Internal server error"}), 500
+
+# User data endpoints
+@app.route('/my_bids', methods=['GET'])
+@token_required
+def my_bids(current_user):
+    try:
+        response, status = get_my_bids({'username': current_user})
+        return flask.jsonify(response), status
+    except Exception as e:
+        logger.error(f"My bids error: {str(e)}")
+        return flask.jsonify({"error": "Internal server error"}), 500
+
+@app.route('/my_jobs', methods=['GET'])
+@token_required
+def my_jobs(current_user):
+    try:
+        response, status = get_my_jobs({'username': current_user})
+        return flask.jsonify(response), status
+    except Exception as e:
+        logger.error(f"My jobs error: {str(e)}")
         return flask.jsonify({"error": "Internal server error"}), 500
 
 # Buyer endpoints

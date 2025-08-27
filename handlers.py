@@ -14,8 +14,8 @@ import config
 from utils import (
     get_account, save_account, account_exists,
     save_token, get_token_username,
-    save_bid, get_bid, delete_bid, get_all_bids,
-    save_job, get_job
+    save_bid, get_bid, delete_bid, get_all_bids, get_user_bids,
+    save_job, get_job, get_user_jobs
 )
 
 logger = logging.getLogger(__name__)
@@ -287,6 +287,97 @@ def get_account_info(data):
         
     except Exception as e:
         logger.error(f"Account error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+def get_my_bids(data):
+    """Get user's outstanding bids"""
+    try:
+        username = data.get('username')
+        
+        user_bids = get_user_bids(username)
+        current_time = int(time.time())
+        
+        # Filter out expired bids and add status info
+        outstanding_bids = []
+        for bid in user_bids:
+            if bid['end_time'] > current_time:
+                outstanding_bids.append({
+                    'bid_id': bid['bid_id'],
+                    'service': bid['service'],
+                    'price': bid['price'],
+                    'end_time': bid['end_time'],
+                    'location_type': bid['location_type'],
+                    'address': bid.get('address'),
+                    'created_at': bid['created_at'],
+                    'status': 'active'
+                })
+        
+        # Sort by creation time (newest first)
+        outstanding_bids.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        logger.info(f"Retrieved {len(outstanding_bids)} outstanding bids for {username}")
+        
+        return {"bids": outstanding_bids}, 200
+        
+    except Exception as e:
+        logger.error(f"Get my bids error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+def get_my_jobs(data):
+    """Get user's completed and active jobs"""
+    try:
+        username = data.get('username')
+        
+        user_jobs = get_user_jobs(username)
+        
+        # Separate completed and active jobs
+        completed_jobs = []
+        active_jobs = []
+        
+        for job in user_jobs:
+            job_info = {
+                'job_id': job['job_id'],
+                'service': job['service'],
+                'price': job['price'],
+                'location_type': job['location_type'],
+                'address': job.get('address'),
+                'accepted_at': job['accepted_at'],
+                'status': job['status'],
+                'buyer_username': job['buyer_username'],
+                'provider_username': job['provider_username']
+            }
+            
+            # Add role information
+            if username == job['buyer_username']:
+                job_info['role'] = 'buyer'
+                job_info['counterparty'] = job['provider_username']
+                job_info['my_rating'] = job.get('buyer_rating')
+                job_info['their_rating'] = job.get('provider_rating')
+            else:
+                job_info['role'] = 'provider'
+                job_info['counterparty'] = job['buyer_username']
+                job_info['my_rating'] = job.get('provider_rating')
+                job_info['their_rating'] = job.get('buyer_rating')
+            
+            if job['status'] == 'completed':
+                job_info['completed_at'] = job.get('completed_at')
+                completed_jobs.append(job_info)
+            else:
+                active_jobs.append(job_info)
+        
+        # Sort by time (newest first)
+        completed_jobs.sort(key=lambda x: x.get('completed_at', 0), reverse=True)
+        active_jobs.sort(key=lambda x: x['accepted_at'], reverse=True)
+        
+        logger.info(f"Retrieved {len(completed_jobs)} completed and {len(active_jobs)} active jobs for {username}")
+        
+        return {
+            "completed_jobs": completed_jobs[:10],  # Limit to last 10 completed jobs
+            "active_jobs": active_jobs
+        }, 200
+        
+    except Exception as e:
+        logger.error(f"Get my jobs error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
 def submit_bid(data):
