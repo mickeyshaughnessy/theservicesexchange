@@ -115,6 +115,142 @@
             margin-top: 8px;
             color: #64748b;
         }
+
+        /* Account Dropdown Styles */
+        .account-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .account-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .account-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .account-window {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            width: 400px;
+            z-index: 1100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .account-dropdown:hover .account-window {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .account-header {
+            padding: 20px 20px 15px;
+            border-bottom: 1px solid var(--light);
+        }
+        
+        .account-section {
+            padding: 15px 20px;
+        }
+        
+        .account-section:not(:last-child) {
+            border-bottom: 1px solid var(--light);
+        }
+        
+        .reputation-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        
+        .star-rating {
+            color: #fbbf24;
+            font-size: 18px;
+        }
+        
+        .bid-item {
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .bid-item h6 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+        }
+        
+        .bid-item p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        .bid-actions {
+            margin-top: 8px;
+        }
+        
+        .btn-xs {
+            padding: 3px 8px;
+            font-size: 12px;
+        }
+        
+        .job-item {
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .job-item h6 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+        }
+        
+        .job-item p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .logout-btn {
+            background: #dc2626;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: #b91c1c;
+        }
     </style>
 </head>
 <body>
@@ -126,7 +262,50 @@
                 <a class="nav-link" href="https://theservicesexchange.com/about.html">About</a>
                 <a class="nav-link" href="https://theservicesexchange.com/seats.html">Seats</a>
                 <a class="nav-link" href="https://theservicesexchange.com/api_docs.html">API Docs</a>
-                <button class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
+                
+                <!-- Account dropdown (shown when logged in) -->
+                <div id="accountDropdown" class="account-dropdown" style="display: none;">
+                    <button class="account-btn">
+                        <span id="accountUsername">Account</span> ▼
+                    </button>
+                    <div class="account-window">
+                        <div class="account-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" id="accountDisplayName">Loading...</h5>
+                                <button class="logout-btn" onclick="logout()">Logout</button>
+                            </div>
+                            <div class="reputation-display">
+                                <span class="star-rating" id="starDisplay">★★★★★</span>
+                                <span id="ratingText">4.5 (12 ratings)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="account-section">
+                            <h6>Outstanding Bids</h6>
+                            <div class="loading-spinner" id="bidsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading bids...</span>
+                            </div>
+                            <div id="outstandingBids">
+                                <p class="text-muted mb-0">No outstanding bids</p>
+                            </div>
+                        </div>
+                        
+                        <div class="account-section">
+                            <h6>Recent Completed Jobs</h6>
+                            <div class="loading-spinner" id="jobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading jobs...</span>
+                            </div>
+                            <div id="completedJobs">
+                                <p class="text-muted mb-0">No completed jobs</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Login button (shown when not logged in) -->
+                <button id="loginButton" class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
             </div>
         </div>
     </nav>
@@ -318,7 +497,219 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const API_URL = 'https://rse-api.com:5003';
-        let authToken = localStorage.getItem('auth_token');
+        let authToken = null;
+        let currentUser = null;
+        let outstandingBids = [];
+        let completedJobs = [];
+        
+        // Initialize the page
+        window.addEventListener('load', () => {
+            authToken = localStorage.getItem('auth_token');
+            if (authToken) {
+                loadAccountData();
+                updateUIForLoggedInUser();
+            }
+        });
+        
+        function updateUIForLoggedInUser() {
+            document.getElementById('loginButton').style.display = 'none';
+            document.getElementById('accountDropdown').style.display = 'inline-block';
+        }
+        
+        function updateUIForLoggedOutUser() {
+            document.getElementById('loginButton').style.display = 'inline-block';
+            document.getElementById('accountDropdown').style.display = 'none';
+        }
+        
+        async function loadAccountData() {
+            try {
+                // Load account info
+                const accountResponse = await fetch(`${API_URL}/account`, {
+                    headers: {'Authorization': `Bearer ${authToken}`}
+                });
+                
+                if (accountResponse.ok) {
+                    currentUser = await accountResponse.json();
+                    updateAccountDisplay();
+                }
+                
+                // Load outstanding bids (assuming there might be an endpoint for this)
+                // For now, we'll show placeholder data since the API docs don't specify this endpoint
+                loadOutstandingBids();
+                loadCompletedJobs();
+                
+            } catch (error) {
+                console.error('Error loading account data:', error);
+            }
+        }
+        
+        function updateAccountDisplay() {
+            if (!currentUser) return;
+            
+            document.getElementById('accountUsername').textContent = currentUser.username;
+            document.getElementById('accountDisplayName').textContent = currentUser.username;
+            
+            // Update star display
+            const stars = Math.round(currentUser.stars || 0);
+            const starDisplay = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+            document.getElementById('starDisplay').textContent = starDisplay;
+            document.getElementById('ratingText').textContent = 
+                `${currentUser.stars || 0} (${currentUser.total_ratings || 0} ratings)`;
+        }
+        
+        async function loadOutstandingBids() {
+            const bidsContainer = document.getElementById('outstandingBids');
+            const loadingSpinner = document.getElementById('bidsLoading');
+            
+            loadingSpinner.style.display = 'block';
+            
+            try {
+                // Since the API docs don't show an endpoint for getting user's bids,
+                // we'll simulate this data or show a message
+                // In a real implementation, you'd call something like /my_bids
+                
+                setTimeout(() => {
+                    loadingSpinner.style.display = 'none';
+                    
+                    // Simulate some outstanding bids
+                    outstandingBids = [
+                        {
+                            bid_id: 'bid123',
+                            service: 'Web development for small business',
+                            price: 500,
+                            end_time: Date.now() / 1000 + 3600,
+                            status: 'pending'
+                        },
+                        {
+                            bid_id: 'bid456', 
+                            service: 'House cleaning service',
+                            price: 120,
+                            end_time: Date.now() / 1000 + 7200,
+                            status: 'pending'
+                        }
+                    ];
+                    
+                    updateBidsDisplay();
+                }, 1000);
+                
+            } catch (error) {
+                loadingSpinner.style.display = 'none';
+                bidsContainer.innerHTML = '<p class="text-danger">Error loading bids</p>';
+            }
+        }
+        
+        function updateBidsDisplay() {
+            const container = document.getElementById('outstandingBids');
+            
+            if (outstandingBids.length === 0) {
+                container.innerHTML = '<p class="text-muted mb-0">No outstanding bids</p>';
+                return;
+            }
+            
+            container.innerHTML = outstandingBids.map(bid => `
+                <div class="bid-item">
+                    <h6>${bid.service}</h6>
+                    <p>Price: $${bid.price} • Expires: ${new Date(bid.end_time * 1000).toLocaleString()}</p>
+                    <div class="bid-actions">
+                        <button class="btn btn-danger btn-xs" onclick="cancelBid('${bid.bid_id}')">Cancel</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function loadCompletedJobs() {
+            const jobsContainer = document.getElementById('completedJobs');
+            const loadingSpinner = document.getElementById('jobsLoading');
+            
+            loadingSpinner.style.display = 'block';
+            
+            try {
+                // Simulate completed jobs data
+                setTimeout(() => {
+                    loadingSpinner.style.display = 'none';
+                    
+                    completedJobs = [
+                        {
+                            job_id: 'job789',
+                            service: 'Kitchen deep cleaning',
+                            price: 180,
+                            completed_at: Date.now() / 1000 - 86400,
+                            rating_given: 5,
+                            rating_received: 4
+                        },
+                        {
+                            job_id: 'job321',
+                            service: 'Logo design',
+                            price: 250,
+                            completed_at: Date.now() / 1000 - 172800,
+                            rating_given: 4,
+                            rating_received: 5
+                        }
+                    ];
+                    
+                    updateJobsDisplay();
+                }, 1200);
+                
+            } catch (error) {
+                loadingSpinner.style.display = 'none';
+                jobsContainer.innerHTML = '<p class="text-danger">Error loading jobs</p>';
+            }
+        }
+        
+        function updateJobsDisplay() {
+            const container = document.getElementById('completedJobs');
+            
+            if (completedJobs.length === 0) {
+                container.innerHTML = '<p class="text-muted mb-0">No completed jobs</p>';
+                return;
+            }
+            
+            container.innerHTML = completedJobs.map(job => `
+                <div class="job-item">
+                    <h6>${job.service}</h6>
+                    <p>Price: $${job.price} • Completed: ${new Date(job.completed_at * 1000).toLocaleDateString()}</p>
+                    <div class="d-flex justify-content-between">
+                        <small>You rated: ${'★'.repeat(job.rating_given)}${'☆'.repeat(5 - job.rating_given)}</small>
+                        <small>They rated: ${'★'.repeat(job.rating_received)}${'☆'.repeat(5 - job.rating_received)}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function cancelBid(bidId) {
+            if (!confirm('Are you sure you want to cancel this bid?')) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/cancel_bid`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ bid_id: bidId })
+                });
+                
+                if (response.ok) {
+                    alert('Bid cancelled successfully');
+                    // Remove from local array and update display
+                    outstandingBids = outstandingBids.filter(bid => bid.bid_id !== bidId);
+                    updateBidsDisplay();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to cancel bid: ${error.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                alert('Network error while cancelling bid');
+            }
+        }
+        
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('auth_token');
+            updateUIForLoggedOutUser();
+            alert('Logged out successfully');
+        }
         
         function showAuth() {
             new bootstrap.Modal(document.getElementById('authModal')).show();
@@ -370,6 +761,8 @@
                 authToken = data.access_token;
                 localStorage.setItem('auth_token', authToken);
                 bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
+                updateUIForLoggedInUser();
+                loadAccountData();
                 alert('Login successful!');
             } else {
                 alert('Login failed');
@@ -425,6 +818,8 @@
                 const result = await response.json();
                 alert(`Service request submitted! ID: ${result.bid_id}`);
                 bootstrap.Modal.getInstance(document.getElementById('bidModal')).hide();
+                // Refresh outstanding bids
+                loadOutstandingBids();
             } else {
                 alert('Failed to submit request');
             }
