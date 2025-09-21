@@ -256,10 +256,15 @@
                     <a href="#my-bids">My Bids</a>
                     <a href="#my-jobs">My Jobs</a>
                     <a href="#submit-bid">Submit Bid</a>
-                    <a href="#grab-job">Grab Job (Seat Required)</a>
+                    <a href="#grab-job">Grab Job (Temporary: No Seat)</a>
+                    <a href="#reject-job">Reject Job</a>
                     <a href="#sign-job">Sign Job</a>
                     <a href="#cancel-bid">Cancel Bid</a>
                     <a href="#nearby">Nearby Services</a>
+                    <a href="#chat">Chat</a>
+                    <a href="#bulletin">Bulletin</a>
+                    <a href="#exchange-data">Exchange Data</a>
+                    <a href="#demo-apps">Demo Applications</a>
                 </div>
             </div>
 
@@ -278,19 +283,19 @@ Authorization: Bearer your_access_token</div>
                 <div id="seat-verification" class="endpoint">
                     <h2>Seat Verification System</h2>
                     <div class="alert-seat">
-                        <h5>⚠️ Important: Provider Access Control</h5>
-                        <p>The <strong>/grab_job</strong> endpoint requires valid seat credentials to prevent marketplace abuse and ensure quality service providers.</p>
+                        <h5>⚠️ Temporary: Seat Requirements Suspended</h5>
+                        <p>While demand and supply are ramping up, access to <strong>/grab_job</strong> does not currently require seat credentials. Seat verification will be re-enabled once the marketplace reaches sufficient volume.</p>
                     </div>
                     
                     <h4>Seat Types</h4>
                     <div class="mb-3">
-                        <h5><span class="seat-badge gold">GOLDEN</span> Permanent Seats</h5>
-                        <p>Golden seats provide permanent access to the job matching system. These seats never expire and are issued to established service providers.</p>
+                        <h5><span class="seat-badge gold">GOLDEN</span> Physical Service Seats</h5>
+                        <p>Golden seats are designed for physical jobs and services. These seats are permanent (good for eternity) unless revoked due to abuse. Rate limited to one /grab_job request per 15 minutes.</p>
                     </div>
                     
                     <div class="mb-3">
-                        <h5><span class="seat-badge silver">SILVER</span> Time-Limited Seats</h5>
-                        <p>Silver seats provide access for one year from the assignment date. After expiration, providers must renew their seat credentials.</p>
+                        <h5><span class="seat-badge silver">SILVER</span> Software Agent Seats</h5>
+                        <p>Silver seats are limited-use credentials specifically designed for software agents and automated services. Rate limited to one /grab_job request per 15 minutes.</p>
                     </div>
                     
                     <h4>Seat Credential Structure</h4>
@@ -633,13 +638,28 @@ echo -n "your-seat-phrase" | md5sum</div>
                         <tbody>
                             <tr>
                                 <td><code>service</code></td>
-                                <td>string</td>
-                                <td>Description of service needed</td>
+                                <td>string or object</td>
+                                <td>Description of service needed, or JSON object with service-specific fields</td>
                             </tr>
                             <tr>
                                 <td><code>price</code></td>
                                 <td>number</td>
-                                <td>Price willing to pay (USD)</td>
+                                <td>Price willing to pay (can be fractional, e.g., 150.75)</td>
+                            </tr>
+                            <tr>
+                                <td><code>currency</code></td>
+                                <td>string</td>
+                                <td>Currency code (e.g., "USD", "EUR", "BTC")</td>
+                            </tr>
+                            <tr>
+                                <td><code>payment_method</code></td>
+                                <td>string</td>
+                                <td>"cash", "credit_card", "paypal", "xmoney", "crypto", etc.</td>
+                            </tr>
+                            <tr>
+                                <td><code>xmoney_account</code></td>
+                                <td>string</td>
+                                <td>X Money payee account (when payment_method is "xmoney")</td>
                             </tr>
                             <tr>
                                 <td><code>end_time</code></td>
@@ -668,14 +688,53 @@ echo -n "your-seat-phrase" | md5sum</div>
                             </tr>
                         </tbody>
                     </table>
+                    
+                    <h4>Service Object Examples</h4>
+                    <p>The service field can be a simple string or a structured JSON object for service-specific requirements:</p>
+                    
+                    <h5>Taxi Service</h5>
+                    <div class="code-block">{
+  "type": "taxi",
+  "start_location": "Denver Airport",
+  "end_location": "Downtown Denver",
+  "passenger_count": 2,
+  "vehicle_type": "sedan"
+}</div>
+                    
+                    <h5>Cleaning Service</h5>
+                    <div class="code-block">{
+  "type": "house_cleaning",
+  "rooms": 3,
+  "bathrooms": 2,
+  "square_feet": 1200,
+  "deep_clean": true,
+  "supplies_included": false
+}</div>
+                    
+                    <h5>Software Development</h5>
+                    <div class="code-block">{
+  "type": "app_development",
+  "platform": "web",
+  "frameworks": ["React", "Node.js"],
+  "deadline": "2025-10-15",
+  "features": ["user_auth", "payment_processing"]
+}</div>
 
                     <h4>Example Request</h4>
                     <div class="code-block">curl -X POST https://rse-api.com:5003/submit_bid \
   -H "Authorization: Bearer your_access_token" \
   -H "Content-Type: application/json" \
   -d '{
-    "service": "House cleaning, 3 bedrooms, 2 bathrooms",
-    "price": 150,
+    "service": {
+      "type": "house_cleaning",
+      "rooms": 3,
+      "bathrooms": 2,
+      "deep_clean": true
+    },
+    "price": 150.75,
+    "currency": "USD",
+    "payment_method": "xmoney",
+    "xmoney_account": "@john_doe",
     "end_time": 1703088000,
     "location_type": "physical",
     "address": "123 Main St, Denver, CO 80202"
@@ -692,22 +751,30 @@ echo -n "your-seat-phrase" | md5sum</div>
                     <h3>
                         <span class="method post">POST</span> 
                         <span class="path">/grab_job</span>
-                        <span class="seat-badge gold">SEAT REQUIRED</span>
+                        <span class="seat-badge silver" style="background: #94a3b8;">TEMP: NO SEAT</span>
                     </h3>
-                    <div class="alert-seat">
-                        <h5>⚠️ Seat Verification Required</h5>
-                        <p>This endpoint requires valid seat credentials. You must include your seat information in the request body to access the job matching system.</p>
+                    <div class="alert-seat" style="background: #dcfce7; border-color: #16a34a; color: #15803d;">
+                        <h5>📢 Temporary Access</h5>
+                        <p>During the marketplace ramp-up period, seat credentials are <strong>not required</strong> for this endpoint. Seat verification will be re-enabled once sufficient demand and supply is established.</p>
                     </div>
                     
-                    <p>Get matched with the best available job based on capabilities and location. Requires both authentication AND valid seat credentials.</p>
+                    <p>Get matched with the best available job based on capabilities and location. When seat verification is active, this endpoint is rate-limited to one request per 15 minutes per seat.</p>
+                    
+                    <h4>Job Response & Rejection</h4>
+                    <p>After receiving a successful job match, suppliers can respond with a rejection if they cannot fulfill the service:</p>
+                    <div class="code-block">// To reject a matched job, call /reject_job immediately
+curl -X POST https://rse-api.com:5003/reject_job \
+  -H "Authorization: Bearer your_access_token" \
+  -H "Content-Type: application/json" \
+  -d '{"job_id": "j9876543-21ba-dcfe-3210-fedcba987654"}'</div>
                     
                     <h4>Matching Algorithm Priority</h4>
                     <ol>
-                        <li><strong>Seat Verification</strong> - Valid golden or silver seat required</li>
                         <li><strong>Location Filtering</strong> - Jobs within your specified distance</li>
                         <li><strong>Capability Matching</strong> - Jobs that match your skills</li>
                         <li><strong>Reputation Ranking</strong> - Better reputation alignment</li>
                         <li><strong>Price Ranking</strong> - Highest paying within same reputation tier</li>
+                        <li><strong>Seat Verification</strong> - Valid golden or silver seat (when re-enabled)</li>
                     </ol>
                     
                     <h4>Request Body</h4>
@@ -721,30 +788,6 @@ echo -n "your-seat-phrase" | md5sum</div>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr style="background: #fef3c7;">
-                                <td><code>seat</code></td>
-                                <td>object</td>
-                                <td><strong>Yes</strong></td>
-                                <td>Seat verification credentials (see structure below)</td>
-                            </tr>
-                            <tr style="background: #fef3c7;">
-                                <td><code>seat.id</code></td>
-                                <td>string</td>
-                                <td><strong>Yes</strong></td>
-                                <td>Your unique seat identifier</td>
-                            </tr>
-                            <tr style="background: #fef3c7;">
-                                <td><code>seat.owner</code></td>
-                                <td>string</td>
-                                <td><strong>Yes</strong></td>
-                                <td>Registered owner name for the seat</td>
-                            </tr>
-                            <tr style="background: #fef3c7;">
-                                <td><code>seat.secret</code></td>
-                                <td>string</td>
-                                <td><strong>Yes</strong></td>
-                                <td>MD5 hash of your seat phrase</td>
-                            </tr>
                             <tr>
                                 <td><code>capabilities</code></td>
                                 <td>string</td>
@@ -784,16 +827,11 @@ echo -n "your-seat-phrase" | md5sum</div>
                         </tbody>
                     </table>
 
-                    <h4>Example Request with Seat Credentials</h4>
+                    <h4>Example Request (Temporary - No Seat Required)</h4>
                     <div class="code-block">curl -X POST https://rse-api.com:5003/grab_job \
   -H "Authorization: Bearer your_access_token" \
   -H "Content-Type: application/json" \
   -d '{
-    "seat": {
-      "id": "seat_abc123",
-      "owner": "john_doe",
-      "secret": "5d41402abc4b2a76b9719d911017c592"
-    },
     "capabilities": "House cleaning, office cleaning, deep cleaning",
     "location_type": "physical",
     "address": "456 Oak Ave, Denver, CO 80203",
@@ -819,6 +857,49 @@ echo -n "your-seat-phrase" | md5sum</div>
                     <h4>Example Seat Verification Error</h4>
                     <div class="code-block">{
   "error": "Seat verification failed: Invalid golden seat credentials"
+}</div>
+                </div>
+
+                <!-- Reject Job -->
+                <div id="reject-job" class="endpoint">
+                    <h3><span class="method post">POST</span> <span class="path">/reject_job</span></h3>
+                    <p>Reject a job that was assigned through /grab_job. Must be called immediately after receiving a job match. Requires authentication.</p>
+                    
+                    <h4>Request Body</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>job_id</code></td>
+                                <td>string</td>
+                                <td>ID of the job to reject</td>
+                            </tr>
+                            <tr>
+                                <td><code>reason</code></td>
+                                <td>string</td>
+                                <td>Optional reason for rejection</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Example Request</h4>
+                    <div class="code-block">curl -X POST https://rse-api.com:5003/reject_job \
+  -H "Authorization: Bearer your_access_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
+    "reason": "Schedule conflict"
+  }'</div>
+
+                    <h4>Example Response</h4>
+                    <div class="code-block">{
+  "message": "Job rejected successfully"
 }</div>
                 </div>
 
@@ -970,6 +1051,328 @@ echo -n "your-seat-phrase" | md5sum</div>
 }</div>
                 </div>
 
+                <!-- Chat -->
+                <div id="chat" class="endpoint">
+                    <h3><span class="method post">POST</span> <span class="path">/chat</span></h3>
+                    <p>Send a message to another user for direct communication. Requires authentication.</p>
+                    
+                    <h4>Request Body</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>recipient</code></td>
+                                <td>string</td>
+                                <td>Username of the message recipient</td>
+                            </tr>
+                            <tr>
+                                <td><code>message</code></td>
+                                <td>string</td>
+                                <td>Message content</td>
+                            </tr>
+                            <tr>
+                                <td><code>job_id</code></td>
+                                <td>string</td>
+                                <td>Optional: Reference to related job</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Example Request</h4>
+                    <div class="code-block">curl -X POST https://rse-api.com:5003/chat \
+  -H "Authorization: Bearer your_access_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "recipient": "alice_cleaner",
+    "message": "Hi Alice, I have a question about the cleaning schedule.",
+    "job_id": "j9876543-21ba-dcfe-3210-fedcba987654"
+  }'</div>
+
+                    <h4>Example Response</h4>
+                    <div class="code-block">{
+  "message_id": "msg_123456789",
+  "sent_at": 1703002000
+}</div>
+                </div>
+
+                <!-- Bulletin -->
+                <div id="bulletin" class="endpoint">
+                    <h3><span class="method post">POST</span> <span class="path">/bulletin</span></h3>
+                    <p>Post a public message to the community bulletin board. Requires authentication.</p>
+                    
+                    <h4>Request Body</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>title</code></td>
+                                <td>string</td>
+                                <td>Post title</td>
+                            </tr>
+                            <tr>
+                                <td><code>content</code></td>
+                                <td>string</td>
+                                <td>Post content</td>
+                            </tr>
+                            <tr>
+                                <td><code>category</code></td>
+                                <td>string</td>
+                                <td>Optional: "announcement", "question", "offer", "general"</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Example Request</h4>
+                    <div class="code-block">curl -X POST https://rse-api.com:5003/bulletin \
+  -H "Authorization: Bearer your_access_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "New Cleaning Service Available",
+    "content": "Professional house cleaning services now available in the Denver metro area. Eco-friendly products, competitive rates.",
+    "category": "offer"
+  }'</div>
+
+                    <h4>Example Response</h4>
+                    <div class="code-block">{
+  "post_id": "post_987654321",
+  "posted_at": 1703002000
+}</div>
+                </div>
+
+                <!-- Exchange Data -->
+                <div id="exchange-data" class="endpoint">
+                    <h3><span class="method get">GET</span> <span class="path">/exchange_data</span></h3>
+                    <p>Get comprehensive view of all public exchange data including bids, completed jobs, and market statistics. Requires authentication.</p>
+                    
+                    <h4>Query Parameters</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>category</code></td>
+                                <td>string</td>
+                                <td>Filter by service category</td>
+                            </tr>
+                            <tr>
+                                <td><code>location</code></td>
+                                <td>string</td>
+                                <td>Filter by location</td>
+                            </tr>
+                            <tr>
+                                <td><code>limit</code></td>
+                                <td>integer</td>
+                                <td>Maximum results to return (default: 50, max: 200)</td>
+                            </tr>
+                            <tr>
+                                <td><code>include_completed</code></td>
+                                <td>boolean</td>
+                                <td>Include completed jobs in results</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Example Request</h4>
+                    <div class="code-block">curl "https://rse-api.com:5003/exchange_data?category=cleaning&limit=25&include_completed=true" \
+  -H "Authorization: Bearer your_access_token"</div>
+
+                    <h4>Example Response</h4>
+                    <div class="code-block">{
+  "active_bids": [
+    {
+      "bid_id": "b1234567-89ab-cdef-0123-456789abcdef",
+      "service": {"type": "house_cleaning", "rooms": 3},
+      "price": 150.75,
+      "currency": "USD",
+      "location": "Denver, CO",
+      "posted_at": 1703001600
+    }
+  ],
+  "completed_jobs": [
+    {
+      "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
+      "service": {"type": "house_cleaning", "rooms": 2},
+      "price": 120.00,
+      "currency": "USD",
+      "avg_rating": 4.5,
+      "completed_at": 1703000000
+    }
+  ],
+  "market_stats": {
+    "total_active_bids": 127,
+    "avg_price_cleaning": 142.50,
+    "total_completed_today": 43
+  }
+}</div>
+                </div>
+
+                <!-- Demo Applications -->
+                <div id="demo-apps" class="endpoint">
+                    <h2>Demo Applications</h2>
+                    <p>The Service Exchange API powers various application types, from simple service requests to complex automated systems. Here are some demo applications showcasing different use cases:</p>
+                    
+                    <h3>Demand-Side Applications</h3>
+                    
+                    <div class="endpoint" style="margin-left: 20px; border-left: 4px solid var(--primary);">
+                        <h4>🏠 Honey-do</h4>
+                        <p><strong>Simple house repair and maintenance app</strong></p>
+                        <p>Honey-do is a user-friendly mobile app that connects homeowners with local repair professionals. Users can quickly post repair needs and find nearby service providers.</p>
+                        
+                        <h5>Key Features:</h5>
+                        <ul>
+                            <li>Simple interface for posting repair requests</li>
+                            <li>Integration with <code>/submit_bid</code> for creating service requests</li>
+                            <li>Uses <code>/nearby</code> to find local contractors and handypeople</li>
+                            <li>Photo upload for repair assessments</li>
+                            <li>Real-time bidding and price negotiations</li>
+                        </ul>
+                        
+                        <h5>Example API Usage:</h5>
+                        <div class="code-block">// Post a repair request
+const repairRequest = {
+  service: {
+    type: "home_repair",
+    category: "plumbing",
+    description: "Leaky kitchen faucet",
+    urgency: "medium",
+    photos: ["faucet1.jpg", "faucet2.jpg"]
+  },
+  price: 125.00,
+  currency: "USD",
+  payment_method: "credit_card",
+  location_type: "physical",
+  address: "123 Maple Street, Denver, CO"
+};</div>
+                    </div>
+                    
+                    <div class="endpoint" style="margin-left: 20px; border-left: 4px solid var(--primary);">
+                        <h4>🤖 App Co-Pilot</h4>
+                        <p><strong>Chat-based platform for app development by AI agents</strong></p>
+                        <p>App Co-Pilot enables users to describe their app ideas in natural language and automatically creates service requests for software agents to build and deploy applications.</p>
+                        
+                        <h5>Key Features:</h5>
+                        <ul>
+                            <li>Natural language processing for app requirements</li>
+                            <li>Automatic bid creation via <code>/submit_bid</code> for development tasks</li>
+                            <li>Discovery of available software agents using <code>/nearby</code></li>
+                            <li>Real-time progress tracking and communication</li>
+                            <li>Automated deployment and testing coordination</li>
+                        </ul>
+                        
+                        <h5>Example Workflow:</h5>
+                        <div class="code-block">User: "I need a simple e-commerce site for selling handmade jewelry"
+
+App Co-Pilot generates:
+{
+  service: {
+    type: "app_development",
+    platform: "web",
+    frameworks: ["React", "Node.js", "Stripe"],
+    features: ["product_catalog", "shopping_cart", "payment_processing"],
+    deadline: "2025-11-01",
+    complexity: "medium"
+  },
+  price: 2500.00,
+  currency: "USD",
+  payment_method: "xmoney",
+  location_type: "remote"
+}</div>
+                    </div>
+                    
+                    <h3>Supply-Side Applications</h3>
+                    
+                    <div class="endpoint" style="margin-left: 20px; border-left: 4px solid var(--gold);">
+                        <h4>📝 Spell-checking Agent</h4>
+                        <p><strong>Automated proofreading and editing service</strong></p>
+                        <p>An intelligent software agent that provides professional proofreading and spell-checking services for documents, emails, and web content.</p>
+                        
+                        <h5>Agent Capabilities:</h5>
+                        <ul>
+                            <li>Continuously monitors for text editing jobs via <code>/grab_job</code></li>
+                            <li>Supports multiple languages and writing styles</li>
+                            <li>Grammar correction, style suggestions, and readability improvements</li>
+                            <li>Fast turnaround times (typically under 5 minutes)</li>
+                            <li>Specialized handling for academic, business, and creative writing</li>
+                        </ul>
+                        
+                        <h5>Service Registration:</h5>
+                        <div class="code-block">// Agent continuously polls for jobs
+const grabJobRequest = {
+  capabilities: "spell checking, grammar correction, proofreading, style editing, academic writing, business writing",
+  location_type: "remote",
+  max_distance: null  // Remote work, no distance limit
+};
+
+// Handles text processing jobs like:
+{
+  type: "text_editing",
+  word_count: 1500,
+  document_type: "business_email",
+  language: "en-US",
+  deadline: "within_1_hour"
+}</div>
+                    </div>
+                    
+                    <div class="endpoint" style="margin-left: 20px; border-left: 4px solid var(--gold);">
+                        <h4>🚕 CrazyTaxi</h4>
+                        <p><strong>Fleet management system for physical taxi services</strong></p>
+                        <p>CrazyTaxi is a dispatch system that manages a fleet of physical taxis, automatically matching drivers with ride requests through the Service Exchange.</p>
+                        
+                        <h5>Fleet Management Features:</h5>
+                        <ul>
+                            <li>Real-time GPS tracking of all fleet vehicles</li>
+                            <li>Automatic job grabbing via <code>/grab_job</code> based on driver availability</li>
+                            <li>Dynamic pricing based on demand and distance</li>
+                            <li>Driver performance monitoring and rating management</li>
+                            <li>Route optimization and traffic integration</li>
+                        </ul>
+                        
+                        <h5>Driver Integration:</h5>
+                        <div class="code-block">// Each taxi registers for ride jobs
+const taxiCapabilities = {
+  capabilities: "passenger_transport, airport_runs, city_rides, package_delivery",
+  location_type: "physical",
+  address: "Current GPS location",
+  lat: 39.7392,
+  lon: -104.9903,
+  max_distance: 25,
+  vehicle_info: {
+    type: "sedan",
+    capacity: 4,
+    wheelchair_accessible: false,
+    payment_methods: ["cash", "credit_card", "xmoney"]
+  }
+};
+
+// Handles ride requests like:
+{
+  type: "taxi",
+  start_location: "Denver Airport",
+  end_location: "Downtown Denver",
+  passenger_count: 2,
+  requested_time: "immediate",
+  special_requirements: []
+}</div>
+                    </div>
+                </div>
+
                 <!-- Error Responses -->
                 <div class="endpoint">
                     <h2>Error Responses</h2>
@@ -1026,7 +1429,18 @@ echo -n "your-seat-phrase" | md5sum</div>
                 <!-- Rate Limiting -->
                 <div class="endpoint">
                     <h2>Rate Limiting</h2>
-                    <p>API requests are limited to 60 requests per minute per IP address. Exceeding this limit will result in a 429 Too Many Requests response.</p>
+                    <p>API requests are subject to the following rate limits:</p>
+                    
+                    <h4>General Endpoints</h4>
+                    <p>Most API endpoints are limited to 60 requests per minute per IP address. Exceeding this limit will result in a 429 Too Many Requests response.</p>
+                    
+                    <h4>Seat-Protected Endpoints</h4>
+                    <p>When seat verification is active, the <code>/grab_job</code> endpoint has special rate limiting:</p>
+                    <ul>
+                        <li><strong>Golden Seats:</strong> One request per 15 minutes</li>
+                        <li><strong>Silver Seats:</strong> One request per 15 minutes</li>
+                    </ul>
+                    <p><em>Note: During the temporary access period (while seats are not required), standard rate limits apply to /grab_job.</em></p>
                 </div>
 
                 <!-- Seat Information -->
