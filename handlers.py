@@ -823,9 +823,10 @@ def send_chat_message(data):
             'read': False
         }
         
-        # Save message for both sender and recipient
-        save_message(sender, message_id, message_data)
-        save_message(recipient, message_id, message_data)
+        # Save message using the correct function signature
+        # The local utils.py uses: save_message(message_id, data)
+        save_message(f"{sender}_{message_id}", message_data)
+        save_message(f"{recipient}_{message_id}", message_data)
         
         logger.info(f"Chat message sent from {sender} to {recipient}")
         
@@ -863,6 +864,7 @@ def post_bulletin(data):
             'posted_at': int(time.time())
         }
         
+        # Save bulletin using the correct function signature
         save_bulletin(post_id, bulletin_data)
         
         logger.info(f"Bulletin posted by {username}")
