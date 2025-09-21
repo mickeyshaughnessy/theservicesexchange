@@ -48,7 +48,16 @@ def create_seat_credentials(seat_data):
 
 def test_api(api_url, test_seats=True):
     """Run integration tests"""
-    print("\n=== Service Exchange API Complete Feature Tests ===\n")
+    # Determine environment
+    is_local = "localhost" in api_url or "127.0.0.1" in api_url
+    env_name = "LOCAL" if is_local else "PRODUCTION"
+    storage_type = "Local Filesystem" if is_local else "AWS S3"
+    
+    print(f"\n=== Service Exchange API Complete Feature Tests ===")
+    print(f"📍 Environment: {env_name}")
+    print(f"🔗 API URL: {api_url}")
+    print(f"💾 Storage: {storage_type}")
+    print("="*55 + "\n")
     
     # Load test seats
     golden_seats, silver_seats = load_test_seats()
@@ -785,16 +794,31 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # Set API URL based on command line flag
+    print("\n" + "="*70)
+    print("SERVICE EXCHANGE API TEST CONFIGURATION")
+    print("="*70)
+    
     if args.local:
         api_url = "http://localhost:5003"
-        print(f"Testing against local server: {api_url}")
+        print(f"🏠 API Endpoint: {api_url} (LOCAL)")
+        print(f"💾 Storage: Local filesystem (./data/)")
+        print(f"📁 Data directories: accounts/, tokens/, bids/, jobs/, messages/, bulletins/")
     else:
         api_url = "https://rse-api.com:5003"
-        print(f"Testing against production server: {api_url}")
+        print(f"🌐 API Endpoint: {api_url} (PRODUCTION)")
+        print(f"☁️  Storage: AWS S3 (Bucket: mithrilmedia)")
+        print(f"🔐 S3 Prefix: theservicesexchange/")
+    
+    print(f"🔒 Seat Verification: {'SKIPPED' if args.skip_seats else 'ENABLED (Currently DISABLED in API)'}")
+    print(f"🕐 Test Started: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print("="*70 + "\n")
     
     # Disable SSL warnings for testing
     import urllib3
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    
+    # Track test start time
+    start_time = time.time()
     
     try:
         # Run main tests
@@ -811,27 +835,31 @@ if __name__ == "__main__":
         print("\n" + "="*60)
         print("✅ COMPLETE TEST SUITE RESULTS")
         print("="*60)
-        print("Core API Tests: PASSED")
-        print("Enhanced Bid System: PASSED")
-        print("  • Multiple currencies supported")
-        print("  • Payment methods validated") 
-        print("  • XMoney integration working")
-        print("  • Service objects supported")
-        print("Chat Messaging: PASSED")
-        print("Bulletin Board: PASSED")
-        print("Exchange Data API: PASSED")
-        print("Job Rejection: PASSED")
-        print("My Bids/Jobs: PASSED")
-        print("Nearby Services: PASSED")
-        print("Authentication: PASSED")
-        print("Edge Cases: PASSED")
+        print(f"Environment: {api_url}")
+        print(f"Storage: {'Local Filesystem' if 'localhost' in api_url else 'AWS S3'}")
+        print("\nTests Passed:")
+        print("  • Core API Tests: PASSED")
+        print("  • Enhanced Bid System: PASSED")
+        print("    - Multiple currencies supported")
+        print("    - Payment methods validated") 
+        print("    - XMoney integration working")
+        print("    - Service objects supported")
+        print("  • Chat Messaging: PASSED")
+        print("  • Bulletin Board: PASSED")
+        print("  • Exchange Data API: PASSED")
+        print("  • Job Rejection: PASSED")
+        print("  • My Bids/Jobs: PASSED")
+        print("  • Nearby Services: PASSED")
+        print("  • Authentication: PASSED")
+        print("  • Edge Cases: PASSED")
         if not args.skip_seats:
-            print("Seat Verification: TESTED (Currently DISABLED)")
+            print("  • Seat Verification: TESTED (Currently DISABLED)")
         
         print(f"\nTest Metrics:")
         print(f"  • Bids created: {test_results['bid_count']}")
         print(f"  • Jobs completed: {test_results['jobs_completed']}")
         print(f"  • Exchange data entries: {test_results['exchange_data_count']}")
+        print(f"  • Test duration: {time.strftime('%H:%M:%S', time.gmtime(time.time() - start_time))}")
         
         print("\n🚀 Service Exchange API: ALL FEATURES OPERATIONAL")
         print("="*60 + "\n")

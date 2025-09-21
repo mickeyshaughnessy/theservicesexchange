@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearby Services - The Service Exchange</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        :root {
+            --primary: #6366f1;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gold: #fbbf24;
+            --silver: #94a3b8;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--light);
+            padding-top: 76px;
+        }
+        
+        .navbar {
+            background: var(--dark) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+        }
+        
+        .navbar-nav .nav-link {
+            color: #94a3b8 !important;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .navbar-nav .nav-link:hover,
+        .navbar-nav .nav-link.active {
+            color: var(--primary) !important;
+        }
+        
+        .map-container {
+            height: 400px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .search-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .service-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--primary);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .service-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .service-distance {
+            color: var(--silver);
+            font-size: 0.9rem;
+        }
+        
+        .reputation-stars {
+            color: var(--gold);
+        }
+        
+        .exchange-stats {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            color: var(--silver);
+            font-size: 0.9rem;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .job-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--gold);
+        }
+        
+        .job-completed {
+            border-left-color: var(--silver);
+        }
+        
+        .job-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .job-meta {
+            font-size: 0.9rem;
+            color: var(--silver);
+        }
+        
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .mapboxgl-popup-content {
+            border-radius: 8px;
+        }
+        
+        .login-required {
+            text-align: center;
+            padding: 40px;
+            color: var(--silver);
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            border: none;
+            padding: 12px 24px;
+            font-weight: 600;
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">The Service Exchange</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://theservicesexchange.com/about.html">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://theservicesexchange.com/seats.html">Seats</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="nearby.html" aria-current="page">Nearby Services</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://theservicesexchange.com/api_docs.html">API Docs</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Login Required Message -->
+        <div id="loginRequired" class="login-required" style="display: none;">
+            <h3>Authentication Required</h3>
+            <p>Please log in to view nearby services and exchange data.</p>
+            <a href="index.html" class="btn-primary-custom">Go to Login</a>
+        </div>
+
+        <!-- Authenticated Content -->
+        <div id="authenticatedContent" style="display: none;">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="search-panel">
+                        <h2>🗺️ Nearby Services</h2>
+                        <p class="text-muted">Find services near any location</p>
+                        
+                        <form id="nearbyForm">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" placeholder="Enter address or location" id="searchAddress" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" class="form-control" placeholder="Radius (miles)" id="searchRadius" value="10" min="1" max="50">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 mt-3">Search Nearby Services</button>
+                        </form>
+                    </div>
+
+                    <!-- Map -->
+                    <div class="map-container">
+                        <div id="map"></div>
+                    </div>
+
+                    <!-- Nearby Services Results -->
+                    <div class="mt-4">
+                        <h4>Search Results</h4>
+                        <div class="loading-spinner" id="nearbyLoading">
+                            <div class="spinner-border" role="status"></div>
+                            <p>Searching for nearby services...</p>
+                        </div>
+                        <div id="nearbyResults">
+                            <p class="text-muted">Use the search form above to find services near any location.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <!-- Exchange Statistics -->
+                    <div class="exchange-stats">
+                        <h4>📊 Exchange Stats</h4>
+                        <div class="loading-spinner" id="statsLoading">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <p>Loading statistics...</p>
+                        </div>
+                        <div id="exchangeStats" style="display: none;">
+                            <div class="stat-card">
+                                <div class="stat-number" id="activeBidsCount">-</div>
+                                <div class="stat-label">Active Bids</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="completedTodayCount">-</div>
+                                <div class="stat-label">Completed Today</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="avgPrice">-</div>
+                                <div class="stat-label">Avg Price (Cleaning)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="filter-section">
+                        <h5>🔍 Exchange Data Filters</h5>
+                        <form id="filterForm">
+                            <div class="mb-3">
+                                <select class="form-control" id="categoryFilter">
+                                    <option value="">All Categories</option>
+                                    <option value="cleaning">Cleaning</option>
+                                    <option value="development">Development</option>
+                                    <option value="repair">Repairs</option>
+                                    <option value="tutoring">Tutoring</option>
+                                    <option value="design">Design</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <input type="text" class="form-control" placeholder="Location filter" id="locationFilter">
+                            </div>
+                            <div class="mb-3">
+                                <input type="number" class="form-control" placeholder="Max results" id="limitFilter" value="25" min="1" max="200">
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="includeCompleted" checked>
+                                    <label class="form-check-label" for="includeCompleted">
+                                        Include completed jobs
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        </form>
+                    </div>
+
+                    <!-- Recent Exchange Activity -->
+                    <div class="exchange-stats">
+                        <h5>📈 Recent Activity</h5>
+                        <div class="loading-spinner" id="activityLoading">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <p>Loading activity...</p>
+                        </div>
+                        <div id="recentActivity" style="display: none;">
+                            <!-- Activity items will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_URL = 'https://rse-api.com:5003';
+        let authToken = null;
+        let map = null;
+        let markers = [];
+        
+        // Mapbox access token - You'll need to replace this with your actual token
+        mapboxgl.accessToken = 'pk.eyJ1IjoibWlja2V5c2hhdWdobmVzc3kiLCJhIjoiY2x6NGxyNG93MnptaDJxb2dhOGloenZqeiJ9.ANY7UIu7VTPFwqTD8cEAKQ'
+        
+        // Initialize the page
+        window.addEventListener('load', () => {
+            authToken = localStorage.getItem('auth_token');
+            if (authToken) {
+                showAuthenticatedContent();
+                initializeMap();
+                loadExchangeData();
+            } else {
+                showLoginRequired();
+            }
+        });
+        
+        function showLoginRequired() {
+            document.getElementById('loginRequired').style.display = 'block';
+            document.getElementById('authenticatedContent').style.display = 'none';
+        }
+        
+        function showAuthenticatedContent() {
+            document.getElementById('loginRequired').style.display = 'none';
+            document.getElementById('authenticatedContent').style.display = 'block';
+        }
+        
+        function initializeMap() {
+            // Initialize map centered on Denver, CO
+            map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/streets-v11',
+                center: [-104.9903, 39.7392], // Denver coordinates
+                zoom: 10
+            });
+            
+            map.addControl(new mapboxgl.NavigationControl());
+            
+            // Add click handler for getting coordinates
+            map.on('click', (e) => {
+                const { lng, lat } = e.lngLat;
+                searchNearbyByCoordinates(lat, lng);
+            });
+        }
+        
+        async function loadExchangeData() {
+            const statsLoading = document.getElementById('statsLoading');
+            const activityLoading = document.getElementById('activityLoading');
+            
+            statsLoading.style.display = 'block';
+            activityLoading.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_URL}/exchange_data?limit=50&include_completed=true`, {
+                    headers: {'Authorization': `Bearer ${authToken}`}
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateExchangeStats(data);
+                    updateRecentActivity(data);
+                } else {
+                    console.error('Failed to load exchange data');
+                }
+                
+            } catch (error) {
+                console.error('Error loading exchange data:', error);
+            } finally {
+                statsLoading.style.display = 'none';
+                activityLoading.style.display = 'none';
+                document.getElementById('exchangeStats').style.display = 'block';
+                document.getElementById('recentActivity').style.display = 'block';
+            }
+        }
+        
+        function updateExchangeStats(data) {
+            const stats = data.market_stats || {};
+            
+            document.getElementById('activeBidsCount').textContent = stats.total_active_bids || 0;
+            document.getElementById('completedTodayCount').textContent = stats.total_completed_today || 0;
+            document.getElementById('avgPrice').textContent = stats.avg_price_cleaning ? `$${stats.avg_price_cleaning.toFixed(0)}` : 'N/A';
+        }
+        
+        function updateRecentActivity(data) {
+            const container = document.getElementById('recentActivity');
+            const activeBids = data.active_bids || [];
+            const completedJobs = data.completed_jobs || [];
+            
+            // Combine and sort by date
+            const allActivity = [
+                ...activeBids.map(bid => ({...bid, type: 'bid', date: bid.posted_at})),
+                ...completedJobs.map(job => ({...job, type: 'completed', date: job.completed_at}))
+            ].sort((a, b) => b.date - a.date).slice(0, 10);
+            
+            if (allActivity.length === 0) {
+                container.innerHTML = '<p class="text-muted">No recent activity</p>';
+                return;
+            }
+            
+            container.innerHTML = allActivity.map(item => {
+                const isCompleted = item.type === 'completed';
+                const service = typeof item.service === 'string' ? item.service : 
+                              (item.service?.type || 'Service');
+                
+                return `
+                    <div class="job-item ${isCompleted ? 'job-completed' : ''}">
+                        <div class="job-title">${service}</div>
+                        <div class="job-meta">
+                            $${item.price} • ${isCompleted ? 'Completed' : 'Active Bid'} • 
+                            ${new Date(item.date * 1000).toLocaleDateString()}
+                        </div>
+                        ${item.location ? `<div class="job-meta">${item.location}</div>` : ''}
+                        ${isCompleted && item.avg_rating ? `<div class="reputation-stars">${'★'.repeat(Math.round(item.avg_rating))}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function clearMapMarkers() {
+            markers.forEach(marker => marker.remove());
+            markers = [];
+        }
+        
+        function addServiceMarker(service, lat, lng) {
+            const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                <div style="padding: 10px;">
+                    <h6>${service.service}</h6>
+                    <p><strong>$${service.price}</strong> • ${service.distance.toFixed(1)} miles</p>
+                    ${service.buyer_reputation ? `<div class="reputation-stars">${'★'.repeat(Math.round(service.buyer_reputation))}</div>` : ''}
+                </div>
+            `);
+            
+            const marker = new mapboxgl.Marker({color: '#6366f1'})
+                .setLngLat([lng, lat])
+                .setPopup(popup)
+                .addTo(map);
+            
+            markers.push(marker);
+        }
+        
+        async function searchNearbyByAddress(address, radius) {
+            const loading = document.getElementById('nearbyLoading');
+            const results = document.getElementById('nearbyResults');
+            
+            loading.style.display = 'block';
+            results.innerHTML = '';
+            
+            try {
+                const response = await fetch(`${API_URL}/nearby`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        address: address,
+                        radius: radius || 10
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    displayNearbyResults(data.services || []);
+                    
+                    // Geocode address to center map
+                    await geocodeAndCenterMap(address);
+                } else {
+                    results.innerHTML = '<p class="text-danger">Failed to search for nearby services</p>';
+                }
+                
+            } catch (error) {
+                results.innerHTML = '<p class="text-danger">Network error while searching</p>';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        async function searchNearbyByCoordinates(lat, lng) {
+            const loading = document.getElementById('nearbyLoading');
+            const results = document.getElementById('nearbyResults');
+            
+            loading.style.display = 'block';
+            results.innerHTML = '';
+            
+            try {
+                const response = await fetch(`${API_URL}/nearby`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        lat: lat,
+                        lon: lng,
+                        radius: parseInt(document.getElementById('searchRadius').value) || 10
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    displayNearbyResults(data.services || []);
+                    map.flyTo({center: [lng, lat], zoom: 12});
+                } else {
+                    results.innerHTML = '<p class="text-danger">Failed to search for nearby services</p>';
+                }
+                
+            } catch (error) {
+                results.innerHTML = '<p class="text-danger">Network error while searching</p>';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        function displayNearbyResults(services) {
+            const results = document.getElementById('nearbyResults');
+            clearMapMarkers();
+            
+            if (services.length === 0) {
+                results.innerHTML = '<p class="text-muted">No services found in this area.</p>';
+                return;
+            }
+            
+            results.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5>Found ${services.length} service${services.length === 1 ? '' : 's'}</h5>
+                </div>
+                ${services.map(service => `
+                    <div class="service-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6>${service.service}</h6>
+                                <p class="service-distance">📍 ${service.distance.toFixed(1)} miles away</p>
+                                ${service.address ? `<p class="text-muted small">${service.address}</p>` : ''}
+                                ${service.buyer_reputation ? `
+                                    <div class="reputation-stars">
+                                        ${'★'.repeat(Math.round(service.buyer_reputation))}${'☆'.repeat(5 - Math.round(service.buyer_reputation))}
+                                        <span class="text-muted ms-1">(${service.buyer_reputation.toFixed(1)})</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="text-end">
+                                <div class="service-price">$${service.price}</div>
+                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="contactProvider('${service.bid_id}')">
+                                    Contact
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+            
+            // Add markers to map (if we had coordinates)
+            // For now, we'll just center on the search location
+        }
+        
+        async function geocodeAndCenterMap(address) {
+            // In a real implementation, you'd use Mapbox Geocoding API
+            // For demo purposes, we'll center on Denver
+            map.flyTo({center: [-104.9903, 39.7392], zoom: 12});
+        }
+        
+        function contactProvider(bidId) {
+            alert(`Contact functionality would be implemented here for bid: ${bidId}`);
+        }
+        
+        // Event handlers
+        document.getElementById('nearbyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const address = document.getElementById('searchAddress').value;
+            const radius = parseInt(document.getElementById('searchRadius').value);
+            await searchNearbyByAddress(address, radius);
+        });
+        
+        document.getElementById('filterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const category = document.getElementById('categoryFilter').value;
+            const location = document.getElementById('locationFilter').value;
+            const limit = parseInt(document.getElementById('limitFilter').value);
+            const includeCompleted = document.getElementById('includeCompleted').checked;
+            
+            const params = new URLSearchParams();
+            if (category) params.append('category', category);
+            if (location) params.append('location', location);
+            if (limit) params.append('limit', limit.toString());
+            if (includeCompleted) params.append('include_completed', 'true');
+            
+            try {
+                const response = await fetch(`${API_URL}/exchange_data?${params}`, {
+                    headers: {'Authorization': `Bearer ${authToken}`}
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateExchangeStats(data);
+                    updateRecentActivity(data);
+                }
+            } catch (error) {
+                console.error('Error applying filters:', error);
+            }
+        });
+    </script>
+</body>
+</html>
