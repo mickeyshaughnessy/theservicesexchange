@@ -1,5 +1,5 @@
 """
-Service Exchange API Server
+Service Exchange API Server - Complete Implementation
 """
 
 import flask
@@ -16,11 +16,15 @@ from handlers import (
     submit_bid,
     cancel_bid,
     grab_job,
+    reject_job,
     get_account_info,
     nearby_services,
     sign_job,
     get_my_bids,
-    get_my_jobs
+    get_my_jobs,
+    send_chat_message,
+    post_bulletin,
+    get_exchange_data
 )
 from utils import get_token_username
 
@@ -82,7 +86,7 @@ def ping():
         logger.error(f"Ping error: {str(e)}")
         return flask.jsonify({"error": "Internal server error"}), 500
 
-# Authentication
+# Authentication endpoints
 @app.route('/register', methods=['POST'])
 def register():
     try:
@@ -178,6 +182,20 @@ def handle_grab_job(current_user):
         logger.error(f"Job grab error: {str(e)}")
         return flask.jsonify({"error": "Internal server error"}), 500
 
+@app.route('/reject_job', methods=['POST'])
+@token_required
+def handle_reject_job(current_user):
+    try:
+        data = flask.request.get_json()
+        if not data:
+            return flask.jsonify({"error": "Invalid JSON data"}), 400
+        data['username'] = current_user
+        response, status = reject_job(data)
+        return flask.jsonify(response), status
+    except Exception as e:
+        logger.error(f"Job rejection error: {str(e)}")
+        return flask.jsonify({"error": "Internal server error"}), 500
+
 # Shared endpoints
 @app.route('/nearby', methods=['POST'])
 @token_required
@@ -206,6 +224,90 @@ def handle_sign_job(current_user):
     except Exception as e:
         logger.error(f"Job signing error: {str(e)}")
         return flask.jsonify({"error": "Internal server error"}), 500
+
+# Communication endpoints
+@app.route('/chat', methods=['POST'])
+@token_required
+def chat(current_user):
+    try:
+        data = flask.request.get_json()
+        if not data:
+            return flask.jsonify({"error": "Invalid JSON data"}), 400
+        data['username'] = current_user
+        response, status = send_chat_message(data)
+        return flask.jsonify(response), status
+    except Exception as e:
+        logger.error(f"Chat error: {str(e)}")
+        return flask.jsonify({"error": "Internal server error"}), 500
+
+@app.route('/bulletin', methods=['POST'])
+@token_required
+def bulletin(current_user):
+    try:
+        data = flask.request.get_json()
+        if not data:
+            return flask.jsonify({"error": "Invalid JSON data"}), 400
+        data['username'] = current_user
+        response, status = post_bulletin(data)
+        return flask.jsonify(response), status
+    except Exception as e:
+        logger.error(f"Bulletin error: {str(e)}")
+        return flask.jsonify({"error": "Internal server error"}), 500
+
+# Data endpoints
+@app.route('/exchange_data', methods=['GET'])
+@token_required
+def exchange_data(current_user):
+    try:
+        # Parse query parameters
+        data = {
+            'username': current_user,
+            'category': flask.request.args.get('category'),
+            'location': flask.request.args.get('location'),
+            'limit': int(flask.request.args.get('limit', 50)),
+            'include_completed': flask.request.args.get('include_completed', 'false').lower() == 'true'
+        }
+        response, status = get_exchange_data(data)
+        return flask.jsonify(response), status
+    except ValueError as e:
+        return flask.jsonify({"error": "Invalid limit parameter"}), 400
+    except Exception as e:
+        logger.error(f"Exchange data error: {str(e)}")
+        return flask.jsonify({"error": "Internal server error"}), 500
+
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    return flask.jsonify({"error": "Endpoint not found"}), 404
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return flask.jsonify({"error": "Method not allowed"}), 405
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error: {str(error)}")
+    return flask.jsonify({"error": "Internal server error"}), 500
+
+# Health check endpoint
+@app.route('/health', methods=['GET'])
+def health():
+    """Health check endpoint for monitoring"""
+    return flask.jsonify({
+        "status": "healthy",
+        "timestamp": int(time.time()),
+        "service": "Service Exchange API"
+    }), 200
+
+# API documentation redirect
+@app.route('/', methods=['GET'])
+def root():
+    """Root endpoint - redirect to API documentation"""
+    return flask.jsonify({
+        "message": "Service Exchange API",
+        "documentation": "https://rse-api.com:5003/api_docs.html",
+        "status": "operational"
+    }), 200
 
 # For gunicorn
 application = app
