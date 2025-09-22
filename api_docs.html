@@ -1294,6 +1294,265 @@ App Co-Pilot generates:
   payment_method: "xmoney",
   location_type: "remote"
 }</div>
+
+                        <!-- Additional Service Buyer Example: Palantir Government Integration -->
+<div class="example-section">
+    <h3>🏛️ Government Agency Integration Example</h3>
+    <p class="lead">Federal agencies using Palantir Ontology for automated service procurement</p>
+
+    <div class="alert alert-info">
+        <strong>Use Case:</strong> USDA and other agencies automatically sourcing approved services through Palantir's ontological data model integration with Service Exchange API.
+    </div>
+
+    <h4>Agency Service Requirements</h4>
+    <div class="row">
+        <div class="col-md-6">
+            <h5>USDA - Agricultural Services</h5>
+            <ul>
+                <li>Crop monitoring and satellite imagery analysis</li>
+                <li>Food safety inspection consulting</li>
+                <li>Rural broadband infrastructure planning</li>
+                <li>Agricultural data visualization services</li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h5>General Federal Services</h5>
+            <ul>
+                <li>Cybersecurity vulnerability assessments</li>
+                <li>Public data analysis and reporting</li>
+                <li>IT infrastructure modernization consulting</li>
+                <li>Training and educational services</li>
+            </ul>
+        </div>
+    </div>
+
+    <h4>Palantir Integration Architecture</h4>
+    <pre><code>
+Palantir Foundry/Gotham → Ontology Objects → Service Exchange API
+                      ↓
+              Government Procurement
+              Workflow Integration
+    </code></pre>
+
+    <h4>Python Implementation</h4>
+    <div class="code-example">
+        <pre><code class="language-python">#!/usr/bin/env python3
+"""
+Federal Agency Service Procurement via Palantir Integration
+Compliant with government procurement regulations
+"""
+
+import requests
+import json
+from datetime import datetime, timedelta
+from palantir_ontology import OntologyClient  # Palantir SDK
+
+class GovernmentServiceProcurement:
+    def __init__(self, palantir_host, exchange_api_url, agency_credentials):
+        self.ontology_client = OntologyClient(palantir_host, agency_credentials)
+        self.exchange_api = exchange_api_url
+        self.agency_token = self.authenticate_agency()
+
+    def authenticate_agency(self):
+        """Authenticate with Service Exchange using agency credentials"""
+        # Government agencies use pre-approved institutional accounts
+        response = requests.post(f"{self.exchange_api}/gov_login", json={
+            "agency_id": "USDA_PROCUREMENT_001",
+            "certification": "GSA_APPROVED",
+            "budget_code": "2024-AG-TECH-001"
+        })
+        return response.json()['access_token']
+
+    def get_approved_service_requirements(self):
+        """Query Palantir Ontology for approved service requirements"""
+        # Query government ontology for pending service needs
+        query = """
+        SELECT service_request
+        FROM government.procurement_requests
+        WHERE status = 'APPROVED'
+        AND budget_allocated = true
+        AND compliance_cleared = true
+        """
+
+        return self.ontology_client.query(query)
+
+    def submit_government_service_request(self, ontology_requirement):
+        """Convert ontology requirement to Service Exchange format"""
+
+        # Map government requirement to exchange format
+        service_data = {
+            "service": {
+                "type": ontology_requirement.service_category,
+                "description": ontology_requirement.description,
+                "security_clearance": ontology_requirement.clearance_level,
+                "compliance_requirements": ["FedRAMP", "FISMA", "Section 508"],
+                "delivery_location": ontology_requirement.location,
+                "contract_vehicle": "GSA Schedule 70"
+            },
+            "price": ontology_requirement.budget_ceiling,
+            "currency": "USD",
+            "payment_method": "gov_purchase_card",
+            "end_time": int((datetime.now() + timedelta(days=30)).timestamp()),
+            "location_type": "hybrid" if ontology_requirement.site_visit_required else "remote"
+        }
+
+        if ontology_requirement.site_visit_required:
+            service_data["address"] = ontology_requirement.government_facility
+
+        # Submit to Service Exchange
+        headers = {"Authorization": f"Bearer {self.agency_token}"}
+        response = requests.post(f"{self.exchange_api}/submit_bid",
+                               headers=headers, json=service_data)
+
+        if response.status_code == 200:
+            bid_id = response.json()['bid_id']
+
+            # Update Palantir Ontology with Service Exchange tracking
+            self.ontology_client.update_object(
+                ontology_requirement.id,
+                {"exchange_bid_id": bid_id, "status": "MARKET_POSTED"}
+            )
+
+            return bid_id
+        else:
+            raise Exception(f"Service request failed: {response.json()}")
+
+    def monitor_procurement_status(self):
+        """Monitor active government procurements"""
+        headers = {"Authorization": f"Bearer {self.agency_token}"}
+
+        # Get agency bids
+        response = requests.get(f"{self.exchange_api}/my_bids", headers=headers)
+        active_bids = response.json().get('bids', [])
+
+        # Get completed jobs
+        response = requests.get(f"{self.exchange_api}/my_jobs", headers=headers)
+        jobs_data = response.json()
+
+        # Update Palantir with procurement status
+        for bid in active_bids:
+            self.ontology_client.update_procurement_status(
+                bid['bid_id'], "AWAITING_VENDOR_RESPONSE"
+            )
+
+        for job in jobs_data.get('completed_jobs', []):
+            self.ontology_client.update_procurement_status(
+                job['job_id'], "CONTRACT_COMPLETED"
+            )
+
+    def verify_vendor_compliance(self, vendor_username):
+        """Verify vendor meets government requirements"""
+        # Check vendor against government databases
+        compliance_check = {
+            "sam_registered": self.check_sam_registration(vendor_username),
+            "security_cleared": self.check_security_clearance(vendor_username),
+            "past_performance": self.check_past_performance(vendor_username)
+        }
+
+        return all(compliance_check.values())
+
+# Usage Example
+if __name__ == "__main__":
+    # Initialize for USDA procurement
+    procurement = GovernmentServiceProcurement(
+        palantir_host="https://usda.palantirfoundry.com",
+        exchange_api_url="https://rse-api.com:5003",
+        agency_credentials="usda_credentials.json"
+    )
+
+    # Process approved requirements
+    requirements = procurement.get_approved_service_requirements()
+
+    for req in requirements:
+        try:
+            bid_id = procurement.submit_government_service_request(req)
+            print(f"Service request posted: {bid_id}")
+            print(f"Budget: ${req.budget_ceiling:,}")
+            print(f"Category: {req.service_category}")
+
+        except Exception as e:
+            print(f"Error processing requirement {req.id}: {e}")
+
+    # Monitor ongoing procurements
+    procurement.monitor_procurement_status()
+</code></pre>
+    </div>
+
+    <h4>Government-Specific Features</h4>
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="feature-box">
+                <h5>🔒 Security Compliance</h5>
+                <p>Automatic FedRAMP and FISMA compliance checking for vendors</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-box">
+                <h5>📊 Budget Tracking</h5>
+                <p>Integration with federal budget systems and spending limits</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-box">
+                <h5>📋 Audit Trail</h5>
+                <p>Complete procurement audit trail maintained in Palantir Ontology</p>
+            </div>
+        </div>
+    </div>
+
+    <h4>Sample USDA Service Requirements</h4>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Service Category</th>
+                    <th>Description</th>
+                    <th>Budget Range</th>
+                    <th>Clearance Level</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Agricultural Data Analysis</td>
+                    <td>Crop yield prediction modeling using satellite imagery</td>
+                    <td>$50,000 - $200,000</td>
+                    <td>Public Trust</td>
+                </tr>
+                <tr>
+                    <td>Food Safety Consulting</td>
+                    <td>HACCP implementation for meat processing facilities</td>
+                    <td>$25,000 - $75,000</td>
+                    <td>None Required</td>
+                </tr>
+                <tr>
+                    <td>Rural Infrastructure Planning</td>
+                    <td>Broadband deployment feasibility studies</td>
+                    <td>$100,000 - $500,000</td>
+                    <td>Public Trust</td>
+                </tr>
+                <tr>
+                    <td>Environmental Monitoring</td>
+                    <td>Water quality sensor network implementation</td>
+                    <td>$75,000 - $300,000</td>
+                    <td>None Required</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="alert alert-warning">
+        <strong>Compliance Note:</strong> All government service procurement through this system must comply with Federal Acquisition Regulation (FAR) and agency-specific procurement policies. Vendors must be registered in SAM.gov and meet applicable security clearance requirements.
+    </div>
+
+    <h4>Integration Benefits</h4>
+    <ul>
+        <li><strong>Automated Compliance:</strong> Palantir Ontology ensures all procurements meet regulatory requirements</li>
+        <li><strong>Market Efficiency:</strong> Access to pre-vetted vendors through Service Exchange platform</li>
+        <li><strong>Cost Transparency:</strong> Market-driven pricing within government budget constraints</li>
+        <li><strong>Audit Ready:</strong> Complete procurement workflow tracked in immutable ontology</li>
+        <li><strong>Risk Mitigation:</strong> Vendor verification and past performance integration</li>
+    </ul>
+</div>
                     </div>
                     
                     <h3>Supply-Side Applications</h3>
