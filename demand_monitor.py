@@ -99,6 +99,65 @@ class DemandMonitor:
             }
         ]
 
+    def signal_handler(self, signum, frame):
+        """Handle shutdown signals gracefully"""
+        print(f"\n🛑 Received signal {signum}, shutting down gracefully...")
+        self.running = False
+
+    def log_status(self, message, level="INFO"):
+        """Log status with timestamp"""
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{timestamp}] {level}: {message}")
+
+    def check_api_health(self):
+        """Check if API is accessible"""
+        try:
+            response = requests.get(f"{self.api_url}/ping", timeout=10, verify=False)
+            return response.status_code == 200
+        except Exception as e:
+            self.log_status(f"API health check failed: {e}", "ERROR")
+            return False
+
+    def maintain_users(self):
+        """Maintain minimum number of active users"""
+        if time.time() - self.last_user_check < 3600:  # Check hourly
+            return
+            
+        self.last_user_check = time.time()
+        self.log_status(f"User maintenance: {len(self.active_tokens)} active users")
+        
+        # Recreate users if we have too few
+        target_users = 3
+        if len(self.active_tokens) < target_users:
+            self.log_status("Recreating missing demand users...", "WARN")
+            missing_users = target_users - len(self.active_tokens)
+            for i in range(missing_users):
+                self.create_test_user()
+                time.sleep(1)  # Avoid rate limiting
+
+    def periodic_cleanup(self):
+        """Perform periodic cleanup tasks"""
+        if time.time() - self.last_cleanup < 3600:  # Cleanup every hour
+            return
+            
+        self.last_cleanup = time.time()
+        self.log_status("Performing periodic cleanup...")
+        
+        # Cleanup expired bids
+        for token in self.active_tokens[:2]:  # Only use first 2 tokens for cleanup
+            self.cleanup_expired_bids(token)
+        
+        # Log statistics
+        runtime_hours = (time.time() - self.start_time) / 3600
+        self.log_status(f"Runtime: {runtime_hours:.1f}h, Demands created: {self.created_demands}")
+        
+        # Monitor marketplace
+        try:
+            active_count = self.monitor_marketplace()
+            self.log_status(f"Marketplace: {active_count} active TEST bids")
+        except Exception as e:
+            self.log_status(f"Error in periodic cleanup: {e}", "ERROR")
+
     def create_test_user(self):
         """Create a test user for demand generation"""
         # Keep username under 20 chars (validation limit)
