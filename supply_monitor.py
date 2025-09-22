@@ -82,7 +82,9 @@ class SupplyMonitor:
 
     def create_test_provider(self, provider_profile):
         """Create a test provider user"""
-        username = f"supply_bot_{provider_profile['name']}_{uuid.uuid4().hex[:6]}"
+        # Keep username under 20 chars (validation limit)
+        provider_short = provider_profile['name'][:8]  # truncate if needed
+        username = f"s_{provider_short}_{uuid.uuid4().hex[:8]}"
         
         try:
             # Register
