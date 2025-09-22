@@ -270,6 +270,20 @@
         .duration-input-group select {
             width: 100px;
         }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -412,6 +426,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div id="authError" class="error-message" style="display: none;"></div>
+                    
                     <ul class="nav nav-tabs mb-3">
                         <li class="nav-item">
                             <a class="nav-link active" data-bs-toggle="tab" href="#login">Login</a>
@@ -430,7 +446,7 @@
                                 <div class="mb-3">
                                     <input type="password" class="form-control" placeholder="Password" id="loginPassword" required>
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100">Login</button>
+                                <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">Login</button>
                             </form>
                         </div>
                         
@@ -442,7 +458,7 @@
                                 <div class="mb-3">
                                     <input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required>
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100">Register</button>
+                                <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">Register</button>
                             </form>
                         </div>
                     </div>
@@ -611,6 +627,7 @@
         const API_URL = 'https://rse-api.com:5003';
         let authToken = null;
         let currentUser = null;
+        let currentUsername = null;
         let outstandingBids = [];
         let completedJobs = [];
         let activeJobs = [];
@@ -618,11 +635,35 @@
         // Initialize the page
         window.addEventListener('load', () => {
             authToken = localStorage.getItem('auth_token');
-            if (authToken) {
+            currentUsername = localStorage.getItem('current_username');
+            
+            if (authToken && currentUsername) {
                 loadAccountData();
                 updateUIForLoggedInUser();
             }
         });
+        
+        function showError(message, containerId = 'authError') {
+            const errorDiv = document.getElementById(containerId);
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function setLoading(isLoading, buttonId) {
+            const button = document.getElementById(buttonId);
+            if (isLoading) {
+                button.classList.add('loading');
+                button.disabled = true;
+                button.textContent = 'Loading...';
+            } else {
+                button.classList.remove('loading');
+                button.disabled = false;
+                button.textContent = buttonId.includes('login') ? 'Login' : 'Register';
+            }
+        }
         
         function updateUIForLoggedInUser() {
             document.getElementById('loginButton').style.display = 'none';
@@ -639,24 +680,41 @@
         }
         
         async function loadAccountData() {
+            if (!authToken || !currentUsername) {
+                console.error('No auth token or username available');
+                return;
+            }
+            
             try {
-                // Load account info
+                // Load account info using username-based endpoint
                 const accountResponse = await fetch(`${API_URL}/account`, {
-                    headers: {'Authorization': `Bearer ${authToken}`}
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: currentUsername })
                 });
                 
                 if (accountResponse.ok) {
                     currentUser = await accountResponse.json();
                     updateAccountDisplay();
+                } else {
+                    console.error('Failed to load account data:', accountResponse.status);
+                    if (accountResponse.status === 401) {
+                        // Token expired, logout
+                        logout();
+                        return;
+                    }
                 }
                 
-                // Load outstanding bids (assuming there might be an endpoint for this)
-                // For now, we'll show placeholder data since the API docs don't specify this endpoint
-                loadOutstandingBids();
-                loadCompletedJobs();
+                // Load bids and jobs
+                await loadOutstandingBids();
+                await loadCompletedJobs();
                 
             } catch (error) {
                 console.error('Error loading account data:', error);
+                showError('Failed to load account data. Please try refreshing the page.');
             }
         }
         
@@ -668,7 +726,7 @@
             
             // Update star display
             const stars = Math.round(currentUser.stars || 0);
-            const starDisplay = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+            const starDisplay = '★'.repeat(Math.min(stars, 5)) + '☆'.repeat(Math.max(5 - stars, 0));
             document.getElementById('starDisplay').textContent = starDisplay;
             document.getElementById('ratingText').textContent = 
                 `${currentUser.stars || 0} (${currentUser.total_ratings || 0} ratings)`;
@@ -711,8 +769,8 @@
             
             container.innerHTML = outstandingBids.map(bid => `
                 <div class="bid-item">
-                    <h6>${bid.service}</h6>
-                    <p>Price: ${bid.price} • Expires: ${new Date(bid.end_time * 1000).toLocaleString()}</p>
+                    <h6>${typeof bid.service === 'object' ? JSON.stringify(bid.service) : bid.service}</h6>
+                    <p>Price: ${bid.currency || 'USD'} ${bid.price} • Expires: ${new Date(bid.end_time * 1000).toLocaleString()}</p>
                     ${bid.location_type !== 'remote' ? `<p class="text-muted">Location: ${bid.address || 'Physical service'}</p>` : '<p class="text-muted">Remote service</p>'}
                     <div class="bid-actions">
                         <button class="btn btn-danger btn-xs" onclick="cancelBid('${bid.bid_id}')">Cancel</button>
@@ -767,8 +825,8 @@
             
             container.innerHTML = activeJobs.map(job => `
                 <div class="job-item">
-                    <h6>${job.service}</h6>
-                    <p>Price: ${job.price} • Accepted: ${new Date(job.accepted_at * 1000).toLocaleDateString()} • Role: ${job.role}</p>
+                    <h6>${typeof job.service === 'object' ? JSON.stringify(job.service) : job.service}</h6>
+                    <p>Price: ${job.currency || 'USD'} ${job.price} • Accepted: ${new Date(job.accepted_at * 1000).toLocaleDateString()} • Role: ${job.role}</p>
                     <p class="text-muted">Partner: ${job.counterparty}</p>
                     ${job.location_type !== 'remote' ? `<small class="text-muted">Location: ${job.address || 'Physical service'}</small>` : '<small class="text-muted">Remote service</small>'}
                 </div>
@@ -785,8 +843,8 @@
             
             container.innerHTML = completedJobs.map(job => `
                 <div class="job-item">
-                    <h6>${job.service}</h6>
-                    <p>Price: ${job.price} • Completed: ${new Date(job.completed_at * 1000).toLocaleDateString()} • Role: ${job.role}</p>
+                    <h6>${typeof job.service === 'object' ? JSON.stringify(job.service) : job.service}</h6>
+                    <p>Price: ${job.currency || 'USD'} ${job.price} • Completed: ${new Date(job.completed_at * 1000).toLocaleDateString()} • Role: ${job.role}</p>
                     <div class="d-flex justify-content-between">
                         <small>You rated: ${job.my_rating ? '★'.repeat(job.my_rating) + '☆'.repeat(5 - job.my_rating) : 'Not rated'}</small>
                         <small>They rated: ${job.their_rating ? '★'.repeat(job.their_rating) + '☆'.repeat(5 - job.their_rating) : 'Not rated'}</small>
@@ -825,12 +883,15 @@
         function logout() {
             authToken = null;
             currentUser = null;
+            currentUsername = null;
             localStorage.removeItem('auth_token');
+            localStorage.removeItem('current_username');
             updateUIForLoggedOutUser();
             alert('Logged out successfully');
         }
         
         function showAuth() {
+            document.getElementById('authError').style.display = 'none';
             new bootstrap.Modal(document.getElementById('authModal')).show();
         }
         
@@ -882,25 +943,48 @@
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const response = await fetch(`${API_URL}/login`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    username: document.getElementById('loginUsername').value,
-                    password: document.getElementById('loginPassword').value
-                })
-            });
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
             
-            if (response.ok) {
-                const data = await response.json();
-                authToken = data.access_token;
-                localStorage.setItem('auth_token', authToken);
-                bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
-                updateUIForLoggedInUser();
-                loadAccountData();
-                alert('Login successful!');
-            } else {
-                alert('Login failed');
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+            
+            setLoading(true, 'loginSubmitBtn');
+            
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, password })
+                });
+                
+                setLoading(false, 'loginSubmitBtn');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    currentUsername = username;
+                    
+                    localStorage.setItem('auth_token', authToken);
+                    localStorage.setItem('current_username', currentUsername);
+                    
+                    bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
+                    updateUIForLoggedInUser();
+                    
+                    // Load account data after successful login
+                    await loadAccountData();
+                    
+                    alert('Login successful!');
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    showError(errorData.error || 'Login failed. Please check your credentials.');
+                }
+            } catch (error) {
+                setLoading(false, 'loginSubmitBtn');
+                showError('Network error. Please check your connection and try again.');
+                console.error('Login error:', error);
             }
         });
         
@@ -908,20 +992,42 @@
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const response = await fetch(`${API_URL}/register`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    username: document.getElementById('regUsername').value,
-                    password: document.getElementById('regPassword').value
-                })
-            });
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
             
-            if (response.ok) {
-                alert('Registration successful! Please login.');
-                document.querySelector('[href="#login"]').click();
-            } else {
-                alert('Registration failed');
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+            
+            if (password.length < 8) {
+                showError('Password must be at least 8 characters long');
+                return;
+            }
+            
+            setLoading(true, 'registerSubmitBtn');
+            
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, password })
+                });
+                
+                setLoading(false, 'registerSubmitBtn');
+                
+                if (response.ok) {
+                    alert('Registration successful! Please login.');
+                    document.querySelector('[href="#login"]').click();
+                    document.getElementById('loginUsername').value = username;
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    showError(errorData.error || 'Registration failed. Please try a different username.');
+                }
+            } catch (error) {
+                setLoading(false, 'registerSubmitBtn');
+                showError('Network error. Please check your connection and try again.');
+                console.error('Registration error:', error);
             }
         });
         
@@ -967,7 +1073,8 @@
                     loadOutstandingBids();
                 }
             } else {
-                alert('Failed to submit request');
+                const errorData = await response.json().catch(() => ({}));
+                alert(`Failed to submit request: ${errorData.error || 'Unknown error'}`);
             }
         });
         
@@ -1001,15 +1108,19 @@
             
             if (response.ok) {
                 const job = await response.json();
-                alert(`Job found!\nService: ${job.service}\nPrice: $${job.price}\nBuyer: ${job.buyer_username}`);
+                const serviceDesc = typeof job.service === 'object' ? JSON.stringify(job.service) : job.service;
+                alert(`Job found!\nService: ${serviceDesc}\nPrice: ${job.currency || 'USD'} ${job.price}\nBuyer: ${job.buyer_username}`);
                 bootstrap.Modal.getInstance(document.getElementById('providerModal')).hide();
+                // Refresh job data
+                await loadCompletedJobs();
             } else if (response.status === 204) {
                 alert('No matching jobs available');
             } else if (response.status === 403) {
                 const error = await response.json();
                 alert(`Seat verification failed: ${error.error}`);
             } else {
-                alert('Failed to find job');
+                const errorData = await response.json().catch(() => ({}));
+                alert(`Failed to find job: ${errorData.error || 'Unknown error'}`);
             }
         });
         
