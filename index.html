@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Service Exchange - Buy and Sell Any Service</title>
+    <title>The Service Exchange - Find Any Service</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
@@ -55,11 +55,19 @@
         .service-tag {
             display: inline-block;
             padding: 6px 14px;
-            background: var(--light);
-            color: var(--dark);
+            background: rgba(255,255,255,0.2);
+            color: white;
             border-radius: 20px;
             margin: 4px;
             font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .service-tag:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
         }
         
         .service-examples {
@@ -77,51 +85,6 @@
             border-radius: 12px;
         }
         
-        .exchange-rate-box {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            border-radius: 12px;
-            padding: 15px 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            z-index: 1000;
-            min-width: 250px;
-        }
-        
-        .exchange-rate-box h6 {
-            margin: 0 0 8px 0;
-            color: var(--dark);
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        .exchange-rate-box .rate {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .exchange-rate-box .coin {
-            color: #f59e0b;
-            font-weight: 700;
-        }
-        
-        .exchange-rate-box .seat-badge {
-            background: var(--silver);
-            color: white;
-            padding: 3px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .exchange-rate-box small {
-            display: block;
-            margin-top: 8px;
-            color: #64748b;
-        }
-
         /* Account Dropdown Styles */
         .account-dropdown {
             position: relative;
@@ -284,6 +247,153 @@
             opacity: 0.6;
             pointer-events: none;
         }
+
+        /* Chat Inbox Styles */
+        .chat-inbox {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .conversation-item:hover {
+            background: #f8fafc;
+        }
+
+        .conversation-item.active {
+            background: #e0e7ff;
+        }
+
+        .conversation-meta {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .conversation-user {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .conversation-time {
+            font-size: 12px;
+            color: #64748b;
+            margin-left: auto;
+        }
+
+        .conversation-preview {
+            font-size: 14px;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .message-history {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .message-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .message-item.sent {
+            background: #e0e7ff;
+            margin-left: 20px;
+        }
+
+        .message-item.received {
+            background: #f1f5f9;
+            margin-right: 20px;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .message-text {
+            font-size: 14px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        /* Bulletin Feed Styles */
+        .bulletin-feed {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .bulletin-item {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .bulletin-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .bulletin-title {
+            font-weight: 600;
+            color: var(--dark);
+            margin: 0;
+        }
+
+        .bulletin-category {
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: auto;
+        }
+
+        .bulletin-meta {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .bulletin-content {
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.4;
+        }
+
+        .payment-method-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .payment-method-group select {
+            width: 120px;
+        }
+
+        .payment-method-group input {
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -293,11 +403,10 @@
             <a class="navbar-brand fw-bold" href="https://theservicesexchange.com">The Service Exchange</a>
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="https://theservicesexchange.com/about.html">About</a>
-                <a class="nav-link" href="https://theservicesexchange.com/seats.html">Seats</a>
                 <a class="nav-link" href="nearby.html">Nearby Services</a>
                 <a class="nav-link" href="https://theservicesexchange.com/api_docs.html">API Docs</a>
-                <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Chat</button>
-                <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Bulletin</button>
+                <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
+                <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
                 
                 <!-- Account dropdown (shown when logged in) -->
                 <div id="accountDropdown" class="account-dropdown" style="display: none;">
@@ -317,35 +426,35 @@
                         </div>
                         
                         <div class="account-section">
-                            <h6>Outstanding Bids</h6>
+                            <h6>Outstanding Requests</h6>
                             <div class="loading-spinner" id="bidsLoading">
                                 <div class="spinner-border spinner-border-sm" role="status"></div>
-                                <span class="ms-2">Loading bids...</span>
+                                <span class="ms-2">Loading requests...</span>
                             </div>
                             <div id="outstandingBids">
-                                <p class="text-muted mb-0">No outstanding bids</p>
+                                <p class="text-muted mb-0">No outstanding requests</p>
                             </div>
                         </div>
                         
                         <div class="account-section">
-                            <h6>Active Jobs</h6>
+                            <h6>Active Services</h6>
                             <div class="loading-spinner" id="activeJobsLoading">
                                 <div class="spinner-border spinner-border-sm" role="status"></div>
-                                <span class="ms-2">Loading active jobs...</span>
+                                <span class="ms-2">Loading active services...</span>
                             </div>
                             <div id="activeJobs">
-                                <p class="text-muted mb-0">No active jobs</p>
+                                <p class="text-muted mb-0">No active services</p>
                             </div>
                         </div>
                         
                         <div class="account-section">
-                            <h6>Recent Completed Jobs</h6>
+                            <h6>Recent Completed Services</h6>
                             <div class="loading-spinner" id="jobsLoading">
                                 <div class="spinner-border spinner-border-sm" role="status"></div>
-                                <span class="ms-2">Loading jobs...</span>
+                                <span class="ms-2">Loading services...</span>
                             </div>
                             <div id="completedJobs">
-                                <p class="text-muted mb-0">No completed jobs</p>
+                                <p class="text-muted mb-0">No completed services</p>
                             </div>
                         </div>
                     </div>
@@ -356,37 +465,25 @@
             </div>
         </div>
     </nav>
-    
-    <!-- Exchange Rate Box -->
-    <div class="exchange-rate-box">
-        <h6>$THERSX Exchange Rate</h6>
-        <div class="rate">
-            <span class="coin">1,000,000 $THERSX</span>
-            <span>=</span>
-            <span class="seat-badge">1 SILVER SEAT</span>
-        </div>
-        <small>Silver seats valid for 30 days</small>
-    </div>
 
     <!-- Hero -->
     <section class="hero">
         <div class="container">
             <h1>The Service Exchange</h1>
-            <p>Buy and sell any service through intelligent matching</p>
+            <p>Find any service through intelligent matching</p>
             <div class="row justify-content-center">
                 <div class="col-md-6">
-                    <button class="btn btn-light btn-lg me-3" onclick="showBuyerForm()">I Need a Service</button>
-                    <button class="btn btn-primary-custom btn-lg" onclick="showProviderForm()">I Provide Services</button>
+                    <button class="btn btn-light btn-lg" onclick="showBuyerForm()">I Need a Service</button>
                 </div>
             </div>
             
             <div class="mt-5">
-                <span class="service-tag">House Cleaning</span>
-                <span class="service-tag">Web Development</span>
-                <span class="service-tag">Tutoring</span>
-                <span class="service-tag">Graphic Design</span>
-                <span class="service-tag">Home Repairs</span>
-                <span class="service-tag">Photography</span>
+                <span class="service-tag" onclick="selectService('House Cleaning')">House Cleaning</span>
+                <span class="service-tag" onclick="selectService('Web Development')">Web Development</span>
+                <span class="service-tag" onclick="selectService('Tutoring')">Tutoring</span>
+                <span class="service-tag" onclick="selectService('Graphic Design')">Graphic Design</span>
+                <span class="service-tag" onclick="selectService('Home Repairs')">Home Repairs</span>
+                <span class="service-tag" onclick="selectService('Photography')">Photography</span>
             </div>
         </div>
     </section>
@@ -398,19 +495,19 @@
                 <div class="col-md-4">
                     <div class="feature-card">
                         <h3>🎯 Smart Matching</h3>
-                        <p>AI-powered matching connects you with the perfect service provider or job.</p>
+                        <p>AI-powered matching connects you with the perfect service provider.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card">
-                        <h3>⭐ Reputation Based</h3>
-                        <p>Build your reputation and get matched with better opportunities.</p>
+                        <h3>⭐ Trusted Providers</h3>
+                        <p>All service providers are vetted and rated by the community.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card">
                         <h3>💰 Fair Pricing</h3>
-                        <p>Market-driven pricing ensures fair rates for everyone.</p>
+                        <p>Market-driven pricing ensures fair rates for quality services.</p>
                     </div>
                 </div>
             </div>
@@ -479,12 +576,12 @@
                     <div class="mb-3">
                         <p class="text-muted mb-2">Popular services:</p>
                         <div class="service-examples">
-                            <span class="service-tag">House Cleaning</span>
-                            <span class="service-tag">Web Development</span>
-                            <span class="service-tag">Tutoring</span>
-                            <span class="service-tag">Graphic Design</span>
-                            <span class="service-tag">Home Repairs</span>
-                            <span class="service-tag">Photography</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='House Cleaning'">House Cleaning</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Web Development'">Web Development</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Tutoring'">Tutoring</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Graphic Design'">Graphic Design</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Home Repairs'">Home Repairs</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Photography'">Photography</span>
                         </div>
                     </div>
                     <form id="bidForm">
@@ -492,10 +589,21 @@
                             <textarea class="form-control" rows="3" placeholder="Describe the service you need" id="bidService" required></textarea>
                         </div>
                         <div class="mb-3">
-                            <input type="number" class="form-control" placeholder="Price (USD)" id="bidPrice" required>
+                            <label class="form-label">Payment & Price</label>
+                            <div class="payment-method-group">
+                                <select class="form-control" id="paymentMethod">
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="GBP">GBP (£)</option>
+                                    <option value="BTC">Bitcoin</option>
+                                    <option value="ETH">Ethereum</option>
+                                    <option value="THERSX">$THERSX</option>
+                                </select>
+                                <input type="number" step="0.01" min="0" class="form-control" placeholder="Price amount" id="bidPrice" required>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Good Until</label>
+                            <label class="form-label">Request Valid For</label>
                             <div class="duration-input-group">
                                 <input type="number" class="form-control" placeholder="Duration" id="bidDuration" value="24" required min="1">
                                 <select class="form-control" id="bidDurationUnit">
@@ -513,51 +621,9 @@
                         </div>
                         <div class="mb-3" id="addressField">
                             <input type="text" class="form-control" placeholder="Service Address" id="bidAddress">
+                            <small class="text-muted">We'll use your current location if not specified</small>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Submit Request</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Provider Modal -->
-    <div class="modal fade" id="providerModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Find a Job</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-warning">
-                        <strong>Note:</strong> Finding jobs requires a valid seat. If you don't have a seat, visit the <a href="/seats.html">Seats page</a> to learn how to obtain one.
-                    </div>
-                    <form id="providerForm">
-                        <div class="mb-3">
-                            <h6>Seat Credentials</h6>
-                            <input type="text" class="form-control mb-2" placeholder="Seat ID" id="seatId" required>
-                            <input type="text" class="form-control mb-2" placeholder="Seat Owner" id="seatOwner" required>
-                            <input type="password" class="form-control" placeholder="Seat Secret (MD5 hash)" id="seatSecret" required>
-                        </div>
-                        <hr>
-                        <div class="mb-3">
-                            <textarea class="form-control" rows="3" placeholder="Your capabilities and services" id="capabilities" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <select class="form-control" id="providerLocationType">
-                                <option value="physical">Physical (In-Person)</option>
-                                <option value="remote">Remote (Online)</option>
-                                <option value="hybrid">Both</option>
-                            </select>
-                        </div>
-                        <div class="mb-3" id="providerAddressField">
-                            <input type="text" class="form-control" placeholder="Your Location" id="providerAddress">
-                        </div>
-                        <div class="mb-3" id="distanceField">
-                            <input type="number" class="form-control" placeholder="Max Distance (miles)" id="maxDistance" value="10">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Find Job</button>
                     </form>
                 </div>
             </div>
@@ -569,23 +635,60 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">💬 Chat</h5>
+                    <h5 class="modal-title">💬 Inbox</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="chatForm">
-                        <div class="mb-3">
-                            <input type="text" class="form-control" placeholder="Recipient username" id="chatRecipient" required>
+                    <div class="row">
+                        <div class="col-4">
+                            <h6>Conversations</h6>
+                            <div class="chat-inbox" id="chatInbox">
+                                <div class="loading-spinner" id="conversationsLoading">
+                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                    <span class="ms-2">Loading...</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <textarea class="form-control" rows="3" placeholder="Your message" id="chatMessage" required></textarea>
+                        <div class="col-8">
+                            <div id="conversationView" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 id="currentConversationUser">Select a conversation</h6>
+                                    <button class="btn btn-sm btn-primary" onclick="showNewMessageForm()">New Message</button>
+                                </div>
+                                <div class="message-history" id="messageHistory"></div>
+                                <form id="replyForm" style="display: none;">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="Type your reply..." id="replyMessage" required>
+                                        <button type="submit" class="btn btn-primary">Send</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div id="newMessageForm" style="display: none;">
+                                <h6>New Message</h6>
+                                <form id="chatForm">
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" placeholder="Recipient username" id="chatRecipient" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <textarea class="form-control" rows="3" placeholder="Your message" id="chatMessage" required></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" placeholder="Job ID (optional)" id="chatJobId">
+                                        <small class="text-muted">Link this message to a specific job</small>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">Send Message</button>
+                                        <button type="button" class="btn btn-secondary" onclick="hideNewMessageForm()">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div id="chatPlaceholder">
+                                <div class="text-center text-muted p-4">
+                                    <p>Select a conversation to view messages or click "New Message" to start chatting.</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <input type="text" class="form-control" placeholder="Job ID (optional)" id="chatJobId">
-                            <small class="text-muted">Link this message to a specific job</small>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Send Message</button>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -600,23 +703,41 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="bulletinForm">
-                        <div class="mb-3">
-                            <input type="text" class="form-control" placeholder="Post title" id="bulletinTitle" required>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Recent Posts</h6>
+                        <button class="btn btn-sm btn-primary" onclick="showNewPostForm()">New Post</button>
+                    </div>
+                    
+                    <div id="bulletinFeed" class="bulletin-feed">
+                        <div class="loading-spinner" id="bulletinLoading">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <span class="ms-2">Loading posts...</span>
                         </div>
-                        <div class="mb-3">
-                            <select class="form-control" id="bulletinCategory">
-                                <option value="general">General</option>
-                                <option value="announcement">Announcement</option>
-                                <option value="question">Question</option>
-                                <option value="offer">Service Offer</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <textarea class="form-control" rows="4" placeholder="Post content" id="bulletinContent" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Post to Bulletin</button>
-                    </form>
+                    </div>
+                    
+                    <div id="newPostForm" style="display: none;" class="mt-3 p-3 border rounded">
+                        <h6>Create New Post</h6>
+                        <form id="bulletinForm">
+                            <div class="mb-3">
+                                <input type="text" class="form-control" placeholder="Post title" id="bulletinTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <select class="form-control" id="bulletinCategory">
+                                    <option value="general">General</option>
+                                    <option value="announcement">Announcement</option>
+                                    <option value="question">Question</option>
+                                    <option value="offer">Service Offer</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <textarea class="form-control" rows="4" placeholder="Post content" id="bulletinContent" required></textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">Post to Bulletin</button>
+                                <button type="button" class="btn btn-secondary" onclick="hideNewPostForm()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -631,6 +752,10 @@
         let outstandingBids = [];
         let completedJobs = [];
         let activeJobs = [];
+        let conversations = [];
+        let currentConversation = null;
+        let bulletinPosts = [];
+        let userLocation = null;
         
         // Initialize the page
         window.addEventListener('load', () => {
@@ -678,6 +803,45 @@
             document.getElementById('chatButton').style.display = 'none';
             document.getElementById('bulletinButton').style.display = 'none';
         }
+
+        function selectService(serviceName) {
+            showBuyerForm();
+            // Wait for modal to show then populate the field
+            setTimeout(() => {
+                document.getElementById('bidService').value = serviceName;
+            }, 100);
+        }
+
+        function requestUserLocation() {
+            return new Promise((resolve, reject) => {
+                if (userLocation) {
+                    resolve(userLocation);
+                    return;
+                }
+
+                if ('geolocation' in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            userLocation = {
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude
+                            };
+                            resolve(userLocation);
+                        },
+                        (error) => {
+                            console.warn('Geolocation error:', error);
+                            resolve(null); // Continue without location
+                        },
+                        {
+                            timeout: 10000,
+                            enableHighAccuracy: false
+                        }
+                    );
+                } else {
+                    resolve(null); // Geolocation not supported
+                }
+            });
+        }
         
         async function loadAccountData() {
             if (!authToken || !currentUsername) {
@@ -686,7 +850,6 @@
             }
             
             try {
-                // Load account info using username-based endpoint
                 const accountResponse = await fetch(`${API_URL}/account`, {
                     method: 'POST',
                     headers: {
@@ -702,13 +865,11 @@
                 } else {
                     console.error('Failed to load account data:', accountResponse.status);
                     if (accountResponse.status === 401) {
-                        // Token expired, logout
                         logout();
                         return;
                     }
                 }
                 
-                // Load bids and jobs
                 await loadOutstandingBids();
                 await loadCompletedJobs();
                 
@@ -724,7 +885,6 @@
             document.getElementById('accountUsername').textContent = currentUser.username;
             document.getElementById('accountDisplayName').textContent = currentUser.username;
             
-            // Update star display
             const stars = Math.round(currentUser.stars || 0);
             const starDisplay = '★'.repeat(Math.min(stars, 5)) + '☆'.repeat(Math.max(5 - stars, 0));
             document.getElementById('starDisplay').textContent = starDisplay;
@@ -750,12 +910,12 @@
                     outstandingBids = data.bids || [];
                     updateBidsDisplay();
                 } else {
-                    bidsContainer.innerHTML = '<p class="text-danger">Error loading bids</p>';
+                    bidsContainer.innerHTML = '<p class="text-danger">Error loading requests</p>';
                 }
                 
             } catch (error) {
                 loadingSpinner.style.display = 'none';
-                bidsContainer.innerHTML = '<p class="text-danger">Network error loading bids</p>';
+                bidsContainer.innerHTML = '<p class="text-danger">Network error loading requests</p>';
             }
         }
         
@@ -763,7 +923,7 @@
             const container = document.getElementById('outstandingBids');
             
             if (outstandingBids.length === 0) {
-                container.innerHTML = '<p class="text-muted mb-0">No outstanding bids</p>';
+                container.innerHTML = '<p class="text-muted mb-0">No outstanding requests</p>';
                 return;
             }
             
@@ -803,15 +963,15 @@
                     updateJobsDisplay();
                     updateActiveJobsDisplay();
                 } else {
-                    jobsContainer.innerHTML = '<p class="text-danger">Error loading jobs</p>';
-                    activeJobsContainer.innerHTML = '<p class="text-danger">Error loading active jobs</p>';
+                    jobsContainer.innerHTML = '<p class="text-danger">Error loading services</p>';
+                    activeJobsContainer.innerHTML = '<p class="text-danger">Error loading active services</p>';
                 }
                 
             } catch (error) {
                 jobsLoadingSpinner.style.display = 'none';
                 activeJobsLoadingSpinner.style.display = 'none';
-                jobsContainer.innerHTML = '<p class="text-danger">Network error loading jobs</p>';
-                activeJobsContainer.innerHTML = '<p class="text-danger">Network error loading active jobs</p>';
+                jobsContainer.innerHTML = '<p class="text-danger">Network error loading services</p>';
+                activeJobsContainer.innerHTML = '<p class="text-danger">Network error loading active services</p>';
             }
         }
         
@@ -819,7 +979,7 @@
             const container = document.getElementById('activeJobs');
             
             if (activeJobs.length === 0) {
-                container.innerHTML = '<p class="text-muted mb-0">No active jobs</p>';
+                container.innerHTML = '<p class="text-muted mb-0">No active services</p>';
                 return;
             }
             
@@ -837,7 +997,7 @@
             const container = document.getElementById('completedJobs');
             
             if (completedJobs.length === 0) {
-                container.innerHTML = '<p class="text-muted mb-0">No completed jobs</p>';
+                container.innerHTML = '<p class="text-muted mb-0">No completed services</p>';
                 return;
             }
             
@@ -854,7 +1014,7 @@
         }
         
         async function cancelBid(bidId) {
-            if (!confirm('Are you sure you want to cancel this bid?')) return;
+            if (!confirm('Are you sure you want to cancel this request?')) return;
             
             try {
                 const response = await fetch(`${API_URL}/cancel_bid`, {
@@ -867,16 +1027,15 @@
                 });
                 
                 if (response.ok) {
-                    alert('Bid cancelled successfully');
-                    // Remove from local array and update display
+                    alert('Request cancelled successfully');
                     outstandingBids = outstandingBids.filter(bid => bid.bid_id !== bidId);
                     updateBidsDisplay();
                 } else {
                     const error = await response.json();
-                    alert(`Failed to cancel bid: ${error.error || 'Unknown error'}`);
+                    alert(`Failed to cancel request: ${error.error || 'Unknown error'}`);
                 }
             } catch (error) {
-                alert('Network error while cancelling bid');
+                alert('Network error while cancelling request');
             }
         }
         
@@ -895,48 +1054,227 @@
             new bootstrap.Modal(document.getElementById('authModal')).show();
         }
         
-        function showBuyerForm() {
+        async function showBuyerForm() {
             if (!authToken) {
                 showAuth();
                 return;
             }
+            
+            // Request location when showing the form
+            await requestUserLocation();
+            
             new bootstrap.Modal(document.getElementById('bidModal')).show();
         }
         
-        function showProviderForm() {
+        async function showChat() {
             if (!authToken) {
                 showAuth();
                 return;
             }
-            new bootstrap.Modal(document.getElementById('providerModal')).show();
-        }
-        
-        function showChat() {
-            if (!authToken) {
-                showAuth();
-                return;
-            }
+            
             new bootstrap.Modal(document.getElementById('chatModal')).show();
+            await loadConversations();
         }
         
-        function showBulletin() {
+        async function showBulletin() {
             if (!authToken) {
                 showAuth();
                 return;
             }
+            
             new bootstrap.Modal(document.getElementById('bulletinModal')).show();
+            await loadBulletinFeed();
+        }
+
+        // Chat functionality
+        async function loadConversations() {
+            const inboxContainer = document.getElementById('chatInbox');
+            const loadingSpinner = document.getElementById('conversationsLoading');
+            
+            loadingSpinner.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_URL}/chat/conversations`, {
+                    headers: {'Authorization': `Bearer ${authToken}`}
+                });
+                
+                loadingSpinner.style.display = 'none';
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    conversations = data.conversations || [];
+                    updateConversationsDisplay();
+                } else {
+                    inboxContainer.innerHTML = '<p class="text-danger">Error loading conversations</p>';
+                }
+                
+            } catch (error) {
+                loadingSpinner.style.display = 'none';
+                inboxContainer.innerHTML = '<p class="text-danger">Network error loading conversations</p>';
+            }
+        }
+
+        function updateConversationsDisplay() {
+            const container = document.getElementById('chatInbox');
+            
+            if (conversations.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center p-3">No conversations yet</p>';
+                return;
+            }
+            
+            container.innerHTML = conversations.map((conv, index) => `
+                <div class="conversation-item ${currentConversation === index ? 'active' : ''}" onclick="selectConversation(${index})">
+                    <div class="conversation-meta">
+                        <span class="conversation-user">${conv.user}</span>
+                        <span class="conversation-time">${formatTime(conv.timestamp * 1000)}</span>
+                    </div>
+                    <div class="conversation-preview">${conv.lastMessage}</div>
+                    ${conv.unread ? '<div class="badge bg-primary">New</div>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function selectConversation(index) {
+            currentConversation = index;
+            updateConversationsDisplay();
+            showConversationView(conversations[index]);
+        }
+
+        async function showConversationView(conversation) {
+            document.getElementById('conversationView').style.display = 'block';
+            document.getElementById('newMessageForm').style.display = 'none';
+            document.getElementById('chatPlaceholder').style.display = 'none';
+            document.getElementById('currentConversationUser').textContent = conversation.user;
+            document.getElementById('replyForm').style.display = 'block';
+            
+            // Load message history from API
+            const messageHistory = document.getElementById('messageHistory');
+            messageHistory.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm"></div> Loading messages...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL}/chat/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        conversation_id: conversation.conversation_id || conversation.user 
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const messages = data.messages || [];
+                    
+                    messageHistory.innerHTML = messages.map(msg => `
+                        <div class="message-item ${msg.sender === currentUsername ? 'sent' : 'received'}">
+                            <div class="message-sender">${msg.sender}</div>
+                            <div class="message-text">${msg.message}</div>
+                            <div class="message-time">${formatTime(msg.timestamp * 1000)}</div>
+                        </div>
+                    `).join('');
+                    
+                    if (messages.length === 0) {
+                        messageHistory.innerHTML = '<div class="text-center text-muted p-3">No messages yet</div>';
+                    }
+                } else {
+                    messageHistory.innerHTML = '<div class="text-center text-danger p-3">Error loading messages</div>';
+                }
+            } catch (error) {
+                messageHistory.innerHTML = '<div class="text-center text-danger p-3">Network error loading messages</div>';
+            }
+            
+            messageHistory.scrollTop = messageHistory.scrollHeight;
+        }
+
+        function showNewMessageForm() {
+            document.getElementById('conversationView').style.display = 'none';
+            document.getElementById('newMessageForm').style.display = 'block';
+            document.getElementById('chatPlaceholder').style.display = 'none';
+        }
+
+        function hideNewMessageForm() {
+            document.getElementById('newMessageForm').style.display = 'none';
+            if (currentConversation !== null) {
+                document.getElementById('conversationView').style.display = 'block';
+            } else {
+                document.getElementById('chatPlaceholder').style.display = 'block';
+            }
+        }
+
+        // Bulletin functionality
+        async function loadBulletinFeed() {
+            const feedContainer = document.getElementById('bulletinFeed');
+            const loadingSpinner = document.getElementById('bulletinLoading');
+            
+            loadingSpinner.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_URL}/bulletin/feed`, {
+                    headers: {'Authorization': `Bearer ${authToken}`}
+                });
+                
+                loadingSpinner.style.display = 'none';
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    bulletinPosts = data.posts || [];
+                    updateBulletinDisplay();
+                } else {
+                    feedContainer.innerHTML = '<p class="text-danger">Error loading bulletin posts</p>';
+                }
+                
+            } catch (error) {
+                loadingSpinner.style.display = 'none';
+                feedContainer.innerHTML = '<p class="text-danger">Network error loading bulletin posts</p>';
+            }
+        }
+
+        function updateBulletinDisplay() {
+            const container = document.getElementById('bulletinFeed');
+            
+            if (bulletinPosts.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center p-3">No posts yet</p>';
+                return;
+            }
+            
+            container.innerHTML = bulletinPosts.map(post => `
+                <div class="bulletin-item">
+                    <div class="bulletin-header">
+                        <h6 class="bulletin-title">${post.title}</h6>
+                        <span class="bulletin-category">${post.category}</span>
+                    </div>
+                    <div class="bulletin-meta">By ${post.author} • ${formatTime(post.timestamp * 1000)}</div>
+                    <div class="bulletin-content">${post.content}</div>
+                </div>
+            `).join('');
+        }
+
+        function showNewPostForm() {
+            document.getElementById('newPostForm').style.display = 'block';
+        }
+
+        function hideNewPostForm() {
+            document.getElementById('newPostForm').style.display = 'none';
+            document.getElementById('bulletinForm').reset();
+        }
+
+        function formatTime(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const days = Math.floor(hours / 24);
+            
+            if (days > 0) return `${days}d ago`;
+            if (hours > 0) return `${hours}h ago`;
+            return 'Just now';
         }
         
         // Location type handling
         document.getElementById('bidLocationType').addEventListener('change', (e) => {
             document.getElementById('addressField').style.display = 
                 e.target.value === 'remote' ? 'none' : 'block';
-        });
-        
-        document.getElementById('providerLocationType').addEventListener('change', (e) => {
-            const showAddress = e.target.value !== 'remote';
-            document.getElementById('providerAddressField').style.display = showAddress ? 'block' : 'none';
-            document.getElementById('distanceField').style.display = showAddress ? 'block' : 'none';
         });
         
         // Login
@@ -973,7 +1311,6 @@
                     bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
                     updateUIForLoggedInUser();
                     
-                    // Load account data after successful login
                     await loadAccountData();
                     
                     alert('Login successful!');
@@ -1031,7 +1368,7 @@
             }
         });
         
-        // Submit bid
+        // Submit bid/service request
         document.getElementById('bidForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1042,12 +1379,22 @@
             const data = {
                 service: document.getElementById('bidService').value,
                 price: parseFloat(document.getElementById('bidPrice').value),
+                currency: document.getElementById('paymentMethod').value,
                 end_time: Math.floor(Date.now() / 1000) + durationInSeconds,
                 location_type: document.getElementById('bidLocationType').value
             };
             
+            // Use provided address or fallback to user location
             if (data.location_type !== 'remote') {
-                data.address = document.getElementById('bidAddress').value;
+                const addressInput = document.getElementById('bidAddress').value.trim();
+                if (addressInput) {
+                    data.address = addressInput;
+                } else if (userLocation) {
+                    data.address = `${userLocation.latitude}, ${userLocation.longitude}`;
+                } else {
+                    alert('Please provide an address or allow location access for physical services.');
+                    return;
+                }
             }
             
             const response = await fetch(`${API_URL}/submit_bid`, {
@@ -1063,64 +1410,16 @@
                 const result = await response.json();
                 alert(`Service request submitted! ID: ${result.bid_id}`);
                 bootstrap.Modal.getInstance(document.getElementById('bidModal')).hide();
-                // Clear the form
                 document.getElementById('bidForm').reset();
-                // Reset duration to default
                 document.getElementById('bidDuration').value = '24';
                 document.getElementById('bidDurationUnit').value = 'hours';
-                // Refresh outstanding bids if user is logged in
+                document.getElementById('paymentMethod').value = 'USD';
                 if (authToken) {
                     loadOutstandingBids();
                 }
             } else {
                 const errorData = await response.json().catch(() => ({}));
                 alert(`Failed to submit request: ${errorData.error || 'Unknown error'}`);
-            }
-        });
-        
-        // Find job (with seat verification)
-        document.getElementById('providerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const data = {
-                seat: {
-                    id: document.getElementById('seatId').value,
-                    owner: document.getElementById('seatOwner').value,
-                    secret: document.getElementById('seatSecret').value
-                },
-                capabilities: document.getElementById('capabilities').value,
-                location_type: document.getElementById('providerLocationType').value
-            };
-            
-            if (data.location_type !== 'remote') {
-                data.address = document.getElementById('providerAddress').value;
-                data.max_distance = parseFloat(document.getElementById('maxDistance').value);
-            }
-            
-            const response = await fetch(`${API_URL}/grab_job`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
-                body: JSON.stringify(data)
-            });
-            
-            if (response.ok) {
-                const job = await response.json();
-                const serviceDesc = typeof job.service === 'object' ? JSON.stringify(job.service) : job.service;
-                alert(`Job found!\nService: ${serviceDesc}\nPrice: ${job.currency || 'USD'} ${job.price}\nBuyer: ${job.buyer_username}`);
-                bootstrap.Modal.getInstance(document.getElementById('providerModal')).hide();
-                // Refresh job data
-                await loadCompletedJobs();
-            } else if (response.status === 204) {
-                alert('No matching jobs available');
-            } else if (response.status === 403) {
-                const error = await response.json();
-                alert(`Seat verification failed: ${error.error}`);
-            } else {
-                const errorData = await response.json().catch(() => ({}));
-                alert(`Failed to find job: ${errorData.error || 'Unknown error'}`);
             }
         });
         
@@ -1150,11 +1449,62 @@
             if (response.ok) {
                 const result = await response.json();
                 alert(`Message sent successfully! Message ID: ${result.message_id}`);
-                bootstrap.Modal.getInstance(document.getElementById('chatModal')).hide();
                 document.getElementById('chatForm').reset();
+                hideNewMessageForm();
+                await loadConversations(); // Refresh conversations
             } else {
                 const error = await response.json();
                 alert(`Failed to send message: ${error.error || 'Unknown error'}`);
+            }
+        });
+
+        // Reply to conversation
+        document.getElementById('replyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const message = document.getElementById('replyMessage').value.trim();
+            if (!message || currentConversation === null) return;
+            
+            const conversation = conversations[currentConversation];
+            
+            try {
+                const response = await fetch(`${API_URL}/chat/reply`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        recipient: conversation.user,
+                        message: message,
+                        conversation_id: conversation.conversation_id || conversation.user
+                    })
+                });
+                
+                if (response.ok) {
+                    // Add message to history immediately
+                    const messageHistory = document.getElementById('messageHistory');
+                    messageHistory.innerHTML += `
+                        <div class="message-item sent">
+                            <div class="message-sender">You</div>
+                            <div class="message-text">${message}</div>
+                            <div class="message-time">Just now</div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('replyMessage').value = '';
+                    messageHistory.scrollTop = messageHistory.scrollHeight;
+                    
+                    // Update conversation preview
+                    conversation.lastMessage = message;
+                    conversation.timestamp = Math.floor(Date.now() / 1000);
+                    updateConversationsDisplay();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to send message: ${error.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                alert('Network error while sending message');
             }
         });
         
@@ -1180,8 +1530,10 @@
             if (response.ok) {
                 const result = await response.json();
                 alert(`Posted to bulletin successfully! Post ID: ${result.post_id}`);
-                bootstrap.Modal.getInstance(document.getElementById('bulletinModal')).hide();
-                document.getElementById('bulletinForm').reset();
+                hideNewPostForm();
+                
+                // Refresh the bulletin feed to show the new post
+                await loadBulletinFeed();
             } else {
                 const error = await response.json();
                 alert(`Failed to post: ${error.error || 'Unknown error'}`);
