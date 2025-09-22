@@ -1,6 +1,6 @@
 """
-Cleaned Integration Tests for Service Exchange API
-Focused, efficient tests with proper cleanup
+Enhanced Integration Tests for Service Exchange API
+Includes comprehensive chat and bulletin system testing
 """
 
 import requests
@@ -20,6 +20,8 @@ class ServiceExchangeAPITester:
         self.created_users = []
         self.created_bids = []
         self.active_tokens = []
+        self.sent_messages = []
+        self.bulletin_posts = []
         
     def cleanup(self):
         """Clean up created test data"""
@@ -43,6 +45,8 @@ class ServiceExchangeAPITester:
                 print(f"  Error cleaning up bids for {username}: {e}")
         
         print(f"✓ Cleanup completed for {len(self.created_users)} test users")
+        print(f"  Messages sent: {len(self.sent_messages)}")
+        print(f"  Bulletin posts: {len(self.bulletin_posts)}")
 
     def test_core_functionality(self):
         """Test core API functionality with minimal test data"""
@@ -172,27 +176,6 @@ class ServiceExchangeAPITester:
         assert account_data['username'] == buyer_username
         print("✓ Account information retrieval working")
         
-        # Test chat messaging
-        response = requests.post(f"{self.api_url}/chat",
-            headers=buyer_headers,
-            json={
-                "recipient": provider_username,
-                "message": "TEST: Hello, this is a test message."
-            }, verify=False)
-        assert response.status_code == 200, "Chat failed"
-        print("✓ Chat messaging working")
-        
-        # Test bulletin posting
-        response = requests.post(f"{self.api_url}/bulletin",
-            headers=buyer_headers,
-            json={
-                "title": "TEST: Integration Test Post",
-                "content": "This is a test bulletin post from integration tests.",
-                "category": "general"
-            }, verify=False)
-        assert response.status_code == 200, "Bulletin posting failed"
-        print("✓ Bulletin posting working")
-        
         # Test bid cancellation
         if bid_ids:
             response = requests.post(f"{self.api_url}/cancel_bid",
@@ -213,11 +196,264 @@ class ServiceExchangeAPITester:
         assert response.status_code == 400, "Negative price validation failed"
         print("✓ Input validation working")
         
+        # Store tokens for chat tests
+        self.buyer_token = tokens[buyer_username]
+        self.provider_token = tokens[provider_username]
+        self.buyer_username = buyer_username
+        self.provider_username = provider_username
+        
         return {
             'users_created': len(self.created_users),
             'bids_created': len(self.created_bids),
             'job_grabbed': job_grabbed
         }
+
+    def test_chat_system(self):
+        """Comprehensive chat system testing"""
+        print(f"\n=== Chat System Tests ===")
+        
+        buyer_headers = {"Authorization": f"Bearer {self.buyer_token}"}
+        provider_headers = {"Authorization": f"Bearer {self.provider_token}"}
+        
+        # Test sending initial message
+        test_message_1 = "TEST: Hello from buyer, are you available for cleaning services?"
+        response = requests.post(f"{self.api_url}/chat", 
+            headers=buyer_headers,
+            json={
+                "recipient": self.provider_username,
+                "message": test_message_1
+            }, verify=False)
+        assert response.status_code == 200, "Initial chat message failed"
+        message_data = response.json()
+        assert 'message_id' in message_data
+        assert 'sent_at' in message_data
+        self.sent_messages.append(message_data['message_id'])
+        print("✓ Initial chat message sent successfully")
+        
+        # Test sending reply
+        test_message_2 = "TEST: Yes, I'm available! What's your schedule like?"
+        response = requests.post(f"{self.api_url}/chat",
+            headers=provider_headers,
+            json={
+                "recipient": self.buyer_username,
+                "message": test_message_2
+            }, verify=False)
+        assert response.status_code == 200, "Reply message failed"
+        reply_data = response.json()
+        self.sent_messages.append(reply_data['message_id'])
+        print("✓ Reply message sent successfully")
+        
+        # Test conversation list retrieval
+        response = requests.get(f"{self.api_url}/chat/conversations", 
+                              headers=buyer_headers, verify=False)
+        assert response.status_code == 200, "Get conversations failed"
+        conversations = response.json()
+        assert 'conversations' in conversations
+        conv_list = conversations['conversations']
+        assert len(conv_list) >= 1, "No conversations found"
+        
+        # Find our test conversation
+        test_conversation = None
+        for conv in conv_list:
+            if conv['user'] == self.provider_username:
+                test_conversation = conv
+                break
+        
+        assert test_conversation is not None, "Test conversation not found"
+        assert 'lastMessage' in test_conversation
+        assert 'timestamp' in test_conversation
+        print(f"✓ Conversation list retrieved: {len(conv_list)} conversations")
+        
+        # Test message history retrieval
+        response = requests.post(f"{self.api_url}/chat/messages",
+            headers=buyer_headers,
+            json={"conversation_id": self.provider_username}, verify=False)
+        assert response.status_code == 200, "Get messages failed"
+        messages_data = response.json()
+        assert 'messages' in messages_data
+        messages = messages_data['messages']
+        assert len(messages) >= 2, "Not all messages retrieved"
+        
+        # Verify message order and content
+        messages.sort(key=lambda x: x['timestamp'])
+        assert messages[0]['sender'] == self.buyer_username
+        assert messages[0]['recipient'] == self.provider_username
+        assert test_message_1 in messages[0]['message']
+        
+        assert messages[1]['sender'] == self.provider_username
+        assert messages[1]['recipient'] == self.buyer_username
+        assert test_message_2 in messages[1]['message']
+        print(f"✓ Message history retrieved: {len(messages)} messages")
+        
+        # Test reply endpoint
+        test_reply = "TEST: How about tomorrow at 2 PM?"
+        response = requests.post(f"{self.api_url}/chat/reply",
+            headers=buyer_headers,
+            json={
+                "recipient": self.provider_username,
+                "message": test_reply,
+                "conversation_id": self.provider_username
+            }, verify=False)
+        assert response.status_code == 200, "Reply endpoint failed"
+        reply_response = response.json()
+        self.sent_messages.append(reply_response['message_id'])
+        print("✓ Reply endpoint working")
+        
+        # Test message with job reference
+        test_job_message = "TEST: This is about job #12345"
+        response = requests.post(f"{self.api_url}/chat",
+            headers=provider_headers,
+            json={
+                "recipient": self.buyer_username,
+                "message": test_job_message,
+                "job_id": "test_job_12345"
+            }, verify=False)
+        assert response.status_code == 200, "Job-referenced message failed"
+        self.sent_messages.append(response.json()['message_id'])
+        print("✓ Job-referenced messaging working")
+        
+        # Test error cases
+        response = requests.post(f"{self.api_url}/chat",
+            headers=buyer_headers,
+            json={
+                "recipient": "nonexistent_user",
+                "message": "This should fail"
+            }, verify=False)
+        assert response.status_code == 404, "Nonexistent recipient validation failed"
+        
+        response = requests.post(f"{self.api_url}/chat",
+            headers=buyer_headers,
+            json={
+                "recipient": self.provider_username,
+                "message": ""  # Empty message
+            }, verify=False)
+        assert response.status_code == 400, "Empty message validation failed"
+        print("✓ Chat error handling working")
+
+    def test_bulletin_system(self):
+        """Comprehensive bulletin system testing"""
+        print(f"\n=== Bulletin System Tests ===")
+        
+        buyer_headers = {"Authorization": f"Bearer {self.buyer_token}"}
+        provider_headers = {"Authorization": f"Bearer {self.provider_token}"}
+        
+        # Test bulletin post creation - different categories
+        test_posts = [
+            {
+                "title": "TEST: New Cleaning Service Available",
+                "content": "Professional house cleaning services now available in Denver metro area. Eco-friendly products, competitive rates, fully insured.",
+                "category": "offer"
+            },
+            {
+                "title": "TEST: Looking for React Developers",
+                "content": "Startup seeking experienced React developers for exciting new project. Remote work available, competitive compensation.",
+                "category": "announcement"
+            },
+            {
+                "title": "TEST: Best practices for service pricing?",
+                "content": "What factors do you consider when pricing your services? Looking for advice from experienced providers.",
+                "category": "question"
+            },
+            {
+                "title": "TEST: General marketplace update",
+                "content": "Just wanted to share some thoughts about the growing Service Exchange community.",
+                "category": "general"
+            }
+        ]
+        
+        post_ids = []
+        for i, post_data in enumerate(test_posts):
+            headers = buyer_headers if i % 2 == 0 else provider_headers
+            response = requests.post(f"{self.api_url}/bulletin",
+                headers=headers,
+                json=post_data, verify=False)
+            assert response.status_code == 200, f"Bulletin post failed: {post_data['title']}"
+            post_response = response.json()
+            assert 'post_id' in post_response
+            assert 'posted_at' in post_response
+            post_ids.append(post_response['post_id'])
+            self.bulletin_posts.append(post_response['post_id'])
+        
+        print(f"✓ Bulletin posts created: {len(post_ids)}")
+        
+        # Test bulletin feed retrieval
+        response = requests.get(f"{self.api_url}/bulletin/feed", 
+                              headers=buyer_headers, verify=False)
+        assert response.status_code == 200, "Get bulletin feed failed"
+        feed_data = response.json()
+        assert 'posts' in feed_data
+        posts = feed_data['posts']
+        assert len(posts) >= len(test_posts), "Not all posts retrieved"
+        
+        # Verify post structure and content
+        test_post_found = False
+        for post in posts:
+            if 'TEST:' in post['title']:
+                test_post_found = True
+                assert 'post_id' in post
+                assert 'title' in post
+                assert 'content' in post
+                assert 'category' in post
+                assert 'author' in post
+                assert 'timestamp' in post
+                break
+        
+        assert test_post_found, "Test posts not found in feed"
+        print(f"✓ Bulletin feed retrieved: {len(posts)} posts")
+        
+        # Test feed with category filter
+        response = requests.get(f"{self.api_url}/bulletin/feed?category=offer", 
+                              headers=buyer_headers, verify=False)
+        assert response.status_code == 200, "Category filtered feed failed"
+        filtered_feed = response.json()
+        filtered_posts = filtered_feed['posts']
+        
+        # Check that filtered posts only contain the specified category
+        for post in filtered_posts:
+            if 'TEST:' in post['title']:
+                assert post['category'] == 'offer', "Category filter not working"
+        print("✓ Category filtering working")
+        
+        # Test feed with limit
+        response = requests.get(f"{self.api_url}/bulletin/feed?limit=2", 
+                              headers=buyer_headers, verify=False)
+        assert response.status_code == 200, "Limited feed failed"
+        limited_feed = response.json()
+        limited_posts = limited_feed['posts']
+        assert len(limited_posts) <= 2, "Limit not respected"
+        print("✓ Feed limiting working")
+        
+        # Test bulletin post validation
+        response = requests.post(f"{self.api_url}/bulletin",
+            headers=buyer_headers,
+            json={
+                "title": "",  # Empty title
+                "content": "This should fail",
+                "category": "general"
+            }, verify=False)
+        assert response.status_code == 400, "Empty title validation failed"
+        
+        response = requests.post(f"{self.api_url}/bulletin",
+            headers=buyer_headers,
+            json={
+                "title": "Valid title",
+                "content": "",  # Empty content
+                "category": "general"
+            }, verify=False)
+        assert response.status_code == 400, "Empty content validation failed"
+        print("✓ Bulletin validation working")
+        
+        # Test invalid category handling
+        response = requests.post(f"{self.api_url}/bulletin",
+            headers=buyer_headers,
+            json={
+                "title": "TEST: Invalid category test",
+                "content": "This should default to general category",
+                "category": "invalid_category"
+            }, verify=False)
+        assert response.status_code == 200, "Invalid category handling failed"
+        self.bulletin_posts.append(response.json()['post_id'])
+        print("✓ Invalid category defaulting working")
 
     def test_advanced_features(self):
         """Test advanced features with enhanced data"""
@@ -264,6 +500,7 @@ class ServiceExchangeAPITester:
         assert response.status_code == 200, "Exchange data endpoint failed"
         exchange_data = response.json()
         assert 'active_bids' in exchange_data
+        assert 'market_stats' in exchange_data
         print("✓ Exchange data endpoint working")
         
         # Test nearby services
@@ -272,16 +509,22 @@ class ServiceExchangeAPITester:
             "radius": 15
         }, verify=False)
         assert response.status_code == 200, "Nearby services failed"
+        nearby_data = response.json()
+        assert 'services' in nearby_data
         print("✓ Nearby services working")
         
         print("✓ Advanced features tested successfully")
 
 def main():
-    parser = argparse.ArgumentParser(description='Clean integration tests for Service Exchange API')
+    parser = argparse.ArgumentParser(description='Enhanced integration tests for Service Exchange API')
     parser.add_argument('--local', action='store_true', 
                        help='Test against localhost:5003')
     parser.add_argument('--quick', action='store_true',
-                       help='Run only core tests, skip advanced features')
+                       help='Run only core tests, skip chat/bulletin/advanced features')
+    parser.add_argument('--chat-only', action='store_true',
+                       help='Run only chat system tests')
+    parser.add_argument('--bulletin-only', action='store_true',
+                       help='Run only bulletin system tests')
     args = parser.parse_args()
     
     api_url = "http://localhost:5003" if args.local else "https://rse-api.com:5003"
@@ -295,20 +538,37 @@ def main():
     try:
         start_time = time.time()
         
-        # Run core tests
-        core_results = tester.test_core_functionality()
-        
-        # Run advanced tests unless quick mode
-        if not args.quick:
-            tester.test_advanced_features()
-        
-        # Success summary
-        duration = time.time() - start_time
-        print(f"\n✅ ALL TESTS PASSED")
-        print(f"Duration: {duration:.2f} seconds")
-        print(f"Test users created: {core_results['users_created']}")
-        print(f"Test bids created: {core_results['bids_created']}")
-        print(f"Job matching: {'✓' if core_results['job_grabbed'] else 'No matches'}")
+        # Run specific test suites based on arguments
+        if args.chat_only:
+            # Need to set up users first
+            core_results = tester.test_core_functionality()
+            tester.test_chat_system()
+            print(f"\n✅ CHAT TESTS PASSED")
+        elif args.bulletin_only:
+            # Need to set up users first
+            core_results = tester.test_core_functionality()
+            tester.test_bulletin_system()
+            print(f"\n✅ BULLETIN TESTS PASSED")
+        else:
+            # Run core tests
+            core_results = tester.test_core_functionality()
+            
+            # Run communication tests unless quick mode
+            if not args.quick:
+                tester.test_chat_system()
+                tester.test_bulletin_system()
+                tester.test_advanced_features()
+            
+            # Success summary
+            duration = time.time() - start_time
+            print(f"\n✅ ALL TESTS PASSED")
+            print(f"Duration: {duration:.2f} seconds")
+            print(f"Test users created: {core_results['users_created']}")
+            print(f"Test bids created: {core_results['bids_created']}")
+            print(f"Job matching: {'✓' if core_results['job_grabbed'] else 'No matches'}")
+            if not args.quick:
+                print(f"Messages sent: {len(tester.sent_messages)}")
+                print(f"Bulletin posts: {len(tester.bulletin_posts)}")
         
     except AssertionError as e:
         print(f"\n❌ TEST FAILED: {e}")
