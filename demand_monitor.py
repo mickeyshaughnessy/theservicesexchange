@@ -10,6 +10,8 @@ import time
 import random
 import uuid
 import argparse
+import signal
+import sys
 from datetime import datetime, timedelta
 
 class DemandMonitor:
@@ -18,6 +20,15 @@ class DemandMonitor:
         self.interval = interval  # seconds between demand creation
         self.test_users = []
         self.active_tokens = []
+        self.running = True
+        self.start_time = time.time()
+        self.last_cleanup = time.time()
+        self.last_user_check = time.time()
+        self.created_demands = 0
+        
+        # Set up signal handlers for graceful shutdown
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
         
         # Service templates that match common provider capabilities
         self.physical_services = [
@@ -90,7 +101,8 @@ class DemandMonitor:
 
     def create_test_user(self):
         """Create a test user for demand generation"""
-        username = f"demand_bot_{uuid.uuid4().hex[:8]}"
+        # Keep username under 20 chars (validation limit)
+        username = f"d_bot_{uuid.uuid4().hex[:10]}"
         
         try:
             # Register
@@ -207,15 +219,16 @@ class DemandMonitor:
                 service_desc = (json.dumps(demand_data['service']) 
                               if isinstance(demand_data['service'], dict) 
                               else demand_data['service'])
-                print(f"✓ Demand created: {service_desc[:50]}... | ${demand_data['price']} | {bid_id[:8]}...")
+                self.log_status(f"Demand created: {service_desc[:40]}... | ${demand_data['price']} | {bid_id[:8]}...")
+                self.created_demands += 1
                 return bid_id
             else:
                 error_data = response.json() if response.content else {}
-                print(f"✗ Failed to create demand: {response.status_code} - {error_data.get('error', 'Unknown error')}")
+                self.log_status(f"Failed to create demand: {response.status_code} - {error_data.get('error', 'Unknown error')}", "ERROR")
                 return None
                 
         except Exception as e:
-            print(f"✗ Error submitting demand: {e}")
+            self.log_status(f"Error submitting demand: {e}", "ERROR")
             return None
 
     def cleanup_expired_bids(self, token):
@@ -258,8 +271,118 @@ class DemandMonitor:
             print(f"Error monitoring marketplace: {e}")
         return 0
 
-    def run(self, duration_minutes=60):
-        """Run demand monitoring for specified duration"""
+    def run_continuous(self):
+        """Run demand monitoring continuously until stopped"""
+        self.log_status("Starting continuous Demand Monitor")
+        self.log_status(f"API: {self.api_url}")
+        self.log_status(f"Interval: {self.interval} seconds")
+        
+        # Initial API health check
+        if not self.check_api_health():
+            self.log_status("API not accessible, waiting 60 seconds before retry...", "ERROR")
+            time.sleep(60)
+            if not self.check_api_health():
+                self.log_status("API still not accessible, exiting", "ERROR")
+                return
+        
+        # Create initial demand users
+        num_users = 3
+        for i in range(num_users):
+            self.create_test_user()
+            time.sleep(1)  # Avoid rate limiting
+        
+        if not self.active_tokens:
+            self.log_status("No active tokens available. Retrying in 5 minutes...", "ERROR")
+            time.sleep(300)
+            return self.run_continuous()  # Retry
+        
+        cycle_count = 0
+        consecutive_errors = 0
+        
+        while self.running:
+            try:
+                cycle_count += 1
+                current_time = datetime.now().strftime('%H:%M:%S')
+                
+                # Periodic status log (every 10 cycles)
+                if cycle_count % 10 == 0:
+                    runtime_hours = (time.time() - self.start_time) / 3600
+                    self.log_status(f"Cycle {cycle_count} | Runtime: {runtime_hours:.1f}h | Demands: {self.created_demands}")
+                
+                # API health check every 50 cycles
+                if cycle_count % 50 == 0:
+                    if not self.check_api_health():
+                        self.log_status("API health check failed, waiting 60 seconds...", "ERROR")
+                        time.sleep(60)
+                        continue
+                
+                # Select random token for this cycle
+                if self.active_tokens:
+                    token = random.choice(self.active_tokens)
+                    
+                    # Decide service type (60% physical, 40% software)
+                    if random.random() < 0.6:
+                        demand_data = self.generate_physical_demand(token)
+                        service_type = "Physical"
+                    else:
+                        demand_data = self.generate_software_demand(token)
+                        service_type = "Software"
+                    
+                    # Submit demand
+                    try:
+                        bid_id = self.submit_demand(token, demand_data)
+                        if bid_id:
+                            self.log_status(f"Type: {service_type} | Payment: {demand_data['payment_method']}")
+                    except Exception as e:
+                        self.log_status(f"Error submitting demand: {e}", "ERROR")
+                        # Remove invalid tokens
+                        if "401" in str(e) or "403" in str(e):
+                            self.active_tokens = [t for t in self.active_tokens if t != token]
+                            self.log_status(f"Removed invalid token", "WARN")
+                
+                # Maintenance tasks
+                self.maintain_users()
+                self.periodic_cleanup()
+                
+                # Reset error counter on successful cycle
+                consecutive_errors = 0
+                
+                # Wait for next cycle
+                time.sleep(self.interval)
+                
+            except KeyboardInterrupt:
+                self.log_status("Interrupted by user", "INFO")
+                break
+            except Exception as e:
+                consecutive_errors += 1
+                self.log_status(f"Cycle error ({consecutive_errors}): {e}", "ERROR")
+                
+                # If too many consecutive errors, take a longer break
+                if consecutive_errors >= 5:
+                    self.log_status("Too many consecutive errors, taking 5 minute break...", "ERROR")
+                    time.sleep(300)
+                    consecutive_errors = 0
+                else:
+                    time.sleep(30)  # Short pause on error
+        
+        # Cleanup on shutdown
+        self.log_status("Performing final cleanup...")
+        for token in self.active_tokens:
+            self.cleanup_expired_bids(token)
+        
+        total_time = time.time() - self.start_time
+        self.log_status(f"Demand monitoring completed")
+        self.log_status(f"Total runtime: {total_time/3600:.1f} hours")
+        self.log_status(f"Cycles completed: {cycle_count}")
+        self.log_status(f"Demands created: {self.created_demands}")
+
+    def run(self, duration_minutes=None):
+        """Run demand monitoring (continuous if no duration specified)"""
+        if duration_minutes is None:
+            self.run_continuous()
+            return
+        
+        # Legacy timed run for backwards compatibility
         print(f"\n🚀 Starting Demand Monitor")
         print(f"API: {self.api_url}")
         print(f"Interval: {self.interval} seconds")
@@ -329,10 +452,11 @@ class DemandMonitor:
         print(f"Test users created: {len(self.test_users)}")
 
 def main():
-    parser = argparse.ArgumentParser(description='Service Exchange Demand Monitor')
+    parser = argparse.ArgumentParser(description='Service Exchange Demand Monitor - Continuous Operation')
     parser.add_argument('--local', action='store_true', help='Use localhost API')
     parser.add_argument('--interval', type=int, default=300, help='Seconds between demands (default: 300)')
-    parser.add_argument('--duration', type=int, default=60, help='Run duration in minutes (default: 60)')
+    parser.add_argument('--duration', type=int, default=None, help='Run duration in minutes (default: continuous)')
+    parser.add_argument('--verbose', action='store_true', help='Enable verbose logging')
     args = parser.parse_args()
     
     api_url = "http://localhost:5003" if args.local else "https://rse-api.com:5003"
@@ -342,7 +466,13 @@ def main():
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     
     monitor = DemandMonitor(api_url, args.interval)
-    monitor.run(args.duration)
+    
+    if args.duration:
+        print(f"Running for {args.duration} minutes...")
+        monitor.run(args.duration)
+    else:
+        print("Running continuously (Ctrl+C or SIGTERM to stop)...")
+        monitor.run()  # Continuous mode
 
 if __name__ == "__main__":
     main()
