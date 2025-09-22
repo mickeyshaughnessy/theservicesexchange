@@ -88,6 +88,66 @@ class SupplyMonitor:
                 "capabilities": "Backend development, API development, database design, Python, Django, Node.js, microservices",
                 "location_type": "remote"
             }
+        ]
+        
+        # Provider capability profiles that match demand templates
+        self.physical_providers = [
+            {
+                "name": "cleaning_specialist",
+                "capabilities": "House cleaning, deep cleaning, residential cleaning, bathroom cleaning, kitchen cleaning, move-out cleaning",
+                "location_type": "physical",
+                "addresses": [
+                    "100 Cleaner Ave, Denver, CO 80220",
+                    "200 Sparkle St, Denver, CO 80221", 
+                    "300 Polish Rd, Denver, CO 80222"
+                ],
+                "max_distance": 25
+            },
+            {
+                "name": "handyman_expert", 
+                "capabilities": "Home repairs, plumbing, electrical work, drywall repair, painting, flooring installation, general maintenance",
+                "location_type": "physical",
+                "addresses": [
+                    "400 Repair Blvd, Denver, CO 80223",
+                    "500 Fix St, Denver, CO 80224",
+                    "600 Mend Ave, Denver, CO 80225"
+                ],
+                "max_distance": 20
+            },
+            {
+                "name": "landscaping_pro",
+                "capabilities": "Landscaping, lawn mowing, tree trimming, garden design, snow removal, outdoor maintenance",
+                "location_type": "physical", 
+                "addresses": [
+                    "700 Garden Way, Denver, CO 80226",
+                    "800 Lawn Dr, Denver, CO 80227",
+                    "900 Yard St, Denver, CO 80228"
+                ],
+                "max_distance": 30
+            }
+        ]
+        
+        self.software_providers = [
+            {
+                "name": "fullstack_developer",
+                "capabilities": "React development, Node.js, TypeScript, web applications, e-commerce platforms, full-stack development",
+                "location_type": "remote"
+            },
+            {
+                "name": "automation_specialist", 
+                "capabilities": "Python scripting, automation, data processing, file management, API integration, report generation",
+                "location_type": "remote"
+            },
+            {
+                "name": "mobile_developer",
+                "capabilities": "Mobile app development, React Native, Flutter, iOS development, Android development, cross-platform apps",
+                "location_type": "remote"
+            },
+            {
+                "name": "backend_expert",
+                "capabilities": "Backend development, API development, database design, Python, Django, Node.js, microservices",
+                "location_type": "remote"
+            }
     def signal_handler(self, signum, frame):
         """Handle shutdown signals gracefully"""
         print(f"\n🛑 Received signal {signum}, shutting down gracefully...")
