@@ -3,1695 +3,1542 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Service Exchange API Documentation</title>
+    <title>The Service Exchange - Find Any Service</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
             --dark: #1e293b;
             --light: #f8fafc;
-            --gold: #fbbf24;
             --silver: #94a3b8;
         }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--light);
-        }
-        
-        .navbar {
-            background: var(--dark) !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .navbar-brand {
-            font-weight: 700;
-            color: white !important;
-        }
-        
-        .navbar-nav .nav-link {
-            color: #94a3b8 !important;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-        
-        .navbar-nav .nav-link:hover,
-        .navbar-nav .nav-link.active {
-            color: var(--primary) !important;
-        }
-        
-        .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .hero {
+            padding: 120px 0;
+            color: white;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+        
+        .service-tag {
+            display: inline-block;
+            padding: 6px 14px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 20px;
+            margin: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .service-tag:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .service-examples {
+            color: var(--dark);
+            font-weight: 500;
+        }
+        
+        .stats {
+            background: var(--dark);
             color: white;
             padding: 60px 0;
-            margin-bottom: 40px;
         }
         
-        .endpoint {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        .modal-content {
+            border-radius: 12px;
         }
         
-        .method {
+        /* Account Dropdown Styles */
+        .account-dropdown {
+            position: relative;
             display: inline-block;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-weight: 600;
-            font-size: 14px;
-            margin-right: 10px;
         }
         
-        .method.get { background: #22c55e; color: white; }
-        .method.post { background: #3b82f6; color: white; }
-        
-        .path {
-            font-family: 'Courier New', monospace;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        
-        .code-block {
-            background: var(--dark);
-            color: #22d3ee;
-            padding: 15px;
+        .account-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
             border-radius: 6px;
-            margin: 15px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            overflow-x: auto;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         
-        .param-table {
-            width: 100%;
-            margin: 15px 0;
+        .account-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
         }
         
-        .param-table th {
-            background: var(--light);
-            padding: 10px;
-            text-align: left;
+        .account-window {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            width: 400px;
+            z-index: 1100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            max-height: 500px;
+            overflow-y: auto;
         }
         
-        .param-table td {
-            padding: 10px;
+        .account-dropdown:hover .account-window {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .account-header {
+            padding: 20px 20px 15px;
             border-bottom: 1px solid var(--light);
         }
         
-        .param-table code {
-            background: var(--light);
-            padding: 2px 6px;
-            border-radius: 3px;
-            color: var(--primary);
+        .account-section {
+            padding: 15px 20px;
         }
         
-        .try-it {
-            background: var(--light);
-            padding: 15px;
+        .account-section:not(:last-child) {
+            border-bottom: 1px solid var(--light);
+        }
+        
+        .reputation-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        
+        .star-rating {
+            color: #fbbf24;
+            font-size: 18px;
+        }
+        
+        .bid-item {
+            padding: 12px;
+            background: #f8fafc;
             border-radius: 6px;
-            margin-top: 20px;
+            margin-bottom: 8px;
         }
         
-        .nav-sidebar {
-            position: sticky;
-            top: 20px;
+        .bid-item h6 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
         }
         
-        .nav-sidebar a {
-            display: block;
-            padding: 8px 12px;
-            color: var(--dark);
-            text-decoration: none;
-            border-left: 2px solid transparent;
+        .bid-item p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
         }
         
-        .nav-sidebar a:hover {
-            background: var(--light);
-            border-left-color: var(--primary);
+        .bid-actions {
+            margin-top: 8px;
         }
         
-        .seat-badge {
-            display: inline-block;
-            padding: 4px 10px;
+        .btn-xs {
+            padding: 3px 8px;
+            font-size: 12px;
+        }
+        
+        .job-item {
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .job-item h6 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+        }
+        
+        .job-item p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .logout-btn {
+            background: #dc2626;
+            border: none;
+            color: white;
+            padding: 6px 12px;
             border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: #b91c1c;
+        }
+        
+        .duration-input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .duration-input-group input {
+            flex: 1;
+        }
+        
+        .duration-input-group select {
+            width: 100px;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Chat Inbox Styles */
+        .chat-inbox {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .conversation-item:hover {
+            background: #f8fafc;
+        }
+
+        .conversation-item.active {
+            background: #e0e7ff;
+        }
+
+        .conversation-meta {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .conversation-user {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .conversation-time {
+            font-size: 12px;
+            color: #64748b;
+            margin-left: auto;
+        }
+
+        .conversation-preview {
+            font-size: 14px;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .message-history {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .message-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .message-item.sent {
+            background: #e0e7ff;
+            margin-left: 20px;
+        }
+
+        .message-item.received {
+            background: #f1f5f9;
+            margin-right: 20px;
+        }
+
+        .message-sender {
             font-weight: 600;
             font-size: 12px;
-            margin-left: 10px;
+            margin-bottom: 4px;
         }
-        
-        .seat-badge.gold {
-            background: var(--gold);
-            color: white;
+
+        .message-text {
+            font-size: 14px;
         }
-        
-        .seat-badge.silver {
-            background: var(--silver);
-            color: white;
+
+        .message-time {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
         }
-        
-        .alert-seat {
-            background: #fef3c7;
-            border: 1px solid #f59e0b;
-            color: #92400e;
+
+        /* Bulletin Feed Styles */
+        .bulletin-feed {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .bulletin-item {
             padding: 15px;
-            border-radius: 6px;
-            margin: 15px 0;
+            border-bottom: 1px solid #e2e8f0;
         }
-        
-        .alert-seat h5 {
-            color: #92400e;
-            margin-bottom: 10px;
+
+        .bulletin-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 8px;
         }
-        
-        .ping-section {
-            background: #f0f9ff;
-            border: 1px solid #0ea5e9;
-            padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
+
+        .bulletin-title {
+            font-weight: 600;
+            color: var(--dark);
+            margin: 0;
         }
-        
-        .ping-result {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
+
+        .bulletin-category {
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: auto;
         }
-        
-        .ping-success {
-            background: #dcfce7;
-            border: 1px solid #16a34a;
-            color: #15803d;
+
+        .bulletin-meta {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 8px;
         }
-        
-        .ping-error {
-            background: #fef2f2;
-            border: 1px solid #dc2626;
-            color: #dc2626;
+
+        .bulletin-content {
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.4;
         }
-        
-        .ping-loading {
-            background: #fef3c7;
-            border: 1px solid #f59e0b;
-            color: #92400e;
+
+        .payment-method-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
-        
-        .spinner-border-sm {
-            width: 1rem;
-            height: 1rem;
+
+        .payment-method-group select {
+            width: 120px;
+        }
+
+        .payment-method-group input {
+            flex: 1;
         }
     </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
+    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="#">Service Exchange</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.html">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#" aria-current="page">API Docs</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="about.html">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="seats.html">Seats</a>
-                    </li>
-                </ul>
+            <a class="navbar-brand fw-bold" href="https://theservicesexchange.com">The Service Exchange</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="https://theservicesexchange.com/about.html">About</a>
+                <a class="nav-link" href="nearby.html">Nearby Services</a>
+                <a class="nav-link" href="https://theservicesexchange.com/api_docs.html">API Docs</a>
+                <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
+                <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
+                
+                <!-- Account dropdown (shown when logged in) -->
+                <div id="accountDropdown" class="account-dropdown" style="display: none;">
+                    <button class="account-btn">
+                        <span id="accountUsername">Account</span> ▼
+                    </button>
+                    <div class="account-window">
+                        <div class="account-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" id="accountDisplayName">Loading...</h5>
+                                <button class="logout-btn" onclick="logout()">Logout</button>
+                            </div>
+                            <div class="reputation-display">
+                                <span class="star-rating" id="starDisplay">★★★★★</span>
+                                <span id="ratingText">4.5 (12 ratings)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="account-section">
+                            <h6>Outstanding Requests</h6>
+                            <div class="loading-spinner" id="bidsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading requests...</span>
+                            </div>
+                            <div id="outstandingBids">
+                                <p class="text-muted mb-0">No outstanding requests</p>
+                            </div>
+                        </div>
+                        
+                        <div class="account-section">
+                            <h6>Active Services</h6>
+                            <div class="loading-spinner" id="activeJobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading active services...</span>
+                            </div>
+                            <div id="activeJobs">
+                                <p class="text-muted mb-0">No active services</p>
+                            </div>
+                        </div>
+                        
+                        <div class="account-section">
+                            <h6>Recent Completed Services</h6>
+                            <div class="loading-spinner" id="jobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading services...</span>
+                            </div>
+                            <div id="completedJobs">
+                                <p class="text-muted mb-0">No completed services</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Login button (shown when not logged in) -->
+                <button id="loginButton" class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
             </div>
         </div>
     </nav>
 
-    <div class="header">
+    <!-- Hero -->
+    <section class="hero">
         <div class="container">
-            <h1>Service Exchange API Documentation</h1>
-            <p class="lead mb-4">RESTful API for the Service Exchange marketplace with seat-based verification</p>
-            <div class="code-block">
-                Base URL: https://rse-api.com:5003
+            <h1>The Service Exchange</h1>
+            <p>Find any service through intelligent matching</p>
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <button class="btn btn-light btn-lg" onclick="showBuyerForm()">I Need a Service</button>
+                </div>
+            </div>
+            
+            <div class="mt-5">
+                <span class="service-tag" onclick="selectService('House Cleaning')">House Cleaning</span>
+                <span class="service-tag" onclick="selectService('Web Development')">Web Development</span>
+                <span class="service-tag" onclick="selectService('Tutoring')">Tutoring</span>
+                <span class="service-tag" onclick="selectService('Graphic Design')">Graphic Design</span>
+                <span class="service-tag" onclick="selectService('Home Repairs')">Home Repairs</span>
+                <span class="service-tag" onclick="selectService('Photography')">Photography</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="py-5" style="background: rgba(255,255,255,0.1);">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <h3>🎯 Smart Matching</h3>
+                        <p>AI-powered matching connects you with the perfect service provider.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <h3>⭐ Trusted Providers</h3>
+                        <p>All service providers are vetted and rated by the community.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <h3>💰 Fair Pricing</h3>
+                        <p>Market-driven pricing ensures fair rates for quality services.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Auth Modal -->
+    <div class="modal fade" id="authModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Get Started</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="authError" class="error-message" style="display: none;"></div>
+                    
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#register">Register</a>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="login">
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" placeholder="Username" id="loginUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="password" class="form-control" placeholder="Password" id="loginPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">Login</button>
+                            </form>
+                        </div>
+                        
+                        <div class="tab-pane" id="register">
+                            <form id="registerForm">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" placeholder="Username" id="regUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">Register</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="container">
-        <div class="row">
-            <!-- Sidebar Navigation -->
-            <div class="col-md-3">
-                <div class="nav-sidebar">
-                    <h5>Quick Navigation</h5>
-                    <a href="#authentication">Authentication</a>
-                    <a href="#seat-verification">Seat Verification</a>
-                    <a href="#ping-test">System Check</a>
-                    <a href="#register">Register</a>
-                    <a href="#login">Login</a>
-                    <a href="#account">Account</a>
-                    <a href="#my-bids">My Bids</a>
-                    <a href="#my-jobs">My Jobs</a>
-                    <a href="#submit-bid">Submit Bid</a>
-                    <a href="#grab-job">Grab Job (Temporary: No Seat)</a>
-                    <a href="#reject-job">Reject Job</a>
-                    <a href="#sign-job">Sign Job</a>
-                    <a href="#cancel-bid">Cancel Bid</a>
-                    <a href="#nearby">Nearby Services</a>
-                    <a href="#chat-endpoints">Chat System</a>
-                    <a href="#bulletin-endpoints">Bulletin Board</a>
-                    <a href="#exchange-data">Exchange Data</a>
-                    <a href="#demo-apps">Demo Applications</a>
+    <!-- Service Request Modal -->
+    <div class="modal fade" id="bidModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Request a Service</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <p class="text-muted mb-2">Popular services:</p>
+                        <div class="service-examples">
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='House Cleaning'">House Cleaning</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Web Development'">Web Development</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Tutoring'">Tutoring</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Graphic Design'">Graphic Design</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Home Repairs'">Home Repairs</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Photography'">Photography</span>
+                        </div>
+                    </div>
+                    <form id="bidForm">
+                        <div class="mb-3">
+                            <textarea class="form-control" rows="3" placeholder="Describe the service you need" id="bidService" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Payment & Price</label>
+                            <div class="payment-method-group">
+                                <select class="form-control" id="paymentMethod">
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="GBP">GBP (£)</option>
+                                    <option value="BTC">Bitcoin</option>
+                                    <option value="ETH">Ethereum</option>
+                                    <option value="THERSX">$THERSX</option>
+                                </select>
+                                <input type="number" step="0.01" min="0" class="form-control" placeholder="Price amount" id="bidPrice" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Request Valid For</label>
+                            <div class="duration-input-group">
+                                <input type="number" class="form-control" placeholder="Duration" id="bidDuration" value="24" required min="1">
+                                <select class="form-control" id="bidDurationUnit">
+                                    <option value="hours">Hours</option>
+                                    <option value="days">Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <select class="form-control" id="bidLocationType">
+                                <option value="physical">Physical (In-Person)</option>
+                                <option value="remote">Remote (Online)</option>
+                                <option value="hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="addressField">
+                            <input type="text" class="form-control" placeholder="Service Address" id="bidAddress">
+                            <small class="text-muted">We'll use your current location if not specified</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Submit Request</button>
+                    </form>
                 </div>
             </div>
-
-            <!-- Main Content -->
-            <div class="col-md-9">
-                <!-- Authentication Overview -->
-                <div id="authentication" class="endpoint">
-                    <h2>Authentication</h2>
-                    <p>All API endpoints (except /ping, /register, and /login) require authentication via Bearer token.</p>
-                    <div class="code-block">
-Authorization: Bearer your_access_token</div>
-                    <p>Tokens are obtained by calling /login and expire after 24 hours.</p>
-                </div>
-
-                <!-- Seat Verification Section -->
-                <div id="seat-verification" class="endpoint">
-                    <h2>Seat Verification System</h2>
-                    <div class="alert-seat">
-                        <h5>⚠️ Temporary: Seat Requirements Suspended</h5>
-                        <p>While demand and supply are ramping up, access to <strong>/grab_job</strong> does not currently require seat credentials. Seat verification will be re-enabled once the marketplace reaches sufficient volume.</p>
-                    </div>
-                    
-                    <h4>Seat Types</h4>
-                    <div class="mb-3">
-                        <h5><span class="seat-badge gold">GOLDEN</span> Physical Service Seats</h5>
-                        <p>Golden seats are designed for physical jobs and services. These seats are permanent (good for eternity) unless revoked due to abuse. Rate limited to one /grab_job request per 15 minutes.</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <h5><span class="seat-badge silver">SILVER</span> Software Agent Seats</h5>
-                        <p>Silver seats are limited-use credentials specifically designed for software agents and automated services. Rate limited to one /grab_job request per 15 minutes.</p>
-                    </div>
-                    
-                    <h4>Seat Credential Structure</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Field</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>seat.id</code></td>
-                                <td>string</td>
-                                <td>Unique seat identifier (e.g., "seat_abc123")</td>
-                            </tr>
-                            <tr>
-                                <td><code>seat.owner</code></td>
-                                <td>string</td>
-                                <td>Registered owner of the seat</td>
-                            </tr>
-                            <tr>
-                                <td><code>seat.secret</code></td>
-                                <td>string</td>
-                                <td>MD5 hash of your seat phrase (never send the phrase directly)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
-                    <h4>How to Generate Your Secret</h4>
-                    <p>Your seat secret must be the MD5 hash of your seat phrase. Never send the raw phrase.</p>
-                    <div class="code-block">// JavaScript Example
-const crypto = require('crypto');
-const secret = crypto.createHash('md5').update('your-seat-phrase').digest('hex');
-
-// Python Example
-import hashlib
-secret = hashlib.md5('your-seat-phrase'.encode()).hexdigest()
-
-// Command Line Example
-echo -n "your-seat-phrase" | md5sum</div>
-                    
-                    <h4>Verification Errors</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Error Message</th>
-                                <th>Reason</th>
-                                <th>Solution</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Missing seat ID</td>
-                                <td>No seat credentials provided</td>
-                                <td>Include seat object in request</td>
-                            </tr>
-                            <tr>
-                                <td>Invalid golden/silver seat credentials</td>
-                                <td>Wrong owner or secret</td>
-                                <td>Verify your credentials match issued seat</td>
-                            </tr>
-                            <tr>
-                                <td>Silver seat has expired</td>
-                                <td>One year period exceeded</td>
-                                <td>Contact admin for seat renewal</td>
-                            </tr>
-                            <tr>
-                                <td>Seat ID not found</td>
-                                <td>Seat doesn't exist</td>
-                                <td>Verify seat ID is correct</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- System Check -->
-                <div id="ping-test" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/ping</span></h3>
-                    <p>Check if the API is operational. No authentication required.</p>
-                    
-                    <!-- Live Ping Test Section -->
-                    <div class="ping-section">
-                        <h5>🔧 Live Server Test</h5>
-                        <p>Test the actual API endpoint to verify server status:</p>
-                        <button id="pingBtn" class="btn btn-primary" onclick="pingServer()">
-                            <span id="pingSpinner" class="spinner-border spinner-border-sm me-2" style="display: none;"></span>
-                            <span id="pingText">Ping Server</span>
-                        </button>
-                        <div id="pingResult" class="ping-result" style="display: none;"></div>
-                    </div>
-                    
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl https://rse-api.com:5003/ping</div>
-                    
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message": "Service Exchange API is operational"
-}</div>
-                </div>
-
-                <!-- Register -->
-                <div id="register" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/register</span></h3>
-                    <p>Create a new user account.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>username</code></td>
-                                <td>string</td>
-                                <td>Unique username (3-20 characters)</td>
-                            </tr>
-                            <tr>
-                                <td><code>password</code></td>
-                                <td>string</td>
-                                <td>Password (minimum 8 characters)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/register \
-  -H "Content-Type: application/json" \
-  -d '{"username": "john_doe", "password": "securepass123"}'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message": "Registration successful"
-}</div>
-                </div>
-
-                <!-- Login -->
-                <div id="login" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/login</span></h3>
-                    <p>Authenticate and receive an access token.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>username</code></td>
-                                <td>string</td>
-                                <td>Your username</td>
-                            </tr>
-                            <tr>
-                                <td><code>password</code></td>
-                                <td>string</td>
-                                <td>Your password</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "john_doe", "password": "securepass123"}'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "access_token": "550e8400-e29b-41d4-a716-446655440000",
-  "username": "john_doe"
-}</div>
-                </div>
-
-                <!-- Account -->
-                <div id="account" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/account</span></h3>
-                    <p>Get account information and reputation score. Requires authentication.</p>
-                    
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl https://rse-api.com:5003/account \
-  -H "Authorization: Bearer your_access_token"</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "username": "john_doe",
-  "created_on": 1703001600,
-  "stars": 4.5,
-  "total_ratings": 12,
-  "completed_jobs": 10,
-  "reputation_score": 4.2
-}</div>
-                </div>
-
-                <!-- My Bids -->
-                <div id="my-bids" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/my_bids</span></h3>
-                    <p>Get your outstanding (active) service requests. Requires authentication.</p>
-                    
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl https://rse-api.com:5003/my_bids \
-  -H "Authorization: Bearer your_access_token"</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "bids": [
-    {
-      "bid_id": "b1234567-89ab-cdef-0123-456789abcdef",
-      "service": "House cleaning, 3 bedrooms, 2 bathrooms",
-      "price": 150,
-      "end_time": 1703088000,
-      "location_type": "physical",
-      "address": "123 Main St, Denver, CO 80202",
-      "created_at": 1703001600,
-      "status": "active"
-    },
-    {
-      "bid_id": "b7654321-89ab-cdef-0123-456789abcdef",
-      "service": "Website redesign for restaurant",
-      "price": 800,
-      "end_time": 1703174400,
-      "location_type": "remote",
-      "address": null,
-      "created_at": 1703002000,
-      "status": "active"
-    }
-  ]
-}</div>
-                </div>
-
-                <!-- My Jobs -->
-                <div id="my-jobs" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/my_jobs</span></h3>
-                    <p>Get your job history including completed jobs and active jobs. Requires authentication.</p>
-                    
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl https://rse-api.com:5003/my_jobs \
-  -H "Authorization: Bearer your_access_token"</div>
-
-                    <h4>Response Structure</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Field</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>completed_jobs</code></td>
-                                <td>array</td>
-                                <td>Last 10 completed jobs</td>
-                            </tr>
-                            <tr>
-                                <td><code>active_jobs</code></td>
-                                <td>array</td>
-                                <td>Currently active jobs (accepted but not completed)</td>
-                            </tr>
-                            <tr>
-                                <td><code>role</code></td>
-                                <td>string</td>
-                                <td>"buyer" or "provider" for this job</td>
-                            </tr>
-                            <tr>
-                                <td><code>counterparty</code></td>
-                                <td>string</td>
-                                <td>Username of the other party</td>
-                            </tr>
-                            <tr>
-                                <td><code>my_rating</code></td>
-                                <td>integer</td>
-                                <td>Rating you gave (1-5, null if not rated)</td>
-                            </tr>
-                            <tr>
-                                <td><code>their_rating</code></td>
-                                <td>integer</td>
-                                <td>Rating they gave you (1-5, null if not rated)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "completed_jobs": [
-    {
-      "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
-      "service": "Kitchen deep cleaning",
-      "price": 180,
-      "location_type": "physical",
-      "address": "123 Main St, Denver, CO 80202",
-      "accepted_at": 1703001600,
-      "status": "completed",
-      "completed_at": 1703088000,
-      "role": "buyer",
-      "counterparty": "alice_cleaner",
-      "my_rating": 5,
-      "their_rating": 4
-    }
-  ],
-  "active_jobs": [
-    {
-      "job_id": "j1234567-89ab-cdef-0123-456789abcdef",
-      "service": "Logo design for startup",
-      "price": 300,
-      "location_type": "remote",
-      "address": null,
-      "accepted_at": 1703002000,
-      "status": "accepted",
-      "role": "provider",
-      "counterparty": "startup_founder",
-      "my_rating": null,
-      "their_rating": null
-    }
-  ]
-}</div>
-                </div>
-
-                <!-- Submit Bid -->
-                <div id="submit-bid" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/submit_bid</span></h3>
-                    <p>Submit a service request as a buyer. Requires authentication.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>service</code></td>
-                                <td>string or object</td>
-                                <td>Description of service needed, or JSON object with service-specific fields</td>
-                            </tr>
-                            <tr>
-                                <td><code>price</code></td>
-                                <td>number</td>
-                                <td>Price willing to pay (can be fractional, e.g., 150.75)</td>
-                            </tr>
-                            <tr>
-                                <td><code>currency</code></td>
-                                <td>string</td>
-                                <td>Currency code (e.g., "USD", "EUR", "BTC")</td>
-                            </tr>
-                            <tr>
-                                <td><code>payment_method</code></td>
-                                <td>string</td>
-                                <td>"cash", "credit_card", "paypal", "xmoney", "crypto", etc.</td>
-                            </tr>
-                            <tr>
-                                <td><code>xmoney_account</code></td>
-                                <td>string</td>
-                                <td>X Money payee account (when payment_method is "xmoney")</td>
-                            </tr>
-                            <tr>
-                                <td><code>end_time</code></td>
-                                <td>integer</td>
-                                <td>Unix timestamp when bid expires</td>
-                            </tr>
-                            <tr>
-                                <td><code>location_type</code></td>
-                                <td>string</td>
-                                <td>"physical", "remote", or "hybrid"</td>
-                            </tr>
-                            <tr>
-                                <td><code>address</code></td>
-                                <td>string</td>
-                                <td>Address (for physical services)</td>
-                            </tr>
-                            <tr>
-                                <td><code>lat</code></td>
-                                <td>number</td>
-                                <td>Latitude (alternative to address)</td>
-                            </tr>
-                            <tr>
-                                <td><code>lon</code></td>
-                                <td>number</td>
-                                <td>Longitude (alternative to address)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/submit_bid \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "service": {
-      "type": "house_cleaning",
-      "rooms": 3,
-      "bathrooms": 2,
-      "deep_clean": true
-    },
-    "price": 150.75,
-    "currency": "USD",
-    "payment_method": "xmoney",
-    "xmoney_account": "@john_doe",
-    "end_time": 1703088000,
-    "location_type": "physical",
-    "address": "123 Main St, Denver, CO 80202"
-  }'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "bid_id": "b1234567-89ab-cdef-0123-456789abcdef"
-}</div>
-                </div>
-
-                <!-- Grab Job -->
-                <div id="grab-job" class="endpoint">
-                    <h3>
-                        <span class="method post">POST</span> 
-                        <span class="path">/grab_job</span>
-                        <span class="seat-badge silver" style="background: #94a3b8;">TEMP: NO SEAT</span>
-                    </h3>
-                    <div class="alert-seat" style="background: #dcfce7; border-color: #16a34a; color: #15803d;">
-                        <h5>📢 Temporary Access</h5>
-                        <p>During the marketplace ramp-up period, seat credentials are <strong>not required</strong> for this endpoint. Seat verification will be re-enabled once sufficient demand and supply is established.</p>
-                    </div>
-                    
-                    <p>Get matched with the best available job based on capabilities and location. When seat verification is active, this endpoint is rate-limited to one request per 15 minutes per seat.</p>
-
-                    <h4>Example Request (Temporary - No Seat Required)</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/grab_job \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "capabilities": "House cleaning, office cleaning, deep cleaning",
-    "location_type": "physical",
-    "address": "456 Oak Ave, Denver, CO 80203",
-    "max_distance": 15
-  }'</div>
-
-                    <h4>Example Success Response</h4>
-                    <div class="code-block">{
-  "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
-  "bid_id": "b1234567-89ab-cdef-0123-456789abcdef",
-  "status": "accepted",
-  "service": "House cleaning, 3 bedrooms, 2 bathrooms",
-  "price": 150,
-  "location_type": "physical",
-  "address": "123 Main St, Denver, CO 80202",
-  "buyer_username": "jane_smith",
-  "provider_username": "john_doe",
-  "accepted_at": 1703002000,
-  "buyer_reputation": 4.3,
-  "provider_reputation": 4.2
-}</div>
-                </div>
-
-                <!-- Reject Job -->
-                <div id="reject-job" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/reject_job</span></h3>
-                    <p>Reject a job that was assigned through /grab_job. Must be called immediately after receiving a job match. Requires authentication.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>job_id</code></td>
-                                <td>string</td>
-                                <td>ID of the job to reject</td>
-                            </tr>
-                            <tr>
-                                <td><code>reason</code></td>
-                                <td>string</td>
-                                <td>Optional reason for rejection</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/reject_job \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
-    "reason": "Schedule conflict"
-  }'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message": "Job rejected successfully"
-}</div>
-                </div>
-
-                <!-- Sign Job -->
-                <div id="sign-job" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/sign_job</span></h3>
-                    <p>Complete and rate a job. Both buyer and provider must sign to complete. Requires authentication.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>job_id</code></td>
-                                <td>string</td>
-                                <td>ID of the job to sign</td>
-                            </tr>
-                            <tr>
-                                <td><code>star_rating</code></td>
-                                <td>integer</td>
-                                <td>Rating for the other party (1-5)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/sign_job \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
-    "star_rating": 5
-  }'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message": "Job signed successfully"
-}</div>
-                </div>
-
-                <!-- Cancel Bid -->
-                <div id="cancel-bid" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/cancel_bid</span></h3>
-                    <p>Cancel a pending bid. Only the bid creator can cancel. Requires authentication.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>bid_id</code></td>
-                                <td>string</td>
-                                <td>ID of the bid to cancel</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/cancel_bid \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{"bid_id": "b1234567-89ab-cdef-0123-456789abcdef"}'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message": "Bid cancelled"
-}</div>
-                </div>
-
-                <!-- Nearby Services -->
-                <div id="nearby" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/nearby</span></h3>
-                    <p>Find services near a location. Requires authentication.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>address</code></td>
-                                <td>string</td>
-                                <td>Location to search around</td>
-                            </tr>
-                            <tr>
-                                <td><code>lat</code></td>
-                                <td>number</td>
-                                <td>Latitude (alternative to address)</td>
-                            </tr>
-                            <tr>
-                                <td><code>lon</code></td>
-                                <td>number</td>
-                                <td>Longitude (alternative to address)</td>
-                            </tr>
-                            <tr>
-                                <td><code>radius</code></td>
-                                <td>number</td>
-                                <td>Search radius in miles (default: 10)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/nearby \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "address": "Downtown Denver, CO",
-    "radius": 20
-  }'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "services": [
-    {
-      "bid_id": "b1234567-89ab-cdef-0123-456789abcdef",
-      "service": "House cleaning, 3 bedrooms",
-      "price": 150,
-      "distance": 2.3,
-      "address": "123 Main St, Denver, CO",
-      "buyer_reputation": 4.3
-    },
-    {
-      "bid_id": "b7654321-89ab-cdef-0123-456789abcdef",
-      "service": "Lawn mowing and trimming",
-      "price": 75,
-      "distance": 4.1,
-      "address": "789 Pine St, Denver, CO",
-      "buyer_reputation": 4.8
-    }
-  ]
-}</div>
-                </div>
-
-                <!-- Chat System -->
-                <div id="chat-endpoints" class="endpoint">
-                    <h2>Chat System</h2>
-                    <p>The chat system enables direct communication between users. All chat endpoints require authentication.</p>
-                    
-                    <h3><span class="method post">POST</span> <span class="path">/chat</span></h3>
-                    <p>Send a new message to another user.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>recipient</code></td>
-                                <td>string</td>
-                                <td>Username of the message recipient</td>
-                            </tr>
-                            <tr>
-                                <td><code>message</code></td>
-                                <td>string</td>
-                                <td>Message content</td>
-                            </tr>
-                            <tr>
-                                <td><code>job_id</code></td>
-                                <td>string</td>
-                                <td>Optional: Reference to related job</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/chat \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "recipient": "alice_cleaner",
-    "message": "Hi Alice, I have a question about the cleaning schedule.",
-    "job_id": "j9876543-21ba-dcfe-3210-fedcba987654"
-  }'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message_id": "msg_123456789",
-  "sent_at": 1703002000
-}</div>
-
-                    <h3><span class="method get">GET</span> <span class="path">/chat/conversations</span></h3>
-                    <p>Get a list of conversations for the authenticated user.</p>
-                    
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl https://rse-api.com:5003/chat/conversations \
-  -H "Authorization: Bearer your_access_token"</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "conversations": [
-    {
-      "user": "alice_cleaner",
-      "conversation_id": "alice_cleaner",
-      "lastMessage": "Thanks for the feedback!",
-      "timestamp": 1703002000,
-      "unread": false
-    },
-    {
-      "user": "bob_painter",
-      "conversation_id": "bob_painter", 
-      "lastMessage": "When should I start the painting job?",
-      "timestamp": 1703001500,
-      "unread": true
-    }
-  ]
-}</div>
-
-                    <h3><span class="method post">POST</span> <span class="path">/chat/messages</span></h3>
-                    <p>Get message history for a specific conversation.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>conversation_id</code></td>
-                                <td>string</td>
-                                <td>ID of the conversation (usually the other user's username)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/chat/messages \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{"conversation_id": "alice_cleaner"}'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "messages": [
-    {
-      "message_id": "msg_123456789",
-      "sender": "john_doe",
-      "recipient": "alice_cleaner",
-      "message": "Hi Alice, I have a question about the cleaning schedule.",
-      "timestamp": 1703001800,
-      "job_id": "j9876543-21ba-dcfe-3210-fedcba987654"
-    },
-    {
-      "message_id": "msg_987654321",
-      "sender": "alice_cleaner",
-      "recipient": "john_doe",
-      "message": "Sure! What would you like to know?",
-      "timestamp": 1703001900,
-      "job_id": null
-    }
-  ]
-}</div>
-
-                    <h3><span class="method post">POST</span> <span class="path">/chat/reply</span></h3>
-                    <p>Reply to an existing conversation.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>recipient</code></td>
-                                <td>string</td>
-                                <td>Username of the recipient</td>
-                            </tr>
-                            <tr>
-                                <td><code>message</code></td>
-                                <td>string</td>
-                                <td>Reply message content</td>
-                            </tr>
-                            <tr>
-                                <td><code>conversation_id</code></td>
-                                <td>string</td>
-                                <td>ID of the conversation</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/chat/reply \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "recipient": "alice_cleaner",
-    "message": "Thanks for the quick response!",
-    "conversation_id": "alice_cleaner"
-  }'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message_id": "msg_456789123",
-  "sent_at": 1703002000
-}</div>
-                </div>
-
-                <!-- Bulletin Board -->
-                <div id="bulletin-endpoints" class="endpoint">
-                    <h2>Bulletin Board</h2>
-                    <p>The bulletin board allows users to post public announcements, questions, and offers. All bulletin endpoints require authentication.</p>
-                    
-                    <h3><span class="method post">POST</span> <span class="path">/bulletin</span></h3>
-                    <p>Post a public message to the community bulletin board.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>title</code></td>
-                                <td>string</td>
-                                <td>Post title</td>
-                            </tr>
-                            <tr>
-                                <td><code>content</code></td>
-                                <td>string</td>
-                                <td>Post content</td>
-                            </tr>
-                            <tr>
-                                <td><code>category</code></td>
-                                <td>string</td>
-                                <td>Optional: "announcement", "question", "offer", "general"</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/bulletin \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "New Cleaning Service Available",
-    "content": "Professional house cleaning services now available in the Denver metro area. Eco-friendly products, competitive rates.",
-    "category": "offer"
-  }'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "post_id": "post_987654321",
-  "posted_at": 1703002000
-}</div>
-
-                    <h3><span class="method get">GET</span> <span class="path">/bulletin/feed</span></h3>
-                    <p>Get recent bulletin posts from the community.</p>
-                    
-                    <h4>Query Parameters</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>limit</code></td>
-                                <td>integer</td>
-                                <td>Maximum posts to return (default: 20)</td>
-                            </tr>
-                            <tr>
-                                <td><code>category</code></td>
-                                <td>string</td>
-                                <td>Filter by category</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl "https://rse-api.com:5003/bulletin/feed?limit=10&category=offer" \
-  -H "Authorization: Bearer your_access_token"</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "posts": [
-    {
-      "post_id": "post_987654321",
-      "title": "New Cleaning Service Available",
-      "content": "Professional house cleaning services now available in the Denver metro area. Eco-friendly products, competitive rates.",
-      "category": "offer",
-      "author": "alice_cleaner",
-      "timestamp": 1703002000
-    },
-    {
-      "post_id": "post_123456789",
-      "title": "Looking for Web Developers",
-      "content": "Small startup seeking experienced web developers for exciting new project. React and Node.js experience preferred.",
-      "category": "announcement",
-      "author": "startup_founder",
-      "timestamp": 1703001500
-    }
-  ]
-}</div>
-                </div>
-
-                <!-- Exchange Data -->
-                <div id="exchange-data" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/exchange_data</span></h3>
-                    <p>Get comprehensive view of all public exchange data including bids, completed jobs, and market statistics. Requires authentication.</p>
-                    
-                    <h4>Query Parameters</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>category</code></td>
-                                <td>string</td>
-                                <td>Filter by service category</td>
-                            </tr>
-                            <tr>
-                                <td><code>location</code></td>
-                                <td>string</td>
-                                <td>Filter by location</td>
-                            </tr>
-                            <tr>
-                                <td><code>limit</code></td>
-                                <td>integer</td>
-                                <td>Maximum results to return (default: 50, max: 200)</td>
-                            </tr>
-                            <tr>
-                                <td><code>include_completed</code></td>
-                                <td>boolean</td>
-                                <td>Include completed jobs in results</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl "https://rse-api.com:5003/exchange_data?category=cleaning&limit=25&include_completed=true" \
-  -H "Authorization: Bearer your_access_token"</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "active_bids": [
-    {
-      "bid_id": "b1234567-89ab-cdef-0123-456789abcdef",
-      "service": {"type": "house_cleaning", "rooms": 3},
-      "price": 150.75,
-      "currency": "USD",
-      "location": "Denver, CO",
-      "posted_at": 1703001600
-    }
-  ],
-  "completed_jobs": [
-    {
-      "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
-      "service": {"type": "house_cleaning", "rooms": 2},
-      "price": 120.00,
-      "currency": "USD",
-      "avg_rating": 4.5,
-      "completed_at": 1703000000
-    }
-  ],
-  "market_stats": {
-    "total_active_bids": 127,
-    "avg_price_cleaning": 142.50,
-    "total_completed_today": 43
-  }
-}</div>
-                </div>
-
-                <!-- Demo Applications -->
-                <div id="demo-apps" class="endpoint">
-                    <h2>Demo Applications</h2>
-                    <p>The Service Exchange API powers various application types, from simple service requests to complex automated systems. Here are some demo applications showcasing different use cases:</p>
-                    
-                    <h3>Demand-Side Applications</h3>
-                    
-                    <div class="endpoint" style="margin-left: 20px; border-left: 4px solid var(--primary);">
-                        <h4>🏠 Honey-do</h4>
-                        <p><strong>Simple house repair and maintenance app</strong></p>
-                        <p>Honey-do is a user-friendly mobile app that connects homeowners with local repair professionals. Users can quickly post repair needs and find nearby service providers.</p>
-                        
-                        <h5>Key Features:</h5>
-                        <ul>
-                            <li>Simple interface for posting repair requests</li>
-                            <li>Integration with <code>/submit_bid</code> for creating service requests</li>
-                            <li>Uses <code>/nearby</code> to find local contractors and handypeople</li>
-                            <li>Photo upload for repair assessments</li>
-                            <li>Real-time bidding and price negotiations</li>
-                        </ul>
-                        
-                        <h5>Example API Usage:</h5>
-                        <div class="code-block">// Post a repair request
-const repairRequest = {
-  service: {
-    type: "home_repair",
-    category: "plumbing",
-    description: "Leaky kitchen faucet",
-    urgency: "medium",
-    photos: ["faucet1.jpg", "faucet2.jpg"]
-  },
-  price: 125.00,
-  currency: "USD",
-  payment_method: "credit_card",
-  location_type: "physical",
-  address: "123 Maple Street, Denver, CO"
-};</div>
-                    </div>
-                    
-                    <div class="endpoint" style="margin-left: 20px; border-left: 4px solid var(--primary);">
-                        <h4>🤖 Vibe Co-Pilot</h4>
-                        <p><strong>Chat-based platform for app development by AI agents</strong></p>
-                        <p>Vibe Co-Pilot enables users to describe their app ideas in natural language and automatically creates service requests for software agents to build and deploy applications.</p>
-                        
-                        <h5>Key Features:</h5>
-                        <ul>
-                            <li>Natural language processing for app requirements</li>
-                            <li>Automatic bid creation via <code>/submit_bid</code> for development tasks</li>
-                            <li>Discovery of available software agents using <code>/nearby</code></li>
-                            <li>Real-time progress tracking and communication via <code>/chat</code> system</li>
-                            <li>Automated deployment and testing coordination</li>
-                        </ul>
-                        
-                        <h5>Example Workflow:</h5>
-                        <div class="code-block">User: "I need a simple e-commerce site for selling handmade jewelry"
-
-Vibe Co-Pilot generates:
-{
-  service: {
-    type: "app_development",
-    platform: "web",
-    frameworks: ["React", "Node.js", "Stripe"],
-    features: ["product_catalog", "shopping_cart", "payment_processing"],
-    deadline: "2025-11-01",
-    complexity: "medium"
-  },
-  price: 2500.00,
-  currency: "USD",
-  payment_method: "xmoney",
-  location_type: "remote"
-}</div>
-
-<!-- Government Agency Integration Example -->
-<div class="borland-section" style="background: #000080; color: #00FFFF; padding: 20px; border: 2px solid #FFFF00; font-family: 'Courier New', monospace;">
-    <h3 style="color: #FFFF00; text-align: center; margin: 0 0 15px 0;">PALANTIR GOVERNMENT PROCUREMENT INTEGRATION</h3>
-    
-    <div style="background: #000040; border: 1px solid #00FF00; padding: 10px; margin: 10px 0;">
-        <span style="color: #00FF00;">AGENCY:</span> <span style="color: #FFFFFF;">USDA / NSA Federal Services</span><br>
-        <span style="color: #00FF00;">PURPOSE:</span> <span style="color: #FFFFFF;">Automated service procurement via Ontology</span>
+        </div>
     </div>
 
-    <h4 style="color: #00FFFF; margin: 15px 0 5px 0;">SERVICE CATEGORIES</h4>
-    <table style="width: 100%; color: #FFFFFF; border-collapse: collapse;">
-        <tr style="background: #000040;">
-            <td style="color: #FFFF00; border: 1px solid #00FF00; padding: 5px;">Agricultural Data Analysis</td>
-            <td style="border: 1px solid #00FF00; padding: 5px;">$50K-200K</td>
-        </tr>
-        <tr>
-            <td style="color: #FFFF00; border: 1px solid #00FF00; padding: 5px;">Cybersecurity Assessment</td>
-            <td style="border: 1px solid #00FF00; padding: 5px;">$75K-300K</td>
-        </tr>
-        <tr style="background: #000040;">
-            <td style="color: #FFFF00; border: 1px solid #00FF00; padding: 5px;">Rural Infrastructure</td>
-            <td style="border: 1px solid #00FF00; padding: 5px;">$100K-500K</td>
-        </tr>
-    </table>
-
-    <h4 style="color: #00FFFF; margin: 15px 0 5px 0;">PYTHON INTEGRATION</h4>
-    <div style="background: #000000; border: 1px solid #00FF00; padding: 10px; overflow-x: auto;">
-        <pre style="margin: 0; color: #00FF00; font-size: 12px;"><code>#!/usr/bin/env python3
-<span style="color: #FFFF00;"># Federal Agency Service Procurement</span>
-<span style="color: #FF00FF;">import</span> requests, json
-<span style="color: #FF00FF;">from</span> palantir_ontology <span style="color: #FF00FF;">import</span> OntologyClient
-
-<span style="color: #FF00FF;">class</span> <span style="color: #FFFFFF;">GovProcurement</span>:
-    <span style="color: #FF00FF;">def</span> <span style="color: #FFFFFF;">__init__</span>(self, palantir_host, exchange_api):
-        self.ontology = OntologyClient(palantir_host)
-        self.api = exchange_api
-        self.token = self.auth_agency()
-    
-    <span style="color: #FF00FF;">def</span> <span style="color: #FFFFFF;">auth_agency</span>(self):
-        resp = requests.post(<span style="color: #00FFFF;">f"{self.api}/gov_login"</span>, json={
-            <span style="color: #00FFFF;">"agency_id"</span>: <span style="color: #00FFFF;">"USDA_001"</span>, <span style="color: #00FFFF;">"cert"</span>: <span style="color: #00FFFF;">"GSA_APPROVED"</span>
-        })
-        <span style="color: #FF00FF;">return</span> resp.json()[<span style="color: #00FFFF;">'access_token'</span>]
-    
-    <span style="color: #FF00FF;">def</span> <span style="color: #FFFFFF;">submit_requirement</span>(self, ontology_req):
-        service_data = {
-            <span style="color: #00FFFF;">"service"</span>: {
-                <span style="color: #00FFFF;">"type"</span>: ontology_req.category,
-                <span style="color: #00FFFF;">"security_clearance"</span>: ontology_req.clearance,
-                <span style="color: #00FFFF;">"compliance"</span>: [<span style="color: #00FFFF;">"FedRAMP"</span>, <span style="color: #00FFFF;">"FISMA"</span>]
-            },
-            <span style="color: #00FFFF;">"price"</span>: ontology_req.budget_ceiling,
-            <span style="color: #00FFFF;">"payment_method"</span>: <span style="color: #00FFFF;">"gov_purchase_card"</span>,
-            <span style="color: #00FFFF;">"location_type"</span>: <span style="color: #00FFFF;">"hybrid"</span>
-        }
-        
-        headers = {<span style="color: #00FFFF;">"Authorization"</span>: <span style="color: #00FFFF;">f"Bearer {self.token}"</span>}
-        resp = requests.post(<span style="color: #00FFFF;">f"{self.api}/submit_bid"</span>, 
-                           headers=headers, json=service_data)
-        
-        <span style="color: #FF00FF;">if</span> resp.status_code == <span style="color: #FFFFFF;">200</span>:
-            bid_id = resp.json()[<span style="color: #00FFFF;">'bid_id'</span>]
-            self.ontology.update_object(ontology_req.id, 
-                                      {<span style="color: #00FFFF;">"exchange_bid"</span>: bid_id})
-            <span style="color: #FF00FF;">return</span> bid_id
-
-<span style="color: #FFFF00;"># Usage</span>
-proc = GovProcurement(<span style="color: #00FFFF;">"https://usda.palantir.com"</span>, 
-                     <span style="color: #00FFFF;">"https://rse-api.com:5003"</span>)
-requirements = proc.ontology.query(<span style="color: #00FFFF;">"approved_services"</span>)
-<span style="color: #FF00FF;">for</span> req <span style="color: #FF00FF;">in</span> requirements:
-    bid_id = proc.submit_requirement(req)
-    <span style="color: #FF00FF;">print</span>(<span style="color: #00FFFF;">f"Posted: {bid_id}"</span>)</code></pre>
-    </div>
-
-    <h4 style="color: #00FFFF; margin: 15px 0 5px 0;">COMPLIANCE FEATURES</h4>
-    <div style="color: #FFFFFF;">
-        <span style="color: #00FF00;">✓</span> FedRAMP/FISMA security compliance<br>
-        <span style="color: #00FF00;">✓</span> SAM.gov vendor verification<br>
-        <span style="color: #00FF00;">✓</span> Budget tracking integration<br>
-        <span style="color: #00FF00;">✓</span> Complete audit trail in Palantir
-    </div>
-
-    <h4 style="color: #00FFFF; margin: 15px 0 5px 0;">PROJECT DECOMPOSITION</h4>
-    <div style="background: #000000; border: 1px solid #00FF00; padding: 10px;">
-        <pre style="margin: 0; color: #00FF00; font-size: 12px;"><code><span style="color: #FFFF00;"># Break large project into sub-jobs via chat/bulletin</span>
-<span style="color: #FF00FF;">def</span> <span style="color: #FFFFFF;">decompose_project</span>(self, large_project_id):
-    <span style="color: #FFFF00;"># Post project overview to bulletin</span>
-    bulletin_data = {
-        <span style="color: #00FFFF;">"title"</span>: <span style="color: #00FFFF;">"USDA Agricultural Monitoring System - Seeking Partners"</span>,
-        <span style="color: #00FFFF;">"content"</span>: <span style="color: #00FFFF;">"$2M project split into: Data Collection ($500K), Analysis Platform ($800K), Reporting Dashboard ($400K), Training ($300K)"</span>,
-        <span style="color: #00FFFF;">"category"</span>: <span style="color: #00FFFF;">"announcement"</span>
-    }
-    requests.post(<span style="color: #00FFFF;">f"{self.api}/bulletin"</span>, 
-                  headers=headers, json=bulletin_data)
-    
-    <span style="color: #FFFF00;"># Chat with interested vendors for capability discussion</span>
-    vendors = [<span style="color: #00FFFF;">"AgTech_Solutions"</span>, <span style="color: #00FFFF;">"DataViz_Corp"</span>]
-    <span style="color: #FF00FF;">for</span> vendor <span style="color: #FF00FF;">in</span> vendors:
-        chat_msg = {
-            <span style="color: #00FFFF;">"recipient"</span>: vendor,
-            <span style="color: #00FFFF;">"message"</span>: <span style="color: #00FFFF;">"Which components can your team handle? Send capability matrix."</span>
-        }
-        requests.post(<span style="color: #00FFFF;">f"{self.api}/chat"</span>, headers=headers, json=chat_msg)
-    
-    <span style="color: #FFFF00;"># Create separate bids for each component</span>
-    components = [
-        {<span style="color: #00FFFF;">"service"</span>: <span style="color: #00FFFF;">"Satellite data collection system"</span>, <span style="color: #00FFFF;">"price"</span>: <span style="color: #FFFFFF;">500000</span>},
-        {<span style="color: #00FFFF;">"service"</span>: <span style="color: #00FFFF;">"ML analysis platform"</span>, <span style="color: #00FFFF;">"price"</span>: <span style="color: #FFFFFF;">800000</span>},
-        {<span style="color: #00FFFF;">"service"</span>: <span style="color: #00FFFF;">"Executive dashboard"</span>, <span style="color: #00FFFF;">"price"</span>: <span style="color: #FFFFFF;">400000</span>}
-    ]
-    <span style="color: #FF00FF;">for</span> component <span style="color: #FF00FF;">in</span> components:
-        self.submit_requirement(component)</code></pre>
-    </div>
-
-    <div style="color: #FFFFFF; margin: 10px 0;">
-        <span style="color: #00FF00;">BENEFITS:</span> Better vendor specialization, reduced risk, faster delivery, competitive pricing per component
-    </div>
-
-    <div style="background: #800000; border: 1px solid #FFFF00; padding: 8px; margin: 15px 0; color: #FFFF00;">
-        <strong>COMPLIANCE:</strong> All procurement must meet FAR requirements. Vendors must be SAM.gov registered.
-    </div>
-</div>
-                    </div>
-                    
-                    <h3>Supply-Side Applications</h3>
-                    
-                    <div class="endpoint" style="margin-left: 20px; border-left: 4px solid var(--gold);">
-                        <h4>📝 Spell-checking Agent</h4>
-                        <p><strong>Automated proofreading and editing service</strong></p>
-                        <p>An intelligent software agent that provides professional proofreading and spell-checking services for documents, emails, and web content.</p>
-                        
-                        <h5>Agent Capabilities:</h5>
-                        <ul>
-                            <li>Continuously monitors for text editing jobs via <code>/grab_job</code></li>
-                            <li>Supports multiple languages and writing styles</li>
-                            <li>Grammar correction, style suggestions, and readability improvements</li>
-                            <li>Fast turnaround times (typically under 5 minutes)</li>
-                            <li>Specialized handling for academic, business, and creative writing</li>
-                        </ul>
-                        
-                        <h5>Service Registration:</h5>
-                        <div class="code-block">// Agent continuously polls for jobs
-const grabJobRequest = {
-  capabilities: "spell checking, grammar correction, proofreading, style editing, academic writing, business writing",
-  location_type: "remote",
-  max_distance: null  // Remote work, no distance limit
-};
-
-// Handles text processing jobs like:
-{
-  type: "text_editing",
-  word_count: 1500,
-  document_type: "business_email",
-  language: "en-US",
-  deadline: "within_1_hour"
-}</div>
-                    </div>
-                    
-                    <div class="endpoint" style="margin-left: 20px; border-left: 4px solid var(--gold);">
-                        <h4>🚕 CrazyTaxi</h4>
-                        <p><strong>Fleet management system for physical taxi services</strong></p>
-                        <p>CrazyTaxi is a dispatch system that manages a fleet of physical taxis, automatically matching drivers with ride requests through the Service Exchange.</p>
-                        
-                        <h5>Fleet Management Features:</h5>
-                        <ul>
-                            <li>Real-time GPS tracking of all fleet vehicles</li>
-                            <li>Automatic job grabbing via <code>/grab_job</code> based on driver availability</li>
-                            <li>Dynamic pricing based on demand and distance</li>
-                            <li>Driver performance monitoring and rating management</li>
-                            <li>Route optimization and traffic integration</li>
-                        </ul>
-                        
-                        <h5>Driver Integration:</h5>
-                        <div class="code-block">// Each taxi registers for ride jobs
-const taxiCapabilities = {
-  capabilities: "passenger_transport, airport_runs, city_rides, package_delivery",
-  location_type: "physical",
-  address: "Current GPS location",
-  lat: 39.7392,
-  lon: -104.9903,
-  max_distance: 25,
-  vehicle_info: {
-    type: "sedan",
-    capacity: 4,
-    wheelchair_accessible: false,
-    payment_methods: ["cash", "credit_card", "xmoney"]
-  }
-};
-
-// Handles ride requests like:
-{
-  type: "taxi",
-  start_location: "Denver Airport",
-  end_location: "Downtown Denver",
-  passenger_count: 2,
-  requested_time: "immediate",
-  special_requirements: []
-}</div>
+    <!-- Chat Modal -->
+    <div class="modal fade" id="chatModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">💬 Inbox</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-4">
+                            <h6>Conversations</h6>
+                            <div class="chat-inbox" id="chatInbox">
+                                <div class="loading-spinner" id="conversationsLoading">
+                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                    <span class="ms-2">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-8">
+                            <div id="conversationView" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 id="currentConversationUser">Select a conversation</h6>
+                                    <button class="btn btn-sm btn-primary" onclick="showNewMessageForm()">New Message</button>
+                                </div>
+                                <div class="message-history" id="messageHistory"></div>
+                                <form id="replyForm" style="display: none;">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="Type your reply..." id="replyMessage" required>
+                                        <button type="submit" class="btn btn-primary">Send</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div id="newMessageForm" style="display: none;">
+                                <h6>New Message</h6>
+                                <form id="chatForm">
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" placeholder="Recipient username" id="chatRecipient" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <textarea class="form-control" rows="3" placeholder="Your message" id="chatMessage" required></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" placeholder="Job ID (optional)" id="chatJobId">
+                                        <small class="text-muted">Link this message to a specific job</small>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">Send Message</button>
+                                        <button type="button" class="btn btn-secondary" onclick="hideNewMessageForm()">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div id="chatPlaceholder">
+                                <div class="text-center text-muted p-4">
+                                    <p>Select a conversation to view messages or click "New Message" to start chatting.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Error Responses -->
-                <div class="endpoint">
-                    <h2>Error Responses</h2>
-                    <p>All errors follow a consistent format:</p>
-                    <div class="code-block">{
-  "error": "Error message describing what went wrong"
-}</div>
-                    
-                    <h4>Common HTTP Status Codes</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Code</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>200</code></td>
-                                <td>Success</td>
-                            </tr>
-                            <tr>
-                                <td><code>201</code></td>
-                                <td>Created (successful registration)</td>
-                            </tr>
-                            <tr>
-                                <td><code>204</code></td>
-                                <td>No Content (no matching jobs available)</td>
-                            </tr>
-                            <tr>
-                                <td><code>400</code></td>
-                                <td>Bad Request (invalid parameters)</td>
-                            </tr>
-                            <tr>
-                                <td><code>401</code></td>
-                                <td>Unauthorized (invalid or missing token)</td>
-                            </tr>
-                            <tr>
-                                <td><code>403</code></td>
-                                <td>Forbidden (not authorized for this action, includes seat verification failures)</td>
-                            </tr>
-                            <tr>
-                                <td><code>404</code></td>
-                                <td>Not Found</td>
-                            </tr>
-                            <tr>
-                                <td><code>500</code></td>
-                                <td>Internal Server Error</td>
-                            </tr>
-                        </tbody>
-                    </table>
+    <!-- Bulletin Modal -->
+    <div class="modal fade" id="bulletinModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">📢 Community Bulletin</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-
-                <!-- Rate Limiting -->
-                <div class="endpoint">
-                    <h2>Rate Limiting</h2>
-                    <p>API requests are subject to the following rate limits:</p>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Recent Posts</h6>
+                        <button class="btn btn-sm btn-primary" onclick="showNewPostForm()">New Post</button>
+                    </div>
                     
-                    <h4>General Endpoints</h4>
-                    <p>Most API endpoints are limited to 60 requests per minute per IP address. Exceeding this limit will result in a 429 Too Many Requests response.</p>
+                    <div id="bulletinFeed" class="bulletin-feed">
+                        <div class="loading-spinner" id="bulletinLoading">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <span class="ms-2">Loading posts...</span>
+                        </div>
+                    </div>
                     
-                    <h4>Seat-Protected Endpoints</h4>
-                    <p>When seat verification is active, the <code>/grab_job</code> endpoint has special rate limiting:</p>
-                    <ul>
-                        <li><strong>Golden Seats:</strong> One request per 15 minutes</li>
-                        <li><strong>Silver Seats:</strong> One request per 15 minutes</li>
-                    </ul>
-                    <p><em>Note: During the temporary access period (while seats are not required), standard rate limits apply to /grab_job.</em></p>
+                    <div id="newPostForm" style="display: none;" class="mt-3 p-3 border rounded">
+                        <h6>Create New Post</h6>
+                        <form id="bulletinForm">
+                            <div class="mb-3">
+                                <input type="text" class="form-control" placeholder="Post title" id="bulletinTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <select class="form-control" id="bulletinCategory">
+                                    <option value="general">General</option>
+                                    <option value="announcement">Announcement</option>
+                                    <option value="question">Question</option>
+                                    <option value="offer">Service Offer</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <textarea class="form-control" rows="4" placeholder="Post content" id="bulletinContent" required></textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">Post to Bulletin</button>
+                                <button type="button" class="btn btn-secondary" onclick="hideNewPostForm()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
-        async function pingServer() {
-            const btn = document.getElementById('pingBtn');
-            const spinner = document.getElementById('pingSpinner');
-            const text = document.getElementById('pingText');
-            const result = document.getElementById('pingResult');
+        const API_URL = 'https://rse-api.com:5003';
+        let authToken = null;
+        let currentUser = null;
+        let currentUsername = null;
+        let outstandingBids = [];
+        let completedJobs = [];
+        let activeJobs = [];
+        let conversations = [];
+        let currentConversation = null;
+        let bulletinPosts = [];
+        let userLocation = null;
+        
+        // Initialize the page
+        window.addEventListener('load', () => {
+            authToken = localStorage.getItem('auth_token');
+            currentUsername = localStorage.getItem('current_username');
             
-            // Reset button state
-            btn.disabled = true;
-            spinner.style.display = 'inline-block';
-            text.textContent = 'Pinging...';
-            result.style.display = 'none';
-            
-            try {
-                const response = await fetch('https://rse-api.com:5003/ping');
-                const data = await response.json();
-                
-                // Show success
-                result.className = 'ping-result ping-success';
-                result.innerHTML = `
-                    <strong>✅ Success (${response.status})</strong><br>
-                    Response: ${JSON.stringify(data, null, 2)}
-                `;
-                result.style.display = 'block';
-                
-            } catch (error) {
-                // Show error
-                result.className = 'ping-result ping-error';
-                result.innerHTML = `
-                    <strong>❌ Error</strong><br>
-                    ${error.message}<br>
-                    <small>Note: This may be due to CORS policy or server unavailability.</small>
-                `;
-                result.style.display = 'block';
+            if (authToken && currentUsername) {
+                loadAccountData();
+                updateUIForLoggedInUser();
+            }
+        });
+        
+        function showError(message, containerId = 'authError') {
+            const errorDiv = document.getElementById(containerId);
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function setLoading(isLoading, buttonId) {
+            const button = document.getElementById(buttonId);
+            if (isLoading) {
+                button.classList.add('loading');
+                button.disabled = true;
+                button.textContent = 'Loading...';
+            } else {
+                button.classList.remove('loading');
+                button.disabled = false;
+                button.textContent = buttonId.includes('login') ? 'Login' : 'Register';
+            }
+        }
+        
+        function updateUIForLoggedInUser() {
+            document.getElementById('loginButton').style.display = 'none';
+            document.getElementById('accountDropdown').style.display = 'inline-block';
+            document.getElementById('chatButton').style.display = 'inline-block';
+            document.getElementById('bulletinButton').style.display = 'inline-block';
+        }
+        
+        function updateUIForLoggedOutUser() {
+            document.getElementById('loginButton').style.display = 'inline-block';
+            document.getElementById('accountDropdown').style.display = 'none';
+            document.getElementById('chatButton').style.display = 'none';
+            document.getElementById('bulletinButton').style.display = 'none';
+        }
+
+        function selectService(serviceName) {
+            showBuyerForm();
+            // Wait for modal to show then populate the field
+            setTimeout(() => {
+                document.getElementById('bidService').value = serviceName;
+            }, 100);
+        }
+
+        function requestUserLocation() {
+            return new Promise((resolve, reject) => {
+                if (userLocation) {
+                    resolve(userLocation);
+                    return;
+                }
+
+                if ('geolocation' in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            userLocation = {
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude
+                            };
+                            resolve(userLocation);
+                        },
+                        (error) => {
+                            console.warn('Geolocation error:', error);
+                            resolve(null); // Continue without location
+                        },
+                        {
+                            timeout: 10000,
+                            enableHighAccuracy: false
+                        }
+                    );
+                } else {
+                    resolve(null); // Geolocation not supported
+                }
+            });
+        }
+        
+        async function loadAccountData() {
+            if (!authToken || !currentUsername) {
+                console.error('No auth token or username available');
+                return;
             }
             
-            // Reset button
-            btn.disabled = false;
-            spinner.style.display = 'none';
-            text.textContent = 'Ping Server';
+            try {
+                const accountResponse = await fetch(`${API_URL}/account`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: currentUsername })
+                });
+                
+                if (accountResponse.ok) {
+                    currentUser = await accountResponse.json();
+                    updateAccountDisplay();
+                } else {
+                    console.error('Failed to load account data:', accountResponse.status);
+                    if (accountResponse.status === 401) {
+                        logout();
+                        return;
+                    }
+                }
+                
+                await loadOutstandingBids();
+                await loadCompletedJobs();
+                
+            } catch (error) {
+                console.error('Error loading account data:', error);
+                showError('Failed to load account data. Please try refreshing the page.');
+            }
         }
+        
+        function updateAccountDisplay() {
+            if (!currentUser) return;
+            
+            document.getElementById('accountUsername').textContent = currentUser.username;
+            document.getElementById('accountDisplayName').textContent = currentUser.username;
+            
+            const stars = Math.round(currentUser.stars || 0);
+            const starDisplay = '★'.repeat(Math.min(stars, 5)) + '☆'.repeat(Math.max(5 - stars, 0));
+            document.getElementById('starDisplay').textContent = starDisplay;
+            document.getElementById('ratingText').textContent = 
+                `${currentUser.stars || 0} (${currentUser.total_ratings || 0} ratings)`;
+        }
+        
+        async function loadOutstandingBids() {
+            const bidsContainer = document.getElementById('outstandingBids');
+            const loadingSpinner = document.getElementById('bidsLoading');
+            
+            loadingSpinner.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_URL}/my_bids`, {
+                    headers: {'Authorization': `Bearer ${authToken}`}
+                });
+                
+                loadingSpinner.style.display = 'none';
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    outstandingBids = data.bids || [];
+                    updateBidsDisplay();
+                } else {
+                    bidsContainer.innerHTML = '<p class="text-danger">Error loading requests</p>';
+                }
+                
+            } catch (error) {
+                loadingSpinner.style.display = 'none';
+                bidsContainer.innerHTML = '<p class="text-danger">Network error loading requests</p>';
+            }
+        }
+        
+        function updateBidsDisplay() {
+            const container = document.getElementById('outstandingBids');
+            
+            if (outstandingBids.length === 0) {
+                container.innerHTML = '<p class="text-muted mb-0">No outstanding requests</p>';
+                return;
+            }
+            
+            container.innerHTML = outstandingBids.map(bid => `
+                <div class="bid-item">
+                    <h6>${typeof bid.service === 'object' ? JSON.stringify(bid.service) : bid.service}</h6>
+                    <p>Price: ${bid.currency || 'USD'} ${bid.price} • Expires: ${new Date(bid.end_time * 1000).toLocaleString()}</p>
+                    ${bid.location_type !== 'remote' ? `<p class="text-muted">Location: ${bid.address || 'Physical service'}</p>` : '<p class="text-muted">Remote service</p>'}
+                    <div class="bid-actions">
+                        <button class="btn btn-danger btn-xs" onclick="cancelBid('${bid.bid_id}')">Cancel</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function loadCompletedJobs() {
+            const jobsContainer = document.getElementById('completedJobs');
+            const jobsLoadingSpinner = document.getElementById('jobsLoading');
+            const activeJobsContainer = document.getElementById('activeJobs');
+            const activeJobsLoadingSpinner = document.getElementById('activeJobsLoading');
+            
+            jobsLoadingSpinner.style.display = 'block';
+            activeJobsLoadingSpinner.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_URL}/my_jobs`, {
+                    headers: {'Authorization': `Bearer ${authToken}`}
+                });
+                
+                jobsLoadingSpinner.style.display = 'none';
+                activeJobsLoadingSpinner.style.display = 'none';
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    completedJobs = data.completed_jobs || [];
+                    activeJobs = data.active_jobs || [];
+                    updateJobsDisplay();
+                    updateActiveJobsDisplay();
+                } else {
+                    jobsContainer.innerHTML = '<p class="text-danger">Error loading services</p>';
+                    activeJobsContainer.innerHTML = '<p class="text-danger">Error loading active services</p>';
+                }
+                
+            } catch (error) {
+                jobsLoadingSpinner.style.display = 'none';
+                activeJobsLoadingSpinner.style.display = 'none';
+                jobsContainer.innerHTML = '<p class="text-danger">Network error loading services</p>';
+                activeJobsContainer.innerHTML = '<p class="text-danger">Network error loading active services</p>';
+            }
+        }
+        
+        function updateActiveJobsDisplay() {
+            const container = document.getElementById('activeJobs');
+            
+            if (activeJobs.length === 0) {
+                container.innerHTML = '<p class="text-muted mb-0">No active services</p>';
+                return;
+            }
+            
+            container.innerHTML = activeJobs.map(job => `
+                <div class="job-item">
+                    <h6>${typeof job.service === 'object' ? JSON.stringify(job.service) : job.service}</h6>
+                    <p>Price: ${job.currency || 'USD'} ${job.price} • Accepted: ${new Date(job.accepted_at * 1000).toLocaleDateString()} • Role: ${job.role}</p>
+                    <p class="text-muted">Partner: ${job.counterparty}</p>
+                    ${job.location_type !== 'remote' ? `<small class="text-muted">Location: ${job.address || 'Physical service'}</small>` : '<small class="text-muted">Remote service</small>'}
+                </div>
+            `).join('');
+        }
+        
+        function updateJobsDisplay() {
+            const container = document.getElementById('completedJobs');
+            
+            if (completedJobs.length === 0) {
+                container.innerHTML = '<p class="text-muted mb-0">No completed services</p>';
+                return;
+            }
+            
+            container.innerHTML = completedJobs.map(job => `
+                <div class="job-item">
+                    <h6>${typeof job.service === 'object' ? JSON.stringify(job.service) : job.service}</h6>
+                    <p>Price: ${job.currency || 'USD'} ${job.price} • Completed: ${new Date(job.completed_at * 1000).toLocaleDateString()} • Role: ${job.role}</p>
+                    <div class="d-flex justify-content-between">
+                        <small>You rated: ${job.my_rating ? '★'.repeat(job.my_rating) + '☆'.repeat(5 - job.my_rating) : 'Not rated'}</small>
+                        <small>They rated: ${job.their_rating ? '★'.repeat(job.their_rating) + '☆'.repeat(5 - job.their_rating) : 'Not rated'}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function cancelBid(bidId) {
+            if (!confirm('Are you sure you want to cancel this request?')) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/cancel_bid`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ bid_id: bidId })
+                });
+                
+                if (response.ok) {
+                    alert('Request cancelled successfully');
+                    outstandingBids = outstandingBids.filter(bid => bid.bid_id !== bidId);
+                    updateBidsDisplay();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to cancel request: ${error.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                alert('Network error while cancelling request');
+            }
+        }
+        
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            currentUsername = null;
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('current_username');
+            updateUIForLoggedOutUser();
+            alert('Logged out successfully');
+        }
+        
+        function showAuth() {
+            document.getElementById('authError').style.display = 'none';
+            new bootstrap.Modal(document.getElementById('authModal')).show();
+        }
+        
+        async function showBuyerForm() {
+            if (!authToken) {
+                showAuth();
+                return;
+            }
+            
+            // Request location when showing the form
+            await requestUserLocation();
+            
+            new bootstrap.Modal(document.getElementById('bidModal')).show();
+        }
+        
+        async function showChat() {
+            if (!authToken) {
+                showAuth();
+                return;
+            }
+            
+            new bootstrap.Modal(document.getElementById('chatModal')).show();
+            await loadConversations();
+        }
+        
+        async function showBulletin() {
+            if (!authToken) {
+                showAuth();
+                return;
+            }
+            
+            new bootstrap.Modal(document.getElementById('bulletinModal')).show();
+            await loadBulletinFeed();
+        }
+
+        // Chat functionality
+        async function loadConversations() {
+            const inboxContainer = document.getElementById('chatInbox');
+            const loadingSpinner = document.getElementById('conversationsLoading');
+            
+            loadingSpinner.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_URL}/chat/conversations`, {
+                    headers: {'Authorization': `Bearer ${authToken}`}
+                });
+                
+                loadingSpinner.style.display = 'none';
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    conversations = data.conversations || [];
+                    updateConversationsDisplay();
+                } else {
+                    inboxContainer.innerHTML = '<p class="text-danger">Error loading conversations</p>';
+                }
+                
+            } catch (error) {
+                loadingSpinner.style.display = 'none';
+                inboxContainer.innerHTML = '<p class="text-danger">Network error loading conversations</p>';
+            }
+        }
+
+        function updateConversationsDisplay() {
+            const container = document.getElementById('chatInbox');
+            
+            if (conversations.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center p-3">No conversations yet</p>';
+                return;
+            }
+            
+            container.innerHTML = conversations.map((conv, index) => `
+                <div class="conversation-item ${currentConversation === index ? 'active' : ''}" onclick="selectConversation(${index})">
+                    <div class="conversation-meta">
+                        <span class="conversation-user">${conv.user}</span>
+                        <span class="conversation-time">${formatTime(conv.timestamp * 1000)}</span>
+                    </div>
+                    <div class="conversation-preview">${conv.lastMessage}</div>
+                    ${conv.unread ? '<div class="badge bg-primary">New</div>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function selectConversation(index) {
+            currentConversation = index;
+            updateConversationsDisplay();
+            showConversationView(conversations[index]);
+        }
+
+        async function showConversationView(conversation) {
+            document.getElementById('conversationView').style.display = 'block';
+            document.getElementById('newMessageForm').style.display = 'none';
+            document.getElementById('chatPlaceholder').style.display = 'none';
+            document.getElementById('currentConversationUser').textContent = conversation.user;
+            document.getElementById('replyForm').style.display = 'block';
+            
+            // Load message history from API
+            const messageHistory = document.getElementById('messageHistory');
+            messageHistory.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm"></div> Loading messages...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL}/chat/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        conversation_id: conversation.conversation_id || conversation.user 
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const messages = data.messages || [];
+                    
+                    messageHistory.innerHTML = messages.map(msg => `
+                        <div class="message-item ${msg.sender === currentUsername ? 'sent' : 'received'}">
+                            <div class="message-sender">${msg.sender}</div>
+                            <div class="message-text">${msg.message}</div>
+                            <div class="message-time">${formatTime(msg.timestamp * 1000)}</div>
+                        </div>
+                    `).join('');
+                    
+                    if (messages.length === 0) {
+                        messageHistory.innerHTML = '<div class="text-center text-muted p-3">No messages yet</div>';
+                    }
+                } else {
+                    messageHistory.innerHTML = '<div class="text-center text-danger p-3">Error loading messages</div>';
+                }
+            } catch (error) {
+                messageHistory.innerHTML = '<div class="text-center text-danger p-3">Network error loading messages</div>';
+            }
+            
+            messageHistory.scrollTop = messageHistory.scrollHeight;
+        }
+
+        function showNewMessageForm() {
+            document.getElementById('conversationView').style.display = 'none';
+            document.getElementById('newMessageForm').style.display = 'block';
+            document.getElementById('chatPlaceholder').style.display = 'none';
+        }
+
+        function hideNewMessageForm() {
+            document.getElementById('newMessageForm').style.display = 'none';
+            if (currentConversation !== null) {
+                document.getElementById('conversationView').style.display = 'block';
+            } else {
+                document.getElementById('chatPlaceholder').style.display = 'block';
+            }
+        }
+
+        // Bulletin functionality
+        async function loadBulletinFeed() {
+            const feedContainer = document.getElementById('bulletinFeed');
+            const loadingSpinner = document.getElementById('bulletinLoading');
+            
+            loadingSpinner.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_URL}/bulletin/feed`, {
+                    headers: {'Authorization': `Bearer ${authToken}`}
+                });
+                
+                loadingSpinner.style.display = 'none';
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    bulletinPosts = data.posts || [];
+                    updateBulletinDisplay();
+                } else {
+                    feedContainer.innerHTML = '<p class="text-danger">Error loading bulletin posts</p>';
+                }
+                
+            } catch (error) {
+                loadingSpinner.style.display = 'none';
+                feedContainer.innerHTML = '<p class="text-danger">Network error loading bulletin posts</p>';
+            }
+        }
+
+        function updateBulletinDisplay() {
+            const container = document.getElementById('bulletinFeed');
+            
+            if (bulletinPosts.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center p-3">No posts yet</p>';
+                return;
+            }
+            
+            container.innerHTML = bulletinPosts.map(post => `
+                <div class="bulletin-item">
+                    <div class="bulletin-header">
+                        <h6 class="bulletin-title">${post.title}</h6>
+                        <span class="bulletin-category">${post.category}</span>
+                    </div>
+                    <div class="bulletin-meta">By ${post.author} • ${formatTime(post.timestamp * 1000)}</div>
+                    <div class="bulletin-content">${post.content}</div>
+                </div>
+            `).join('');
+        }
+
+        function showNewPostForm() {
+            document.getElementById('newPostForm').style.display = 'block';
+        }
+
+        function hideNewPostForm() {
+            document.getElementById('newPostForm').style.display = 'none';
+            document.getElementById('bulletinForm').reset();
+        }
+
+        function formatTime(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const days = Math.floor(hours / 24);
+            
+            if (days > 0) return `${days}d ago`;
+            if (hours > 0) return `${hours}h ago`;
+            return 'Just now';
+        }
+        
+        // Location type handling
+        document.getElementById('bidLocationType').addEventListener('change', (e) => {
+            document.getElementById('addressField').style.display = 
+                e.target.value === 'remote' ? 'none' : 'block';
+        });
+        
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+            
+            setLoading(true, 'loginSubmitBtn');
+            
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, password })
+                });
+                
+                setLoading(false, 'loginSubmitBtn');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    currentUsername = username;
+                    
+                    localStorage.setItem('auth_token', authToken);
+                    localStorage.setItem('current_username', currentUsername);
+                    
+                    bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
+                    updateUIForLoggedInUser();
+                    
+                    await loadAccountData();
+                    
+                    alert('Login successful!');
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    showError(errorData.error || 'Login failed. Please check your credentials.');
+                }
+            } catch (error) {
+                setLoading(false, 'loginSubmitBtn');
+                showError('Network error. Please check your connection and try again.');
+                console.error('Login error:', error);
+            }
+        });
+        
+        // Register
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+            
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+            
+            if (password.length < 8) {
+                showError('Password must be at least 8 characters long');
+                return;
+            }
+            
+            setLoading(true, 'registerSubmitBtn');
+            
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, password })
+                });
+                
+                setLoading(false, 'registerSubmitBtn');
+                
+                if (response.ok) {
+                    alert('Registration successful! Please login.');
+                    document.querySelector('[href="#login"]').click();
+                    document.getElementById('loginUsername').value = username;
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    showError(errorData.error || 'Registration failed. Please try a different username.');
+                }
+            } catch (error) {
+                setLoading(false, 'registerSubmitBtn');
+                showError('Network error. Please check your connection and try again.');
+                console.error('Registration error:', error);
+            }
+        });
+        
+        // Submit bid/service request
+        document.getElementById('bidForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const duration = parseInt(document.getElementById('bidDuration').value);
+            const durationUnit = document.getElementById('bidDurationUnit').value;
+            const durationInSeconds = durationUnit === 'hours' ? duration * 3600 : duration * 86400;
+            
+            const data = {
+                service: document.getElementById('bidService').value,
+                price: parseFloat(document.getElementById('bidPrice').value),
+                currency: document.getElementById('paymentMethod').value,
+                end_time: Math.floor(Date.now() / 1000) + durationInSeconds,
+                location_type: document.getElementById('bidLocationType').value
+            };
+            
+            // Use provided address or fallback to user location
+            if (data.location_type !== 'remote') {
+                const addressInput = document.getElementById('bidAddress').value.trim();
+                if (addressInput) {
+                    data.address = addressInput;
+                } else if (userLocation) {
+                    data.address = `${userLocation.latitude}, ${userLocation.longitude}`;
+                } else {
+                    alert('Please provide an address or allow location access for physical services.');
+                    return;
+                }
+            }
+            
+            const response = await fetch(`${API_URL}/submit_bid`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                alert(`Service request submitted! ID: ${result.bid_id}`);
+                bootstrap.Modal.getInstance(document.getElementById('bidModal')).hide();
+                document.getElementById('bidForm').reset();
+                document.getElementById('bidDuration').value = '24';
+                document.getElementById('bidDurationUnit').value = 'hours';
+                document.getElementById('paymentMethod').value = 'USD';
+                if (authToken) {
+                    loadOutstandingBids();
+                }
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                alert(`Failed to submit request: ${errorData.error || 'Unknown error'}`);
+            }
+        });
+        
+        // Send chat message
+        document.getElementById('chatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                recipient: document.getElementById('chatRecipient').value,
+                message: document.getElementById('chatMessage').value
+            };
+            
+            const jobId = document.getElementById('chatJobId').value.trim();
+            if (jobId) {
+                data.job_id = jobId;
+            }
+            
+            const response = await fetch(`${API_URL}/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                alert(`Message sent successfully! Message ID: ${result.message_id}`);
+                document.getElementById('chatForm').reset();
+                hideNewMessageForm();
+                await loadConversations(); // Refresh conversations
+            } else {
+                const error = await response.json();
+                alert(`Failed to send message: ${error.error || 'Unknown error'}`);
+            }
+        });
+
+        // Reply to conversation
+        document.getElementById('replyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const message = document.getElementById('replyMessage').value.trim();
+            if (!message || currentConversation === null) return;
+            
+            const conversation = conversations[currentConversation];
+            
+            try {
+                const response = await fetch(`${API_URL}/chat/reply`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        recipient: conversation.user,
+                        message: message,
+                        conversation_id: conversation.conversation_id || conversation.user
+                    })
+                });
+                
+                if (response.ok) {
+                    // Add message to history immediately
+                    const messageHistory = document.getElementById('messageHistory');
+                    messageHistory.innerHTML += `
+                        <div class="message-item sent">
+                            <div class="message-sender">You</div>
+                            <div class="message-text">${message}</div>
+                            <div class="message-time">Just now</div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('replyMessage').value = '';
+                    messageHistory.scrollTop = messageHistory.scrollHeight;
+                    
+                    // Update conversation preview
+                    conversation.lastMessage = message;
+                    conversation.timestamp = Math.floor(Date.now() / 1000);
+                    updateConversationsDisplay();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to send message: ${error.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                alert('Network error while sending message');
+            }
+        });
+        
+        // Post to bulletin
+        document.getElementById('bulletinForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                title: document.getElementById('bulletinTitle').value,
+                content: document.getElementById('bulletinContent').value,
+                category: document.getElementById('bulletinCategory').value
+            };
+            
+            const response = await fetch(`${API_URL}/bulletin`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                alert(`Posted to bulletin successfully! Post ID: ${result.post_id}`);
+                hideNewPostForm();
+                
+                // Refresh the bulletin feed to show the new post
+                await loadBulletinFeed();
+            } else {
+                const error = await response.json();
+                alert(`Failed to post: ${error.error || 'Unknown error'}`);
+            }
+        });
     </script>
 </body>
 </html>

@@ -819,7 +819,7 @@ def send_chat_message(data):
             'recipient': recipient,
             'message': message_text,
             'job_id': job_id,
-            'timestamp': int(time.time()),
+            'sent_at': int(time.time()),
             'read': False
         }
         
@@ -832,153 +832,11 @@ def send_chat_message(data):
         
         return {
             "message_id": message_id,
-            "sent_at": message_data['timestamp']
+            "sent_at": message_data['sent_at']
         }, 200
         
     except Exception as e:
         logger.error(f"Chat error: {str(e)}")
-        return {"error": "Internal server error"}, 500
-
-def get_chat_conversations(data):
-    """Get conversations for a user"""
-    try:
-        username = data.get('username')
-        
-        all_messages = get_user_messages(username)
-        
-        # Group messages by conversation partner
-        conversations = {}
-        
-        for msg in all_messages:
-            # Determine conversation partner
-            if msg['sender'] == username:
-                partner = msg['recipient']
-            else:
-                partner = msg['sender']
-            
-            # Initialize conversation if not exists
-            if partner not in conversations:
-                conversations[partner] = {
-                    'user': partner,
-                    'conversation_id': partner,  # Simple conversation ID
-                    'messages': [],
-                    'unread': False
-                }
-            
-            conversations[partner]['messages'].append(msg)
-            
-            # Check for unread messages (recipient is current user and not read)
-            if msg['recipient'] == username and not msg.get('read', False):
-                conversations[partner]['unread'] = True
-        
-        # Convert to list and add metadata
-        conversation_list = []
-        for partner, conv_data in conversations.items():
-            messages = conv_data['messages']
-            if messages:
-                # Sort messages by timestamp
-                messages.sort(key=lambda x: x.get('timestamp', 0))
-                
-                # Get last message for preview
-                last_message = messages[-1]
-                last_message_text = last_message['message']
-                if len(last_message_text) > 50:
-                    last_message_text = last_message_text[:47] + "..."
-                
-                conversation_list.append({
-                    'user': partner,
-                    'conversation_id': partner,
-                    'lastMessage': last_message_text,
-                    'timestamp': last_message.get('timestamp', 0),
-                    'unread': conv_data['unread']
-                })
-        
-        # Sort by most recent activity
-        conversation_list.sort(key=lambda x: x['timestamp'], reverse=True)
-        
-        logger.info(f"Retrieved {len(conversation_list)} conversations for {username}")
-        
-        return {"conversations": conversation_list}, 200
-        
-    except Exception as e:
-        logger.error(f"Get conversations error: {str(e)}")
-        return {"error": "Internal server error"}, 500
-
-def get_chat_messages(data):
-    """Get message history for a conversation"""
-    try:
-        username = data.get('username')
-        conversation_id = data.get('conversation_id')
-        
-        if not conversation_id:
-            return {"error": "Conversation ID required"}, 400
-        
-        all_messages = get_user_messages(username)
-        
-        # Filter messages for this conversation
-        conversation_messages = []
-        for msg in all_messages:
-            if (msg['sender'] == username and msg['recipient'] == conversation_id) or \
-               (msg['sender'] == conversation_id and msg['recipient'] == username):
-                conversation_messages.append({
-                    'message_id': msg['message_id'],
-                    'sender': msg['sender'],
-                    'recipient': msg['recipient'],
-                    'message': msg['message'],
-                    'timestamp': msg.get('timestamp', 0),
-                    'job_id': msg.get('job_id')
-                })
-        
-        # Sort by timestamp
-        conversation_messages.sort(key=lambda x: x['timestamp'])
-        
-        logger.info(f"Retrieved {len(conversation_messages)} messages for conversation {conversation_id}")
-        
-        return {"messages": conversation_messages}, 200
-        
-    except Exception as e:
-        logger.error(f"Get messages error: {str(e)}")
-        return {"error": "Internal server error"}, 500
-
-def reply_to_conversation(data):
-    """Reply to an existing conversation"""
-    try:
-        sender = data.get('username')
-        recipient = data.get('recipient')
-        message_text = data.get('message', '').strip()
-        conversation_id = data.get('conversation_id')
-        
-        if not recipient or not message_text:
-            return {"error": "Recipient and message required"}, 400
-        
-        # Check if recipient exists
-        if not account_exists(recipient):
-            return {"error": "Recipient not found"}, 404
-        
-        message_id = str(uuid.uuid4())
-        message_data = {
-            'message_id': message_id,
-            'sender': sender,
-            'recipient': recipient,
-            'message': message_text,
-            'conversation_id': conversation_id,
-            'timestamp': int(time.time()),
-            'read': False
-        }
-        
-        # Save message
-        save_message(f"{sender}_{message_id}", message_data)
-        save_message(f"{recipient}_{message_id}", message_data)
-        
-        logger.info(f"Reply sent from {sender} to {recipient} in conversation {conversation_id}")
-        
-        return {
-            "message_id": message_id,
-            "sent_at": message_data['timestamp']
-        }, 200
-        
-    except Exception as e:
-        logger.error(f"Reply error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
 def post_bulletin(data):
@@ -999,11 +857,11 @@ def post_bulletin(data):
         post_id = str(uuid.uuid4())
         bulletin_data = {
             'post_id': post_id,
-            'author': username,  # Use 'author' instead of 'username' for consistency
+            'username': username,
             'title': title,
             'content': content,
             'category': category,
-            'timestamp': int(time.time())
+            'posted_at': int(time.time())
         }
         
         # Save bulletin using the correct function signature
@@ -1013,47 +871,11 @@ def post_bulletin(data):
         
         return {
             "post_id": post_id,
-            "posted_at": bulletin_data['timestamp']
+            "posted_at": bulletin_data['posted_at']
         }, 200
         
     except Exception as e:
         logger.error(f"Bulletin error: {str(e)}")
-        return {"error": "Internal server error"}, 500
-
-def get_bulletin_feed(data):
-    """Get recent bulletin posts"""
-    try:
-        limit = data.get('limit', 20)
-        category_filter = data.get('category')
-        
-        all_bulletins = get_all_bulletins()
-        
-        # Apply category filter if specified
-        if category_filter:
-            all_bulletins = [b for b in all_bulletins if b.get('category') == category_filter]
-        
-        # Limit results
-        if limit:
-            all_bulletins = all_bulletins[:limit]
-        
-        # Format for frontend
-        formatted_posts = []
-        for post in all_bulletins:
-            formatted_posts.append({
-                'post_id': post['post_id'],
-                'title': post['title'],
-                'content': post['content'],
-                'category': post.get('category', 'general'),
-                'author': post.get('author', post.get('username', 'Anonymous')),  # Handle both field names
-                'timestamp': post.get('timestamp', post.get('posted_at', 0))
-            })
-        
-        logger.info(f"Retrieved {len(formatted_posts)} bulletin posts")
-        
-        return {"posts": formatted_posts}, 200
-        
-    except Exception as e:
-        logger.error(f"Get bulletin feed error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
 def get_exchange_data(data):
