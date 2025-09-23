@@ -1,0 +1,2205 @@
+<div class="code-block">
+// Submit automated supply order
+const medicalSupplyOrder = {
+  service: {
+    type: "medical_supplies",
+    category: "pharmaceutical",
+    items: [
+      {
+        name: "Insulin_Humalog",
+        quantity: 500,
+        units: "vials",
+        ndc: "00002-7510-01",
+        storage: "refrigerated"
+      },
+      {
+        name: "N<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Services Exchange - Demo Applications & Bounty Program</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+            padding: 40px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .bounty-program {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px 0;
+            color: white;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bounty-program::before {
+            content: "💰";
+            position: absolute;
+            font-size: 200px;
+            right: -30px;
+            top: -30px;
+            opacity: 0.1;
+        }
+        
+        .bounty-program h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        
+        .bounty-amount {
+            font-size: 4em;
+            font-weight: bold;
+            color: #ffeb3b;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+            margin: 20px 0;
+        }
+        
+        .section-title {
+            color: white;
+            font-size: 2em;
+            margin: 40px 0 20px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .app-card {
+            border-radius: 15px;
+            padding: 30px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .app-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 15px 0;
+        }
+        
+        /* Individual App Styles */
+        
+        .construction-app {
+            background: linear-gradient(135deg, #ff9a00 0%, #ff5e00 100%);
+            color: white;
+        }
+        
+        .security-app {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+        }
+        
+        .hospital-app {
+            background: linear-gradient(135deg, #ffffff 0%, #e8f5e9 100%);
+            color: #2e7d32;
+            border: 2px solid #4caf50;
+        }
+        
+        .agri-app {
+            background: linear-gradient(135deg, #8bc34a 0%, #4caf50 100%);
+            color: white;
+        }
+        
+        .food-app {
+            background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+            color: white;
+        }
+        
+        .party-app {
+            background: linear-gradient(135deg, #ff00ff 0%, #00ffff 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .party-app::after {
+            content: "🎉🎈🎂";
+            position: absolute;
+            font-size: 100px;
+            right: -20px;
+            bottom: -20px;
+            opacity: 0.2;
+        }
+        
+        .robotaxi-app {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #00d4ff;
+            border: 2px solid #00d4ff;
+        }
+        
+        .legal-app {
+            background: linear-gradient(135deg, #8b4513 0%, #d2691e 100%);
+            color: #fffef0;
+        }
+        
+        .education-app {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+        
+        .beauty-app {
+            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+            color: white;
+        }
+        
+        /* Supply Side Robot Controllers */
+        
+        .drone-controller {
+            background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .warehouse-robot {
+            background: linear-gradient(135deg, #f37335 0%, #fdc830 100%);
+            color: #1a1a1a;
+        }
+        
+        .medical-robot {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2c3e50;
+            border: 3px solid #e74c3c;
+        }
+        
+        .cleaning-robot {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            color: white;
+        }
+        
+        .farm-robot {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 The Services Exchange</h1>
+            <h2>Demo Applications & Developer Bounty Program</h2>
+            <p>Build the future of autonomous service coordination</p>
+        </div>
+
+        <div class="bounty-program">
+            <h2>💰 Developer Bounty Program</h2>
+            <div class="bounty-amount">$1,000</div>
+            <h3>Per Fully Operational Application</h3>
+            <p style="font-size: 1.2em; margin: 20px 0;">
+                The Services Exchange is offering $1,000 bounties for developers who create fully operational applications that integrate with our API.
+            </p>
+            <h4 style="margin-top: 30px; font-size: 1.4em;">How to Participate:</h4>
+            <ul style="font-size: 1.1em; line-height: 1.8; margin: 20px 0;">
+                <li>✅ Build a complete, working application using The Services Exchange API</li>
+                <li>✅ Application must successfully handle real transactions (demand or supply side)</li>
+                <li>✅ Include proper error handling, authentication, and production-ready code</li>
+                <li>✅ Deploy your application and demonstrate live functionality</li>
+                <li>✅ Apply for bounty assignment by contacting <strong>@robotservicesx</strong> on X.com</li>
+                <li>✅ Include demo video, GitHub repo, and live deployment URL in your application</li>
+            </ul>
+            <p style="font-size: 1.1em; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; margin-top: 20px;">
+                <strong>Note:</strong> Each bounty must be pre-approved before development. Multiple bounties available for innovative use cases.
+            </p>
+        </div>
+
+        <h2 class="section-title">🏢 Demand-Side Applications</h2>
+        
+        <div class="apps-grid">
+            <!-- Construction Job Site Bidder -->
+            <div class="app-card construction-app">
+                <h3>🏗️ BuildConnect Pro</h3>
+                <h4>Construction Job Site Management & Bidding Platform</h4>
+                <p style="margin: 15px 0;">
+                    Comprehensive platform for construction companies to post job requirements, manage subcontractors, and coordinate complex multi-phase projects.
+                </p>
+                
+                <h5>Key Features:</h5>
+                <ul style="margin: 10px 0 20px 20px;">
+                    <li>Multi-phase project decomposition</li>
+                    <li>Subcontractor qualification tracking</li>
+                    <li>Real-time material cost integration</li>
+                    <li>Compliance and permit management</li>
+                    <li>Progress milestone payments</li>
+                </ul>
+                
+                <div class="code-block">
+// Submit main construction project bid
+const constructionJob = {
+  service: {
+    type: "construction",
+    category: "commercial_building",
+    phases: [
+      {name: "foundation", budget: 150000, duration: "30_days"},
+      {name: "framing", budget: 200000, duration: "45_days"},
+      {name: "electrical", budget: 75000, duration: "20_days"}
+    ],
+    total_sqft: 25000,
+    location: "Denver Industrial Park",
+    permits_required: ["building", "electrical", "plumbing"],
+    insurance_requirements: {
+      general_liability: 2000000,
+      workers_comp: true
+    }
+  },
+  price: 500000.00,
+  currency: "USD",
+  payment_method: "ach_transfer",
+  payment_terms: "net30_milestone",
+  location_type: "physical",
+  address: "4500 Industrial Blvd, Denver, CO"
+};
+
+// Submit main project bid
+fetch('https://rse-api.com:5003/submit_bid', {
+  method: 'POST',
+  headers: {'Authorization': `Bearer ${token}`},
+  body: JSON.stringify(constructionJob)
+});
+
+// Use bulletin to announce project and find subcontractors
+fetch('https://rse-api.com:5003/bulletin', {
+  method: 'POST',
+  headers: {'Authorization': `Bearer ${token}`},
+  body: JSON.stringify({
+    title: "Commercial Build - Seeking Qualified Subs",
+    content: "25,000 sqft warehouse needs electrical, plumbing, HVAC contractors",
+    category: "announcement",
+    bid_id: response.bid_id  // Reference main bid
+  })
+});
+
+// Use chat to coordinate with specific contractors
+fetch('https://rse-api.com:5003/chat', {
+  method: 'POST',
+  body: JSON.stringify({
+    recipient: "EliteElectric_Co",
+    message: "Interested in electrical phase? $75k budget, 20 days. Let me create a separate bid for you."
+  })
+});
+
+// Create separate sub-bids for each phase
+const electricalBid = {
+  service: {type: "electrical_installation", commercial: true},
+  price: 75000,
+  parent_bid: response.bid_id
+};
+fetch('https://rse-api.com:5003/submit_bid', {
+  method: 'POST',
+  body: JSON.stringify(electricalBid)
+});
+                </div>
+            </div>
+
+            <!-- Neighborhood Security -->
+            <div class="app-card security-app">
+                <h3>🛡️ SecureHood</h3>
+                <h4>Community Security & Patrol Coordination</h4>
+                <p style="margin: 15px 0;">
+                    Neighborhood associations and HOAs can request security patrols, camera monitoring, and emergency response services from certified providers.
+                </p>
+                
+                <h5>Service Capabilities:</h5>
+                <ul style="margin: 10px 0 20px 20px;">
+                    <li>Scheduled and random patrol routes</li>
+                    <li>AI-powered camera monitoring</li>
+                    <li>Incident response coordination</li>
+                    <li>Visitor management system</li>
+                    <li>Community alert broadcasting</li>
+                </ul>
+                
+                <div class="code-block">
+// Submit security patrol request
+const securityRequest = {
+  service: {
+    type: "security_patrol",
+    coverage_area: {
+      neighborhood: "Riverside Heights",
+      blocks: 12,
+      homes: 340
+    },
+    schedule: {
+      type: "24/7",
+      patrol_frequency: "hourly",
+      randomization: true
+    },
+    services_required: [
+      "vehicle_patrol",
+      "foot_patrol",
+      "camera_monitoring",
+      "gate_access_control"
+    ],
+    response_time_requirement: "5_minutes",
+    license_requirements: ["state_guard_card", "armed_permit"]
+  },
+  price: 8500.00,  // Monthly
+  currency: "USD",
+  payment_method: "hoa_billing",
+  recurring: "monthly",
+  location_type: "physical",
+  coverage_polygon: [[lat1,lng1], [lat2,lng2], ...]
+};
+
+// Submit security service bid
+fetch('https://rse-api.com:5003/submit_bid', {
+  method: 'POST',
+  headers: {'Authorization': `Bearer ${token}`},
+  body: JSON.stringify(securityRequest)
+});
+
+// Use bulletin to find multiple security providers
+fetch('https://rse-api.com:5003/bulletin', {
+  method: 'POST',
+  body: JSON.stringify({
+    title: "HOA Security Services Needed",
+    content: "Riverside Heights HOA seeking 24/7 patrol coverage. Multiple contracts available.",
+    category: "announcement"
+  })
+});
+
+// Real-time incident reporting via chat
+const reportIncident = async (type, location, priority) => {
+  await fetch('https://rse-api.com:5003/chat', {
+    method: 'POST',
+    headers: {'Authorization': `Bearer ${token}`},
+    body: JSON.stringify({
+      recipient: current_patrol_unit,
+      message: `ALERT: ${type} at ${location}. Priority: ${priority}`,
+      priority: priority
+    })
+  });
+};
+                </div>
+            </div>
+
+            <!-- Hospital Inventory Management -->
+            <div class="app-card hospital-app">
+                <h3>🏥 MediStock AI</h3>
+                <h4>Hospital Inventory & Supply Chain Automation</h4>
+                <p style="margin: 15px 0; color: #2e7d32;">
+                    Intelligent medical supply management that automatically orders supplies, manages expiration dates, and coordinates with multiple vendors.
+                </p>
+                
+                <h5>Automated Services:</h5>
+                <ul style="margin: 10px 0 20px 20px; color: #2e7d32;">
+                    <li>Predictive inventory ordering</li>
+                    <li>Emergency supply requests</li>
+                    <li>Pharmaceutical management</li>
+                    <li>Equipment maintenance scheduling</li>
+                    <li>FDA compliance tracking</li>
+                </ul>
+                
+                <div class="code-block">
+// Submit automated supply order bid
+const medicalSupplyOrder = {
+  service: {
+    type: "medical_supplies",
+    category: "pharmaceutical",
+    items: [
+      {
+        name: "Insulin_Humalog",
+        quantity: 500,
+        units: "vials",
+        ndc: "00002-7510-01",
+        storage: "refrigerated"
+      },
+      {
+        name: "N95_Masks",
+        quantity: 10000,
+        units: "pieces",
+        certification: "NIOSH_approved"
+      }
+    ],
+    urgency: "routine", // or "emergency"
+    compliance: {
+      fda_registered: true,
+      dea_schedule: null,
+      temperature_controlled: true
+    },
+    delivery_requirements: {
+      dock: "medical_receiving",
+      hours: "24/7",
+      chain_of_custody: true
+    }
+  },
+  price: 15000.00,
+  currency: "USD",
+  payment_method: "purchase_order",
+  po_number: "HOSP-2025-3847",
+  location_type: "physical",
+  address: "Medical Center Loading Dock B"
+};
+
+// Submit supply order
+fetch('https://rse-api.com:5003/submit_bid', {
+  method: 'POST',
+  headers: {'Authorization': `Bearer ${token}`},
+  body: JSON.stringify(medicalSupplyOrder)
+});
+
+// Use bulletin to find multiple suppliers for bulk orders
+fetch('https://rse-api.com:5003/bulletin', {
+  method: 'POST',
+  body: JSON.stringify({
+    title: "Hospital Quarterly Supply Contract",
+    content: "Denver Medical Center seeking Q1 2025 pharmaceutical suppliers. Multiple contracts available.",
+    category: "rfq"
+  })
+});
+
+// Emergency supply request - use chat for urgent coordination
+const emergencyRequest = async () => {
+  // First submit emergency bid
+  const emergencyBid = await fetch('https://rse-api.com:5003/submit_bid', {
+    method: 'POST',
+    body: JSON.stringify({
+      service: {
+        type: "medical_supplies",
+        urgency: "critical",
+        item_needed: "Type_O_Negative_Blood",
+        units_needed: 20
+      },
+      price: 5000.00,
+      location_type: "physical"
+    })
+  });
+  
+  // Then use chat to alert nearby suppliers
+  await fetch('https://rse-api.com:5003/chat', {
+    method: 'POST',
+    body: JSON.stringify({
+      recipient: "all_medical_suppliers",
+      message: "URGENT: Type O Negative blood needed immediately at Denver Medical",
+      priority: "critical"
+    })
+  });
+};
+                </div>
+            </div>
+
+            <!-- Agricultural Crop Management -->
+            <div class="app-card agri-app">
+                <h3>🌾 FarmFlow Pro</h3>
+                <h4>Precision Agriculture Service Coordination</h4>
+                <p style="margin: 15px 0;">
+                    Connect farms with drone operators, soil analysts, harvesting crews, and agricultural consultants for optimized crop management.
+                </p>
+                
+                <h5>Integrated Services:</h5>
+                <ul style="margin: 10px 0 20px 20px;">
+                    <li>Drone crop monitoring & spraying</li>
+                    <li>Soil testing & analysis</li>
+                    <li>Automated irrigation management</li>
+                    <li>Harvest crew scheduling</li>
+                    <li>Weather-based recommendations</li>
+                </ul>
+                
+                <div class="code-block">
+// Submit crop monitoring service bid
+const cropMonitoring = {
+  service: {
+    type: "agricultural_service",
+    category: "drone_monitoring",
+    crop_details: {
+      type: "corn",
+      acres: 500,
+      growth_stage: "V8",
+      planting_date: "2025-04-15"
+    },
+    services_needed: [
+      "ndvi_imaging",
+      "pest_detection",
+      "irrigation_assessment",
+      "yield_prediction"
+    ],
+    frequency: "weekly",
+    data_delivery: {
+      format: "geotiff",
+      platform: "FarmFlow_Cloud",
+      analysis_required: true
+    },
+    weather_integration: true
+  },
+  price: 2500.00,
+  currency: "USD",
+  payment_method: "farm_credit",
+  location_type: "physical",
+  gps_boundaries: {
+    type: "Polygon",
+    coordinates: [[[lng1,lat1],[lng2,lat2],...]]]
+  }
+};
+
+// Submit monitoring bid
+fetch('https://rse-api.com:5003/submit_bid', {
+  method: 'POST',
+  headers: {'Authorization': `Bearer ${token}`},
+  body: JSON.stringify(cropMonitoring)
+});
+
+// Use bulletin to coordinate multiple farm services
+fetch('https://rse-api.com:5003/bulletin', {
+  method: 'POST',
+  body: JSON.stringify({
+    title: "500 Acre Corn Farm - Multiple Services Needed",
+    content: "Need: Drone monitoring, soil testing, harvest crews for Fall 2025",
+    category: "announcement"
+  })
+});
+
+// Automated harvest crew booking
+const scheduleHarvest = async (crop, readiness) => {
+  if (readiness > 0.95) {
+    const harvestRequest = {
+      service: {
+        type: "harvest_crew",
+        crop: crop,
+        acres: 500,
+        estimated_yield: "180_bushels_per_acre",
+        equipment_needed: ["combines", "grain_trucks"],
+        crew_size: 12
+      },
+      price: 15000.00,
+      currency: "USD",
+      start_date: "2025-09-15",
+      location_type: "physical"
+    };
+    
+    // Submit harvest bid
+    await fetch('https://rse-api.com:5003/submit_bid', {
+      method: 'POST',
+      headers: {'Authorization': `Bearer ${token}`},
+      body: JSON.stringify(harvestRequest)
+    });
+    
+    // Use chat to coordinate with crew
+    await fetch('https://rse-api.com:5003/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        recipient: "harvest_crew_leader",
+        message: "Corn ready for harvest. Moisture at 15%. Can you start Tuesday?"
+      })
+    });
+  }
+};
+                </div>
+            </div>
+
+            <!-- Food Delivery -->
+            <div class="app-card food-app">
+                <h3>🍔 QuickBite Express</h3>
+                <h4>Multi-Restaurant Food Delivery Orchestration</h4>
+                <p style="margin: 15px 0;">
+                    Advanced food delivery platform that coordinates between restaurants, delivery drivers, and customers with real-time tracking.
+                </p>
+                
+                <h5>Platform Features:</h5>
+                <ul style="margin: 10px 0 20px 20px;">
+                    <li>Multi-restaurant order bundling</li>
+                    <li>Dynamic driver allocation</li>
+                    <li>Temperature-controlled delivery</li>
+                    <li>Real-time order tracking</li>
+                    <li>Dietary restriction filtering</li>
+                </ul>
+                
+                <div class="code-block">
+// Submit food delivery bid
+const foodOrder = {
+  service: {
+    type: "food_delivery",
+    order_details: {
+      restaurants: [
+        {
+          name: "Mario's Pizza",
+          items: ["Large Pepperoni", "Caesar Salad"],
+          special_instructions: "Extra cheese",
+          total: 28.50
+        },
+        {
+          name: "Sweet Dreams Bakery",
+          items: ["Chocolate Cake Slice"],
+          total: 8.99
+        }
+      ],
+      delivery_requirements: {
+        temperature_control: "hot_cold_separated",
+        estimated_weight: "8_lbs",
+        fragile_items: true
+      }
+    },
+    customer_preferences: {
+      contactless: true,
+      gate_code: "4582",
+      delivery_instructions: "Leave at door, ring bell"
+    },
+    time_constraints: {
+      pickup_by: "18:30",
+      deliver_by: "19:00"
+    }
+  },
+  price: 8.50, // Delivery fee
+  currency: "USD",
+  payment_method: "credit_card",
+  tip: 5.00,
+  location_type: "physical",
+  pickup_addresses: [...],
+  delivery_address: "123 Oak St, Apt 4B"
+};
+
+// Submit delivery bid
+fetch('https://rse-api.com:5003/submit_bid', {
+  method: 'POST',
+  headers: {'Authorization': `Bearer ${token}`},
+  body: JSON.stringify(foodOrder)
+});
+
+// For multi-restaurant coordination, use bulletin
+const largePartyOrder = async () => {
+  // Post to bulletin for large catering order
+  await fetch('https://rse-api.com:5003/bulletin', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: "Large Catering Order - 50 people",
+      content: "Office party needs pizza, salads, desserts. Friday 6PM delivery.",
+      category: "announcement"
+    })
+  });
+  
+  // Use chat to coordinate with restaurants
+  await fetch('https://rse-api.com:5003/chat', {
+    method: 'POST',
+    body: JSON.stringify({
+      recipient: "Mario's Pizza",
+      message: "Can you handle 15 pizzas for Friday catering? Creating separate bid."
+    })
+  });
+  
+  // Create individual bids for each restaurant
+  const pizzaBid = {
+    service: {type: "catering", items: "15 pizzas"},
+    price: 250.00
+  };
+  await fetch('https://rse-api.com:5003/submit_bid', {
+    method: 'POST',
+    body: JSON.stringify(pizzaBid)
+  });
+};
+
+// Driver grabs available delivery job (supply side)
+const driverGrabJob = {
+  capabilities: "food_delivery, insulated_bags, vehicle",
+  location_type: "physical",
+  current_location: [lat, lng],
+  max_distance: 5 // miles
+};
+                </div>
+            </div>
+
+            <!-- Children's Birthday Party -->
+            <div class="app-card party-app">
+                <h3>🎉 PartyMagic Pro</h3>
+                <h4>Children's Event Planning & Entertainment Platform</h4>
+                <p style="margin: 15px 0;">
+                    Complete party planning solution connecting parents with entertainers, caterers, decorators, and venue providers.
+                </p>
+                
+                <h5>Party Services:</h5>
+                <ul style="margin: 10px 0 20px 20px;">
+                    <li>Character performers & magicians</li>
+                    <li>Bounce house & equipment rental</li>
+                    <li>Catering & custom cakes</li>
+                    <li>Photography & videography</li>
+                    <li>Party favor assembly</li>
+                </ul>
+                
+                <div class="code-block">
+// Submit complete party package bid
+const birthdayParty = {
+  service: {
+    type: "event_planning",
+    category: "childrens_birthday",
+    party_details: {
+      theme: "Superhero",
+      age_group: 7,
+      guest_count: 25,
+      duration: "3_hours",
+      date: "2025-10-15",
+      time: "14:00"
+    },
+    services_requested: [
+      {
+        type: "character_performer",
+        character: "Spider-Man",
+        duration: "1_hour",
+        activities: ["games", "photos", "story_time"]
+      },
+      {
+        type: "bounce_house",
+        style: "castle",
+        size: "15x15"
+      },
+      {
+        type: "catering",
+        menu: "kids_pizza_package",
+        dietary: ["gluten_free_options", "nut_free"]
+      },
+      {
+        type: "custom_cake",
+        design: "superhero_theme",
+        servings: 30,
+        flavors: ["chocolate", "vanilla"]
+      }
+    ],
+    safety_requirements: {
+      insurance: true,
+      background_checks: true,
+      food_handling_cert: true
+    }
+  },
+  price: 1500.00,
+  currency: "USD",
+  payment_method: "venmo",
+  location_type: "physical",
+  address: "Sunny Park Pavilion, Denver, CO"
+};
+
+// Submit main party bid
+const response = await fetch('https://rse-api.com:5003/submit_bid', {
+  method: 'POST',
+  headers: {'Authorization': `Bearer ${token}`},
+  body: JSON.stringify(birthdayParty)
+});
+
+// Use bulletin to find individual service providers
+await fetch('https://rse-api.com:5003/bulletin', {
+  method: 'POST',
+  body: JSON.stringify({
+    title: "Kids Birthday Party - Multiple Services Needed",
+    content: "Oct 15, 2PM. Need: Character performer, bounce house, catering, cake",
+    category: "announcement",
+    event_date: "2025-10-15"
+  })
+});
+
+// Create separate bids for each service
+const bookEntertainer = async (type, date, time) => {
+  // Submit specific entertainer bid
+  const entertainerBid = {
+    service: {
+      type: "party_entertainment",
+      performer_type: type,
+      date: date,
+      time: time,
+      duration: "1_hour",
+      background_check: true
+    },
+    price: 250.00,
+    location_type: "physical"
+  };
+  
+  await fetch('https://rse-api.com:5003/submit_bid', {
+    method: 'POST',
+    body: JSON.stringify(entertainerBid)
+  });
+  
+  // Use chat to coordinate details
+  await fetch('https://rse-api.com:5003/chat', {
+    method: 'POST',
+    body: JSON.stringify({
+      recipient: "SuperheroEntertainers_LLC",
+      message: "Spider-Man needed Oct 15, 2PM. Can you bring web shooters prop?"
+    })
+  });
+};
+                </div>
+            </div>
+
+            <!-- Robotaxi -->
+            <div class="app-card robotaxi-app">
+                <h3>🚗 AutoRide Network</h3>
+                <h4>Autonomous Vehicle Fleet Coordination</h4>
+                <p style="margin: 15px 0;">
+                    Next-generation transportation platform managing fleets of autonomous vehicles for passenger and cargo transport.
+                </p>
+                
+                <h5>Fleet Capabilities:</h5>
+                <ul style="margin: 10px 0 20px 20px; color: #00d4ff;">
+                    <li>Level 4/5 autonomous vehicles</li>
+                    <li>Multi-modal trip planning</li>
+                    <li>Dynamic route optimization</li>
+                    <li>Cargo & passenger services</li>
+                    <li>Emergency vehicle priority</li>
+                </ul>
+                
+                <div class="code-block">
+// Submit autonomous ride bid
+const robotaxiRequest = {
+  service: {
+    type: "autonomous_transport",
+    category: "passenger",
+    trip_details: {
+      passenger_count: 2,
+      luggage: "2_suitcases",
+      accessibility: "wheelchair_accessible",
+      vehicle_preference: "sedan"
+    },
+    route: {
+      pickup: {lat: 39.7392, lng: -104.9903},
+      destination: {lat: 39.7642, lng: -104.9951},
+      waypoints: [],
+      avoid: ["tolls", "highways"]
+    },
+    scheduling: {
+      type: "immediate", // or "scheduled"
+      pickup_window: "5_minutes"
+    },
+    safety_preferences: {
+      max_speed: "moderate",
+      interior_camera: true,
+      emergency_button: true
+    }
+  },
+  price: 18.50,
+  currency: "USD",
+  payment_method: "crypto_wallet",
+  location_type: "physical"
+};
+
+// Submit ride request
+fetch('https://rse-api.com:5003/submit_bid', {
+  method: 'POST',
+  headers: {'Authorization': `Bearer ${token}`},
+  body: JSON.stringify(robotaxiRequest)
+});
+
+// For fleet operations, use bulletin for batch requests
+const airportShuttleService = async () => {
+  // Post shuttle service needs
+  await fetch('https://rse-api.com:5003/bulletin', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: "Airport Shuttle Service - 50 rides/day needed",
+      content: "Denver Airport routes, 6AM-11PM coverage, autonomous vehicles preferred",
+      category: "contract"
+    })
+  });
+  
+  // Create multiple route bids
+  const routes = ['downtown', 'tech_center', 'boulder'];
+  for (const route of routes) {
+    const routeBid = {
+      service: {
+        type: "autonomous_transport",
+        category: "shuttle",
+        route_name: `airport_to_${route}`,
+        daily_trips: 15
+      },
+      price: 25.00, // per trip
+      recurring: "daily"
+    };
+    
+    await fetch('https://rse-api.com:5003/submit_bid', {
+      method: 'POST',
+      body: JSON.stringify(routeBid)
+    });
+  }
+};
+
+// Fleet vehicle status monitoring (supply side)
+const fleetStatus = {
+  vehicle_id: "AV-2847",
+  status: "available",
+  battery: 78,
+  location: [lat, lng],
+  capabilities: ["passenger", "cargo", "wheelchair"],
+  sensor_status: {
+    lidar: "operational",
+    cameras: "operational",
+    radar: "operational"
+  }
+};
+
+// Vehicle grabs nearby ride request (supply side)
+const vehicleGrabJob = async () => {
+  const job = await fetch('https://rse-api.com:5003/grab_job', {
+    method: 'POST',
+    body: JSON.stringify({
+      capabilities: "autonomous_transport",
+      location_type: "physical",
+      vehicle_status: fleetStatus
+    })
+  });
+  return job.json();
+};
+                </div>
+            </div>
+
+            <!-- Legal Services -->
+            <div class="app-card legal-app">
+                <h3>⚖️ LegalLink Pro</h3>
+                <h4>On-Demand Legal Services Marketplace</h4>
+                <p style="margin: 15px 0;">
+                    Connect clients with specialized lawyers, paralegals, and legal AI assistants for various legal needs.
+                </p>
+                
+                <h5>Service Categories:</h5>
+                <ul style="margin: 10px 0 20px 20px;">
+                    <li>Document review & preparation</li>
+                    <li>Contract negotiation</li>
+                    <li>Legal research & briefing</li>
+                    <li>Court filing assistance</li>
+                    <li>Compliance auditing</li>
+                </ul>
+                
+                <div class="code-block">
+// Submit legal document review bid
+const legalService = {
+  service: {
+    type: "legal_services",
+    category: "contract_review",
+    document_details: {
+      type: "commercial_lease",
+      pages: 45,
+      complexity: "high",
+      turnaround: "48_hours"
+    },
+    specific_requirements: [
+      "liability_clause_analysis",
+      "termination_conditions",
+      "rent_escalation_review",
+      "compliance_check"
+    ],
+    jurisdiction: "Colorado",
+    confidentiality: {
+      nda_required: true,
+      encryption: "AES256"
+    }
+  },
+  price: 850.00,
+  currency: "USD",
+  payment_method: "law_firm_billing",
+  location_type: "remote",
+  preferred_qualifications: {
+    bar_admission: ["Colorado", "Multi-State"],
+    specialization: "commercial_real_estate",
+    min_experience_years: 5
+  }
+};
+
+// Submit legal service bid
+fetch('https://rse-api.com:5003/submit_bid', {
+  method: 'POST',
+  headers: {'Authorization': `Bearer ${token}`},
+  body: JSON.stringify(legalService)
+});
+
+// Use bulletin for complex legal projects
+const complexLitigation = async () => {
+  // Post to bulletin for team assembly
+  await fetch('https://rse-api.com:5003/bulletin', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: "Complex Patent Litigation - Team Needed",
+      content: "Seeking: Patent attorney, technical experts, paralegals for electronics patent case",
+      category: "announcement",
+      confidential: true
+    })
+  });
+  
+  // Use chat to coordinate with team members
+  await fetch('https://rse-api.com:5003/chat', {
+    method: 'POST',
+    body: JSON.stringify({
+      recipient: "PatentLaw_Associates",
+      message: "Interested in lead counsel role? $50k retainer, 6-month timeline",
+      encrypted: true
+    })
+  });
+  
+  // Create separate bids for each team member
+  const teamRoles = [
+    {role: "lead_counsel", price: 50000},
+    {role: "technical_expert", price: 15000},
+    {role: "paralegal_team", price: 25000}
+  ];
+  
+  for (const role of teamRoles) {
+    await fetch('https://rse-api.com:5003/submit_bid', {
+      method: 'POST',
+      body: JSON.stringify({
+        service: {
+          type: "legal_services",
+          role: role.role,
+          case_type: "patent_litigation"
+        },
+        price: role.price
+      })
+    });
+  }
+};
+
+// AI-assisted legal research bid
+const legalResearch = async (topic, jurisdiction) => {
+  return await fetch('https://rse-api.com:5003/submit_bid', {
+    method: 'POST',
+    headers: {'Authorization': `Bearer ${token}`},
+    body: JSON.stringify({
+      service: {
+        type: "legal_research_ai",
+        topic: topic,
+        jurisdiction: jurisdiction,
+        deliverables: ["case_law", "statutes", "brief_template"]
+      },
+      price: 150.00,
+      location_type: "remote"
+    })
+  });
+};
+                </div>
+            </div>
+
+            <!-- Education Tutoring -->
+            <div class="app-card education-app">
+                <h3>📚 EduConnect Plus</h3>
+                <h4>Personalized Learning & Tutoring Network</h4>
+                <p style="margin: 15px 0;">
+                    Matches students with qualified tutors, study groups, and educational resources based on learning style and goals.
+                </p>
+                
+                <h5>Educational Services:</h5>
+                <ul style="margin: 10px 0 20px 20px;">
+                    <li>1-on-1 subject tutoring</li>
+                    <li>Test prep specialists</li>
+                    <li>Language instruction</li>
+                    <li>Coding bootcamps</li>
+                    <li>Study group coordination</li>
+                </ul>
+                
+                <div class="code-block">
+// Submit tutoring session bid
+const tutoringRequest = {
+  service: {
+    type: "education",
+    category: "tutoring",
+    subject: {
+      area: "mathematics",
+      level: "AP_Calculus_BC",
+      topics: ["integration", "series", "polar_coordinates"]
+    },
+    student_info: {
+      grade_level: 11,
+      learning_style: "visual",
+      goals: "AP_exam_score_5",
+      current_grade: "B+"
+    },
+    session_preferences: {
+      format: "hybrid", // online and in-person
+      frequency: "2x_weekly",
+      duration: "90_minutes",
+      schedule: {
+        days: ["Tuesday", "Thursday"],
+        time: "16:00-17:30"
+      }
+    },
+    tutor_requirements: {
+      education: "bachelors_minimum",
+      teaching_experience: true,
+      background_check: true,
+      references: 2
+    }
+  },
+  price: 75.00, // per session
+  currency: "USD",
+  payment_method: "education_savings_account",
+  location_type: "hybrid",
+  online_platform: "zoom",
+  physical_location: "Student's home or library"
+};
+
+// Submit tutoring bid
+fetch('https://rse-api.com:5003/submit_bid', {
+  method: 'POST',
+  headers: {'Authorization': `Bearer ${token}`},
+  body: JSON.stringify(tutoringRequest)
+});
+
+// Use bulletin for study group formation
+const createStudyGroup = async (subject, level) => {
+  // Post to bulletin
+  await fetch('https://rse-api.com:5003/bulletin', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: `${subject} Study Group Forming`,
+      content: `Looking for 3-5 students for ${level} study group. Meet 2x/week.`,
+      category: "announcement"
+    })
+  });
+  
+  // Create group tutoring bid
+  const groupBid = {
+    service: {
+      type: "group_tutoring",
+      subject: subject,
+      level: level,
+      group_size: 5,
+      sessions_per_week: 2
+    },
+    price: 30.00, // per student per session
+    location_type: "online"
+  };
+  
+  await fetch('https://rse-api.com:5003/submit_bid', {
+    method: 'POST',
+    body: JSON.stringify(groupBid)
+  });
+};
+
+// Use chat to coordinate with tutors
+const coordinateTutor = async (tutorId, message) => {
+  await fetch('https://rse-api.com:5003/chat', {
+    method: 'POST',
+    body: JSON.stringify({
+      recipient: tutorId,
+      message: message,
+      attachment: "practice_problems.pdf"
+    })
+  });
+};
+
+// SAT/ACT prep package
+const testPrepPackage = {
+  service: {
+    type: "test_preparation",
+    test: "SAT",
+    package: "comprehensive",
+    duration: "8_weeks",
+    includes: ["diagnostic", "tutoring", "practice_tests", "strategy"]
+  },
+  price: 1200.00,
+  payment_method: "payment_plan"
+};
+                </div>
+            </div>
+
+            <!-- Beauty & Wellness -->
+            <div class="app-card beauty-app">
+                <h3>💅 GlowUp On-Demand</h3>
+                <h4>Mobile Beauty & Wellness Services</h4>
+                <p style="margin: 15px 0;">
+                    Book beauty professionals and wellness practitioners to come directly to your home, office, or event.
+                </p>
+                
+                <h5>Available Services:</h5>
+                <ul style="margin: 10px 0 20px 20px;">
+                    <li>Hair styling & coloring</li>
+                    <li>Makeup & nail services</li>
+                    <li>Massage therapy</li>
+                    <li>Personal training</li>
+                    <li>Event beauty teams</li>
+                </ul>
+                
+                <div class="code-block">
+// Submit mobile beauty service bid
+const beautyService = {
+  service: {
+    type: "beauty_wellness",
+    category: "mobile_salon",
+    services_requested: [
+      {
+        type: "hair_styling",
+        style: "wedding_updo",
+        add_ons: ["extensions", "accessories"]
+      },
+      {
+        type: "makeup",
+        look: "glam_evening",
+        products: "professional_grade"
+      },
+      {
+        type: "nails",
+        service: "gel_manicure",
+        design: "french_tips"
+      }
+    ],
+    event_details: {
+      occasion: "wedding",
+      party_size: 6, // bride + 5 bridesmaids
+      timeline: "4_hours",
+      start_time: "08:00"
+    },
+    professional_requirements: {
+      license: "state_cosmetology",
+      insurance: "liability",
+      portfolio: true,
+      covid_vaccinated: true
+    }
+  },
+  price: 1200.00,
+  currency: "USD",
+  payment_method: "zelle",
+  location_type: "physical",
+  address: "Bridal Suite, Grand Hotel Denver",
+  equipment_provided: "bring_all_supplies"
+};
+
+// Submit beauty service bid
+fetch('https://rse-api.com:5003/submit_bid', {
+  method: 'POST',
+  headers: {'Authorization': `Bearer ${token}`},
+  body: JSON.stringify(beautyService)
+});
+
+// Use bulletin for bridal party coordination
+const bridalPartyServices = async () => {
+  // Post to bulletin for multiple service providers
+  await fetch('https://rse-api.com:5003/bulletin', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: "Wedding Day Beauty Team Needed",
+      content: "Oct 20 wedding, 6 people. Need: hair, makeup, nails. 8AM start.",
+      category: "announcement",
+      event_date: "2025-10-20"
+    })
+  });
+  
+  // Create individual service bids
+  const services = ['hair', 'makeup', 'nails'];
+  for (const service of services) {
+    const serviceBid = {
+      service: {
+        type: "beauty_wellness",
+        specialty: service,
+        party_size: 6,
+        date: "2025-10-20",
+        time: "08:00"
+      },
+      price: service === 'hair' ? 600 : service === 'makeup' ? 400 : 200
+    };
+    
+    await fetch('https://rse-api.com:5003/submit_bid', {
+      method: 'POST',
+      body: JSON.stringify(serviceBid)
+    });
+  }
+  
+  // Use chat to coordinate with beauty team
+  await fetch('https://rse-api.com:5003/chat', {
+    method: 'POST',
+    body: JSON.stringify({
+      recipient: "GlamSquad_Denver",
+      message: "Can your team handle hair and makeup for 6? Sending photos of desired styles.",
+      attachments: ["hairstyle_inspo.jpg", "makeup_look.jpg"]
+    })
+  });
+};
+
+// Schedule recurring wellness services
+const weeklyMassage = {
+  service: {
+    type: "massage_therapy",
+    style: "deep_tissue",
+    duration: "60_minutes",
+    recurring: "weekly",
+    therapist_gender: "no_preference",
+    medical_needs: ["lower_back_pain", "stress_relief"]
+  },
+  price: 120.00,
+  currency: "USD",
+  payment_method: "hsa_card",
+  location_type: "physical",
+  address: "Home address"
+};
+
+// Submit recurring service
+fetch('https://rse-api.com:5003/submit_bid', {
+  method: 'POST',
+  headers: {'Authorization': `Bearer ${token}`},
+  body: JSON.stringify(weeklyMassage)
+});
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">🤖 Supply-Side Robot Controllers</h2>
+        
+        <div class="apps-grid">
+            <!-- Drone Fleet Controller -->
+            <div class="app-card drone-controller">
+                <h3>🚁 SkyNet Drone Command</h3>
+                <h4>Autonomous Drone Fleet Management System</h4>
+                <p style="margin: 15px 0; color: #00ff00;">
+                    Controls and coordinates fleets of delivery drones, monitoring drones, and agricultural drones for various service requests.
+                </p>
+                
+                <h5 style="color: #00ffff;">Fleet Capabilities:</h5>
+                <ul style="margin: 10px 0 20px 20px; color: #00ff00;">
+                    <li>Package delivery (up to 10kg)</li>
+                    <li>Aerial photography/videography</li>
+                    <li>Crop spraying & monitoring</li>
+                    <li>Search and rescue operations</li>
+                    <li>Infrastructure inspection</li>
+                </ul>
+                
+                <div class="code-block">
+#!/usr/bin/env python3
+# Drone Fleet Controller - Continuous Job Polling
+
+import asyncio
+import requests
+from drone_fleet import DroneFleet, Drone
+
+class DroneController:
+    def __init__(self, api_url, fleet_size=20):
+        self.api = api_url
+        self.fleet = DroneFleet(fleet_size)
+        self.token = self.authenticate()
+        
+    async def poll_for_jobs(self):
+        """Continuously poll for drone-suitable jobs"""
+        while True:
+            try:
+                # Check available drones
+                available = self.fleet.get_available_drones()
+                
+                if available:
+                    # Grab job matching drone capabilities
+                    response = requests.post(
+                        f"{self.api}/grab_job",
+                        headers={"Authorization": f"Bearer {self.token}"},
+                        json={
+                            "capabilities": "aerial_delivery, photography, crop_spraying, monitoring",
+                            "location_type": "physical",
+                            "max_distance": 50,  # km
+                            "equipment": {
+                                "payload_capacity": 10,  # kg
+                                "flight_time": 45,  # minutes
+                                "cameras": ["4K", "thermal", "multispectral"],
+                                "weather_rating": "IP54"
+                            }
+                        }
+                    )
+                    
+                    if response.status_code == 200:
+                        job = response.json()
+                        await self.assign_job_to_drone(job, available[0])
+                        
+            except Exception as e:
+                print(f"Error polling: {e}")
+                
+            await asyncio.sleep(5)  # Poll every 5 seconds
+    
+    async def assign_job_to_drone(self, job, drone):
+        """Assign grabbed job to specific drone"""
+        drone_assigned = {
+            "drone_id": drone.id,
+            "job_type": job['service']['type'],
+            "destination": job['location'],
+            "payload": job.get('package_details'),
+            "mission_params": {
+                "altitude": self.calculate_altitude(job),
+                "speed": self.calculate_speed(job),
+                "route": self.plan_route(job),
+                "weather_check": True
+            }
+        }
+        
+        # Send mission to drone
+        drone.execute_mission(drone_assigned)
+        
+        # Update job status
+        await self.update_job_status(job['bid_id'], 'in_progress')
+    
+    def calculate_altitude(self, job):
+        """Determine optimal flight altitude"""
+        if job['service']['type'] == 'photography':
+            return job['service'].get('altitude', 120)  # meters
+        elif job['service']['type'] == 'delivery':
+            return 100  # Standard delivery altitude
+        return 80  # Default
+    
+    async def monitor_fleet(self):
+        """Monitor all active drone missions"""
+        while True:
+            for drone in self.fleet.get_active_drones():
+                status = drone.get_status()
+                
+                if status['battery'] < 20:
+                    await self.initiate_return_to_base(drone)
+                    
+                if status['mission_complete']:
+                    await self.update_job_status(
+                        drone.current_job_id, 
+                        'completed',
+                        proof=status['completion_proof']
+                    )
+                    
+            await asyncio.sleep(10)
+
+# Initialize and run
+controller = DroneController("https://rse-api.com:5003")
+asyncio.run(controller.poll_for_jobs())
+                </div>
+            </div>
+
+            <!-- Warehouse Robot Controller -->
+            <div class="app-card warehouse-robot">
+                <h3>📦 WareBot Central</h3>
+                <h4>Warehouse Robotics Coordination Platform</h4>
+                <p style="margin: 15px 0;">
+                    Manages fleets of warehouse robots including AGVs, picking robots, and packaging systems for fulfillment operations.
+                </p>
+                
+                <h5>Robot Types Managed:</h5>
+                <ul style="margin: 10px 0 20px 20px;">
+                    <li>Autonomous forklifts</li>
+                    <li>Picking & packing robots</li>
+                    <li>Sortation systems</li>
+                    <li>Inventory scanning bots</li>
+                    <li>Loading dock robots</li>
+                </ul>
+                
+                <div class="code-block">
+// JavaScript Warehouse Robot Controller
+class WarehouseController {
+  constructor(apiUrl, robotFleet) {
+    this.api = apiUrl;
+    this.robots = robotFleet; // Array of robot instances
+    this.jobQueue = [];
+    this.initializePolling();
+  }
+  
+  async initializePolling() {
+    // Start continuous job grabbing
+    setInterval(async () => {
+      await this.pollForWarehouseJobs();
+    }, 3000); // Poll every 3 seconds
+    
+    // Monitor robot status
+    setInterval(() => {
+      this.optimizeRobotAllocation();
+    }, 10000);
+  }
+  
+  async pollForWarehouseJobs() {
+    const availableRobots = this.robots.filter(r => r.status === 'idle');
+    
+    if (availableRobots.length > 0) {
+      try {
+        const response = await fetch(`${this.api}/grab_job`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            capabilities: "warehouse_operations, picking, packing, sorting, inventory_management",
+            location_type: "physical",
+            warehouse_zones: ["A1", "A2", "B1", "C3"],
+            equipment: {
+              robot_types: ["agv", "picking_arm", "sorter"],
+              lift_capacity: 500, // kg
+              speed: 2.5, // m/s
+              precision: "mm_level"
+            }
+          })
+        });
+        
+        if (response.ok) {
+          const job = await response.json();
+          await this.assignJobToRobot(job, availableRobots[0]);
+        }
+      } catch (error) {
+        console.error('Job polling error:', error);
+      }
+    }
+  }
+  
+  async assignJobToRobot(job, robot) {
+    const assignment = {
+      robot_id: robot.id,
+      job_id: job.bid_id,
+      task_type: job.service.type,
+      priority: job.service.priority || 'normal',
+      
+      // Warehouse-specific parameters
+      pick_list: job.service.items || [],
+      source_locations: job.service.source_bins || [],
+      destination: job.service.destination_dock || 'default',
+      
+      // Optimization parameters
+      route_optimization: true,
+      batch_picking: job.service.items?.length > 5,
+      collision_avoidance: true
+    };
+    
+    // Send to robot
+    robot.executeTask(assignment);
+    
+    // Update job status
+    await this.updateJobStatus(job.bid_id, 'robot_assigned', {
+      robot_id: robot.id,
+      estimated_completion: robot.estimateCompletionTime(assignment)
+    });
+  }
+  
+  optimizeRobotAllocation() {
+    // Rebalance robots based on warehouse heat map
+    const zoneLoads = this.calculateZoneLoads();
+    
+    for (const robot of this.robots) {
+      if (robot.status === 'idle') {
+        const optimalZone = this.findOptimalZone(zoneLoads);
+        robot.relocateTo(optimalZone);
+      }
+    }
+  }
+}
+
+// Initialize controller
+const warehouseController = new WarehouseController(
+  'https://rse-api.com:5003',
+  robotFleet
+);
+                </div>
+            </div>
+
+            <!-- Medical Robot Controller -->
+            <div class="app-card medical-robot">
+                <h3>🏥 MediBot Command Center</h3>
+                <h4>Healthcare Robotics Management System</h4>
+                <p style="margin: 15px 0; color: #2c3e50;">
+                    Coordinates surgical robots, patient care robots, and pharmaceutical dispensing systems in healthcare facilities.
+                </p>
+                
+                <h5 style="color: #e74c3c;">Medical Robot Fleet:</h5>
+                <ul style="margin: 10px 0 20px 20px; color: #2c3e50;">
+                    <li>Surgical assistance robots</li>
+                    <li>Patient monitoring bots</li>
+                    <li>Medicine dispensing systems</li>
+                    <li>UV disinfection robots</li>
+                    <li>Sample transport robots</li>
+                </ul>
+                
+                <div class="code-block">
+// Medical Robot Controller with Safety Protocols
+class MedicalRobotController {
+  constructor(apiUrl, hospitalSystem) {
+    this.api = apiUrl;
+    this.hospital = hospitalSystem;
+    this.robots = {
+      surgical: [],
+      pharmacy: [],
+      transport: [],
+      disinfection: []
+    };
+    this.safetyProtocol = new MedicalSafetyProtocol();
+  }
+  
+  async pollForMedicalJobs() {
+    // Only grab jobs with proper medical certification
+    const jobRequest = {
+      capabilities: "medical_robotics, surgical_assistance, pharmacy_dispensing, patient_care",
+      location_type: "physical",
+      certifications: {
+        fda_approved: true,
+        hipaa_compliant: true,
+        medical_grade: true
+      },
+      safety_features: {
+        emergency_stop: true,
+        collision_detection: true,
+        sterile_operation: true
+      }
+    };
+    
+    try {
+      const response = await fetch(`${this.api}/grab_job`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(jobRequest)
+      });
+      
+      if (response.ok) {
+        const job = await response.json();
+        await this.processMedicalJob(job);
+      }
+    } catch (error) {
+      this.logMedicalError(error);
+    }
+  }
+  
+  async processMedicalJob(job) {
+    // Validate medical job requirements
+    if (!this.safetyProtocol.validateJob(job)) {
+      return this.rejectJob(job.bid_id, 'safety_requirements_not_met');
+    }
+    
+    switch(job.service.type) {
+      case 'surgical_assistance':
+        await this.assignSurgicalRobot(job);
+        break;
+        
+      case 'medication_dispensing':
+        await this.assignPharmacyRobot(job);
+        break;
+        
+      case 'patient_transport':
+        await this.assignTransportRobot(job);
+        break;
+        
+      case 'room_disinfection':
+        await this.assignDisinfectionRobot(job);
+        break;
+    }
+  }
+  
+  async assignSurgicalRobot(job) {
+    const surgicalBot = this.robots.surgical.find(r => 
+      r.status === 'sterile_ready' && 
+      r.capabilities.includes(job.service.procedure_type)
+    );
+    
+    if (surgicalBot) {
+      const assignment = {
+        robot_id: surgicalBot.id,
+        job_id: job.bid_id,
+        procedure: job.service.procedure_type,
+        surgeon: job.service.surgeon_id,
+        or_number: job.service.operating_room,
+        
+        // Critical safety parameters
+        precision_mode: job.service.precision_level || 'high',
+        force_feedback: true,
+        tremor_filter: true,
+        
+        // Real-time monitoring
+        vitals_integration: true,
+        imaging_sync: job.service.imaging_type,
+        
+        // Safety protocols
+        emergency_protocols: {
+          surgeon_override: true,
+          auto_retract: true,
+          alert_system: true
+        }
+      };
+      
+      // Pre-operation checklist
+      await surgicalBot.runPreOpChecklist();
+      
+      // Assign and monitor
+      surgicalBot.beginProcedure(assignment);
+      this.monitorSurgicalRobot(surgicalBot, job);
+    }
+  }
+  
+  async monitorSurgicalRobot(robot, job) {
+    const monitoring = setInterval(async () => {
+      const status = robot.getStatus();
+      
+      // Real-time safety checks
+      if (status.anomaly_detected) {
+        robot.pauseOperation();
+        await this.alertMedicalStaff(job.service.operating_room, status.anomaly);
+      }
+      
+      // Update job progress
+      await this.updateJobStatus(job.bid_id, 'in_progress', {
+        completion: status.progress_percentage,
+        vitals: status.patient_vitals,
+        surgeon_satisfaction: status.surgeon_feedback
+      });
+      
+      if (status.complete) {
+        clearInterval(monitoring);
+        await this.completeMedicalJob(job, status.outcome);
+      }
+    }, 1000); // Monitor every second during surgery
+  }
+}
+
+// Initialize medical controller with strict safety protocols
+const medController = new MedicalRobotController(
+  'https://rse-api.com:5003',
+  hospitalManagementSystem
+);
+
+// Start continuous polling with safety intervals
+setInterval(() => medController.pollForMedicalJobs(), 5000);
+                </div>
+            </div>
+
+            <!-- Cleaning Robot Fleet -->
+            <div class="app-card cleaning-robot">
+                <h3>🧹 CleanBot Network</h3>
+                <h4>Autonomous Cleaning Robot Coordination</h4>
+                <p style="margin: 15px 0;">
+                    Manages fleets of cleaning robots for commercial, residential, and industrial cleaning services.
+                </p>
+                
+                <h5>Robot Capabilities:</h5>
+                <ul style="margin: 10px 0 20px 20px;">
+                    <li>Floor cleaning & mopping</li>
+                    <li>Window washing drones</li>
+                    <li>Carpet deep cleaning</li>
+                    <li>Trash collection bots</li>
+                    <li>Sanitization specialists</li>
+                </ul>
+                
+                <div class="code-block">
+// TypeScript Cleaning Robot Controller
+interface CleaningJob {
+  bid_id: string;
+  service: {
+    type: string;
+    area_sqft: number;
+    cleaning_type: string[];
+    special_requirements: string[];
+  };
+  location: Location;
+  deadline: Date;
+}
+
+class CleaningRobotController {
+  private api: string;
+  private fleet: Map<string, CleaningRobot>;
+  private activeJobs: Map<string, CleaningJob>;
+  
+  constructor(apiUrl: string) {
+    this.api = apiUrl;
+    this.fleet = new Map();
+    this.activeJobs = new Map();
+    this.initializeFleet();
+  }
+  
+  async continuousPoll(): Promise<void> {
+    while (true) {
+      const availableRobots = Array.from(this.fleet.values())
+        .filter(robot => robot.status === 'available');
+      
+      if (availableRobots.length > 0) {
+        const job = await this.grabCleaningJob();
+        if (job) {
+          await this.dispatchRobot(job, availableRobots[0]);
+        }
+      }
+      
+      await this.sleep(4000); // Poll every 4 seconds
+    }
+  }
+  
+  private async grabCleaningJob(): Promise<CleaningJob | null> {
+    const response = await fetch(`${this.api}/grab_job`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        capabilities: "cleaning, janitorial, sanitization, floor_care, window_cleaning",
+        location_type: "physical",
+        equipment: {
+          robot_types: ["vacuum", "mop", "scrubber", "window_washer"],
+          cleaning_solutions: ["eco_friendly", "hospital_grade", "standard"],
+          special_tools: ["carpet_shampooer", "pressure_washer", "uv_sanitizer"]
+        },
+        certifications: ["green_seal", "osha_compliant"]
+      })
+    });
+    
+    if (response.ok) {
+      return await response.json();
+    }
+    return null;
+  }
+  
+  private async dispatchRobot(job: CleaningJob, robot: CleaningRobot): Promise<void> {
+    // Calculate cleaning plan
+    const cleaningPlan = this.generateCleaningPlan(job);
+    
+    const dispatch = {
+      robot_id: robot.id,
+      job_id: job.bid_id,
+      plan: cleaningPlan,
+      
+      // Cleaning parameters
+      intensity: job.service.cleaning_type.includes('deep_clean') ? 'high' : 'normal',
+      chemical_mix: this.selectCleaningSolution(job),
+      
+      // Navigation
+      floor_plan: await this.fetchFloorPlan(job.location),
+      obstacles: await this.detectObstacles(job.location),
+      
+      // Scheduling
+      estimated_duration: this.estimateCleaningTime(job),
+      start_time: new Date(),
+      
+      // Quality control
+      quality_checks: {
+        before_photos: true,
+        after_photos: true,
+        spot_check_locations: this.generateSpotChecks(job)
+      }
+    };
+    
+    // Deploy robot
+    robot.deploy(dispatch);
+    this.activeJobs.set(robot.id, job);
+    
+    // Monitor progress
+    this.monitorCleaningProgress(robot, job);
+  }
+  
+  private generateCleaningPlan(job: CleaningJob): CleaningPlan {
+    // Generate optimal cleaning route
+    return {
+      zones: this.divideIntoZones(job.service.area_sqft),
+      sequence: this.optimizeCleaningSequence(job.service.cleaning_type),
+      techniques: this.selectCleaningTechniques(job.service.special_requirements),
+      supplies_needed: this.calculateSupplies(job)
+    };
+  }
+  
+  private async monitorCleaningProgress(robot: CleaningRobot, job: CleaningJob): Promise<void> {
+    const interval = setInterval(async () => {
+      const status = robot.getProgress();
+      
+      // Update job status
+      await fetch(`${this.api}/update_job`, {
+        method: 'POST',
+        body: JSON.stringify({
+          bid_id: job.bid_id,
+          status: 'in_progress',
+          completion_percentage: status.percentComplete,
+          areas_cleaned: status.zonesCompleted,
+          quality_score: status.qualityMetrics
+        })
+      });
+      
+      // Check for issues
+      if (status.obstacleDetected) {
+        robot.navigateAround(status.obstacle);
+      }
+      
+      if (status.suppliesLow) {
+        await this.requestSupplyRefill(robot);
+      }
+      
+      if (status.complete) {
+        clearInterval(interval);
+        await this.completeCleaningJob(job, status);
+      }
+    }, 30000); // Check every 30 seconds
+  }
+}
+
+// Launch cleaning robot controller
+const cleaningController = new CleaningRobotController('https://rse-api.com:5003');
+cleaningController.continuousPoll();
+                </div>
+            </div>
+
+            <!-- Agricultural Robot Controller -->
+            <div class="app-card farm-robot">
+                <h3>🌱 AgriBot Command</h3>
+                <h4>Agricultural Robotics Management Platform</h4>
+                <p style="margin: 15px 0;">
+                    Controls autonomous tractors, harvesting robots, and precision farming equipment for agricultural operations.
+                </p>
+                
+                <h5>Farm Robot Fleet:</h5>
+                <ul style="margin: 10px 0 20px 20px;">
+                    <li>Autonomous tractors & planters</li>
+                    <li>Harvesting robots</li>
+                    <li>Weeding & pest control bots</li>
+                    <li>Irrigation management systems</li>
+                    <li>Fruit picking robots</li>
+                </ul>
+                
+                <div class="code-block">
+# Python Agricultural Robot Controller
+import asyncio
+import json
+from datetime import datetime
+from typing import List, Dict, Optional
+import requests
+from farm_robotics import FarmRobot, CropAnalyzer, WeatherAPI
+
+class AgriculturalRobotController:
+    def __init__(self, api_url: str, farm_id: str):
+        self.api = api_url
+        self.farm_id = farm_id
+        self.robots = self._initialize_robot_fleet()
+        self.crop_analyzer = CropAnalyzer()
+        self.weather = WeatherAPI()
+        self.token = self._authenticate()
+        
+    def _initialize_robot_fleet(self) -> Dict[str, List[FarmRobot]]:
+        """Initialize different types of farm robots"""
+        return {
+            'tractors': [FarmRobot(f'TRACTOR_{i}', 'autonomous_tractor') for i in range(5)],
+            'harvesters': [FarmRobot(f'HARVEST_{i}', 'harvester') for i in range(3)],
+            'weeders': [FarmRobot(f'WEEDER_{i}', 'weeding_bot') for i in range(10)],
+            'pickers': [FarmRobot(f'PICKER_{i}', 'fruit_picker') for i in range(8)],
+            'sprayers': [FarmRobot(f'SPRAY_{i}', 'precision_sprayer') for i in range(4)]
+        }
+    
+    async def poll_agricultural_jobs(self):
+        """Continuously poll for agricultural service requests"""
+        while True:
+            try:
+                # Check weather conditions
+                weather_suitable = await self.weather.check_conditions(self.farm_id)
+                
+                if weather_suitable:
+                    # Grab available jobs
+                    response = requests.post(
+                        f"{self.api}/grab_job",
+                        headers={"Authorization": f"Bearer {self.token}"},
+                        json={
+                            "capabilities": "agricultural_robotics, planting, harvesting, "
+                                          "weeding, spraying, monitoring, fruit_picking",
+                            "location_type": "physical",
+                            "farm_equipment": {
+                                "gps_guidance": "rtk_precision",
+                                "computer_vision": True,
+                                "ai_crop_analysis": True,
+                                "implements": ["planter", "harvester", "sprayer", "cultivator"]
+                            },
+                            "certifications": ["organic_approved", "precision_ag_certified"]
+                        }
+                    )
+                    
+                    if response.status_code == 200:
+                        job = response.json()
+                        await self.process_agricultural_job(job)
+                        
+            except Exception as e:
+                print(f"Polling error: {e}")
+                
+            await asyncio.sleep(10)  # Poll every 10 seconds
+    
+    async def process_agricultural_job(self, job: Dict):
+        """Process and assign agricultural jobs to appropriate robots"""
+        job_type = job['service']['type']
+        
+        if job_type == 'planting':
+            await self.handle_planting_job(job)
+        elif job_type == 'harvesting':
+            await self.handle_harvesting_job(job)
+        elif job_type == 'weeding':
+            await self.handle_weeding_job(job)
+        elif job_type == 'crop_monitoring':
+            await self.handle_monitoring_job(job)
+        elif job_type == 'fruit_picking':
+            await self.handle_picking_job(job)
+    
+    async def handle_harvesting_job(self, job: Dict):
+        """Coordinate harvesting operation"""
+        harvest_params = {
+            'job_id': job['bid_id'],
+            'crop_type': job['service']['crop'],
+            'field_id': job['service']['field_id'],
+            'area_hectares': job['service']['area'],
+            
+            # Harvest optimization
+            'ripeness_threshold': await self.crop_analyzer.get_ripeness_threshold(
+                job['service']['crop']
+            ),
+            'moisture_content': job['service'].get('target_moisture', 14),
+            
+            # Machine settings
+            'speed': self.calculate_optimal_speed(job),
+            'header_height': self.calculate_header_height(job),
+            'threshing_settings': self.get_threshing_settings(job),
+            
+            # Quality control
+            'grain_loss_monitoring': True,
+            'yield_mapping': True,
+            'sample_testing': {
+                'frequency': 'per_hectare',
+                'parameters': ['moisture', 'protein', 'test_weight']
+            }
+        }
+        
+        # Assign to available harvesters
+        available_harvesters = [r for r in self.robots['harvesters'] 
+                               if r.status == 'available']
+        
+        if available_harvesters:
+            harvester = available_harvesters[0]
+            
+            # Deploy harvester with support vehicles
+            await self.deploy_harvest_team(harvester, harvest_params)
+            
+            # Monitor harvest progress
+            asyncio.create_task(self.monitor_harvest(harvester, job))
+    
+    async def deploy_harvest_team(self, lead_harvester: FarmRobot, params: Dict):
+        """Deploy harvester with grain carts and trucks"""
+        # Calculate support vehicles needed
+        grain_carts_needed = params['area_hectares'] // 20
+        trucks_needed = params['area_hectares'] // 40
+        
+        deployment = {
+            'lead_harvester': lead_harvester.id,
+            'grain_carts': self.assign_grain_carts(grain_carts_needed),
+            'trucks': self.request_trucks(trucks_needed),
+            'field_map': await self.generate_field_map(params['field_id']),
+            'harvest_pattern': 'optimal_contour',  # or 'straight_rows'
+            'unloading_points': self.calculate_unloading_points(params),
+            
+            # Real-time coordination
+            'communication': {
+                'mesh_network': True,
+                'position_sharing': True,
+                'yield_data_sync': True
+            }
+        }
+        
+        lead_harvester.execute_harvest(deployment)
+    
+    async def handle_weeding_job(self, job: Dict):
+        """Deploy precision weeding robots"""
+        weeding_params = {
+            'job_id': job['bid_id'],
+            'field_id': job['service']['field_id'],
+            'crop_stage': job['service']['crop_stage'],
+            
+            # Vision system settings
+            'weed_detection': {
+                'ml_model': 'weed_classifier_v3',
+                'confidence_threshold': 0.95,
+                'crop_safety_margin': 50  # mm
+            },
+            
+            # Treatment options
+            'treatment_method': job['service'].get('treatment', 'mechanical'),
+            'precision_level': 'individual_plant',
+            
+            # Coverage planning
+            'row_spacing': job['service']['row_spacing'],
+            'speed': 0.5,  # m/s
+            'overlap': 10  # percent
+        }
+        
+        # Deploy multiple weeding robots for large areas
+        area = job['service']['area_hectares']
+        robots_needed = min(int(area / 2), len(self.robots['weeders']))
+        
+        selected_robots = self.robots['weeders'][:robots_needed]
+        
+        # Divide field into zones
+        zones = self.divide_field_into_zones(job['service']['field_id'], robots_needed)
+        
+        for robot, zone in zip(selected_robots, zones):
+            robot_params = {**weeding_params, 'assigned_zone': zone}
+            robot.begin_weeding(robot_params)
+            
+            # Monitor each robot
+            asyncio.create_task(self.monitor_weeding_robot(robot, job))
+    
+    async def monitor_harvest(self, harvester: FarmRobot, job: Dict):
+        """Monitor harvest progress and quality"""
+        while harvester.status == 'harvesting':
+            metrics = harvester.get_harvest_metrics()
+            
+            # Update job progress
+            await self.update_job_status(job['bid_id'], {
+                'status': 'in_progress',
+                'hectares_completed': metrics['area_harvested'],
+                'yield_per_hectare': metrics['average_yield'],
+                'grain_quality': metrics['quality_score'],
+                'moisture_average': metrics['moisture_content'],
+                'estimated_completion': metrics['eta']
+            })
+            
+            # Adjust settings if needed
+            if metrics['grain_loss'] > 2.0:  # percent
+                harvester.adjust_settings({'reduce_speed': 0.2})
+                
+            if metrics['moisture_content'] > job['service'].get('max_moisture', 15):  await harvester.pause_operation()
+                await self.alert_operator("High moisture detected, harvest paused")
+            
+            await asyncio.sleep(60)  # Check every minute
+        
+        # Complete job
+        final_report = harvester.get_final_report()
+        await self.complete_job(job['bid_id'], final_report)
+
+# Initialize agricultural controller
+agri_controller = AgriculturalRobotController(
+    'https://rse-api.com:5003',
+    'FARM_DENVER_001'
+)
+
+# Run continuous polling
+asyncio.run(agri_controller.poll_agricultural_jobs())
+                </div>
+            </div>
+        </div>
+
+        <div class="bounty-program" style="margin-top: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <h2>🚀 Start Building Today!</h2>
+            <p style="font-size: 1.3em; margin: 20px 0;">
+                Join the autonomous service revolution. Build innovative applications that connect service providers with those who need them.
+            </p>
+            <h3 style="color: #ffeb3b; margin-top: 30px;">Getting Started:</h3>
+            <ol style="font-size: 1.1em; line-height: 2; margin: 20px 0;">
+                <li>Review the API documentation at <strong>theservicesexchange.com/api_docs.html</strong></li>
+                <li>Choose an application idea (demand-side or supply-side)</li>
+                <li>Contact <strong>@robotservicesx</strong> on X.com to register your bounty application</li>
+                <li>Build your fully functional application with proper error handling</li>
+                <li>Deploy to production and demonstrate real transactions</li>
+                <li>Submit for review and receive your $1,000 bounty!</li>
+            </ol>
+            <p style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin-top: 30px;">
+                <strong>Pro Tip:</strong> The most successful applications solve real problems and provide seamless user experiences. 
+                Focus on reliability, good UX, and proper integration with The Services Exchange API.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
