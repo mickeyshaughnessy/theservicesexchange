@@ -196,21 +196,41 @@ def handle_reject_job(current_user):
         logger.error(f"Job rejection error: {str(e)}")
         return flask.jsonify({"error": "Internal server error"}), 500
 
-# Shared endpoints
+# PUBLIC ROUTES - No authentication required
 @app.route('/nearby', methods=['POST'])
-@token_required
-def nearby(current_user):
+def nearby():
+    """Public endpoint for nearby services - no authentication required"""
     try:
         data = flask.request.get_json()
         if not data:
             return flask.jsonify({"error": "Invalid JSON data"}), 400
-        data['username'] = current_user
+        # Don't add username since this is a public endpoint
         response, status = nearby_services(data)
         return flask.jsonify(response), status
     except Exception as e:
         logger.error(f"Nearby services error: {str(e)}")
         return flask.jsonify({"error": "Internal server error"}), 500
 
+@app.route('/exchange_data', methods=['GET'])
+def exchange_data():
+    """Public endpoint for exchange data - no authentication required"""
+    try:
+        # Parse query parameters - don't include username for public access
+        data = {
+            'category': flask.request.args.get('category'),
+            'location': flask.request.args.get('location'),
+            'limit': int(flask.request.args.get('limit', 50)),
+            'include_completed': flask.request.args.get('include_completed', 'false').lower() == 'true'
+        }
+        response, status = get_exchange_data(data)
+        return flask.jsonify(response), status
+    except ValueError as e:
+        return flask.jsonify({"error": "Invalid limit parameter"}), 400
+    except Exception as e:
+        logger.error(f"Exchange data error: {str(e)}")
+        return flask.jsonify({"error": "Internal server error"}), 500
+
+# Shared endpoints (still require auth)
 @app.route('/sign_job', methods=['POST'])
 @token_required
 def handle_sign_job(current_user):
@@ -252,27 +272,6 @@ def bulletin(current_user):
         return flask.jsonify(response), status
     except Exception as e:
         logger.error(f"Bulletin error: {str(e)}")
-        return flask.jsonify({"error": "Internal server error"}), 500
-
-# Data endpoints
-@app.route('/exchange_data', methods=['GET'])
-@token_required
-def exchange_data(current_user):
-    try:
-        # Parse query parameters
-        data = {
-            'username': current_user,
-            'category': flask.request.args.get('category'),
-            'location': flask.request.args.get('location'),
-            'limit': int(flask.request.args.get('limit', 50)),
-            'include_completed': flask.request.args.get('include_completed', 'false').lower() == 'true'
-        }
-        response, status = get_exchange_data(data)
-        return flask.jsonify(response), status
-    except ValueError as e:
-        return flask.jsonify({"error": "Invalid limit parameter"}), 400
-    except Exception as e:
-        logger.error(f"Exchange data error: {str(e)}")
         return flask.jsonify({"error": "Internal server error"}), 500
 
 # Error handlers

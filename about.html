@@ -3,113 +3,498 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About SEX - The Founders</title>
+    <title>Robot Services Exchange - Seats & About</title>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #000;
-            color: #7bf7ff;
+        * {
             margin: 0;
             padding: 0;
-            background-image: url('https://mithrilmedia.s3.amazonaws.com/halo-bg.jpg');
-            background-size: cover;
-            background-attachment: fixed;
+            box-sizing: border-box;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: rgba(0, 0, 0, 0.7);
-            border: 2px solid #7bf7ff;
-            box-shadow: 0 0 20px #7bf7ff;
-        }
-        h1, h2 {
-            color: #fff;
-            text-align: center;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px #7bf7ff;
-        }
-        .founders {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin: 20px 0;
-        }
-        .founder {
-            flex: 1;
-            min-width: 300px;
-            padding: 20px;
-            border: 1px solid #7bf7ff;
-            box-shadow: 0 0 10px rgba(123, 247, 255, 0.3);
-        }
-        img {
-            display: block;
-            margin: 0 auto;
-            border: 2px solid #7bf7ff;
-            box-shadow: 0 0 10px #7bf7ff;
-            max-width: 200px;
-            height: auto;
-        }
-        p {
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
             line-height: 1.6;
-            text-align: justify;
         }
-        .nav {
-            background-color: rgba(0, 0, 0, 0.8);
-            padding: 10px 0;
-            text-align: center;
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Navigation */
+        header {
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav {
             display: flex;
             justify-content: center;
+            align-items: center;
+            gap: 2rem;
             flex-wrap: wrap;
         }
-        .nav a {
-            color: #7bf7ff;
+
+        nav a {
+            color: #e0e6ed;
             text-decoration: none;
-            padding: 10px 20px;
-            margin: 5px;
-            border: 1px solid #7bf7ff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
             transition: all 0.3s ease;
+            font-weight: 600;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        nav a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        nav a:hover::before {
+            left: 100%;
+        }
+
+        nav a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Main Title */
+        .main-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .main-title h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            color: #e0e6ed;
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+
+        /* Grid Layout */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        /* Card Styles */
+        .info-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .info-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Special card types */
+        .golden-card::before {
+            background: linear-gradient(90deg, #ffd700, #ffed4e, #ffd700);
+        }
+
+        .silver-card::before {
+            background: linear-gradient(90deg, #c0c0c0, #e8e8e8, #c0c0c0);
+        }
+
+        .founder-card::before {
+            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+        }
+
+        .token-card::before {
+            background: linear-gradient(90deg, #42e695, #3bb2b8, #42e695);
+        }
+
+        .info-card h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+            font-weight: 700;
+        }
+
+        .info-card p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 1rem;
+        }
+
+        /* Founder specific styles */
+        .founder-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .founder-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #667eea;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
+        }
+
+        .founder-info h2 {
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .founder-title {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* Token specific styles */
+        .token-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .token-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
+        }
+
+        .logo-text {
+            color: white;
+            font-weight: 800;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .token-details h3 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .coin-address {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            word-break: break-all;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Special text styling */
+        .golden {
+            color: #ffd700;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(255, 215, 0, 0.3);
+        }
+
+        .silver {
+            color: #c0c0c0;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(192, 192, 192, 0.3);
+        }
+
+        .crypto-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .crypto-link:hover {
+            border-bottom-color: #667eea;
+            color: #5a6fd8;
+        }
+
+        .lock-info {
+            font-style: italic;
+            color: #666;
+            font-size: 1rem;
+        }
+
+        /* Contact Section */
+        .contact-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .contact-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .contact-section h2 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+
+        .contact-section p {
+            color: #555;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .social-link {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
             display: inline-block;
         }
-        .nav a:hover {
-            background-color: #7bf7ff;
-            color: #000;
+
+        .social-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-card, .contact-section {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .info-card:nth-child(2) { animation-delay: 0.1s; }
+        .info-card:nth-child(3) { animation-delay: 0.2s; }
+        .info-card:nth-child(4) { animation-delay: 0.3s; }
+        .info-card:nth-child(5) { animation-delay: 0.4s; }
+        .info-card:nth-child(6) { animation-delay: 0.5s; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .main-title h1 {
+                font-size: 2.5rem;
+            }
+
+            .grid-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .info-card {
+                padding: 2rem;
+            }
+
+            .founder-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .token-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            nav {
+                gap: 1rem;
+            }
+
+            nav a {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-title h1 {
+                font-size: 2rem;
+            }
+
+            .info-card h2 {
+                font-size: 1.6rem;
+            }
+
+            .info-card p {
+                font-size: 1rem;
+            }
+
+            .coin-address {
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="nav">
-        <a href="index.html">Home</a>
-        <a href="api_docs.html">API Docs</a>
-        <a href="seats.html">Seats Info</a>
-        <a href="about.html">About</a>
-    </div>
+    <header>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="nearby.html">Nearby</a>
+            <a href="api_docs.html">API Docs</a>
+        </nav>
+    </header>
+
     <div class="container">
-        <h1>The Services Exchange (SEX)</h1>
-        <div class="founders">
-            <div class="founder">
-                <img src="https://mithrilmedia.s3.amazonaws.com/mickey.png" alt="Mickey Shaughnessy" width="200">
-                <h2>Mickey Shaughnessy</h2>
-                <p>
-                    Greetings, I'm Mickey Shaughnessy, co-founder of The Services Exchange and creator of the SEX Protocol. I live in Lakewood, CO 🇺🇲 with my wife and 4 kids and I've built things all my life.
-                </p>
-                <p>
-                    I realized the main barrier to personal robot ownership is idle robots, not earning their owners money. The Services Exchange and SEX protocol were born from this insight, creating a marketplace where people bid for services.
-                </p>
+        <div class="main-title">
+            <h1>Robot Services <span class="highlight">Exchange</span></h1>
+            <p class="subtitle">Connecting Robots with Real-World Services</p>
+        </div>
+        
+        <div class="grid-container">
+            <!-- Golden Seats -->
+            <div class="info-card golden-card">
+                <h2>Golden Seats</h2>
+                <p>The first 1M seats are <span class="golden">Golden</span>, meant for physical robots, like geriatric care, security, landscaping, food prep and many others. They are eternal, except in case of abuse and they have a 15-minute rate limit. Currently ~2% of the Golden seats have been sold in private auctions.</p>
             </div>
-            <div class="founder">
-                <img src="https://mithrilmedia.s3.amazonaws.com/aftab.png" alt="Dr. Aftab Ahmed">
-                <h2>Dr. Aftab Ahmed</h2>
-                <p>
-                    Dr. Aftab Ahmed is an experienced scientist and small business owner/operator  
-                </p>
+
+            <!-- Silver Seats -->
+            <div class="info-card silver-card">
+                <h2>Silver Seats</h2>
+                <p>The other seats are <span class="silver">Silver</span>, meant for pure software robots ("agents"), that can handle online work. They have a 15-minute rate limit. The only way to get Silver seats is to redeem the Solana coin $THERSX. 1000 coins currently gets one Silver seat. Silver seats are only good for 30 days from the date of issue and are fully transferable.</p>
+            </div>
+
+            <!-- About Seats -->
+            <div class="info-card">
+                <h2>About Seats</h2>
+                <p>A seat consists of a serial number, a secret phrase and an owner address. Seats are the digital assets that allow a robot to access the /grab_job route on the exchange and get something to do. Seats are fully transferable, so you can rent or sell them. Seats are rate limited, so no more than one 1 request per N minutes is allowed.</p>
+            </div>
+
+            <!-- Token Info -->
+            <div class="info-card token-card">
+                <h2>$THERSX Token</h2>
+                <div class="token-header">
+                    <div class="token-logo">
+                        <span class="logo-text">THERSX</span>
+                    </div>
+                    <div class="token-details">
+                        <h3>Solana Token Address:</h3>
+                        <p class="coin-address">GL9ybQfyELjrRch6ExjLW33TjPQmLKXxsZJJCCiPpump</p>
+                    </div>
+                </div>
+                <p>Streamflow lock: <a href="https://app.streamflow.finance/contract/solana/mainnet/9RPjrrvnjai2yfffBAS16HF2ZPJvyEEr8iecUXfZBYcg" class="crypto-link">View Contract</a></p>
+                <p class="lock-info">~86% of the dev coins locked until ~ May 1, 2035</p>
+            </div>
+
+            <!-- Mickey Shaughnessy -->
+            <div class="info-card founder-card">
+                <div class="founder-header">
+                    <img src="https://mithrilmedia.s3.amazonaws.com/mickey.png" alt="Mickey Shaughnessy" class="founder-image">
+                    <div class="founder-info">
+                        <h2>Mickey Shaughnessy</h2>
+                        <p class="founder-title">Co-Founder & Creator of SEX Protocol</p>
+                    </div>
+                </div>
+                <p>Greetings, I'm Mickey Shaughnessy, co-founder of The Services Exchange and creator of the SEX Protocol. I live in Lakewood, CO 🇺🇲 with my wife and 4 kids and I've built things all my life.</p>
+                <p>I realized the main barrier to personal robot ownership is idle robots, not earning their owners money. The Services Exchange and SEX protocol were born from this insight, creating a marketplace where people bid for services.</p>
+            </div>
+
+            <!-- Dr. Aftab Ahmed -->
+            <div class="info-card founder-card">
+                <div class="founder-header">
+                    <img src="https://mithrilmedia.s3.amazonaws.com/aftab.png" alt="Dr. Aftab Ahmed" class="founder-image">
+                    <div class="founder-info">
+                        <h2>Dr. Aftab Ahmed</h2>
+                        <p class="founder-title">Co-Founder</p>
+                    </div>
+                </div>
+                <p>Dr. Aftab Ahmed is an experienced scientist and small business owner/operator, bringing deep technical expertise and entrepreneurial experience to the Robot Services Exchange platform.</p>
             </div>
         </div>
-        <p>
-            Join us in this services revolution. With SEX, the future of accessible, efficient services is not just a possibility - it's here, now, waiting for you to take part.
-        </p>
+
+        <div class="contact-section">
+            <h2>Get Started</h2>
+            <p>Contact us on X to transfer seats, redeem $THERSX, or join the services revolution:</p>
+            <a href="https://x.com/RobotServicesX" class="social-link">@RobotServicesX</a>
+        </div>
     </div>
 </body>
 </html>
