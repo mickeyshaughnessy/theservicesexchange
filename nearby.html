@@ -5,176 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nearby Services - The Service Exchange</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
-    <style>
-        :root {
-            --primary: #6366f1;
-            --dark: #1e293b;
-            --light: #f8fafc;
-            --gold: #fbbf24;
-            --silver: #94a3b8;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--light);
-            padding-top: 76px;
-        }
-        
-        .navbar {
-            background: var(--dark) !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .navbar-brand {
-            font-weight: 700;
-            color: white !important;
-        }
-        
-        .navbar-nav .nav-link {
-            color: #94a3b8 !important;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-        
-        .navbar-nav .nav-link:hover,
-        .navbar-nav .nav-link.active {
-            color: var(--primary) !important;
-        }
-        
-        .map-container {
-            height: 400px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        
-        .search-panel {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        .service-card {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border-left: 4px solid var(--primary);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        
-        .service-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        
-        .service-price {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .service-distance {
-            color: var(--silver);
-            font-size: 0.9rem;
-        }
-        
-        .reputation-stars {
-            color: var(--gold);
-        }
-        
-        .exchange-stats {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        
-        .stat-card {
-            text-align: center;
-            padding: 15px;
-            background: var(--light);
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-        
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .stat-label {
-            color: var(--silver);
-            font-size: 0.9rem;
-        }
-        
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .job-item {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-left: 3px solid var(--gold);
-        }
-        
-        .job-completed {
-            border-left-color: var(--silver);
-        }
-        
-        .job-title {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        
-        .job-meta {
-            font-size: 0.9rem;
-            color: var(--silver);
-        }
-        
-        .filter-section {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        .mapboxgl-popup-content {
-            border-radius: 8px;
-        }
-        
-        .btn-primary-custom {
-            background: linear-gradient(135deg, var(--primary), #4f46e5);
-            border: none;
-            padding: 12px 24px;
-            font-weight: 600;
-            border-radius: 8px;
-            color: white;
-            text-decoration: none;
-            display: inline-block;
-        }
-        
-        .btn-primary-custom:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-            color: white;
-        }
-    </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="index.html">The Service Exchange</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -186,28 +23,91 @@
                         <a class="nav-link" href="index.html">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="https://theservicesexchange.com/about.html">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="https://theservicesexchange.com/seats.html">Seats</a>
+                        <a class="nav-link" href="api_docs.html">API Docs</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link active" href="nearby.html" aria-current="page">Nearby Services</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="https://theservicesexchange.com/api_docs.html">API Docs</a>
+                        <a class="nav-link" href="bounty.html">Demo Apps</a>
                     </li>
                 </ul>
+                
+                <!-- Chat and Bulletin buttons (shown when logged in) -->
+                <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
+                <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
+                
+                <!-- Account dropdown (shown when logged in) -->
+                <div id="accountDropdown" class="account-dropdown ms-3" style="display: none;">
+                    <button class="account-btn">
+                        <span id="accountUsername">Account</span> ▼
+                    </button>
+                    <div class="account-window">
+                        <div class="account-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" id="accountDisplayName">Loading...</h5>
+                                <button class="logout-btn" onclick="logout()">Logout</button>
+                            </div>
+                            <div class="reputation-display">
+                                <span class="star-rating" id="starDisplay">★★★★★</span>
+                                <span id="ratingText">4.5 (12 ratings)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="account-section">
+                            <h6>Outstanding Requests</h6>
+                            <div class="loading-spinner" id="bidsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading requests...</span>
+                            </div>
+                            <div id="outstandingBids">
+                                <p class="text-muted mb-0">No outstanding requests</p>
+                            </div>
+                        </div>
+                        
+                        <div class="account-section">
+                            <h6>Active Services</h6>
+                            <div class="loading-spinner" id="activeJobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading active services...</span>
+                            </div>
+                            <div id="activeJobs">
+                                <p class="text-muted mb-0">No active services</p>
+                            </div>
+                        </div>
+                        
+                        <div class="account-section">
+                            <h6>Recent Completed Services</h6>
+                            <div class="loading-spinner" id="jobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading services...</span>
+                            </div>
+                            <div id="completedJobs">
+                                <p class="text-muted mb-0">No completed services</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Login button (shown when not logged in) -->
+                <button id="loginButton" class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
             </div>
         </div>
     </nav>
+
+    <div class="header">
+        <div class="container">
+            <h1>🗺️ Nearby Services</h1>
+            <p class="lead">Find services near any location</p>
+        </div>
+    </div>
 
     <div class="container mt-4">
         <div class="row">
             <div class="col-md-8">
                 <div class="search-panel">
-                    <h2>🗺️ Nearby Services</h2>
-                    <p class="text-muted">Find services near any location</p>
+                    <h2>Search for Services</h2>
+                    <p class="text-muted">Enter a location to find available services nearby</p>
                     
                     <form id="nearbyForm">
                         <div class="row">
@@ -311,297 +211,171 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const API_URL = 'https://rse-api.com:5003';
-        let map = null;
-        let markers = [];
-        
-        // Mapbox access token - You'll need to replace this with your actual token
-        mapboxgl.accessToken = 'pk.eyJ1IjoibWlja2V5c2hhdWdobmVzc3kiLCJhIjoiY2x6NGxyNG93MnptaDJxb2dhOGloenZqeiJ9.ANY7UIu7VTPFwqTD8cEAKQ'
-        
-        // Initialize the page - wait for mapbox to be loaded
-        function initializePage() {
-            if (typeof mapboxgl === 'undefined') {
-                // If mapboxgl isn't loaded yet, try again in 100ms
-                setTimeout(initializePage, 100);
-                return;
-            }
-            initializeMap();
-            loadExchangeData();
-        }
-        
-        // Initialize when DOM and scripts are ready
-        window.addEventListener('load', initializePage);
-        
-        function initializeMap() {
-            // Initialize map centered on Denver, CO
-            map = new mapboxgl.Map({
-                container: 'map',
-                style: 'mapbox://styles/mapbox/streets-v11',
-                center: [-104.9903, 39.7392], // Denver coordinates
-                zoom: 10
-            });
-            
-            map.addControl(new mapboxgl.NavigationControl());
-            
-            // Add click handler for getting coordinates
-            map.on('click', (e) => {
-                const { lng, lat } = e.lngLat;
-                searchNearbyByCoordinates(lat, lng);
-            });
-        }
-        
-        async function loadExchangeData() {
-            const statsLoading = document.getElementById('statsLoading');
-            const activityLoading = document.getElementById('activityLoading');
-            
-            statsLoading.style.display = 'block';
-            activityLoading.style.display = 'block';
-            
-            try {
-                const response = await fetch(`${API_URL}/exchange_data?limit=50&include_completed=true`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    updateExchangeStats(data);
-                    updateRecentActivity(data);
-                } else {
-                    console.error('Failed to load exchange data');
-                }
-                
-            } catch (error) {
-                console.error('Error loading exchange data:', error);
-            } finally {
-                statsLoading.style.display = 'none';
-                activityLoading.style.display = 'none';
-                document.getElementById('exchangeStats').style.display = 'block';
-                document.getElementById('recentActivity').style.display = 'block';
-            }
-        }
-        
-        function updateExchangeStats(data) {
-            const stats = data.market_stats || {};
-            
-            document.getElementById('activeBidsCount').textContent = stats.total_active_bids || 0;
-            document.getElementById('completedTodayCount').textContent = stats.total_completed_today || 0;
-            document.getElementById('avgPrice').textContent = stats.avg_price_cleaning ? `$${stats.avg_price_cleaning.toFixed(0)}` : 'N/A';
-        }
-        
-        function updateRecentActivity(data) {
-            const container = document.getElementById('recentActivity');
-            const activeBids = data.active_bids || [];
-            const completedJobs = data.completed_jobs || [];
-            
-            // Combine and sort by date
-            const allActivity = [
-                ...activeBids.map(bid => ({...bid, type: 'bid', date: bid.posted_at})),
-                ...completedJobs.map(job => ({...job, type: 'completed', date: job.completed_at}))
-            ].sort((a, b) => b.date - a.date).slice(0, 10);
-            
-            if (allActivity.length === 0) {
-                container.innerHTML = '<p class="text-muted">No recent activity</p>';
-                return;
-            }
-            
-            container.innerHTML = allActivity.map(item => {
-                const isCompleted = item.type === 'completed';
-                const service = typeof item.service === 'string' ? item.service : 
-                              (item.service?.type || 'Service');
-                
-                return `
-                    <div class="job-item ${isCompleted ? 'job-completed' : ''}">
-                        <div class="job-title">${service}</div>
-                        <div class="job-meta">
-                            $${item.price} • ${isCompleted ? 'Completed' : 'Active Bid'} • 
-                            ${new Date(item.date * 1000).toLocaleDateString()}
-                        </div>
-                        ${item.location ? `<div class="job-meta">${item.location}</div>` : ''}
-                        ${isCompleted && item.avg_rating ? `<div class="reputation-stars">${'★'.repeat(Math.round(item.avg_rating))}</div>` : ''}
-                    </div>
-                `;
-            }).join('');
-        }
-        
-        function clearMapMarkers() {
-            markers.forEach(marker => marker.remove());
-            markers = [];
-        }
-        
-        function addServiceMarker(service, lat, lng) {
-            const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-                <div style="padding: 10px;">
-                    <h6>${service.service}</h6>
-                    <p><strong>$${service.price}</strong> • ${service.distance.toFixed(1)} miles</p>
-                    ${service.buyer_reputation ? `<div class="reputation-stars">${'★'.repeat(Math.round(service.buyer_reputation))}</div>` : ''}
+    <!-- Auth Modal -->
+    <div class="modal fade" id="authModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Get Started</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-            `);
-            
-            const marker = new mapboxgl.Marker({color: '#6366f1'})
-                .setLngLat([lng, lat])
-                .setPopup(popup)
-                .addTo(map);
-            
-            markers.push(marker);
-        }
-        
-        async function searchNearbyByAddress(address, radius) {
-            const loading = document.getElementById('nearbyLoading');
-            const results = document.getElementById('nearbyResults');
-            
-            loading.style.display = 'block';
-            results.innerHTML = '';
-            
-            try {
-                const response = await fetch(`${API_URL}/nearby`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        address: address,
-                        radius: radius || 10
-                    })
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    displayNearbyResults(data.services || []);
+                <div class="modal-body">
+                    <div id="authError" class="error-message" style="display: none;"></div>
                     
-                    // Geocode address to center map
-                    await geocodeAndCenterMap(address);
-                } else {
-                    results.innerHTML = '<p class="text-danger">Failed to search for nearby services</p>';
-                }
-                
-            } catch (error) {
-                results.innerHTML = '<p class="text-danger">Network error while searching</p>';
-            } finally {
-                loading.style.display = 'none';
-            }
-        }
-        
-        async function searchNearbyByCoordinates(lat, lng) {
-            const loading = document.getElementById('nearbyLoading');
-            const results = document.getElementById('nearbyResults');
-            
-            loading.style.display = 'block';
-            results.innerHTML = '';
-            
-            try {
-                const response = await fetch(`${API_URL}/nearby`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        lat: lat,
-                        lon: lng,
-                        radius: parseInt(document.getElementById('searchRadius').value) || 10
-                    })
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    displayNearbyResults(data.services || []);
-                    map.flyTo({center: [lng, lat], zoom: 12});
-                } else {
-                    results.innerHTML = '<p class="text-danger">Failed to search for nearby services</p>';
-                }
-                
-            } catch (error) {
-                results.innerHTML = '<p class="text-danger">Network error while searching</p>';
-            } finally {
-                loading.style.display = 'none';
-            }
-        }
-        
-        function displayNearbyResults(services) {
-            const results = document.getElementById('nearbyResults');
-            clearMapMarkers();
-            
-            if (services.length === 0) {
-                results.innerHTML = '<p class="text-muted">No services found in this area.</p>';
-                return;
-            }
-            
-            results.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5>Found ${services.length} service${services.length === 1 ? '' : 's'}</h5>
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#register">Register</a>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="login">
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" placeholder="Username" id="loginUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="password" class="form-control" placeholder="Password" id="loginPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">Login</button>
+                            </form>
+                        </div>
+                        
+                        <div class="tab-pane" id="register">
+                            <form id="registerForm">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" placeholder="Username" id="regUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">Register</button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                ${services.map(service => `
-                    <div class="service-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h6>${service.service}</h6>
-                                <p class="service-distance">📍 ${service.distance.toFixed(1)} miles away</p>
-                                ${service.address ? `<p class="text-muted small">${service.address}</p>` : ''}
-                                ${service.buyer_reputation ? `
-                                    <div class="reputation-stars">
-                                        ${'★'.repeat(Math.round(service.buyer_reputation))}${'☆'.repeat(5 - Math.round(service.buyer_reputation))}
-                                        <span class="text-muted ms-1">(${service.buyer_reputation.toFixed(1)})</span>
-                                    </div>
-                                ` : ''}
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div class="modal fade" id="chatModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">💬 Inbox</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-4">
+                            <h6>Conversations</h6>
+                            <div class="chat-inbox" id="chatInbox">
+                                <div class="loading-spinner" id="conversationsLoading">
+                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                    <span class="ms-2">Loading...</span>
+                                </div>
                             </div>
-                            <div class="text-end">
-                                <div class="service-price">$${service.price}</div>
-                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="contactProvider('${service.bid_id}')">
-                                    Contact
-                                </button>
+                        </div>
+                        <div class="col-8">
+                            <div id="conversationView" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 id="currentConversationUser">Select a conversation</h6>
+                                    <button class="btn btn-sm btn-primary" onclick="showNewMessageForm()">New Message</button>
+                                </div>
+                                <div class="message-history" id="messageHistory"></div>
+                                <form id="replyForm" style="display: none;">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="Type your reply..." id="replyMessage" required>
+                                        <button type="submit" class="btn btn-primary">Send</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div id="newMessageForm" style="display: none;">
+                                <h6>New Message</h6>
+                                <form id="chatForm">
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" placeholder="Recipient username" id="chatRecipient" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <textarea class="form-control" rows="3" placeholder="Your message" id="chatMessage" required></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" placeholder="Job ID (optional)" id="chatJobId">
+                                        <small class="text-muted">Link this message to a specific job</small>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">Send Message</button>
+                                        <button type="button" class="btn btn-secondary" onclick="hideNewMessageForm()">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div id="chatPlaceholder">
+                                <div class="text-center text-muted p-4">
+                                    <p>Select a conversation to view messages or click "New Message" to start chatting.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                `).join('')}
-            `;
-            
-            // Add markers to map (if we had coordinates)
-            // For now, we'll just center on the search location
-        }
-        
-        async function geocodeAndCenterMap(address) {
-            // In a real implementation, you'd use Mapbox Geocoding API
-            // For demo purposes, we'll center on Denver
-            map.flyTo({center: [-104.9903, 39.7392], zoom: 12});
-        }
-        
-        function contactProvider(bidId) {
-            alert(`Contact functionality would be implemented here for bid: ${bidId}`);
-        }
-        
-        // Event handlers
-        document.getElementById('nearbyForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const address = document.getElementById('searchAddress').value;
-            const radius = parseInt(document.getElementById('searchRadius').value);
-            await searchNearbyByAddress(address, radius);
-        });
-        
-        document.getElementById('filterForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const category = document.getElementById('categoryFilter').value;
-            const location = document.getElementById('locationFilter').value;
-            const limit = parseInt(document.getElementById('limitFilter').value);
-            const includeCompleted = document.getElementById('includeCompleted').checked;
-            
-            const params = new URLSearchParams();
-            if (category) params.append('category', category);
-            if (location) params.append('location', location);
-            if (limit) params.append('limit', limit.toString());
-            if (includeCompleted) params.append('include_completed', 'true');
-            
-            try {
-                const response = await fetch(`${API_URL}/exchange_data?${params}`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    updateExchangeStats(data);
-                    updateRecentActivity(data);
-                }
-            } catch (error) {
-                console.error('Error applying filters:', error);
-            }
-        });
-    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulletin Modal -->
+    <div class="modal fade" id="bulletinModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">📢 Community Bulletin</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Recent Posts</h6>
+                        <button class="btn btn-sm btn-primary" onclick="showNewPostForm()">New Post</button>
+                    </div>
+                    
+                    <div id="bulletinFeed" class="bulletin-feed">
+                        <div class="loading-spinner" id="bulletinLoading">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <span class="ms-2">Loading posts...</span>
+                        </div>
+                    </div>
+                    
+                    <div id="newPostForm" style="display: none;" class="mt-3 p-3 border rounded">
+                        <h6>Create New Post</h6>
+                        <form id="bulletinForm">
+                            <div class="mb-3">
+                                <input type="text" class="form-control" placeholder="Post title" id="bulletinTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <select class="form-control" id="bulletinCategory">
+                                    <option value="general">General</option>
+                                    <option value="announcement">Announcement</option>
+                                    <option value="question">Question</option>
+                                    <option value="offer">Service Offer</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <textarea class="form-control" rows="4" placeholder="Post content" id="bulletinContent" required></textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">Post to Bulletin</button>
+                                <button type="button" class="btn btn-secondary" onclick="hideNewPostForm()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+    <script src="nearby.js"></script>
 </body>
 </html>
