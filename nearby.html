@@ -154,12 +154,6 @@
             border-radius: 8px;
         }
         
-        .login-required {
-            text-align: center;
-            padding: 40px;
-            color: var(--silver);
-        }
-        
         .btn-primary-custom {
             background: linear-gradient(135deg, var(--primary), #4f46e5);
             border: none;
@@ -209,118 +203,108 @@
     </nav>
 
     <div class="container mt-4">
-        <!-- Login Required Message -->
-        <div id="loginRequired" class="login-required" style="display: none;">
-            <h3>Authentication Required</h3>
-            <p>Please log in to view nearby services and exchange data.</p>
-            <a href="index.html" class="btn-primary-custom">Go to Login</a>
-        </div>
-
-        <!-- Authenticated Content -->
-        <div id="authenticatedContent" style="display: none;">
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="search-panel">
-                        <h2>🗺️ Nearby Services</h2>
-                        <p class="text-muted">Find services near any location</p>
-                        
-                        <form id="nearbyForm">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <input type="text" class="form-control" placeholder="Enter address or location" id="searchAddress" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <input type="number" class="form-control" placeholder="Radius (miles)" id="searchRadius" value="10" min="1" max="50">
-                                </div>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="search-panel">
+                    <h2>🗺️ Nearby Services</h2>
+                    <p class="text-muted">Find services near any location</p>
+                    
+                    <form id="nearbyForm">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <input type="text" class="form-control" placeholder="Enter address or location" id="searchAddress" required>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100 mt-3">Search Nearby Services</button>
-                        </form>
-                    </div>
-
-                    <!-- Map -->
-                    <div class="map-container">
-                        <div id="map"></div>
-                    </div>
-
-                    <!-- Nearby Services Results -->
-                    <div class="mt-4">
-                        <h4>Search Results</h4>
-                        <div class="loading-spinner" id="nearbyLoading">
-                            <div class="spinner-border" role="status"></div>
-                            <p>Searching for nearby services...</p>
+                            <div class="col-md-4">
+                                <input type="number" class="form-control" placeholder="Radius (miles)" id="searchRadius" value="10" min="1" max="50">
+                            </div>
                         </div>
-                        <div id="nearbyResults">
-                            <p class="text-muted">Use the search form above to find services near any location.</p>
+                        <button type="submit" class="btn btn-primary w-100 mt-3">Search Nearby Services</button>
+                    </form>
+                </div>
+
+                <!-- Map -->
+                <div class="map-container">
+                    <div id="map"></div>
+                </div>
+
+                <!-- Nearby Services Results -->
+                <div class="mt-4">
+                    <h4>Search Results</h4>
+                    <div class="loading-spinner" id="nearbyLoading">
+                        <div class="spinner-border" role="status"></div>
+                        <p>Searching for nearby services...</p>
+                    </div>
+                    <div id="nearbyResults">
+                        <p class="text-muted">Use the search form above to find services near any location.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Exchange Statistics -->
+                <div class="exchange-stats">
+                    <h4>📊 Exchange Stats</h4>
+                    <div class="loading-spinner" id="statsLoading">
+                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                        <p>Loading statistics...</p>
+                    </div>
+                    <div id="exchangeStats" style="display: none;">
+                        <div class="stat-card">
+                            <div class="stat-number" id="activeBidsCount">-</div>
+                            <div class="stat-label">Active Bids</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="completedTodayCount">-</div>
+                            <div class="stat-label">Completed Today</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="avgPrice">-</div>
+                            <div class="stat-label">Avg Price (Cleaning)</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-md-4">
-                    <!-- Exchange Statistics -->
-                    <div class="exchange-stats">
-                        <h4>📊 Exchange Stats</h4>
-                        <div class="loading-spinner" id="statsLoading">
-                            <div class="spinner-border spinner-border-sm" role="status"></div>
-                            <p>Loading statistics...</p>
+                <!-- Filters -->
+                <div class="filter-section">
+                    <h5>🔍 Exchange Data Filters</h5>
+                    <form id="filterForm">
+                        <div class="mb-3">
+                            <select class="form-control" id="categoryFilter">
+                                <option value="">All Categories</option>
+                                <option value="cleaning">Cleaning</option>
+                                <option value="development">Development</option>
+                                <option value="repair">Repairs</option>
+                                <option value="tutoring">Tutoring</option>
+                                <option value="design">Design</option>
+                            </select>
                         </div>
-                        <div id="exchangeStats" style="display: none;">
-                            <div class="stat-card">
-                                <div class="stat-number" id="activeBidsCount">-</div>
-                                <div class="stat-label">Active Bids</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="completedTodayCount">-</div>
-                                <div class="stat-label">Completed Today</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="avgPrice">-</div>
-                                <div class="stat-label">Avg Price (Cleaning)</div>
+                        <div class="mb-3">
+                            <input type="text" class="form-control" placeholder="Location filter" id="locationFilter">
+                        </div>
+                        <div class="mb-3">
+                            <input type="number" class="form-control" placeholder="Max results" id="limitFilter" value="25" min="1" max="200">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="includeCompleted" checked>
+                                <label class="form-check-label" for="includeCompleted">
+                                    Include completed jobs
+                                </label>
                             </div>
                         </div>
-                    </div>
+                        <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                    </form>
+                </div>
 
-                    <!-- Filters -->
-                    <div class="filter-section">
-                        <h5>🔍 Exchange Data Filters</h5>
-                        <form id="filterForm">
-                            <div class="mb-3">
-                                <select class="form-control" id="categoryFilter">
-                                    <option value="">All Categories</option>
-                                    <option value="cleaning">Cleaning</option>
-                                    <option value="development">Development</option>
-                                    <option value="repair">Repairs</option>
-                                    <option value="tutoring">Tutoring</option>
-                                    <option value="design">Design</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <input type="text" class="form-control" placeholder="Location filter" id="locationFilter">
-                            </div>
-                            <div class="mb-3">
-                                <input type="number" class="form-control" placeholder="Max results" id="limitFilter" value="25" min="1" max="200">
-                            </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="includeCompleted" checked>
-                                    <label class="form-check-label" for="includeCompleted">
-                                        Include completed jobs
-                                    </label>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
-                        </form>
+                <!-- Recent Exchange Activity -->
+                <div class="exchange-stats">
+                    <h5>📈 Recent Activity</h5>
+                    <div class="loading-spinner" id="activityLoading">
+                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                        <p>Loading activity...</p>
                     </div>
-
-                    <!-- Recent Exchange Activity -->
-                    <div class="exchange-stats">
-                        <h5>📈 Recent Activity</h5>
-                        <div class="loading-spinner" id="activityLoading">
-                            <div class="spinner-border spinner-border-sm" role="status"></div>
-                            <p>Loading activity...</p>
-                        </div>
-                        <div id="recentActivity" style="display: none;">
-                            <!-- Activity items will be populated here -->
-                        </div>
+                    <div id="recentActivity" style="display: none;">
+                        <!-- Activity items will be populated here -->
                     </div>
                 </div>
             </div>
@@ -330,34 +314,25 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const API_URL = 'https://rse-api.com:5003';
-        let authToken = null;
         let map = null;
         let markers = [];
         
         // Mapbox access token - You'll need to replace this with your actual token
         mapboxgl.accessToken = 'pk.eyJ1IjoibWlja2V5c2hhdWdobmVzc3kiLCJhIjoiY2x6NGxyNG93MnptaDJxb2dhOGloenZqeiJ9.ANY7UIu7VTPFwqTD8cEAKQ'
         
-        // Initialize the page
-        window.addEventListener('load', () => {
-            authToken = localStorage.getItem('auth_token');
-            if (authToken) {
-                showAuthenticatedContent();
-                initializeMap();
-                loadExchangeData();
-            } else {
-                showLoginRequired();
+        // Initialize the page - wait for mapbox to be loaded
+        function initializePage() {
+            if (typeof mapboxgl === 'undefined') {
+                // If mapboxgl isn't loaded yet, try again in 100ms
+                setTimeout(initializePage, 100);
+                return;
             }
-        });
-        
-        function showLoginRequired() {
-            document.getElementById('loginRequired').style.display = 'block';
-            document.getElementById('authenticatedContent').style.display = 'none';
+            initializeMap();
+            loadExchangeData();
         }
         
-        function showAuthenticatedContent() {
-            document.getElementById('loginRequired').style.display = 'none';
-            document.getElementById('authenticatedContent').style.display = 'block';
-        }
+        // Initialize when DOM and scripts are ready
+        window.addEventListener('load', initializePage);
         
         function initializeMap() {
             // Initialize map centered on Denver, CO
@@ -385,9 +360,7 @@
             activityLoading.style.display = 'block';
             
             try {
-                const response = await fetch(`${API_URL}/exchange_data?limit=50&include_completed=true`, {
-                    headers: {'Authorization': `Bearer ${authToken}`}
-                });
+                const response = await fetch(`${API_URL}/exchange_data?limit=50&include_completed=true`);
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -483,8 +456,7 @@
                 const response = await fetch(`${API_URL}/nearby`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         address: address,
@@ -520,8 +492,7 @@
                 const response = await fetch(`${API_URL}/nearby`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         lat: lat,
@@ -620,9 +591,7 @@
             if (includeCompleted) params.append('include_completed', 'true');
             
             try {
-                const response = await fetch(`${API_URL}/exchange_data?${params}`, {
-                    headers: {'Authorization': `Bearer ${authToken}`}
-                });
+                const response = await fetch(`${API_URL}/exchange_data?${params}`);
                 
                 if (response.ok) {
                     const data = await response.json();
