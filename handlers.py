@@ -166,6 +166,16 @@ def call_openrouter_llm(prompt, temperature=0, max_tokens=10):
             "max_tokens": max_tokens
         }
         
+        # Debug logging
+        logger.info("=" * 80)
+        logger.info("LLM API CALL")
+        logger.info("=" * 80)
+        logger.info(f"Endpoint: https://openrouter.ai/api/v1/chat/completions")
+        logger.info(f"Model: {data['model']}")
+        logger.info(f"Temperature: {temperature}, Max Tokens: {max_tokens}")
+        logger.info(f"\nInput Messages:")
+        logger.info(json.dumps(data['messages'], indent=2))
+        
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
@@ -173,17 +183,29 @@ def call_openrouter_llm(prompt, temperature=0, max_tokens=10):
             timeout=5
         )
         
+        logger.info(f"\nResponse Status: {response.status_code}")
+        
         if response.status_code == 200:
             result = response.json()
+            logger.info(f"\nFull Response:")
+            logger.info(json.dumps(result, indent=2))
+            
             if 'choices' in result and len(result['choices']) > 0:
-                return result['choices'][0]['message']['content'].strip()
+                answer = result['choices'][0]['message']['content'].strip()
+                logger.info(f"\nExtracted Answer: '{answer}'")
+                logger.info("=" * 80)
+                return answer
         else:
-            logger.error(f"OpenRouter API error: {response.status_code} - {response.text}")
+            logger.error(f"OpenRouter API error: {response.status_code}")
+            logger.error(f"Response text: {response.text}")
+            logger.info("=" * 80)
         
     except requests.exceptions.RequestException as e:
         logger.error(f"OpenRouter API request error: {str(e)}")
+        logger.info("=" * 80)
     except Exception as e:
         logger.error(f"Unexpected error calling OpenRouter: {str(e)}")
+        logger.info("=" * 80)
     
     return None
 
@@ -1012,3 +1034,104 @@ def get_exchange_data(data):
     except Exception as e:
         logger.error(f"Exchange data error: {str(e)}")
         return {"error": "Internal server error"}, 500
+
+
+# Unit test for LLM integration
+if __name__ == "__main__":
+    print("=" * 60)
+    print("Testing OpenRouter LLM Integration")
+    print("=" * 60)
+    
+    # Check if API key is configured
+    if not hasattr(config, 'OPENROUTER_API_KEY') or not config.OPENROUTER_API_KEY:
+        print("\n❌ FAILED: OPENROUTER_API_KEY not configured in config.py")
+        print("Please add: OPENROUTER_API_KEY = 'your-api-key-here'")
+        exit(1)
+    
+    print(f"\n✓ API key configured (length: {len(config.OPENROUTER_API_KEY)} chars)")
+    
+    # Test 1: Basic LLM call
+    print("\n" + "-" * 60)
+    print("Test 1: Basic LLM Call")
+    print("-" * 60)
+    
+    test_prompt = "Say only the word 'WORKING' if you can read this message."
+    print(f"Prompt: {test_prompt}")
+    
+    response = call_openrouter_llm(test_prompt, temperature=0, max_tokens=10)
+    
+    if response:
+        print(f"✓ Response received: '{response}'")
+        if "WORKING" in response.upper():
+            print("✓ LLM responded correctly")
+        else:
+            print(f"⚠ Warning: Expected 'WORKING', got '{response}'")
+    else:
+        print("❌ FAILED: No response from LLM")
+        exit(1)
+    
+    # Test 2: Service matching with LLM
+    print("\n" + "-" * 60)
+    print("Test 2: Service Matching")
+    print("-" * 60)
+    
+    test_cases = [
+        {
+            "service": "Build a website for my business",
+            "capabilities": "web development, HTML, CSS, JavaScript, React",
+            "expected": True
+        },
+        {
+            "service": "Fix my car engine",
+            "capabilities": "web development, HTML, CSS, JavaScript",
+            "expected": False
+        },
+        {
+            "service": "Lawn mowing service",
+            "capabilities": "gardening, landscaping, lawn care",
+            "expected": True
+        }
+    ]
+    
+    all_passed = True
+    for i, test in enumerate(test_cases, 1):
+        print(f"\nTest case {i}:")
+        print(f"  Service: {test['service']}")
+        print(f"  Capabilities: {test['capabilities']}")
+        print(f"  Expected match: {test['expected']}")
+        
+        result = match_service_with_capabilities(test['service'], test['capabilities'])
+        print(f"  Result: {result}")
+        
+        if result == test['expected']:
+            print(f"  ✓ PASS")
+        else:
+            print(f"  ❌ FAIL: Expected {test['expected']}, got {result}")
+            all_passed = False
+    
+    # Test 3: Fallback to keyword matching
+    print("\n" + "-" * 60)
+    print("Test 3: Keyword Matching Fallback")
+    print("-" * 60)
+    
+    print("Testing keyword_match_service directly...")
+    result = keyword_match_service("lawn mowing", "lawn care gardening")
+    print(f"  Result: {result}")
+    if result:
+        print("  ✓ Keyword matching works")
+    else:
+        print("  ❌ Keyword matching failed")
+        all_passed = False
+    
+    # Final summary
+    print("\n" + "=" * 60)
+    if all_passed:
+        print("✓ ALL TESTS PASSED")
+        print("=" * 60)
+        print("\nLLM integration is working correctly!")
+        exit(0)
+    else:
+        print("⚠ SOME TESTS FAILED")
+        print("=" * 60)
+        print("\nPlease review the failures above.")
+        exit(1)
