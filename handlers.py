@@ -145,18 +145,51 @@ def simple_geocode(address):
     logger.info(f"Using default coordinates for address: {address}")
     return address_map["unknown"]
 
-def match_service_with_capabilities(service_description, provider_capabilities):
-    """Use OpenRouter to determine if provider can fulfill service, with fallback"""
+def call_openrouter_llm(prompt, temperature=0, max_tokens=10):
+    """Call OpenRouter API for LLM inference"""
     try:
         if not hasattr(config, 'OPENROUTER_API_KEY') or not config.OPENROUTER_API_KEY:
-            # Fallback to keyword matching if no API key
-            return keyword_match_service(service_description, provider_capabilities)
+            logger.warning("OpenRouter API key not configured")
+            return None
         
         headers = {
             "Authorization": f"Bearer {config.OPENROUTER_API_KEY}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://serviceexchange.com",
+            "X-Title": "ServiceExchange"
         }
         
+        data = {
+            "model": "openai/gpt-3.5-turbo",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": temperature,
+            "max_tokens": max_tokens
+        }
+        
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=data,
+            timeout=5
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            if 'choices' in result and len(result['choices']) > 0:
+                return result['choices'][0]['message']['content'].strip()
+        else:
+            logger.error(f"OpenRouter API error: {response.status_code} - {response.text}")
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"OpenRouter API request error: {str(e)}")
+    except Exception as e:
+        logger.error(f"Unexpected error calling OpenRouter: {str(e)}")
+    
+    return None
+
+def match_service_with_capabilities(service_description, provider_capabilities):
+    """Use OpenRouter to determine if provider can fulfill service, with fallback"""
+    try:
         # Handle service objects
         if isinstance(service_description, dict):
             service_description = json.dumps(service_description)
@@ -170,23 +203,12 @@ Respond with only 'YES' if the provider can definitely fulfill this request, or 
 
 Answer:"""
 
-        data = {
-            "model": "openai/gpt-3.5-turbo",
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0,
-            "max_tokens": 10
-        }
+        answer = call_openrouter_llm(prompt, temperature=0, max_tokens=10)
         
-        response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers=headers,
-            json=data,
-            timeout=5
-        )
-        
-        if response.status_code == 200:
-            answer = response.json()['choices'][0]['message']['content'].strip().upper()
-            return answer == "YES"
+        if answer and answer.upper() == "YES":
+            return True
+        elif answer and answer.upper() == "NO":
+            return False
         
     except Exception as e:
         logger.error(f"LLM matching error: {str(e)}")
@@ -567,7 +589,7 @@ def grab_job(data):
         if not location_filtered:
             return {"message": "No jobs in your area"}, 204
         
-        # Step 2: Capability matching
+        # Step 2: Capability matching using LLM
         capability_matched = []
         for bid in location_filtered:
             if match_service_with_capabilities(bid['service'], capabilities):
