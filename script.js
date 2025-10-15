@@ -982,6 +982,13 @@ function initializeGrabJobPage() {
         capabilitiesEditor.addEventListener('input', () => {
             providerProfile = capabilitiesEditor.value.trim();
         });
+        
+        capabilitiesEditor.addEventListener('blur', () => {
+            const value = capabilitiesEditor.value.trim();
+            if (value) {
+                localStorage.setItem('provider_capabilities_profile', value);
+            }
+        });
     }
 
     if (capabilitiesFile) {
@@ -1098,7 +1105,8 @@ function prepareCapabilitiesPayload(raw) {
         }
         return JSON.stringify(parsed);
     } catch (err) {
-        return trimmed;
+        const wrapped = { capabilities: trimmed };
+        return JSON.stringify(wrapped);
     }
 }
 
@@ -1125,6 +1133,10 @@ async function handleGrabJobSubmission(e) {
     if (!capabilitiesText) {
         setGrabJobResult('Add your capabilities before grabbing a job.', true);
         return;
+    }
+
+    if (capabilitiesText) {
+        localStorage.setItem('provider_capabilities_profile', capabilitiesText);
     }
 
     const payload = {
