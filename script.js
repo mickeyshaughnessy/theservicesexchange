@@ -2,9 +2,9 @@
 const API_URL = 'https://rse-api.com:5003';
 
 // Global state
-let authToken = null;
-let currentUser = null;
-let currentUsername = null;
+window.authToken = null;
+window.currentUser = null;
+window.currentUsername = null;
 let outstandingBids = [];
 let completedJobs = [];
 let activeJobs = [];
@@ -17,10 +17,10 @@ let providerProfile = null;
 // Initialize when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
     // Restore authentication state
-    authToken = localStorage.getItem('auth_token');
-    currentUsername = localStorage.getItem('current_username');
+    window.authToken = localStorage.getItem('auth_token');
+    window.currentUsername = localStorage.getItem('current_username');
     
-    if (authToken && currentUsername) {
+    if (window.authToken && window.currentUsername) {
         loadAccountData();
         updateUIForLoggedInUser();
     }
@@ -206,11 +206,11 @@ async function handleLogin(e) {
         
         if (response.ok) {
             const data = await response.json();
-            authToken = data.access_token;
-            currentUsername = username;
+            window.authToken = data.access_token;
+            window.currentUsername = username;
             
-            localStorage.setItem('auth_token', authToken);
-            localStorage.setItem('current_username', currentUsername);
+            localStorage.setItem('auth_token', window.authToken);
+            localStorage.setItem('current_username', window.currentUsername);
             
             const authModal = document.getElementById('authModal');
             if (authModal) {
@@ -275,9 +275,9 @@ async function handleRegister(e) {
 }
 
 function logout() {
-    authToken = null;
-    currentUser = null;
-    currentUsername = null;
+    window.authToken = null;
+    window.currentUser = null;
+    window.currentUsername = null;
     localStorage.removeItem('auth_token');
     localStorage.removeItem('current_username');
     updateUIForLoggedOutUser();
@@ -290,7 +290,7 @@ function logout() {
 
 // Account Management Functions
 async function loadAccountData() {
-    if (!authToken || !currentUsername) {
+    if (!window.authToken || !window.currentUsername) {
         console.error('No auth token or username available');
         return;
     }
@@ -299,14 +299,14 @@ async function loadAccountData() {
         const accountResponse = await fetch(`${API_URL}/account`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${authToken}`,
+                'Authorization': `Bearer ${window.authToken}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username: currentUsername })
+            body: JSON.stringify({ username: window.currentUsername })
         });
         
         if (accountResponse.ok) {
-            currentUser = await accountResponse.json();
+            window.currentUser = await accountResponse.json();
             updateAccountDisplay();
         } else {
             console.error('Failed to load account data:', accountResponse.status);
@@ -326,21 +326,21 @@ async function loadAccountData() {
 }
 
 function updateAccountDisplay() {
-    if (!currentUser) return;
+    if (!window.currentUser) return;
     
     const accountUsername = document.getElementById('accountUsername');
     const accountDisplayName = document.getElementById('accountDisplayName');
     const starDisplay = document.getElementById('starDisplay');
     const ratingText = document.getElementById('ratingText');
     
-    if (accountUsername) accountUsername.textContent = currentUser.username;
-    if (accountDisplayName) accountDisplayName.textContent = currentUser.username;
+    if (accountUsername) accountUsername.textContent = window.currentUser.username;
+    if (accountDisplayName) accountDisplayName.textContent = window.currentUser.username;
     
     if (starDisplay && ratingText) {
-        const stars = Math.round(currentUser.stars || 0);
+        const stars = Math.round(window.currentUser.stars || 0);
         const starDisplayText = '★'.repeat(Math.min(stars, 5)) + '☆'.repeat(Math.max(5 - stars, 0));
         starDisplay.textContent = starDisplayText;
-        ratingText.textContent = `${currentUser.stars || 0} (${currentUser.total_ratings || 0} ratings)`;
+        ratingText.textContent = `${window.currentUser.stars || 0} (${window.currentUser.total_ratings || 0} ratings)`;
     }
 }
 
@@ -352,7 +352,7 @@ async function loadOutstandingBids() {
     
     try {
         const response = await fetch(`${API_URL}/my_bids`, {
-            headers: {'Authorization': `Bearer ${authToken}`}
+            headers: {'Authorization': `Bearer ${window.authToken}`}
         });
         
         if (loadingSpinner) loadingSpinner.style.display = 'none';
@@ -405,7 +405,7 @@ async function loadCompletedJobs() {
     
     try {
         const response = await fetch(`${API_URL}/my_jobs`, {
-            headers: {'Authorization': `Bearer ${authToken}`}
+            headers: {'Authorization': `Bearer ${window.authToken}`}
         });
         
         if (jobsLoadingSpinner) jobsLoadingSpinner.style.display = 'none';
@@ -478,7 +478,7 @@ async function cancelBid(bidId) {
         const response = await fetch(`${API_URL}/cancel_bid`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${authToken}`,
+                'Authorization': `Bearer ${window.authToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ bid_id: bidId })
@@ -547,7 +547,7 @@ async function handleBidSubmission(e) {
             document.getElementById('bidDuration').value = '24';
             document.getElementById('bidDurationUnit').value = 'hours';
             document.getElementById('paymentMethod').value = 'USD';
-            if (authToken) {
+            if (window.authToken) {
                 loadOutstandingBids();
             }
         } else {
@@ -568,7 +568,7 @@ async function loadConversations() {
     
     try {
         const response = await fetch(`${API_URL}/chat/conversations`, {
-            headers: {'Authorization': `Bearer ${authToken}`}
+            headers: {'Authorization': `Bearer ${window.authToken}`}
         });
         
         if (loadingSpinner) loadingSpinner.style.display = 'none';
@@ -638,7 +638,7 @@ async function showConversationView(conversation) {
             const response = await fetch(`${API_URL}/chat/messages`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${authToken}`,
+                    'Authorization': `Bearer ${window.authToken}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ 
@@ -651,7 +651,7 @@ async function showConversationView(conversation) {
                 const messages = data.messages || [];
                 
                 messageHistory.innerHTML = messages.map(msg => `
-                    <div class="message-item ${msg.sender === currentUsername ? 'sent' : 'received'}">
+                    <div class="message-item ${msg.sender === window.currentUsername ? 'sent' : 'received'}">
                         <div class="message-sender">${msg.sender}</div>
                         <div class="message-text">${msg.message}</div>
                         <div class="message-time">${formatTime(msg.timestamp * 1000)}</div>
@@ -722,7 +722,7 @@ async function handleReply(e) {
         const response = await fetch(`${API_URL}/chat/reply`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${authToken}`,
+                'Authorization': `Bearer ${window.authToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -794,7 +794,7 @@ async function loadBulletinFeed() {
     
     try {
         const response = await fetch(`${API_URL}/bulletin/feed`, {
-            headers: {'Authorization': `Bearer ${authToken}`}
+            headers: {'Authorization': `Bearer ${window.authToken}`}
         });
         
         if (loadingSpinner) loadingSpinner.style.display = 'none';
@@ -896,7 +896,7 @@ function showAuth() {
 }
 
 async function showBuyerForm() {
-    if (!authToken) {
+    if (!window.authToken) {
         showAuth();
         return;
     }
@@ -910,7 +910,7 @@ async function showBuyerForm() {
 }
 
 async function showChat() {
-    if (!authToken) {
+    if (!window.authToken) {
         showAuth();
         return;
     }
@@ -923,7 +923,7 @@ async function showChat() {
 }
 
 async function showBulletin() {
-    if (!authToken) {
+    if (!window.authToken) {
         showAuth();
         return;
     }
@@ -1020,7 +1020,7 @@ function initializeGrabJobPage() {
     if (refreshBtn) {
         refreshBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            if (!authToken) {
+            if (!window.authToken) {
                 showAuth();
                 return;
             }
@@ -1107,7 +1107,7 @@ async function handleGrabJobSubmission(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!authToken) {
+    if (!window.authToken) {
         console.log('No auth token, showing auth modal');
         showAuth();
         return;
@@ -1179,7 +1179,7 @@ async function handleGrabJobSubmission(e) {
         const response = await fetch(`${API_URL}/grab_job`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${authToken}`,
+                'Authorization': `Bearer ${window.authToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(payload)
@@ -1261,7 +1261,7 @@ function updateProviderDashboard() {
         return;
     }
 
-    if (!authToken) {
+    if (!window.authToken) {
         if (activeContainer) {
             activeContainer.innerHTML = '<p class="text-muted mb-0">Login to view your active jobs.</p>';
         }
@@ -1292,11 +1292,11 @@ function updateProviderDashboard() {
     }
 
     if (reputationEl) {
-        reputationEl.textContent = currentUser && currentUser.reputation_score !== undefined ? currentUser.reputation_score.toFixed(2) : '--';
+        reputationEl.textContent = window.currentUser && window.currentUser.reputation_score !== undefined ? window.currentUser.reputation_score.toFixed(2) : '--';
     }
 
     if (completedTotalEl) {
-        completedTotalEl.textContent = currentUser && currentUser.completed_jobs !== undefined ? currentUser.completed_jobs : '--';
+        completedTotalEl.textContent = window.currentUser && window.currentUser.completed_jobs !== undefined ? window.currentUser.completed_jobs : '--';
     }
 }
 
@@ -1513,3 +1513,6 @@ window.showNewPostForm = showNewPostForm;
 window.hideNewPostForm = hideNewPostForm;
 window.contactProvider = contactProvider;
 window.pingServer = pingServer;
+window.loadCompletedJobs = loadCompletedJobs;
+window.updateUIForLoggedInUser = updateUIForLoggedInUser;
+window.updateUIForLoggedOutUser = updateUIForLoggedOutUser;
