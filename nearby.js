@@ -20,21 +20,26 @@ function initializePage() {
 window.addEventListener('load', initializePage);
 
 function initializeMap() {
-    // Initialize map centered on Denver, CO
-    map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: [-104.9903, 39.7392], // Denver coordinates
-        zoom: 10
-    });
-    
-    map.addControl(new mapboxgl.NavigationControl());
-    
-    // Add click handler for getting coordinates
-    map.on('click', (e) => {
-        const { lng, lat } = e.lngLat;
-        searchNearbyByCoordinates(lat, lng);
-    });
+    try {
+        // Initialize map centered on Denver, CO
+        map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [-104.9903, 39.7392], // Denver coordinates
+            zoom: 10
+        });
+        
+        map.addControl(new mapboxgl.NavigationControl());
+        
+        // Load markers after map is loaded
+        map.on('load', () => {
+            loadExchangeDataOnMap();
+        });
+        
+        console.log('Map initialized successfully');
+    } catch (error) {
+        console.error('Error initializing map:', error);
+    }
 }
 
 async function loadExchangeData() {
@@ -69,6 +74,73 @@ async function loadExchangeData() {
             if (recentActivity) recentActivity.style.display = 'block';
         }
     }
+}
+
+async function loadExchangeDataOnMap() {
+    try {
+        // Get filter values
+        const categoryFilter = document.getElementById('categoryFilter');
+        const locationFilter = document.getElementById('locationFilter');
+        const limitFilter = document.getElementById('limitFilter');
+        const includeCompleted = document.getElementById('includeCompleted');
+        
+        const params = new URLSearchParams();
+        if (categoryFilter && categoryFilter.value) params.append('category', categoryFilter.value);
+        if (locationFilter && locationFilter.value) params.append('location', locationFilter.value);
+        if (limitFilter && limitFilter.value) params.append('limit', limitFilter.value);
+        if (includeCompleted) params.append('include_completed', includeCompleted.checked);
+        
+        const response = await fetch(`${API_URL}/exchange_data?${params.toString()}`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            displayServicesOnMap(data);
+        } else {
+            console.error('Failed to load exchange data for map');
+        }
+        
+    } catch (error) {
+        console.error('Error loading exchange data for map:', error);
+    }
+}
+
+function displayServicesOnMap(data) {
+    clearMapMarkers();
+    
+    const activeBids = data.active_bids || [];
+    const completedJobs = data.completed_jobs || [];
+    
+    // Combine all jobs with location data
+    const allJobs = [...activeBids, ...completedJobs];
+    
+    allJobs.forEach(job => {
+        // If job has coordinates, add marker
+        if (job.lat && job.lon) {
+            const service = typeof job.service === 'string' ? job.service : 
+                          (job.service?.type || 'Service');
+            const isCompleted = job.completed_at !== undefined;
+            
+            const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                <div style="padding: 10px;">
+                    <h6>${service}</h6>
+                    <p><strong>$${job.price}</strong> ${isCompleted ? '• Completed' : '• Active'}</p>
+                    ${job.location ? `<p class="text-muted small">${job.location}</p>` : ''}
+                    ${job.buyer_reputation ? `<div style="color: gold;">${'★'.repeat(Math.round(job.buyer_reputation))}</div>` : ''}
+                </div>
+            `);
+            
+            const markerColor = isCompleted ? '#10b981' : '#6366f1';
+            
+            const marker = new mapboxgl.Marker({color: markerColor})
+                .setLngLat([job.lon, job.lat])
+                .setPopup(popup)
+                .addTo(map);
+            
+            markers.push(marker);
+        }
+    });
+    
+    console.log(`Displayed ${markers.length} services on map`);
 }
 
 function updateExchangeStats(data) {
@@ -269,6 +341,29 @@ async function geocodeAndCenterMap(address) {
     // For demo purposes, we'll center on Denver
     map.flyTo({center: [-104.9903, 39.7392], zoom: 12});
 }
+
+// Set up filter form event handler
+document.addEventListener('DOMContentLoaded', () => {
+    const filterForm = document.getElementById('filterForm');
+    if (filterForm) {
+        filterForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (map) {
+                loadExchangeDataOnMap();
+            }
+        });
+    }
+    
+    // Also trigger filter when checkbox changes
+    const includeCompleted = document.getElementById('includeCompleted');
+    if (includeCompleted) {
+        includeCompleted.addEventListener('change', () => {
+            if (map) {
+                loadExchangeDataOnMap();
+            }
+        });
+    }
+});
 
 // Make functions available globally for nearby page
 window.updateExchangeStats = updateExchangeStats;

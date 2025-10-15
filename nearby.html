@@ -114,38 +114,9 @@
     <div class="container mt-4">
         <div class="row">
             <div class="col-md-8">
-                <div class="search-panel">
-                    <h2>Search for Services</h2>
-                    <p class="text-muted">Enter a location to find available services nearby</p>
-                    
-                    <form id="nearbyForm">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <input type="text" class="form-control" placeholder="Enter address or location" id="searchAddress" required>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="number" class="form-control" placeholder="Radius (miles)" id="searchRadius" value="10" min="1" max="50">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100 mt-3">Search Nearby Services</button>
-                    </form>
-                </div>
-
                 <!-- Map -->
-                <div class="map-container">
-                    <div id="map"></div>
-                </div>
-
-                <!-- Nearby Services Results -->
-                <div class="mt-4">
-                    <h4>Search Results</h4>
-                    <div class="loading-spinner" id="nearbyLoading">
-                        <div class="spinner-border" role="status"></div>
-                        <p>Searching for nearby services...</p>
-                    </div>
-                    <div id="nearbyResults">
-                        <p class="text-muted">Use the search form above to find services near any location.</p>
-                    </div>
+                <div class="map-container" style="height: 600px;">
+                    <div id="map" style="width: 100%; height: 100%;"></div>
                 </div>
             </div>
 
