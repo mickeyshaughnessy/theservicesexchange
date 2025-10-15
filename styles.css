@@ -53,6 +53,8 @@ body {
     font-size: 4rem;
     font-weight: 800;
     margin-bottom: 1.5rem;
+    color: var(--gold);
+    text-shadow: 0 2px 6px rgba(0,0,0,0.35);
 }
 
 .hero p {
@@ -644,4 +646,149 @@ body {
     .feature-card {
         padding: 1.5rem;
     }
+}
+
+/* Provider Dashboard */
+.provider-dashboard {
+    padding: 60px 0;
+}
+
+.provider-dashboard h2 {
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.provider-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.provider-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.provider-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.profile-dropzone {
+    border: 2px dashed rgba(99, 102, 241, 0.4);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    background: rgba(248, 250, 252, 0.9);
+    margin-bottom: 1rem;
+}
+
+.profile-dropzone input[type="file"] {
+    display: none;
+}
+
+.profile-dropzone label {
+    display: inline-block;
+    padding: 10px 20px;
+    background: var(--primary);
+    color: white;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.capabilities-editor {
+    width: 100%;
+    min-height: 160px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    background: #f8fafc;
+    resize: vertical;
+}
+
+.provider-action {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.provider-action button {
+    flex: 1 1 160px;
+}
+
+.job-list {
+    display: grid;
+    gap: 12px;
+}
+
+.job-card {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.job-card h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.job-meta {
+    font-size: 0.9rem;
+    color: #475569;
+    margin-bottom: 0.25rem;
+}
+
+.job-status {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.grab-result {
+    margin-top: 1rem;
+    padding: 16px;
+    border-radius: 10px;
+    background: #ecfeff;
+    border: 1px solid #06b6d4;
+    color: #0f172a;
+}
+
+.grab-result.error {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #991b1b;
+}
+
+.provider-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.provider-meta div {
+    flex: 1;
+    min-width: 150px;
+}
+
+.provider-meta span {
+    display: block;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.provider-meta strong {
+    font-size: 1.1rem;
+    color: var(--dark);
 }

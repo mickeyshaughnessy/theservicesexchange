@@ -12,6 +12,7 @@ let conversations = [];
 let currentConversation = null;
 let bulletinPosts = [];
 let userLocation = null;
+let providerProfile = null;
 
 // Initialize when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -26,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set up form event listeners
     setupEventListeners();
+    initializeGrabJobPage();
 });
 
 // Set up all event listeners
@@ -279,6 +281,10 @@ function logout() {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('current_username');
     updateUIForLoggedOutUser();
+    outstandingBids = [];
+    completedJobs = [];
+    activeJobs = [];
+    updateProviderDashboard();
     alert('Logged out successfully');
 }
 
@@ -411,6 +417,7 @@ async function loadCompletedJobs() {
             activeJobs = data.active_jobs || [];
             updateJobsDisplay();
             updateActiveJobsDisplay();
+            updateProviderDashboard();
         } else {
             if (jobsContainer) jobsContainer.innerHTML = '<p class="text-danger">Error loading services</p>';
             if (activeJobsContainer) activeJobsContainer.innerHTML = '<p class="text-danger">Error loading active services</p>';
@@ -936,6 +943,382 @@ function selectService(serviceName) {
             bidService.value = serviceName;
         }
     }, 100);
+}
+
+function escapeHtml(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Provider Grab Job Page Functions
+function initializeGrabJobPage() {
+    const capabilitiesEditor = document.getElementById('capabilitiesText');
+    const capabilitiesFile = document.getElementById('capabilitiesFile');
+    const saveBtn = document.getElementById('saveCapabilitiesBtn');
+    const clearBtn = document.getElementById('clearCapabilitiesBtn');
+    const grabJobForm = document.getElementById('grabJobForm');
+    const refreshBtn = document.getElementById('refreshJobsBtn');
+
+    if (!capabilitiesEditor && !grabJobForm) {
+        return;
+    }
+
+    const savedProfile = localStorage.getItem('provider_capabilities_profile');
+    if (savedProfile && capabilitiesEditor && !capabilitiesEditor.value.trim()) {
+        capabilitiesEditor.value = savedProfile;
+        providerProfile = savedProfile;
+    } else if (capabilitiesEditor) {
+        providerProfile = capabilitiesEditor.value.trim();
+    }
+
+    if (capabilitiesEditor) {
+        capabilitiesEditor.addEventListener('input', () => {
+            providerProfile = capabilitiesEditor.value.trim();
+        });
+    }
+
+    if (capabilitiesFile) {
+        capabilitiesFile.addEventListener('change', handleCapabilitiesFile);
+    }
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            saveCapabilitiesProfile();
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (capabilitiesEditor) {
+                capabilitiesEditor.value = '';
+            }
+            providerProfile = null;
+            localStorage.removeItem('provider_capabilities_profile');
+            setCapabilitiesStatus('Capabilities cleared.', false);
+        });
+    }
+
+    if (grabJobForm) {
+        grabJobForm.addEventListener('submit', handleGrabJobSubmission);
+    }
+
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (!authToken) {
+                showAuth();
+                return;
+            }
+            await loadCompletedJobs();
+        });
+    }
+
+    updateProviderDashboard();
+}
+
+function handleCapabilitiesFile(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        const textarea = document.getElementById('capabilitiesText');
+        if (!textarea) {
+            return;
+        }
+
+        const raw = typeof reader.result === 'string' ? reader.result : '';
+        let formatted = raw.trim();
+        try {
+            const parsed = JSON.parse(raw);
+            formatted = JSON.stringify(parsed, null, 2);
+        } catch (err) {
+            formatted = raw.trim();
+        }
+
+        textarea.value = formatted;
+        providerProfile = formatted;
+        localStorage.setItem('provider_capabilities_profile', formatted);
+        setCapabilitiesStatus(`Loaded profile from ${file.name}.`, false);
+    };
+
+    reader.onerror = () => {
+        setCapabilitiesStatus('Failed to read capabilities file.', true);
+    };
+
+    reader.readAsText(file);
+}
+
+function saveCapabilitiesProfile() {
+    const textarea = document.getElementById('capabilitiesText');
+    if (!textarea) {
+        return;
+    }
+
+    const value = textarea.value.trim();
+    if (!value) {
+        localStorage.removeItem('provider_capabilities_profile');
+        providerProfile = null;
+        setCapabilitiesStatus('Capabilities profile removed.', false);
+        return;
+    }
+
+    localStorage.setItem('provider_capabilities_profile', value);
+    providerProfile = value;
+    setCapabilitiesStatus('Capabilities profile saved locally.', false);
+}
+
+function prepareCapabilitiesPayload(raw) {
+    if (!raw) {
+        return '';
+    }
+
+    const trimmed = raw.trim();
+    try {
+        const parsed = JSON.parse(trimmed);
+        if (typeof parsed === 'string') {
+            return parsed;
+        }
+        return JSON.stringify(parsed);
+    } catch (err) {
+        return trimmed;
+    }
+}
+
+async function handleGrabJobSubmission(e) {
+    e.preventDefault();
+
+    if (!authToken) {
+        showAuth();
+        return;
+    }
+
+    const textarea = document.getElementById('capabilitiesText');
+    const submitBtn = document.getElementById('grabJobSubmit');
+    const locationTypeEl = document.getElementById('grabLocationType');
+    const addressEl = document.getElementById('grabAddress');
+    const latEl = document.getElementById('grabLatitude');
+    const lonEl = document.getElementById('grabLongitude');
+    const maxDistanceEl = document.getElementById('grabDistance');
+
+    const capabilitiesText = textarea ? textarea.value.trim() : providerProfile;
+    if (!capabilitiesText) {
+        setGrabJobResult('Add your capabilities before grabbing a job.', true);
+        return;
+    }
+
+    const payload = {
+        capabilities: prepareCapabilitiesPayload(capabilitiesText)
+    };
+
+    const locationType = locationTypeEl ? locationTypeEl.value : 'remote';
+    if (locationType) {
+        payload.location_type = locationType;
+    }
+
+    const address = addressEl ? addressEl.value.trim() : '';
+    const latValue = latEl ? latEl.value.trim() : '';
+    const lonValue = lonEl ? lonEl.value.trim() : '';
+    const distanceValue = maxDistanceEl ? maxDistanceEl.value.trim() : '';
+
+    if (locationType !== 'remote') {
+        if (latValue && lonValue) {
+            const lat = parseFloat(latValue);
+            const lon = parseFloat(lonValue);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+                setGrabJobResult('Latitude and longitude must be numeric.', true);
+                return;
+            }
+            payload.lat = lat;
+            payload.lon = lon;
+        } else if (address) {
+            payload.address = address;
+        } else {
+            setGrabJobResult('Provide an address or coordinates for physical or hybrid jobs.', true);
+            return;
+        }
+    } else if (address) {
+        payload.address = address;
+    }
+
+    if (distanceValue) {
+        const maxDistance = parseFloat(distanceValue);
+        if (Number.isFinite(maxDistance) && maxDistance > 0) {
+            payload.max_distance = maxDistance;
+        }
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Grabbing...';
+    }
+
+    setGrabJobResult('Looking for the best job match...', false);
+
+    try {
+        const response = await fetch(`${API_URL}/grab_job`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.status === 204) {
+            setGrabJobResult('No jobs matched your capabilities. Try again soon.', true);
+            return;
+        }
+
+        const data = await response.json().catch(() => ({}));
+        if (response.ok) {
+            setGrabJobResult(renderGrabJobSuccess(data), false);
+            await loadCompletedJobs();
+        } else {
+            setGrabJobResult(data.error || 'Unable to grab a job right now.', true);
+        }
+    } catch (error) {
+        setGrabJobResult('Network error while grabbing a job.', true);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Grab Job';
+        }
+    }
+}
+
+function renderGrabJobSuccess(job) {
+    const price = job && job.currency ? `${escapeHtml(job.currency)} ${escapeHtml(job.price)}` : `$${escapeHtml(job.price)}`;
+    const location = job && job.location_type === 'remote' ? 'Remote' : escapeHtml(job.address || 'Physical service');
+    const acceptedTime = job && job.accepted_at ? new Date(job.accepted_at * 1000).toLocaleString() : 'Just now';
+    const service = typeof job.service === 'object' ? escapeHtml(JSON.stringify(job.service)) : escapeHtml(job.service);
+    const buyer = escapeHtml(job.buyer_username || '');
+    return `
+        <strong>Matched Job:</strong> ${service}<br>
+        <span class="job-meta">Price: ${price}</span><br>
+        <span class="job-meta">Buyer: ${buyer}</span><br>
+        <span class="job-meta">Location: ${location}</span><br>
+        <span class="job-meta">Accepted at: ${acceptedTime}</span>
+    `;
+}
+
+function setGrabJobResult(message, isError = false) {
+    const result = document.getElementById('grabJobResult');
+    if (!result) {
+        return;
+    }
+
+    result.style.display = 'block';
+    result.className = isError ? 'grab-result error' : 'grab-result';
+    result.innerHTML = message;
+}
+
+function setCapabilitiesStatus(message, isError = false) {
+    const status = document.getElementById('capabilitiesStatus');
+    if (!status) {
+        return;
+    }
+
+    if (!message) {
+        status.style.display = 'none';
+        return;
+    }
+
+    status.style.display = 'block';
+    status.className = isError ? 'grab-result error' : 'grab-result';
+    status.textContent = message;
+}
+
+function updateProviderDashboard() {
+    const activeContainer = document.getElementById('providerActiveJobs');
+    const completedContainer = document.getElementById('providerCompletedJobs');
+    const activeCount = document.getElementById('providerActiveCount');
+    const completedCount = document.getElementById('providerCompletedCount');
+    const reputationEl = document.getElementById('providerReputation');
+    const completedTotalEl = document.getElementById('providerCompletedTotal');
+
+    if (!activeContainer && !completedContainer && !activeCount) {
+        return;
+    }
+
+    if (!authToken) {
+        if (activeContainer) {
+            activeContainer.innerHTML = '<p class="text-muted mb-0">Login to view your active jobs.</p>';
+        }
+        if (completedContainer) {
+            completedContainer.innerHTML = '<p class="text-muted mb-0">Login to view completed jobs.</p>';
+        }
+        if (activeCount) activeCount.textContent = '0';
+        if (completedCount) completedCount.textContent = '0';
+        if (reputationEl) reputationEl.textContent = '--';
+        if (completedTotalEl) completedTotalEl.textContent = '--';
+        return;
+    }
+
+    if (activeContainer) {
+        activeContainer.innerHTML = renderJobCards(activeJobs, 'active');
+    }
+
+    if (completedContainer) {
+        completedContainer.innerHTML = renderJobCards(completedJobs, 'completed');
+    }
+
+    if (activeCount) {
+        activeCount.textContent = activeJobs.length.toString();
+    }
+
+    if (completedCount) {
+        completedCount.textContent = completedJobs.length.toString();
+    }
+
+    if (reputationEl) {
+        reputationEl.textContent = currentUser && currentUser.reputation_score !== undefined ? currentUser.reputation_score.toFixed(2) : '--';
+    }
+
+    if (completedTotalEl) {
+        completedTotalEl.textContent = currentUser && currentUser.completed_jobs !== undefined ? currentUser.completed_jobs : '--';
+    }
+}
+
+function renderJobCards(jobs, type) {
+    if (!jobs || jobs.length === 0) {
+        return `<p class="text-muted mb-0">No ${type === 'completed' ? 'completed' : 'active'} jobs yet.</p>`;
+    }
+
+    return jobs.map(job => {
+        const title = typeof job.service === 'object' ? escapeHtml(JSON.stringify(job.service)) : escapeHtml(job.service);
+        const price = job.currency ? `${escapeHtml(job.currency)} ${escapeHtml(job.price)}` : `$${escapeHtml(job.price)}`;
+        const accepted = job.accepted_at ? new Date(job.accepted_at * 1000).toLocaleString() : '';
+        const completed = job.completed_at ? new Date(job.completed_at * 1000).toLocaleString() : '';
+        const partner = job.counterparty ? `Partner: ${escapeHtml(job.counterparty)}` : '';
+        const role = job.role ? escapeHtml(job.role.toUpperCase()) : '';
+        const location = job.location_type === 'remote' ? 'Remote' : escapeHtml(job.address || 'Physical service');
+        const status = job.status ? escapeHtml(job.status.toUpperCase()) : (type === 'completed' ? 'COMPLETED' : 'ACTIVE');
+
+        return `
+            <div class="job-card">
+                <h4>${title}</h4>
+                <div class="job-meta">Price: ${price}</div>
+                <div class="job-meta">Role: ${role}</div>
+                <div class="job-meta">${partner}</div>
+                <div class="job-meta">Location: ${location}</div>
+                ${accepted ? `<div class="job-meta">Accepted: ${accepted}</div>` : ''}
+                ${completed ? `<div class="job-meta">Completed: ${completed}</div>` : ''}
+                <div class="job-status">${status}</div>
+            </div>
+        `;
+    }).join('');
 }
 
 // Nearby Services Functions
