@@ -104,7 +104,7 @@ async function loadExchangeDataOnMap() {
     }
 }
 
-function displayServicesOnMap(data) {
+async function displayServicesOnMap(data) {
     clearMapMarkers();
     
     const activeBids = data.active_bids || [];
@@ -113,9 +113,25 @@ function displayServicesOnMap(data) {
     // Combine all jobs with location data
     const allJobs = [...activeBids, ...completedJobs];
     
-    allJobs.forEach(job => {
-        // If job has coordinates, add marker
-        if (job.lat && job.lon) {
+    for (const job of allJobs) {
+        let lat = job.lat;
+        let lon = job.lon;
+        
+        // If no coordinates but we have an address, try to geocode
+        if ((!lat || !lon) && job.address) {
+            try {
+                const coords = await geocodeAddress(job.address);
+                if (coords) {
+                    lat = coords.lat;
+                    lon = coords.lon;
+                }
+            } catch (error) {
+                console.warn(`Failed to geocode address: ${job.address}`, error);
+            }
+        }
+        
+        // If we have coordinates (original or geocoded), add marker
+        if (lat && lon) {
             const service = typeof job.service === 'string' ? job.service : 
                           (job.service?.type || 'Service');
             const isCompleted = job.completed_at !== undefined;
@@ -124,7 +140,7 @@ function displayServicesOnMap(data) {
                 <div style="padding: 10px;">
                     <h6>${service}</h6>
                     <p><strong>$${job.price}</strong> ${isCompleted ? '• Completed' : '• Active'}</p>
-                    ${job.location ? `<p class="text-muted small">${job.location}</p>` : ''}
+                    ${job.address || job.location ? `<p class="text-muted small">${job.address || job.location}</p>` : ''}
                     ${job.buyer_reputation ? `<div style="color: gold;">${'★'.repeat(Math.round(job.buyer_reputation))}</div>` : ''}
                 </div>
             `);
@@ -132,13 +148,13 @@ function displayServicesOnMap(data) {
             const markerColor = isCompleted ? '#10b981' : '#6366f1';
             
             const marker = new mapboxgl.Marker({color: markerColor})
-                .setLngLat([job.lon, job.lat])
+                .setLngLat([lon, lat])
                 .setPopup(popup)
                 .addTo(map);
             
             markers.push(marker);
         }
-    });
+    }
     
     console.log(`Displayed ${markers.length} services on map`);
 }
@@ -148,11 +164,29 @@ function updateExchangeStats(data) {
     
     const activeBidsCount = document.getElementById('activeBidsCount');
     const completedTodayCount = document.getElementById('completedTodayCount');
-    const avgPrice = document.getElementById('avgPrice');
+    const activeBidsDetails = document.getElementById('activeBidsDetails');
     
     if (activeBidsCount) activeBidsCount.textContent = stats.total_active_bids || 0;
     if (completedTodayCount) completedTodayCount.textContent = stats.total_completed_today || 0;
-    if (avgPrice) avgPrice.textContent = stats.avg_price_cleaning ? `$${stats.avg_price_cleaning.toFixed(0)}` : 'N/A';
+    
+    // Populate active bids details text box
+    if (activeBidsDetails) {
+        const activeBids = data.active_bids || [];
+        if (activeBids.length === 0) {
+            activeBidsDetails.value = 'No active bids available.';
+        } else {
+            const bidDetails = activeBids.map((bid, index) => {
+                const service = typeof bid.service === 'string' ? bid.service : 
+                              (bid.service?.type || 'Service');
+                const location = bid.address || bid.location || 'No address specified';
+                const postedDate = bid.posted_at ? new Date(bid.posted_at * 1000).toLocaleString() : 'N/A';
+                
+                return `Bid #${index + 1}:\nService: ${service}\nPrice: $${bid.price}\nLocation: ${location}\nPosted: ${postedDate}\n${bid.buyer_reputation ? `Rating: ${bid.buyer_reputation.toFixed(1)} stars` : 'No rating'}\n`;
+            }).join('\n---\n\n');
+            
+            activeBidsDetails.value = bidDetails;
+        }
+    }
 }
 
 function updateRecentActivity(data) {
@@ -336,10 +370,34 @@ function displayNearbyResults(services) {
     // For now, we'll just center on the search location
 }
 
+async function geocodeAddress(address) {
+    try {
+        const response = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}&limit=1`
+        );
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.features && data.features.length > 0) {
+                const [lon, lat] = data.features[0].center;
+                return { lat, lon };
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        return null;
+    }
+}
+
 async function geocodeAndCenterMap(address) {
-    // In a real implementation, you'd use Mapbox Geocoding API
-    // For demo purposes, we'll center on Denver
-    map.flyTo({center: [-104.9903, 39.7392], zoom: 12});
+    const coords = await geocodeAddress(address);
+    if (coords) {
+        map.flyTo({center: [coords.lon, coords.lat], zoom: 12});
+    } else {
+        // Fallback to Denver if geocoding fails
+        map.flyTo({center: [-104.9903, 39.7392], zoom: 12});
+    }
 }
 
 // Set up filter form event handler
