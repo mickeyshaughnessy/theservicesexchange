@@ -954,6 +954,9 @@ def get_exchange_data(data):
                     'price': bid['price'],
                     'currency': bid.get('currency', 'USD'),
                     'location': bid.get('address', 'Remote'),
+                    'lat': bid.get('lat'),
+                    'lon': bid.get('lon'),
+                    'buyer_reputation': bid.get('buyer_reputation'),
                     'posted_at': bid['created_at']
                 })
         
