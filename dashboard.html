@@ -5,8 +5,9 @@
     <title>RSE Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <!-- Mapbox CSS -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto&display=swap" rel="stylesheet">
     
@@ -104,17 +105,6 @@
     <header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 0; margin-bottom: 30px;">
         <div class="container">
             <h1 style="color: white; text-shadow: 0 2px 6px rgba(0,0,0,0.3);">RSE Activity Dashboard</h1>
-            <div class="style-picker">
-                <label for="theme-select" style="color: white;">Style:</label>
-                <select id="theme-select" class="form-select" style="width: auto; display: inline-block;">
-                    <option value="default">Default</option>
-                    <option value="aztec-wrestler">Aztec Wrestler</option>
-                    <option value="tmnt">TMNT</option>
-                    <option value="icewind-dale">Icewind Dale</option>
-                    <option value="classic-snes">Classic SNES</option>
-                    <option value="cyberninja">CyberNinja</option>
-                </select>
-            </div>
         </div>
     </header>
     <main>
@@ -300,49 +290,44 @@
         </div>
     </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
     <script>
-        // Theme Switching Logic
-        const themeSelect = document.getElementById('theme-select');
-        themeSelect.addEventListener('change', (e) => {
-            document.body.className = ''; // Reset any existing theme classes
-            if (e.target.value !== 'default') {
-                document.body.classList.add(`theme-${e.target.value}`);
-            }
-        });
+        // Mapbox access token
+        mapboxgl.accessToken = 'pk.eyJ1IjoibWlja2V5c2hhdWdobmVzc3kiLCJhIjoiY2x6NGxyNG93MnptaDJxb2dhOGloenZqeiJ9.ANY7UIu7VTPFwqTD8cEAKQ';
 
         // Initialize the map
-        const map = L.map('map').setView([40.7128, -74.0060], 13); // Default to New York City
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [-104.9903, 39.7392], // Default to Denver, CO
+            zoom: 12
+        });
 
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        // Add navigation controls
+        map.addControl(new mapboxgl.NavigationControl());
 
-        // Geolocation: Center map on user's location if permission granted
+        // Try to center on user's location
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const userLat = position.coords.latitude;
                     const userLon = position.coords.longitude;
-                    map.setView([userLat, userLon], 13);
-                    L.marker([userLat, userLon]).addTo(map)
-                        .bindPopup("You are here").openPopup();
+                    map.flyTo({center: [userLon, userLat], zoom: 13});
+                    new mapboxgl.Marker({color: '#ef4444'})
+                        .setLngLat([userLon, userLat])
+                        .setPopup(new mapboxgl.Popup().setHTML('<p>You are here</p>'))
+                        .addTo(map);
                 },
                 (error) => {
                     console.warn(`Geolocation error (${error.code}): ${error.message}`);
-                    // Optional: You can inform the user that default location is used
                 }
             );
-        } else {
-            console.warn("Geolocation is not supported by this browser.");
         }
 
         // Activity Log Element
         const activityLog = document.getElementById('activity-log');
+        const markers = [];
 
         // Predefined Service Requests and Robot Names
         const serviceRequests = [
@@ -423,27 +408,19 @@
         // Function to get a random location within current map bounds
         function getRandomLocation() {
             const bounds = map.getBounds();
-            const southWest = bounds.getSouthWest();
-            const northEast = bounds.getNorthEast();
-            const lat = Math.random() * (northEast.lat - southWest.lat) + southWest.lat;
-            const lon = Math.random() * (northEast.lng - southWest.lng) + southWest.lng;
+            const sw = bounds.getSouthWest();
+            const ne = bounds.getNorthEast();
+            const lat = Math.random() * (ne.lat - sw.lat) + sw.lat;
+            const lon = Math.random() * (ne.lng - sw.lng) + sw.lng;
             return [lat, lon];
         }
 
-        // Function to create a custom Leaflet icon
-        function createCustomIcon(color) {
-            return L.divIcon({
-                className: 'custom-icon',
-                html: `<div style="background-color:${color};width:12px;height:12px;border-radius:50%; border: 2px solid white;"></div>`,
-                iconSize: [12, 12],
-                iconAnchor: [6, 6]
-            });
-        }
-
-        // Define different icons for services, completed jobs, and robots
-        const serviceIcon = createCustomIcon('blue');
-        const completedJobIcon = createCustomIcon('green');
-        const robotIcon = createCustomIcon('red');
+        // Define colors for different marker types
+        const markerColors = {
+            service: '#3b82f6',    // blue
+            completed: '#10b981',  // green
+            robot: '#ef4444'       // red
+        };
 
         // Function to add a simulated activity
         function addSimulatedActivity() {
@@ -462,26 +439,26 @@
             const [lat, lon] = getRandomLocation();
             const timestamp = new Date().toLocaleTimeString();
 
-            let logEntry, markerIcon, popupContent;
+            let logEntry, markerColor, popupContent;
 
             switch(activityType) {
                 case 'service':
                     const service = serviceRequests[Math.floor(Math.random() * serviceRequests.length)];
                     logEntry = `[${timestamp}] Simulated service request: ${service} (simulated) at (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-                    markerIcon = serviceIcon;
-                    popupContent = `Service: ${service} (simulated)`;
+                    markerColor = markerColors.service;
+                    popupContent = `<div style="padding: 8px;"><h6>Service Request</h6><p>${service}</p><p class="text-muted small">Simulated</p></div>`;
                     break;
                 case 'completed':
                     const completedService = serviceRequests[Math.floor(Math.random() * serviceRequests.length)];
                     logEntry = `[${timestamp}] Simulated completed job: ${completedService} (simulated) at (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-                    markerIcon = completedJobIcon;
-                    popupContent = `Completed Job: ${completedService} (simulated)`;
+                    markerColor = markerColors.completed;
+                    popupContent = `<div style="padding: 8px;"><h6>Completed Job</h6><p>${completedService}</p><p class="text-muted small">Simulated</p></div>`;
                     break;
                 case 'robot':
                     const robot = robotNames[Math.floor(Math.random() * robotNames.length)];
                     logEntry = `[${timestamp}] Simulated robot location: ${robot} (simulated) at (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-                    markerIcon = robotIcon;
-                    popupContent = `Robot: ${robot} (simulated)`;
+                    markerColor = markerColors.robot;
+                    popupContent = `<div style="padding: 8px;"><h6>Robot Location</h6><p>${robot}</p><p class="text-muted small">Simulated</p></div>`;
                     break;
             }
 
@@ -499,17 +476,24 @@
             }
 
             // Add a marker to the map with a popup
-            L.marker([lat, lon], {icon: markerIcon}).addTo(map)
-                .bindPopup(popupContent);
+            const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent);
+            const marker = new mapboxgl.Marker({color: markerColor})
+                .setLngLat([lon, lat])
+                .setPopup(popup)
+                .addTo(map);
+            
+            markers.push(marker);
+            
+            // Limit markers to 100 to prevent performance issues
+            if (markers.length > 100) {
+                markers.shift().remove();
+            }
         }
 
-        // Start adding simulated activities every 2 seconds
-        setInterval(addSimulatedActivity, 2000);
-
-        // Optional: Adjust simulated activities when the map view changes (e.g., on zoom or pan)
-        // This ensures that new activities are always within the current view
-        map.on('moveend', () => {
-            // You can implement additional logic here if needed when the map view changes
+        // Wait for map to load before starting simulations
+        map.on('load', () => {
+            // Start adding simulated activities every 2 seconds
+            setInterval(addSimulatedActivity, 2000);
         });
     </script>
 </body>
