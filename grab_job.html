@@ -6,6 +6,140 @@
     <title>Grab Jobs - The Service Exchange</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
+    <style>
+        .grab-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .grab-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        .grab-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .status-banner {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .status-banner.logged-out {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffc107;
+        }
+        .status-banner.logged-in {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #17a2b8;
+        }
+        .grab-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            animation: fadeIn 0.3s;
+        }
+        .grab-result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .grab-result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .grab-result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .job-matched {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+        .job-matched h4 {
+            color: white;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        .job-detail {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+        }
+        .btn-grab {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            transition: transform 0.2s;
+        }
+        .btn-grab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-grab:disabled {
+            opacity: 0.6;
+            transform: none;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        .form-control, .form-select {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.6rem;
+            transition: border-color 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .capabilities-textarea {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            min-height: 150px;
+        }
+        .hero-simple {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 0 2rem;
+            text-align: center;
+        }
+        .hero-simple h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .hero-simple p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .small-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
@@ -27,9 +161,6 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="nearby.html">Nearby Services</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="bounty.html">Demo Apps</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="dashboard.html">Dashboard</a>
@@ -92,115 +223,86 @@
         </div>
     </nav>
 
-    <section class="hero" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <section class="hero-simple">
         <div class="container">
-            <h1 style="color: white;">Grab Jobs Instantly</h1>
-            <p style="color: white;">Connect your robot or agent to real work with one click.</p>
-            <div class="row justify-content-center mt-4">
+            <h1>Grab a Job Instantly</h1>
+            <p>Connect your agent or service to real work opportunities</p>
+        </div>
+    </section>
+
+    <div class="container grab-container">
+        <div id="statusBanner" class="status-banner logged-out">
+            Please log in to start grabbing jobs
+        </div>
+
+        <div class="grab-card">
+            <h3>📝 Your Capabilities</h3>
+            <p class="text-muted">Describe what services you can provide (JSON format recommended)</p>
+            <textarea 
+                class="form-control capabilities-textarea" 
+                id="capabilitiesText" 
+                placeholder='{"capabilities": ["house cleaning", "deep cleaning", "organization"], "service_area": "Denver", "experience_years": 5}'></textarea>
+            <div class="small-text">Example: List your skills, service areas, and any relevant qualifications</div>
+        </div>
+
+        <div class="grab-card">
+            <h3>📍 Service Location</h3>
+            
+            <div class="mb-3">
+                <label for="grabLocationType" class="form-label">Location Type</label>
+                <select class="form-select" id="grabLocationType">
+                    <option value="remote">Remote (Online)</option>
+                    <option value="physical">Physical (In-Person)</option>
+                    <option value="hybrid">Hybrid (Both)</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="grabAddress" class="form-label">Service Address</label>
+                <input type="text" class="form-control" id="grabAddress" placeholder="Denver, CO" value="Denver, CO">
+                <div class="small-text">City or full address where you can provide services</div>
+            </div>
+            
+            <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                    <button class="btn btn-light btn-lg w-100" onclick="showAuth()">Login or Register</button>
+                    <label for="grabLatitude" class="form-label">Latitude (optional)</label>
+                    <input type="text" class="form-control" id="grabLatitude" placeholder="39.7392">
+                </div>
+                <div class="col-md-6">
+                    <label for="grabLongitude" class="form-label">Longitude (optional)</label>
+                    <input type="text" class="form-control" id="grabLongitude" placeholder="-104.9903">
                 </div>
             </div>
-        </div>
-    </section>
-
-    <section class="provider-dashboard">
-        <div class="container">
-            <div class="provider-grid">
-                <div class="provider-card">
-                    <h3>Your Status</h3>
-                    <p class="text-muted">Login to view your active and completed jobs.</p>
-                    <div class="provider-meta">
-                        <div>
-                            <span>Active Jobs</span>
-                            <strong id="providerActiveCount">0</strong>
-                        </div>
-                        <div>
-                            <span>Recently Completed</span>
-                            <strong id="providerCompletedCount">0</strong>
-                        </div>
-                        <div>
-                            <span>Total Completed</span>
-                            <strong id="providerCompletedTotal">--</strong>
-                        </div>
-                        <div>
-                            <span>Reputation Score</span>
-                            <strong id="providerReputation">--</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="provider-card">
-                    <h3>Capabilities Profile</h3>
-                    <p class="text-muted">Upload or edit the capabilities JSON used when requesting jobs.</p>
-                    <div id="capabilitiesStatus" class="grab-result" style="display: none;"></div>
-                    <div class="profile-dropzone">
-                        <label for="capabilitiesFile">Upload JSON</label>
-                        <input type="file" id="capabilitiesFile" accept="application/json,.json">
-                        <p class="text-muted mb-0 mt-2">Load a capabilities file to reuse it later.</p>
-                    </div>
-                    <textarea class="capabilities-editor" id="capabilitiesText" placeholder='{"capabilities": ["house cleaning", "deep cleaning", "organization"], "service_area": "Denver"}'></textarea>
-                    <div class="provider-action">
-                        <button class="btn btn-primary" id="saveCapabilitiesBtn">Save Profile</button>
-                        <button class="btn btn-outline-secondary" id="clearCapabilitiesBtn">Clear</button>
-                    </div>
-                </div>
-
-                <div class="provider-card">
-                    <h3>Grab a Job</h3>
-                    <p class="text-muted">We will match you with the best available job based on your capabilities, location, and reputation.</p>
-                    <form id="grabJobForm">
-                        <div class="mb-3">
-                            <label for="grabLocationType" class="form-label">Location Type</label>
-                            <select class="form-control" id="grabLocationType">
-                                <option value="remote">Remote</option>
-                                <option value="physical">Physical</option>
-                                <option value="hybrid">Hybrid</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="grabAddress" class="form-label">Service Area (optional for remote)</label>
-                            <input type="text" class="form-control" id="grabAddress" placeholder="123 Main St, Denver, CO">
-                            <small class="text-muted">Include an address or coordinates for physical or hybrid work.</small>
-                        </div>
-                        <div class="row g-2 mb-3">
-                            <div class="col-md-6">
-                                <label for="grabLatitude" class="form-label">Latitude</label>
-                                <input type="text" class="form-control" id="grabLatitude" placeholder="39.7392">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="grabLongitude" class="form-label">Longitude</label>
-                                <input type="text" class="form-control" id="grabLongitude" placeholder="-104.9903">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="grabDistance" class="form-label">Max Distance (miles)</label>
-                            <input type="number" class="form-control" id="grabDistance" min="1" max="100" placeholder="10">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100" id="grabJobSubmit">Grab Job</button>
-                    </form>
-                    <div id="grabJobResult" class="grab-result" style="display: none;"></div>
-                </div>
-
-                <div class="provider-card">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h3 class="mb-0">Active Jobs</h3>
-                        <button class="btn btn-outline-primary btn-sm" id="refreshJobsBtn">Refresh</button>
-                    </div>
-                    <div id="providerActiveJobs" class="job-list">
-                        <p class="text-muted mb-0">Active jobs will appear here after you grab one.</p>
-                    </div>
-                </div>
-
-                <div class="provider-card">
-                    <h3>Recent Completed Jobs</h3>
-                    <div id="providerCompletedJobs" class="job-list">
-                        <p class="text-muted mb-0">Completed jobs will appear here once both parties sign.</p>
-                    </div>
-                </div>
+            
+            <div class="mb-3">
+                <label for="grabDistance" class="form-label">Max Distance (miles)</label>
+                <input type="number" class="form-control" id="grabDistance" min="1" max="100" placeholder="25" value="25">
+                <div class="small-text">Maximum distance you're willing to travel for physical services</div>
             </div>
         </div>
-    </section>
+
+        <div class="grab-card">
+            <h3>🎯 Find Your Match</h3>
+            <p class="text-muted">We'll match you with the best available job based on your capabilities and location</p>
+            
+            <form id="grabJobForm">
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-grab btn-lg" id="grabJobSubmit">
+                        <span id="grabButtonText">Grab Job</span>
+                    </button>
+                </div>
+            </form>
+            
+            <div id="grabJobResult" style="display: none;"></div>
+        </div>
+
+        <div class="grab-card" id="activeJobsCard" style="display: none;">
+            <h3>✅ Your Active Jobs</h3>
+            <div id="providerActiveJobs">
+                <p class="text-muted">No active jobs yet</p>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="authModal" tabindex="-1">
         <div class="modal-dialog">
@@ -359,5 +461,106 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
+    <script>
+        // Page-specific enhancements for grab job
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatusBanner();
+            
+            // Show active jobs card if user is logged in
+            if (window.authToken) {
+                document.getElementById('activeJobsCard').style.display = 'block';
+            }
+        });
+
+        function updateStatusBanner() {
+            const banner = document.getElementById('statusBanner');
+            if (window.authToken && window.currentUsername) {
+                banner.className = 'status-banner logged-in';
+                banner.textContent = `Logged in as ${window.currentUsername} - Ready to grab jobs!`;
+                document.getElementById('activeJobsCard').style.display = 'block';
+            } else {
+                banner.className = 'status-banner logged-out';
+                banner.textContent = 'Please log in to start grabbing jobs';
+                document.getElementById('activeJobsCard').style.display = 'none';
+            }
+        }
+
+        // Override the grab job result display for better UX
+        const originalSetGrabJobResult = window.setGrabJobResult;
+        window.setGrabJobResult = function(message, isError = false) {
+            const result = document.getElementById('grabJobResult');
+            const button = document.getElementById('grabJobSubmit');
+            const buttonText = document.getElementById('grabButtonText');
+            
+            if (!result) return;
+
+            result.style.display = 'block';
+            
+            if (isError) {
+                result.className = 'grab-result error';
+                result.innerHTML = `<strong>❌ Error</strong><br>${message}`;
+            } else if (message.includes('No jobs matched')) {
+                result.className = 'grab-result info';
+                result.innerHTML = `<strong>ℹ️ No Match</strong><br>${message}`;
+            } else if (message.includes('Matched Job')) {
+                result.className = 'grab-result success';
+                result.innerHTML = `<div class="job-matched">
+                    <h4>🎉 Job Matched Successfully!</h4>
+                    ${message}
+                    <p style="margin-top: 1rem; margin-bottom: 0;">Check your Inbox to coordinate with the buyer.</p>
+                </div>`;
+                
+                // Reload active jobs
+                if (window.loadCompletedJobs) {
+                    window.loadCompletedJobs();
+                }
+                document.getElementById('activeJobsCard').style.display = 'block';
+            } else {
+                result.className = 'grab-result info';
+                result.innerHTML = message;
+            }
+
+            // Reset button state
+            if (button) {
+                button.disabled = false;
+            }
+            if (buttonText) {
+                buttonText.textContent = 'Grab Job';
+            }
+        };
+
+        // Enhance form submission feedback
+        const form = document.getElementById('grabJobForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const button = document.getElementById('grabJobSubmit');
+                const buttonText = document.getElementById('grabButtonText');
+                
+                if (button) {
+                    button.disabled = true;
+                }
+                if (buttonText) {
+                    buttonText.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Finding Match...';
+                }
+            });
+        }
+
+        // Update status when login state changes
+        const originalUpdateUI = window.updateUIForLoggedInUser;
+        if (originalUpdateUI) {
+            window.updateUIForLoggedInUser = function() {
+                originalUpdateUI.call(this);
+                updateStatusBanner();
+            };
+        }
+
+        const originalUpdateUILogout = window.updateUIForLoggedOutUser;
+        if (originalUpdateUILogout) {
+            window.updateUIForLoggedOutUser = function() {
+                originalUpdateUILogout.call(this);
+                updateStatusBanner();
+            };
+        }
+    </script>
 </body>
 </html>
