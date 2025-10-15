@@ -1008,7 +1008,13 @@ function initializeGrabJobPage() {
     }
 
     if (grabJobForm) {
-        grabJobForm.addEventListener('submit', handleGrabJobSubmission);
+        console.log('Grab Job form found, attaching submit handler');
+        grabJobForm.addEventListener('submit', function(e) {
+            console.log('Grab Job form submitted');
+            handleGrabJobSubmission(e);
+        });
+    } else {
+        console.log('Grab Job form not found on this page');
     }
 
     if (refreshBtn) {
@@ -1097,9 +1103,12 @@ function prepareCapabilitiesPayload(raw) {
 }
 
 async function handleGrabJobSubmission(e) {
+    console.log('handleGrabJobSubmission called', e);
     e.preventDefault();
+    e.stopPropagation();
 
     if (!authToken) {
+        console.log('No auth token, showing auth modal');
         showAuth();
         return;
     }
