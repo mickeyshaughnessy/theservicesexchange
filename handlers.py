@@ -954,6 +954,7 @@ def get_exchange_data(data):
                     'price': bid['price'],
                     'currency': bid.get('currency', 'USD'),
                     'location': bid.get('address', 'Remote'),
+                    'address': bid.get('address'),
                     'lat': bid.get('lat'),
                     'lon': bid.get('lon'),
                     'buyer_reputation': bid.get('buyer_reputation'),
@@ -998,6 +999,9 @@ def get_exchange_data(data):
                         'service': job['service'],
                         'price': job['price'],
                         'currency': job.get('currency', 'USD'),
+                        'address': job.get('address'),
+                        'lat': job.get('lat'),
+                        'lon': job.get('lon'),
                         'avg_rating': avg_rating,
                         'completed_at': job.get('completed_at', job['accepted_at'])
                     })
