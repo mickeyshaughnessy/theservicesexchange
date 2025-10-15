@@ -1198,19 +1198,19 @@ async function handleGrabJobSubmission(e) {
         });
 
         if (response.status === 204) {
-            setGrabJobResult('No jobs matched your capabilities. Try again soon.', true);
+            setGrabJobResult('No jobs matched your capabilities. Try again soon.<br><br><strong>Submitted capabilities:</strong><br><pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 5px; overflow-x: auto;">' + escapeHtml(payload.capabilities) + '</pre>', true);
             return;
         }
 
         const data = await response.json().catch(() => ({}));
         if (response.ok) {
-            setGrabJobResult(renderGrabJobSuccess(data), false);
+            setGrabJobResult(renderGrabJobSuccess(data, payload.capabilities), false);
             await loadCompletedJobs();
         } else {
-            setGrabJobResult(data.error || 'Unable to grab a job right now.', true);
+            setGrabJobResult((data.error || 'Unable to grab a job right now.') + '<br><br><strong>Submitted capabilities:</strong><br><pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 5px; overflow-x: auto;">' + escapeHtml(payload.capabilities) + '</pre>', true);
         }
     } catch (error) {
-        setGrabJobResult('Network error while grabbing a job.', true);
+        setGrabJobResult('Network error while grabbing a job.<br><br><strong>Submitted capabilities:</strong><br><pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 5px; overflow-x: auto;">' + escapeHtml(payload.capabilities) + '</pre>', true);
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -1219,18 +1219,24 @@ async function handleGrabJobSubmission(e) {
     }
 }
 
-function renderGrabJobSuccess(job) {
+function renderGrabJobSuccess(job, submittedCapabilities) {
     const price = job && job.currency ? `${escapeHtml(job.currency)} ${escapeHtml(job.price)}` : `$${escapeHtml(job.price)}`;
     const location = job && job.location_type === 'remote' ? 'Remote' : escapeHtml(job.address || 'Physical service');
     const acceptedTime = job && job.accepted_at ? new Date(job.accepted_at * 1000).toLocaleString() : 'Just now';
     const service = typeof job.service === 'object' ? escapeHtml(JSON.stringify(job.service)) : escapeHtml(job.service);
     const buyer = escapeHtml(job.buyer_username || '');
+    
+    let capabilitiesSection = '';
+    if (submittedCapabilities) {
+        capabilitiesSection = `<br><br><strong>Submitted capabilities:</strong><br><pre style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 5px; margin-top: 5px; overflow-x: auto;">${escapeHtml(submittedCapabilities)}</pre>`;
+    }
+    
     return `
         <strong>Matched Job:</strong> ${service}<br>
         <span class="job-meta">Price: ${price}</span><br>
         <span class="job-meta">Buyer: ${buyer}</span><br>
         <span class="job-meta">Location: ${location}</span><br>
-        <span class="job-meta">Accepted at: ${acceptedTime}</span>
+        <span class="job-meta">Accepted at: ${acceptedTime}</span>${capabilitiesSection}
     `;
 }
 
