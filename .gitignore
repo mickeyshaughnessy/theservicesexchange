@@ -4,16 +4,36 @@ __pycache__/
 *$py.class
 *.so
 .Python
-venv/
 env/
+venv/
 ENV/
-.venv
-*onfig.py
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Environment variables
-.env
-.env.local
-.env.*.local
+# Flask
+instance/
+.webassets-cache
+
+# Test data
+data/
+
+# Load Testing
+load_testing/results/
+load_testing/test_tokens.json
+load_testing/*.log
 
 # IDE
 .vscode/
@@ -21,39 +41,17 @@ ENV/
 *.swp
 *.swo
 *~
-.DS_Store
 
-# Testing
-.coverage
-.pytest_cache/
-htmlcov/
-*.cover
-.hypothesis/
+# OS
+.DS_Store
+Thumbs.db
 
 # Logs
 *.log
-logs/
 
-# AWS
-.aws/
+# Local config
+config_local.py
 
-# SSL Certificates
-*.pem
-*.key
-*.crt
-*.cer
-
-# Build artifacts
-build/
-dist/
-*.egg-info/
-
-# Documentation
-docs/_build/
-
-# Static files cache
-static/.cache/
-
-# Test outputs
-test_connection.py
-test_results/
+# Seat data (keep in repo but could be sensitive)
+# seats.dat
+# silver_seats.dat

@@ -134,17 +134,66 @@ Or use environment variables as shown in the `.env` file.
 
 ## Testing
 
+### Integration Tests
+
 Run the integration tests:
 
 ```bash
-python integration_tests.py
+python int_tests.py
 ```
 
-Run with verbose output:
+Run with verbose output and local testing:
 
 ```bash
-python integration_tests.py --verbose
+python int_tests.py --local --quick
 ```
+
+### Load Testing
+
+Comprehensive load testing infrastructure is available to validate API performance and scalability. All load testing traffic is clearly marked with `X-Load-Test: LOAD_TESTING` headers.
+
+**Quick Start:**
+
+```bash
+# 1. Check prerequisites
+./load_testing/check_prerequisites.sh
+
+# 2. Install siege (if needed)
+brew install siege  # macOS
+# or: sudo apt-get install siege  # Linux
+
+# 3. Install Flask-Limiter
+pip install Flask-Limiter
+
+# 4. Prepare test data
+./load_testing/prepare_test_users.py
+
+# 5. Run smoke test
+./load_testing/run_smoke_test.sh
+```
+
+**Available Test Scenarios:**
+
+- **Smoke Test** (30s, 5 users): Quick validation
+- **Steady State** (2m, 10 users): Normal load simulation  
+- **Stress Test** (1m, 50 users): Find performance limits
+- **Workflow Test** (3m, 15 users): Realistic user journeys
+
+**Monitor Performance:**
+
+```bash
+# Watch real-time metrics
+watch -n 2 'curl -s http://localhost:5003/metrics | python3 -m json.tool'
+
+# Analyze test results
+./load_testing/analyze_results.py
+```
+
+**Documentation:**
+
+- Quick Start: `load_testing/QUICK_START.md`
+- Full Guide: `LOAD_TESTING.md`
+- Implementation: `load_testing/IMPLEMENTATION_SUMMARY.md`
 
 ## Security Considerations
 

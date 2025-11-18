@@ -9,6 +9,8 @@ import uuid
 import logging
 from flask_cors import CORS
 from functools import wraps
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 from handlers import (
     register_user,
@@ -34,25 +36,85 @@ logger = logging.getLogger(__name__)
 app = flask.Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+# Rate limiting configuration
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["1000 per hour", "60 per minute"],
+    storage_uri="memory://"
+)
+
+# Performance tracking
+request_metrics = {
+    'total_requests': 0,
+    'endpoint_timings': {},
+    'errors': 0,
+    'load_test_requests': 0
+}
+
 @app.before_request
 def log_request():
-    logger.info(f"Incoming request - Method: {flask.request.method}, Route: {flask.request.path}, Endpoint: {flask.request.endpoint}, Remote Addr: {flask.request.remote_addr}")
+    # Add request ID for tracing
+    flask.g.request_id = str(uuid.uuid4())[:8]
+    flask.g.start_time = time.time()
+    
+    # Check if this is a load testing request
+    is_load_test = flask.request.headers.get('X-Load-Test') == 'LOAD_TESTING'
+    flask.g.is_load_test = is_load_test
+    
+    if is_load_test:
+        request_metrics['load_test_requests'] += 1
+    
+    request_metrics['total_requests'] += 1
+    
+    # Log with request ID
+    log_prefix = f"[LOAD_TEST:{flask.g.request_id}]" if is_load_test else f"[{flask.g.request_id}]"
+    logger.info(f"{log_prefix} Incoming request - Method: {flask.request.method}, Route: {flask.request.path}, Endpoint: {flask.request.endpoint}, Remote Addr: {flask.request.remote_addr}")
+    
     if flask.request.is_json:
         try:
             data = flask.request.get_json()
-            logger.info(f"Request data: {json.dumps(data)}")
+            logger.info(f"{log_prefix} Request data: {json.dumps(data)}")
         except Exception as e:
-            logger.warning(f"Failed to parse request data: {str(e)}")
+            logger.warning(f"{log_prefix} Failed to parse request data: {str(e)}")
 
 @app.after_request
 def log_response(response):
-    logger.info(f"Response for route {flask.request.path} - Status: {response.status_code}")
+    # Calculate request duration
+    duration = time.time() - flask.g.start_time
+    endpoint = flask.request.endpoint or flask.request.path
+    
+    # Track endpoint timings
+    if endpoint not in request_metrics['endpoint_timings']:
+        request_metrics['endpoint_timings'][endpoint] = {
+            'count': 0,
+            'total_time': 0,
+            'min_time': float('inf'),
+            'max_time': 0,
+            'errors': 0
+        }
+    
+    metrics = request_metrics['endpoint_timings'][endpoint]
+    metrics['count'] += 1
+    metrics['total_time'] += duration
+    metrics['min_time'] = min(metrics['min_time'], duration)
+    metrics['max_time'] = max(metrics['max_time'], duration)
+    
+    if response.status_code >= 400:
+        metrics['errors'] += 1
+        request_metrics['errors'] += 1
+    
+    # Log with request ID and duration
+    log_prefix = f"[LOAD_TEST:{flask.g.request_id}]" if flask.g.is_load_test else f"[{flask.g.request_id}]"
+    logger.info(f"{log_prefix} Response for route {flask.request.path} - Status: {response.status_code}, Duration: {duration:.3f}s")
+    
     if response.content_type and 'application/json' in response.content_type:
         try:
             resp_data = json.loads(response.get_data(as_text=True))
-            logger.info(f"Response data: {json.dumps(resp_data)}")
+            logger.info(f"{log_prefix} Response data: {json.dumps(resp_data)}")
         except Exception as e:
-            logger.warning(f"Failed to parse response data: {str(e)}")
+            logger.warning(f"{log_prefix} Failed to parse response data: {str(e)}")
+    
     return response
 
 def token_required(f):
@@ -296,6 +358,33 @@ def health():
         "status": "healthy",
         "timestamp": int(time.time()),
         "service": "Service Exchange API"
+    }), 200
+
+# Metrics endpoint for performance monitoring
+@app.route('/metrics', methods=['GET'])
+@limiter.exempt
+def metrics():
+    """Performance metrics endpoint for load testing and monitoring"""
+    # Calculate average response times
+    endpoint_stats = {}
+    for endpoint, data in request_metrics['endpoint_timings'].items():
+        if data['count'] > 0:
+            endpoint_stats[endpoint] = {
+                'requests': data['count'],
+                'avg_time': round(data['total_time'] / data['count'], 3),
+                'min_time': round(data['min_time'], 3),
+                'max_time': round(data['max_time'], 3),
+                'errors': data['errors'],
+                'error_rate': round(data['errors'] / data['count'] * 100, 2) if data['count'] > 0 else 0
+            }
+    
+    return flask.jsonify({
+        "timestamp": int(time.time()),
+        "total_requests": request_metrics['total_requests'],
+        "load_test_requests": request_metrics['load_test_requests'],
+        "total_errors": request_metrics['errors'],
+        "error_rate": round(request_metrics['errors'] / request_metrics['total_requests'] * 100, 2) if request_metrics['total_requests'] > 0 else 0,
+        "endpoint_stats": endpoint_stats
     }), 200
 
 # API documentation redirect
