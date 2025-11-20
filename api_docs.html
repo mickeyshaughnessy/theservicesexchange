@@ -268,6 +268,45 @@ echo -n "your-seat-phrase" | md5sum</div>
 }</div>
                 </div>
 
+                <!-- Health Check -->
+                <div id="health-check" class="endpoint">
+                    <h3><span class="method get">GET</span> <span class="path">/health</span></h3>
+                    <p>Detailed system health check including version and timestamp.</p>
+                    
+                    <h4>Example Request</h4>
+                    <div class="code-block">curl https://rse-api.com:5003/health</div>
+                    
+                    <h4>Example Response</h4>
+                    <div class="code-block">{
+  "status": "healthy",
+  "timestamp": 1703001600,
+  "service": "Service Exchange API",
+  "version": "1.0.0"
+}</div>
+                </div>
+
+                <!-- Metrics -->
+                <div id="metrics" class="endpoint">
+                    <h3><span class="method get">GET</span> <span class="path">/metrics</span></h3>
+                    <p>System performance metrics and request statistics.</p>
+                    
+                    <h4>Example Request</h4>
+                    <div class="code-block">curl https://rse-api.com:5003/metrics</div>
+                    
+                    <h4>Example Response</h4>
+                    <div class="code-block">{
+  "timestamp": 1703001600,
+  "total_requests": 1542,
+  "total_errors": 12,
+  "endpoint_stats": {
+    "submit_bid": {
+      "requests": 45,
+      "avg_time": 0.125
+    }
+  }
+}</div>
+                </div>
+
                 <!-- Register -->
                 <div id="register" class="endpoint">
                     <h3><span class="method post">POST</span> <span class="path">/register</span></h3>

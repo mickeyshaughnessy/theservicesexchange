@@ -1,8 +1,8 @@
-# Service Exchange (SEX) Protocol
+# Service Exchange Protocol
 
 ## Overview
 
-The Service Exchange (SEX) is an open marketplace protocol that connects service buyers with service providers through a transparent bidding system. Whether you need home repairs, tutoring, graphic design, or any other service, SEX enables efficient price discovery and quality-based matching.
+The Service Exchange (SE) is an open marketplace protocol that connects service buyers with service providers through a transparent bidding system. Whether you need home repairs, tutoring, graphic design, or any other service, SE enables efficient price discovery and quality-based matching.
 
 ## Key Features
 
@@ -30,8 +30,8 @@ The Service Exchange (SEX) is an open marketplace protocol that connects service
 
 ### Prerequisites
 - Python 3.8+
-- AWS account with S3 access
-- Anthropic API key (for LLM matching)
+- AWS account with S3 access (optional for production storage)
+- OpenRouter API key (for LLM matching)
 
 ### Installation
 
@@ -44,11 +44,7 @@ cd service-exchange
 pip install -r requirements.txt
 
 # Set up environment variables
-export ANTHROPIC_API_KEY="your-api-key"
-export AWS_ACCESS_KEY_ID="your-aws-key"
-export AWS_SECRET_ACCESS_KEY="your-aws-secret"
-export S3_BUCKET="mithrilmedia"
-export S3_PREFIX="theservicesexchange"
+export OPENROUTER_API_KEY="your-api-key"
 
 # Run the server
 python api_server.py
@@ -60,13 +56,13 @@ python api_server.py
 import requests
 
 # Register a new user
-response = requests.post('https://api.sex-protocol.com/register', json={
+response = requests.post('https://rse-api.com:5003/register', json={
     'username': 'john_doe',
     'password': 'secure_password'
 })
 
 # Login
-response = requests.post('https://api.sex-protocol.com/login', json={
+response = requests.post('https://rse-api.com:5003/login', json={
     'username': 'john_doe',
     'password': 'secure_password'
 })
@@ -74,7 +70,7 @@ token = response.json()['access_token']
 
 # Submit a service request
 headers = {'Authorization': f'Bearer {token}'}
-response = requests.post('https://api.sex-protocol.com/submit_bid', 
+response = requests.post('https://rse-api.com:5003/submit_bid', 
     headers=headers,
     json={
         'service': 'I need my website redesigned with modern UI/UX',
@@ -85,7 +81,7 @@ response = requests.post('https://api.sex-protocol.com/submit_bid',
 )
 
 # For providers - grab a job
-response = requests.post('https://api.sex-protocol.com/grab_job',
+response = requests.post('https://rse-api.com:5003/grab_job',
     headers=headers,
     json={
         'capabilities': 'Web design, UI/UX, React, Figma, responsive design',
@@ -96,7 +92,7 @@ response = requests.post('https://api.sex-protocol.com/grab_job',
 
 ## API Documentation
 
-Full API documentation is available at [https://sex-protocol.com/api_docs.html](https://sex-protocol.com/api_docs.html)
+Full API documentation is available at [https://rse-api.com:5003/api_docs.html](https://rse-api.com:5003/api_docs.html)
 
 ### Core Endpoints
 
@@ -114,23 +110,12 @@ Create a `config.py` file with your settings:
 
 ```python
 # API Configuration
-API_PORT = 5000
+API_PORT = 5003
 API_HOST = '0.0.0.0'
 
-# AWS S3 Configuration
-S3_BUCKET = 'mithrilmedia'
-S3_PREFIX = 'theservicesexchange'
-AWS_REGION = 'us-east-1'
-
-# Anthropic API for matching
-ANTHROPIC_API_KEY = 'your-key-here'
-
-# SSL Configuration (for production)
-SSL_CERT = '/path/to/cert.pem'
-SSL_KEY = '/path/to/key.pem'
+# OpenRouter API for matching
+OPENROUTER_API_KEY = 'your-key-here'
 ```
-
-Or use environment variables as shown in the `.env` file.
 
 ## Testing
 
@@ -142,69 +127,29 @@ Run the integration tests:
 python int_tests.py
 ```
 
-Run with verbose output and local testing:
-
-```bash
-python int_tests.py --local --quick
-```
-
 ### Load Testing
 
-Comprehensive load testing infrastructure is available to validate API performance and scalability. All load testing traffic is clearly marked with `X-Load-Test: LOAD_TESTING` headers.
+Comprehensive load testing infrastructure is available to validate API performance and scalability.
 
 **Quick Start:**
 
 ```bash
-# 1. Check prerequisites
-./load_testing/check_prerequisites.sh
-
-# 2. Install siege (if needed)
-brew install siege  # macOS
-# or: sudo apt-get install siege  # Linux
-
-# 3. Install Flask-Limiter
+# 1. Install dependencies
 pip install Flask-Limiter
 
-# 4. Prepare test data
-./load_testing/prepare_test_users.py
-
-# 5. Run smoke test
+# 2. Run smoke test
 ./load_testing/run_smoke_test.sh
 ```
-
-**Available Test Scenarios:**
-
-- **Smoke Test** (30s, 5 users): Quick validation
-- **Steady State** (2m, 10 users): Normal load simulation  
-- **Stress Test** (1m, 50 users): Find performance limits
-- **Workflow Test** (3m, 15 users): Realistic user journeys
-
-**Monitor Performance:**
-
-```bash
-# Watch real-time metrics
-watch -n 2 'curl -s http://localhost:5003/metrics | python3 -m json.tool'
-
-# Analyze test results
-./load_testing/analyze_results.py
-```
-
-**Documentation:**
-
-- Quick Start: `load_testing/QUICK_START.md`
-- Full Guide: `LOAD_TESTING.md`
-- Implementation: `load_testing/IMPLEMENTATION_SUMMARY.md`
 
 ## Security Considerations
 
 - All passwords are hashed using bcrypt
 - Bearer token authentication for all API calls
 - Automatic token expiration
-- SSL/TLS required for production deployments
 
 ## Protocol Specification
 
-The complete SEX Protocol specification is available in [SEX1.0.pdf](SEX1.0.pdf)
+The complete Service Exchange Protocol specification is available in the documentation.
 
 ## Contributing
 
@@ -216,10 +161,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Support
 
-- Documentation: [https://sex-protocol.com/docs](https://sex-protocol.com/docs)
-- GitHub Issues: [https://github.com/service-exchange/sex-protocol/issues](https://github.com/service-exchange/sex-protocol/issues)
-- Community Forum: [https://forum.sex-protocol.com](https://forum.sex-protocol.com)
-
-## Acknowledgments
-
-The Service Exchange Protocol is designed to democratize access to services and create efficient markets for all types of work.
+- Documentation: [https://rse-api.com:5003/api_docs.html](https://rse-api.com:5003/api_docs.html)

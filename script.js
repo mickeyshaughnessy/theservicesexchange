@@ -1,4 +1,9 @@
-// The Services Exchange - Unified JavaScript
+/**
+ * Service Exchange Frontend Script
+ * -------------------------------
+ * Handles all frontend interactions, API calls, and UI updates.
+ */
+
 const API_URL = 'https://rse-api.com:5003';
 
 // Global state

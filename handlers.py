@@ -1,5 +1,8 @@
 """
-Service Exchange Business Logic with Complete API Implementation
+Service Exchange Business Logic
+------------------------------
+This module contains the core business logic for the Service Exchange Protocol.
+It handles user management, bid/job matching, messaging, and seat verification.
 """
 
 import uuid
@@ -7,52 +10,74 @@ import json
 import time
 import logging
 import hashlib
-import requests
 import math
+import requests
+from typing import Dict, List, Optional, Tuple, Union, Any
 from werkzeug.security import generate_password_hash, check_password_hash
+
 import config
 from utils import (
     get_account, save_account, account_exists,
-    save_token, get_token_username,
+    save_token,
     save_bid, get_bid, delete_bid, get_all_bids, get_user_bids,
     save_job, get_job, get_all_jobs, get_user_jobs,
-    save_message, get_user_messages,
-    save_bulletin, get_all_bulletins
+    save_message,
+    save_bulletin
 )
 
+# Configure logging
+logging.basicConfig(level=config.LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
-# Load Golden seats data at module level
-golden_seats = {}
-try:
-    with open('seats.dat', 'r') as f:
-        for line in f:
-            seat_data = json.loads(line.strip())
-            golden_seats[seat_data['id']] = seat_data
-except Exception as e:
-    logger.warning(f"Could not load golden seats data: {str(e)}")
+# -----------------------------------------------------------------------------
+# Data Loading (Mock Database)
+# -----------------------------------------------------------------------------
 
-# Load Silver seats data at module level
-silver_seats = {}
-try:
-    with open('silver_seats.dat', 'r') as f:
-        for line in f:
-            seat_data = json.loads(line.strip())
-            silver_seats[seat_data['id']] = seat_data
-except Exception as e:
-    logger.warning(f"Could not load silver seats data: {str(e)}")
+def load_seat_data(filename: str) -> Dict[str, Any]:
+    """Load seat data from a file safely."""
+    seats = {}
+    try:
+        with open(filename, 'r') as f:
+            for line in f:
+                if line.strip():
+                    seat_data = json.loads(line.strip())
+                    seats[seat_data['id']] = seat_data
+        return seats
+    except FileNotFoundError:
+        logger.warning(f"Seat data file not found: {filename}")
+        return {}
+    except json.JSONDecodeError:
+        logger.error(f"Invalid JSON in seat data file: {filename}")
+        return {}
+    except Exception as e:
+        logger.error(f"Error loading seat data from {filename}: {str(e)}")
+        return {}
 
-# TEMPORARY: Seat verification disabled during ramp-up
-SEAT_VERIFICATION_ENABLED = False
+# Load seats at module level
+golden_seats = load_seat_data('seats.dat')
+silver_seats = load_seat_data('silver_seats.dat')
 
-def md5(text):
-    """Generate MD5 hash of text"""
+# -----------------------------------------------------------------------------
+# Helper Functions
+# -----------------------------------------------------------------------------
+
+def md5(text: str) -> str:
+    """Generate MD5 hash of text."""
     return hashlib.md5(text.encode()).hexdigest()
 
-def verify_seat_credentials(seat_data):
-    """Verify seat credentials for both Golden and Silver seats"""
+def verify_seat_credentials(seat_data: Dict[str, Any]) -> Tuple[bool, str]:
+    """
+    Verify seat credentials for both Golden and Silver seats.
+    
+    Args:
+        seat_data: Dictionary containing 'id', 'owner', and 'secret'.
+        
+    Returns:
+        Tuple[bool, str]: (isValid, message)
+    """
     # TEMPORARY: Skip verification during ramp-up period
-    if not SEAT_VERIFICATION_ENABLED:
+    # This should be enabled in production via config
+    if not os.environ.get('SEAT_VERIFICATION_ENABLED', 'False').lower() == 'true':
         return True, "Seat verification temporarily disabled"
     
     if not seat_data or 'id' not in seat_data:
@@ -83,7 +108,7 @@ def verify_seat_credentials(seat_data):
             seat_secret != md5(stored_seat['phrase'])):
             return False, "Invalid silver seat credentials"
         
-        # Check if seat has expired (1 year = 365 * 24 * 3600 seconds)
+        # Check if seat has expired
         assigned_time = stored_seat.get('assigned', 0)
         current_time = int(time.time())
         one_year_seconds = 365 * 24 * 3600
@@ -95,27 +120,36 @@ def verify_seat_credentials(seat_data):
     
     return False, "Seat ID not found"
 
-def calculate_distance(lat1, lon1, lat2, lon2):
-    """Calculate distance between two geographic points using Haversine formula"""
-    if not all([lat1, lon1, lat2, lon2]):
+def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """
+    Calculate distance between two geographic points using Haversine formula.
+    Returns distance in miles.
+    """
+    if not all([lat1 is not None, lon1 is not None, lat2 is not None, lon2 is not None]):
         return float('inf')
     
     # Radius of Earth in miles
     R = 3959
     
-    # Convert latitude and longitude from degrees to radians
-    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-    
-    # Haversine formula
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-    c = 2 * math.asin(math.sqrt(a))
-    
-    return R * c
+    try:
+        # Convert latitude and longitude from degrees to radians
+        lat1, lon1, lat2, lon2 = map(math.radians, [float(lat1), float(lon1), float(lat2), float(lon2)])
+        
+        # Haversine formula
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+        c = 2 * math.asin(math.sqrt(a))
+        
+        return R * c
+    except ValueError:
+        return float('inf')
 
-def simple_geocode(address):
-    """Simple geocoding for common test addresses - no external API calls"""
+def simple_geocode(address: str) -> Tuple[float, float]:
+    """
+    Simple geocoding for common test addresses - no external API calls.
+    In production, this should use a real geocoding service.
+    """
     # Mock geocoding for testing - maps common addresses to coordinates
     address_map = {
         # Denver area coordinates for testing
@@ -145,72 +179,52 @@ def simple_geocode(address):
     logger.info(f"Using default coordinates for address: {address}")
     return address_map["unknown"]
 
-def call_openrouter_llm(prompt, temperature=0, max_tokens=10):
-    """Call OpenRouter API for LLM inference"""
+def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 10) -> Optional[str]:
+    """Call OpenRouter API for LLM inference."""
     try:
-        if not hasattr(config, 'OPENROUTER_API_KEY') or not config.OPENROUTER_API_KEY:
+        if not config.OPENROUTER_API_KEY:
             logger.warning("OpenRouter API key not configured")
             return None
         
         headers = {
             "Authorization": f"Bearer {config.OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://serviceexchange.com",
+            "HTTP-Referer": "https://rse-api.com",
             "X-Title": "ServiceExchange"
         }
         
         data = {
-            "model": "openai/gpt-3.5-turbo",
+            "model": config.OPENROUTER_MODEL,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": temperature,
             "max_tokens": max_tokens
         }
         
-        # Debug logging
-        logger.info("=" * 80)
-        logger.info("LLM API CALL")
-        logger.info("=" * 80)
-        logger.info(f"Endpoint: https://openrouter.ai/api/v1/chat/completions")
-        logger.info(f"Model: {data['model']}")
-        logger.info(f"Temperature: {temperature}, Max Tokens: {max_tokens}")
-        logger.info(f"\nInput Messages:")
-        logger.info(json.dumps(data['messages'], indent=2))
-        
         response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
+            config.OPENROUTER_API_URL,
             headers=headers,
             json=data,
-            timeout=5
+            timeout=10
         )
-        
-        logger.info(f"\nResponse Status: {response.status_code}")
         
         if response.status_code == 200:
             result = response.json()
-            logger.info(f"\nFull Response:")
-            logger.info(json.dumps(result, indent=2))
-            
             if 'choices' in result and len(result['choices']) > 0:
-                answer = result['choices'][0]['message']['content'].strip()
-                logger.info(f"\nExtracted Answer: '{answer}'")
-                logger.info("=" * 80)
-                return answer
+                return result['choices'][0]['message']['content'].strip()
         else:
-            logger.error(f"OpenRouter API error: {response.status_code}")
-            logger.error(f"Response text: {response.text}")
-            logger.info("=" * 80)
-        
+            logger.error(f"OpenRouter API error: {response.status_code} - {response.text}")
+            
     except requests.exceptions.RequestException as e:
         logger.error(f"OpenRouter API request error: {str(e)}")
-        logger.info("=" * 80)
     except Exception as e:
         logger.error(f"Unexpected error calling OpenRouter: {str(e)}")
-        logger.info("=" * 80)
     
     return None
 
-def match_service_with_capabilities(service_description, provider_capabilities):
-    """Use OpenRouter to determine if provider can fulfill service, with fallback"""
+def match_service_with_capabilities(service_description: Union[str, Dict], provider_capabilities: str) -> bool:
+    """
+    Use OpenRouter to determine if provider can fulfill service, with keyword fallback.
+    """
     try:
         # Handle service objects
         if isinstance(service_description, dict):
@@ -227,10 +241,11 @@ Answer:"""
 
         answer = call_openrouter_llm(prompt, temperature=0, max_tokens=10)
         
-        if answer and answer.upper() == "YES":
-            return True
-        elif answer and answer.upper() == "NO":
-            return False
+        if answer:
+            if "YES" in answer.upper():
+                return True
+            if "NO" in answer.upper():
+                return False
         
     except Exception as e:
         logger.error(f"LLM matching error: {str(e)}")
@@ -238,8 +253,8 @@ Answer:"""
     # Fallback to keyword matching
     return keyword_match_service(service_description, provider_capabilities)
 
-def keyword_match_service(service_description, provider_capabilities):
-    """Fallback keyword matching"""
+def keyword_match_service(service_description: Union[str, Dict], provider_capabilities: str) -> bool:
+    """Fallback keyword matching."""
     # Handle service objects
     if isinstance(service_description, dict):
         service_description = json.dumps(service_description)
@@ -249,8 +264,8 @@ def keyword_match_service(service_description, provider_capabilities):
     common_words = service_words & capability_words
     return len(common_words) >= 1  # More lenient for testing
 
-def calculate_reputation_score(user_data):
-    """Calculate user reputation score"""
+def calculate_reputation_score(user_data: Dict[str, Any]) -> float:
+    """Calculate user reputation score (0.0 - 5.0)."""
     stars = user_data.get('stars', 0)
     total_ratings = user_data.get('total_ratings', 0)
     
@@ -261,8 +276,12 @@ def calculate_reputation_score(user_data):
     confidence_factor = min(total_ratings / 10, 1.0)
     return (avg_rating * confidence_factor) + (2.5 * (1 - confidence_factor))
 
-def register_user(data):
-    """Register a new user"""
+# -----------------------------------------------------------------------------
+# Business Logic Handlers
+# -----------------------------------------------------------------------------
+
+def register_user(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Register a new user."""
     try:
         username = data.get('username', '').strip()
         password = data.get('password', '')
@@ -297,8 +316,8 @@ def register_user(data):
         logger.error(f"Registration error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def login_user(data):
-    """Authenticate user"""
+def login_user(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Authenticate user and return token."""
     try:
         username = data.get('username', '').strip()
         password = data.get('password', '')
@@ -314,7 +333,7 @@ def login_user(data):
             return {"error": "Invalid credentials"}, 401
         
         token = str(uuid.uuid4())
-        expiry_time = int(time.time()) + 86400
+        expiry_time = int(time.time()) + config.TOKEN_EXPIRY_SECONDS
         save_token(token, username, expiry_time)
         
         logger.info(f"User logged in: {username}")
@@ -324,8 +343,8 @@ def login_user(data):
         logger.error(f"Login error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def get_account_info(data):
-    """Get account information"""
+def get_account_info(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Get account information."""
     try:
         username = data.get('username')
         
@@ -350,15 +369,14 @@ def get_account_info(data):
         logger.error(f"Account error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def get_my_bids(data):
-    """Get user's outstanding bids"""
+def get_my_bids(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Get user's active bids."""
     try:
         username = data.get('username')
         
         user_bids = get_user_bids(username)
         current_time = int(time.time())
         
-        # Filter out expired bids and add status info
         outstanding_bids = []
         for bid in user_bids:
             if bid['end_time'] > current_time:
@@ -375,10 +393,8 @@ def get_my_bids(data):
                     'status': 'active'
                 })
         
-        # Sort by creation time (newest first)
+        # Sort by newest first
         outstanding_bids.sort(key=lambda x: x['created_at'], reverse=True)
-        
-        logger.info(f"Retrieved {len(outstanding_bids)} outstanding bids for {username}")
         
         return {"bids": outstanding_bids}, 200
         
@@ -386,14 +402,12 @@ def get_my_bids(data):
         logger.error(f"Get my bids error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def get_my_jobs(data):
-    """Get user's completed and active jobs"""
+def get_my_jobs(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Get user's completed and active jobs."""
     try:
         username = data.get('username')
-        
         user_jobs = get_user_jobs(username)
         
-        # Separate completed and active jobs
         completed_jobs = []
         active_jobs = []
         
@@ -434,10 +448,8 @@ def get_my_jobs(data):
         completed_jobs.sort(key=lambda x: x.get('completed_at', 0), reverse=True)
         active_jobs.sort(key=lambda x: x['accepted_at'], reverse=True)
         
-        logger.info(f"Retrieved {len(completed_jobs)} completed and {len(active_jobs)} active jobs for {username}")
-        
         return {
-            "completed_jobs": completed_jobs[:10],  # Limit to last 10 completed jobs
+            "completed_jobs": completed_jobs[:10],  # Limit to last 10
             "active_jobs": active_jobs
         }, 200
         
@@ -445,11 +457,11 @@ def get_my_jobs(data):
         logger.error(f"Get my jobs error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def submit_bid(data):
-    """Submit a service request with enhanced fields"""
+def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Submit a new service request."""
     try:
         username = data.get('username')
-        service = data.get('service')  # Can be string or object
+        service = data.get('service')
         price = data.get('price')
         currency = data.get('currency', 'USD')
         payment_method = data.get('payment_method', 'cash')
@@ -465,16 +477,7 @@ def submit_bid(data):
         
         if end_time <= time.time():
             return {"error": "End time must be in the future"}, 400
-        
-        # Validate payment method
-        valid_payment_methods = ['cash', 'credit_card', 'paypal', 'xmoney', 'crypto', 'bank_transfer', 'venmo']
-        if payment_method not in valid_payment_methods:
-            return {"error": f"Invalid payment method. Must be one of: {', '.join(valid_payment_methods)}"}, 400
-        
-        # XMoney account required if payment method is xmoney
-        if payment_method == 'xmoney' and not xmoney_account:
-            return {"error": "XMoney account required for XMoney payment method"}, 400
-        
+            
         lat, lon = None, None
         address = None
         
@@ -495,7 +498,7 @@ def submit_bid(data):
         bid = {
             'bid_id': bid_id,
             'username': username,
-            'service': service,  # Can be string or object
+            'service': service,
             'price': price,
             'currency': currency,
             'payment_method': payment_method,
@@ -518,8 +521,8 @@ def submit_bid(data):
         logger.error(f"Bid error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def cancel_bid(data):
-    """Cancel a bid"""
+def cancel_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Cancel a pending bid."""
     try:
         username = data.get('username')
         bid_id = data.get('bid_id')
@@ -543,19 +546,21 @@ def cancel_bid(data):
         logger.error(f"Cancel error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def grab_job(data):
-    """Match provider with best job using prioritized matching"""
+def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """
+    Match provider with best job using prioritized matching algorithm:
+    1. Location filtering
+    2. Capability matching (AI)
+    3. Reputation alignment
+    4. Price (Highest first)
+    """
     try:
-        logger.info(f"grab_job called with data: {json.dumps(data, indent=2)}")
-        
-        # SEAT VERIFICATION (when enabled)
-        if SEAT_VERIFICATION_ENABLED:
+        # Verify seat credentials if enabled
+        if os.environ.get('SEAT_VERIFICATION_ENABLED', 'False').lower() == 'true':
             seat_data = data.get('seat')
             is_valid, message = verify_seat_credentials(seat_data)
             if not is_valid:
-                logger.warning(f"Seat verification failed: {message}")
                 return {"error": f"Seat verification failed: {message}"}, 403
-            logger.info(f"Seat verification successful: {message}")
         
         username = data.get('username')
         capabilities = data.get('capabilities', '').strip()
@@ -571,7 +576,7 @@ def grab_job(data):
         provider_reputation = calculate_reputation_score(user_data)
         
         provider_lat, provider_lon = None, None
-        max_distance = 10
+        max_distance = data.get('max_distance', config.DEFAULT_MAX_DISTANCE_MILES)
         
         if location_type in ['physical', 'hybrid']:
             if 'lat' in data and 'lon' in data:
@@ -581,8 +586,6 @@ def grab_job(data):
                 provider_lat, provider_lon = simple_geocode(data['address'])
             else:
                 return {"error": "Location required for physical services"}, 400
-            
-            max_distance = data.get('max_distance', 10)
         
         all_bids = get_all_bids()
         
@@ -592,13 +595,15 @@ def grab_job(data):
             if bid['end_time'] <= time.time():
                 continue
             
+            # Filter by location type compatibility
             if location_type == 'remote' and bid['location_type'] == 'physical':
                 continue
             if location_type == 'physical' and bid['location_type'] == 'remote':
                 continue
             
+            # Check distance for physical services
             if bid['location_type'] in ['physical', 'hybrid'] and location_type in ['physical', 'hybrid']:
-                if bid['lat'] and bid['lon'] and provider_lat and provider_lon:
+                if bid.get('lat') and bid.get('lon') and provider_lat and provider_lon:
                     distance = calculate_distance(
                         bid['lat'], bid['lon'],
                         provider_lat, provider_lon
@@ -678,8 +683,8 @@ def grab_job(data):
         logger.error(f"Job grab error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def reject_job(data):
-    """Reject a job that was assigned"""
+def reject_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Reject a job that was assigned."""
     try:
         username = data.get('username')
         job_id = data.get('job_id')
@@ -692,16 +697,14 @@ def reject_job(data):
         if not job:
             return {"error": "Job not found"}, 404
         
-        # Only provider can reject
         if job['provider_username'] != username:
             return {"error": "Only provider can reject job"}, 403
         
-        # Check if job is still in accepted state
         if job['status'] != 'accepted':
             return {"error": "Can only reject jobs in accepted state"}, 400
         
-        # Restore the bid
-        bid_id = str(uuid.uuid4())  # New bid ID since original was deleted
+        # Restore the bid with new ID
+        bid_id = str(uuid.uuid4())
         bid = {
             'bid_id': bid_id,
             'username': job['buyer_username'],
@@ -720,7 +723,6 @@ def reject_job(data):
         }
         save_bid(bid_id, bid)
         
-        # Update job status
         job['status'] = 'rejected'
         job['rejected_at'] = int(time.time())
         job['rejection_reason'] = reason
@@ -734,8 +736,8 @@ def reject_job(data):
         logger.error(f"Reject job error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def sign_job(data):
-    """Complete and rate a job"""
+def sign_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Complete and rate a job."""
     try:
         username = data.get('username')
         job_id = data.get('job_id')
@@ -764,12 +766,14 @@ def sign_job(data):
         job[sign_field] = True
         job[f"{'buyer' if is_buyer else 'provider'}_rating"] = star_rating
         
+        # Update counterparty stats
         counterparty = job['provider_username'] if is_buyer else job['buyer_username']
         counterparty_data = get_account(counterparty)
         if counterparty_data:
             counterparty_data['stars'] = counterparty_data.get('stars', 0) + star_rating
             counterparty_data['total_ratings'] = counterparty_data.get('total_ratings', 0) + 1
             
+            # If both signed, mark complete
             if job.get('buyer_signed') and job.get('provider_signed'):
                 counterparty_data['completed_jobs'] = counterparty_data.get('completed_jobs', 0) + 1
                 job['status'] = 'completed'
@@ -784,7 +788,6 @@ def sign_job(data):
             save_account(counterparty, counterparty_data)
         
         save_job(job_id, job)
-        
         logger.info(f"Job signed: {job_id}")
         
         return {"message": "Job signed successfully"}, 200
@@ -793,8 +796,8 @@ def sign_job(data):
         logger.error(f"Sign job error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def nearby_services(data):
-    """Find nearby services"""
+def nearby_services(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Find nearby services."""
     try:
         if 'lat' in data and 'lon' in data:
             user_lat = data['lat']
@@ -812,7 +815,6 @@ def nearby_services(data):
         for bid in all_bids:
             if bid['location_type'] == 'remote':
                 continue
-            
             if bid['end_time'] <= time.time():
                 continue
             
@@ -841,8 +843,8 @@ def nearby_services(data):
         logger.error(f"Nearby error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def send_chat_message(data):
-    """Send a chat message to another user"""
+def send_chat_message(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Send a chat message."""
     try:
         sender = data.get('username')
         recipient = data.get('recipient')
@@ -852,7 +854,6 @@ def send_chat_message(data):
         if not recipient or not message_text:
             return {"error": "Recipient and message required"}, 400
         
-        # Check if recipient exists
         if not account_exists(recipient):
             return {"error": "Recipient not found"}, 404
         
@@ -867,12 +868,8 @@ def send_chat_message(data):
             'read': False
         }
         
-        # Save message using the correct function signature
-        # The local utils.py uses: save_message(message_id, data)
         save_message(f"{sender}_{message_id}", message_data)
         save_message(f"{recipient}_{message_id}", message_data)
-        
-        logger.info(f"Chat message sent from {sender} to {recipient}")
         
         return {
             "message_id": message_id,
@@ -883,8 +880,8 @@ def send_chat_message(data):
         logger.error(f"Chat error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def post_bulletin(data):
-    """Post a bulletin message"""
+def post_bulletin(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Post to the community bulletin."""
     try:
         username = data.get('username')
         title = data.get('title', '').strip()
@@ -908,10 +905,7 @@ def post_bulletin(data):
             'posted_at': int(time.time())
         }
         
-        # Save bulletin using the correct function signature
         save_bulletin(post_id, bulletin_data)
-        
-        logger.info(f"Bulletin posted by {username}")
         
         return {
             "post_id": post_id,
@@ -922,23 +916,21 @@ def post_bulletin(data):
         logger.error(f"Bulletin error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
-def get_exchange_data(data):
-    """Get comprehensive exchange data"""
+def get_exchange_data(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Get comprehensive exchange data for the dashboard."""
     try:
-        # Get query parameters
         category_filter = data.get('category')
         location_filter = data.get('location')
         limit = min(data.get('limit', 50), 200)
         include_completed = data.get('include_completed', False)
         
-        # Get active bids
         all_bids = get_all_bids()
         current_time = int(time.time())
         
         active_bids = []
         for bid in all_bids:
             if bid['end_time'] > current_time:
-                # Apply filters
+                # Filter
                 if category_filter:
                     service_str = json.dumps(bid['service']) if isinstance(bid['service'], dict) else bid['service']
                     if category_filter.lower() not in service_str.lower():
@@ -961,7 +953,6 @@ def get_exchange_data(data):
                     'posted_at': bid['created_at']
                 })
         
-        # Sort by newest first and limit
         active_bids.sort(key=lambda x: x['posted_at'], reverse=True)
         active_bids = active_bids[:limit]
         
@@ -969,14 +960,12 @@ def get_exchange_data(data):
             'active_bids': active_bids
         }
         
-        # Include completed jobs if requested
         if include_completed:
             all_jobs = get_all_jobs()
             completed_jobs = []
             
             for job in all_jobs:
                 if job['status'] == 'completed':
-                    # Apply filters
                     if category_filter:
                         service_str = json.dumps(job['service']) if isinstance(job['service'], dict) else job['service']
                         if category_filter.lower() not in service_str.lower():
@@ -986,12 +975,9 @@ def get_exchange_data(data):
                         if location_filter.lower() not in job['address'].lower():
                             continue
                     
-                    # Calculate average rating
                     ratings = []
-                    if job.get('buyer_rating'):
-                        ratings.append(job['buyer_rating'])
-                    if job.get('provider_rating'):
-                        ratings.append(job['provider_rating'])
+                    if job.get('buyer_rating'): ratings.append(job['buyer_rating'])
+                    if job.get('provider_rating'): ratings.append(job['provider_rating'])
                     avg_rating = sum(ratings) / len(ratings) if ratings else None
                     
                     completed_jobs.append({
@@ -1006,26 +992,23 @@ def get_exchange_data(data):
                         'completed_at': job.get('completed_at', job['accepted_at'])
                     })
             
-            # Sort by newest first and limit
             completed_jobs.sort(key=lambda x: x['completed_at'], reverse=True)
             completed_jobs = completed_jobs[:limit]
             
             result['completed_jobs'] = completed_jobs
         
-        # Calculate market statistics
+        # Market statistics
         market_stats = {
             'total_active_bids': len([b for b in all_bids if b['end_time'] > current_time]),
             'total_completed_today': 0
         }
         
-        # Category-specific average prices
         if category_filter and active_bids:
             prices = [b['price'] for b in active_bids]
             market_stats[f'avg_price_{category_filter}'] = round(sum(prices) / len(prices), 2)
         
-        # Count today's completed jobs
         if include_completed:
-            today_start = int(time.time()) - 86400  # Last 24 hours
+            today_start = int(time.time()) - 86400
             all_jobs = get_all_jobs()
             market_stats['total_completed_today'] = len([
                 j for j in all_jobs 
@@ -1034,111 +1017,94 @@ def get_exchange_data(data):
         
         result['market_stats'] = market_stats
         
-        logger.info(f"Exchange data retrieved with {len(active_bids)} active bids")
-        
         return result, 200
         
     except Exception as e:
         logger.error(f"Exchange data error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
+def get_conversations(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Get list of conversations for the user."""
+    try:
+        username = data.get('username')
+        messages = get_user_messages(username)
+        
+        conversations = {}
+        for msg in messages:
+            other_user = msg['recipient'] if msg['sender'] == username else msg['sender']
+            
+            if other_user not in conversations:
+                conversations[other_user] = {
+                    'user': other_user,
+                    'lastMessage': msg['message'],
+                    'timestamp': msg['sent_at'],
+                    'unread': False,
+                    'conversation_id': other_user
+                }
+            else:
+                if msg['sent_at'] > conversations[other_user]['timestamp']:
+                    conversations[other_user]['lastMessage'] = msg['message']
+                    conversations[other_user]['timestamp'] = msg['sent_at']
+            
+            if msg['recipient'] == username and not msg.get('read'):
+                conversations[other_user]['unread'] = True
+                
+        conv_list = list(conversations.values())
+        conv_list.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        return {"conversations": conv_list}, 200
+    except Exception as e:
+        logger.error(f"Get conversations error: {str(e)}")
+        return {"error": "Internal server error"}, 500
 
-# Unit test for LLM integration
-if __name__ == "__main__":
-    print("=" * 60)
-    print("Testing OpenRouter LLM Integration")
-    print("=" * 60)
-    
-    # Check if API key is configured
-    if not hasattr(config, 'OPENROUTER_API_KEY') or not config.OPENROUTER_API_KEY:
-        print("\n❌ FAILED: OPENROUTER_API_KEY not configured in config.py")
-        print("Please add: OPENROUTER_API_KEY = 'your-api-key-here'")
-        exit(1)
-    
-    print(f"\n✓ API key configured (length: {len(config.OPENROUTER_API_KEY)} chars)")
-    
-    # Test 1: Basic LLM call
-    print("\n" + "-" * 60)
-    print("Test 1: Basic LLM Call")
-    print("-" * 60)
-    
-    test_prompt = "Say only the word 'WORKING' if you can read this message."
-    print(f"Prompt: {test_prompt}")
-    
-    response = call_openrouter_llm(test_prompt, temperature=0, max_tokens=10)
-    
-    if response:
-        print(f"✓ Response received: '{response}'")
-        if "WORKING" in response.upper():
-            print("✓ LLM responded correctly")
-        else:
-            print(f"⚠ Warning: Expected 'WORKING', got '{response}'")
-    else:
-        print("❌ FAILED: No response from LLM")
-        exit(1)
-    
-    # Test 2: Service matching with LLM
-    print("\n" + "-" * 60)
-    print("Test 2: Service Matching")
-    print("-" * 60)
-    
-    test_cases = [
-        {
-            "service": "Build a website for my business",
-            "capabilities": "web development, HTML, CSS, JavaScript, React",
-            "expected": True
-        },
-        {
-            "service": "Fix my car engine",
-            "capabilities": "web development, HTML, CSS, JavaScript",
-            "expected": False
-        },
-        {
-            "service": "Lawn mowing service",
-            "capabilities": "gardening, landscaping, lawn care",
-            "expected": True
-        }
-    ]
-    
-    all_passed = True
-    for i, test in enumerate(test_cases, 1):
-        print(f"\nTest case {i}:")
-        print(f"  Service: {test['service']}")
-        print(f"  Capabilities: {test['capabilities']}")
-        print(f"  Expected match: {test['expected']}")
+def get_chat_history(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Get message history for a specific conversation."""
+    try:
+        username = data.get('username')
+        other_user = data.get('conversation_id')
         
-        result = match_service_with_capabilities(test['service'], test['capabilities'])
-        print(f"  Result: {result}")
+        if not other_user:
+            return {"error": "Conversation ID required"}, 400
+            
+        all_messages = get_user_messages(username)
+        chat_messages = []
         
-        if result == test['expected']:
-            print(f"  ✓ PASS")
-        else:
-            print(f"  ❌ FAIL: Expected {test['expected']}, got {result}")
-            all_passed = False
-    
-    # Test 3: Fallback to keyword matching
-    print("\n" + "-" * 60)
-    print("Test 3: Keyword Matching Fallback")
-    print("-" * 60)
-    
-    print("Testing keyword_match_service directly...")
-    result = keyword_match_service("lawn mowing", "lawn care gardening")
-    print(f"  Result: {result}")
-    if result:
-        print("  ✓ Keyword matching works")
-    else:
-        print("  ❌ Keyword matching failed")
-        all_passed = False
-    
-    # Final summary
-    print("\n" + "=" * 60)
-    if all_passed:
-        print("✓ ALL TESTS PASSED")
-        print("=" * 60)
-        print("\nLLM integration is working correctly!")
-        exit(0)
-    else:
-        print("⚠ SOME TESTS FAILED")
-        print("=" * 60)
-        print("\nPlease review the failures above.")
-        exit(1)
+        for msg in all_messages:
+            if (msg.get('sender') == username and msg.get('recipient') == other_user) or \
+               (msg.get('sender') == other_user and msg.get('recipient') == username):
+                chat_messages.append({
+                    'sender': msg['sender'],
+                    'message': msg['message'],
+                    'timestamp': msg['sent_at'],
+                    'read': msg.get('read', False)
+                })
+        
+        chat_messages.sort(key=lambda x: x['timestamp'])
+        
+        return {"messages": chat_messages}, 200
+    except Exception as e:
+        logger.error(f"Get chat history error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+def send_reply(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Reply to a conversation."""
+    return send_chat_message(data)
+
+def get_bulletin_feed(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Get bulletin feed."""
+    try:
+        bulletins = get_all_bulletins()
+        posts = []
+        for b in bulletins:
+            posts.append({
+                'post_id': b['post_id'],
+                'title': b['title'],
+                'content': b['content'],
+                'category': b['category'],
+                'author': b['username'],
+                'timestamp': b['posted_at']
+            })
+        return {"posts": posts}, 200
+    except Exception as e:
+        logger.error(f"Get bulletin feed error: {str(e)}")
+        return {"error": "Internal server error"}, 500
