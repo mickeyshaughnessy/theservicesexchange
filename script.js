@@ -5,27 +5,38 @@
  */
 
 const API_URL = 'https://rse-api.com:5003';
+const STORAGE_KEYS = {
+    AUTH_TOKEN: 'auth_token',
+    USERNAME: 'current_username',
+    PROVIDER_PROFILE: 'provider_capabilities_profile'
+};
 
 // Global state
-window.authToken = null;
-window.currentUser = null;
-window.currentUsername = null;
-let outstandingBids = [];
-let completedJobs = [];
-let activeJobs = [];
-let conversations = [];
-let currentConversation = null;
-let bulletinPosts = [];
-let userLocation = null;
-let providerProfile = null;
+const AppState = {
+    authToken: null,
+    currentUser: null,
+    currentUsername: null,
+    outstandingBids: [],
+    completedJobs: [],
+    activeJobs: [],
+    conversations: [],
+    currentConversation: null,
+    bulletinPosts: [],
+    userLocation: null,
+    providerProfile: null
+};
 
 // Initialize when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
     // Restore authentication state
-    window.authToken = localStorage.getItem('auth_token');
-    window.currentUsername = localStorage.getItem('current_username');
+    AppState.authToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    AppState.currentUsername = localStorage.getItem(STORAGE_KEYS.USERNAME);
     
-    if (window.authToken && window.currentUsername) {
+    // Make available globally for inline handlers
+    window.authToken = AppState.authToken;
+    window.currentUsername = AppState.currentUsername;
+    
+    if (AppState.authToken && AppState.currentUsername) {
         loadAccountData();
         updateUIForLoggedInUser();
     }
@@ -37,28 +48,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Set up all event listeners
 function setupEventListeners() {
-    // Authentication forms
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    const bidForm = document.getElementById('bidForm');
-    const chatForm = document.getElementById('chatForm');
-    const replyForm = document.getElementById('replyForm');
-    const bulletinForm = document.getElementById('bulletinForm');
-    const nearbyForm = document.getElementById('nearbyForm');
-    const filterForm = document.getElementById('filterForm');
+    const forms = {
+        login: document.getElementById('loginForm'),
+        register: document.getElementById('registerForm'),
+        bid: document.getElementById('bidForm'),
+        chat: document.getElementById('chatForm'),
+        reply: document.getElementById('replyForm'),
+        bulletin: document.getElementById('bulletinForm'),
+        nearby: document.getElementById('nearbyForm'),
+        filter: document.getElementById('filterForm')
+    };
     
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
-    }
+    if (forms.login) forms.login.addEventListener('submit', handleLogin);
+    if (forms.register) forms.register.addEventListener('submit', handleRegister);
     
-    if (registerForm) {
-        registerForm.addEventListener('submit', handleRegister);
-    }
-    
-    if (bidForm) {
-        bidForm.addEventListener('submit', handleBidSubmission);
-        
-        // Location type handling
+    if (forms.bid) {
+        forms.bid.addEventListener('submit', handleBidSubmission);
         const locationType = document.getElementById('bidLocationType');
         if (locationType) {
             locationType.addEventListener('change', (e) => {
@@ -70,25 +75,11 @@ function setupEventListeners() {
         }
     }
     
-    if (chatForm) {
-        chatForm.addEventListener('submit', handleChatMessage);
-    }
-    
-    if (replyForm) {
-        replyForm.addEventListener('submit', handleReply);
-    }
-    
-    if (bulletinForm) {
-        bulletinForm.addEventListener('submit', handleBulletinPost);
-    }
-    
-    if (nearbyForm) {
-        nearbyForm.addEventListener('submit', handleNearbySearch);
-    }
-    
-    if (filterForm) {
-        filterForm.addEventListener('submit', handleFilterApplication);
-    }
+    if (forms.chat) forms.chat.addEventListener('submit', handleChatMessage);
+    if (forms.reply) forms.reply.addEventListener('submit', handleReply);
+    if (forms.bulletin) forms.bulletin.addEventListener('submit', handleBulletinPost);
+    if (forms.nearby) forms.nearby.addEventListener('submit', handleNearbySearch);
+    if (forms.filter) forms.filter.addEventListener('submit', handleFilterApplication);
 }
 
 // Utility Functions
@@ -102,6 +93,7 @@ function showError(message, containerId = 'authError') {
         }, 5000);
     } else {
         console.error(message);
+        alert(message);
     }
 }
 
@@ -110,64 +102,66 @@ function setLoading(isLoading, buttonId) {
     if (button) {
         if (isLoading) {
             button.classList.add('loading');
-            button.disabled = true;
+            button.dataset.originalText = button.textContent;
             button.textContent = 'Loading...';
+            button.disabled = true;
         } else {
             button.classList.remove('loading');
+            button.textContent = button.dataset.originalText || (buttonId.includes('login') ? 'Login' : 'Register');
             button.disabled = false;
-            button.textContent = buttonId.includes('login') ? 'Login' : 'Register';
         }
     }
 }
 
 function updateUIForLoggedInUser() {
-    const loginButton = document.getElementById('loginButton');
-    const accountDropdown = document.getElementById('accountDropdown');
-    const chatButton = document.getElementById('chatButton');
-    const bulletinButton = document.getElementById('bulletinButton');
+    const elements = {
+        login: document.getElementById('loginButton'),
+        account: document.getElementById('accountDropdown'),
+        chat: document.getElementById('chatButton'),
+        bulletin: document.getElementById('bulletinButton')
+    };
     
-    if (loginButton) loginButton.style.display = 'none';
-    if (accountDropdown) accountDropdown.style.display = 'inline-block';
-    if (chatButton) chatButton.style.display = 'inline-block';
-    if (bulletinButton) bulletinButton.style.display = 'inline-block';
+    if (elements.login) elements.login.style.display = 'none';
+    if (elements.account) elements.account.style.display = 'inline-block';
+    if (elements.chat) elements.chat.style.display = 'inline-block';
+    if (elements.bulletin) elements.bulletin.style.display = 'inline-block';
 }
 
 function updateUIForLoggedOutUser() {
-    const loginButton = document.getElementById('loginButton');
-    const accountDropdown = document.getElementById('accountDropdown');
-    const chatButton = document.getElementById('chatButton');
-    const bulletinButton = document.getElementById('bulletinButton');
+    const elements = {
+        login: document.getElementById('loginButton'),
+        account: document.getElementById('accountDropdown'),
+        chat: document.getElementById('chatButton'),
+        bulletin: document.getElementById('bulletinButton')
+    };
     
-    if (loginButton) loginButton.style.display = 'inline-block';
-    if (accountDropdown) accountDropdown.style.display = 'none';
-    if (chatButton) chatButton.style.display = 'none';
-    if (bulletinButton) bulletinButton.style.display = 'none';
+    if (elements.login) elements.login.style.display = 'inline-block';
+    if (elements.account) elements.account.style.display = 'none';
+    if (elements.chat) elements.chat.style.display = 'none';
+    if (elements.bulletin) elements.bulletin.style.display = 'none';
 }
 
 function requestUserLocation() {
-    return new Promise((resolve, reject) => {
-        if (userLocation) {
-            resolve(userLocation);
+    return new Promise((resolve) => {
+        if (AppState.userLocation) {
+            resolve(AppState.userLocation);
             return;
         }
 
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    userLocation = {
+                    AppState.userLocation = {
                         latitude: position.coords.latitude,
                         longitude: position.coords.longitude
                     };
-                    resolve(userLocation);
+                    resolve(AppState.userLocation);
                 },
                 (error) => {
                     console.warn('Geolocation error:', error);
                     resolve(null);
                 },
-                {
-                    timeout: 10000,
-                    enableHighAccuracy: false
-                }
+                { timeout: 10000, enableHighAccuracy: false }
             );
         } else {
             resolve(null);
@@ -176,13 +170,16 @@ function requestUserLocation() {
 }
 
 function formatTime(timestamp) {
+    if (!timestamp) return '';
     const now = Date.now();
     const diff = now - timestamp;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
     const days = Math.floor(hours / 24);
     
     if (days > 0) return `${days}d ago`;
     if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
     return 'Just now';
 }
 
@@ -207,28 +204,33 @@ async function handleLogin(e) {
             body: JSON.stringify({ username, password })
         });
         
+        const data = await response.json();
         setLoading(false, 'loginSubmitBtn');
         
         if (response.ok) {
-            const data = await response.json();
-            window.authToken = data.access_token;
-            window.currentUsername = username;
+            AppState.authToken = data.access_token;
+            AppState.currentUsername = username;
             
-            localStorage.setItem('auth_token', window.authToken);
-            localStorage.setItem('current_username', window.currentUsername);
+            // Sync global window vars for compatibility
+            window.authToken = AppState.authToken;
+            window.currentUsername = AppState.currentUsername;
+            
+            localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, AppState.authToken);
+            localStorage.setItem(STORAGE_KEYS.USERNAME, AppState.currentUsername);
             
             const authModal = document.getElementById('authModal');
             if (authModal) {
-                bootstrap.Modal.getInstance(authModal).hide();
+                const modal = bootstrap.Modal.getInstance(authModal);
+                if (modal) modal.hide();
             }
             
             updateUIForLoggedInUser();
             await loadAccountData();
             
-            alert('Login successful!');
+            // Only show alert if manual login (not auto-login)
+            if (e) alert('Login successful!');
         } else {
-            const errorData = await response.json().catch(() => ({}));
-            showError(errorData.error || 'Login failed. Please check your credentials.');
+            showError(data.error || 'Login failed. Please check your credentials.');
         }
     } catch (error) {
         setLoading(false, 'loginSubmitBtn');
@@ -266,7 +268,13 @@ async function handleRegister(e) {
         
         if (response.ok) {
             alert('Registration successful! Please login.');
-            document.querySelector('[href="#login"]').click();
+            // Switch to login tab
+            const loginTab = document.querySelector('a[href="#login"]');
+            if (loginTab) {
+                // Bootstrap 5 tab activation
+                const tab = new bootstrap.Tab(loginTab);
+                tab.show();
+            }
             document.getElementById('loginUsername').value = username;
         } else {
             const errorData = await response.json().catch(() => ({}));
@@ -280,72 +288,73 @@ async function handleRegister(e) {
 }
 
 function logout() {
+    AppState.authToken = null;
+    AppState.currentUser = null;
+    AppState.currentUsername = null;
+    
     window.authToken = null;
     window.currentUser = null;
     window.currentUsername = null;
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('current_username');
+    
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USERNAME);
+    
     updateUIForLoggedOutUser();
-    outstandingBids = [];
-    completedJobs = [];
-    activeJobs = [];
+    AppState.outstandingBids = [];
+    AppState.completedJobs = [];
+    AppState.activeJobs = [];
+    
     updateProviderDashboard();
     alert('Logged out successfully');
 }
 
 // Account Management Functions
 async function loadAccountData() {
-    if (!window.authToken || !window.currentUsername) {
-        console.error('No auth token or username available');
-        return;
-    }
+    if (!AppState.authToken || !AppState.currentUsername) return;
     
     try {
         const accountResponse = await fetch(`${API_URL}/account`, {
-            method: 'POST',
+            method: 'GET',
             headers: {
-                'Authorization': `Bearer ${window.authToken}`,
+                'Authorization': `Bearer ${AppState.authToken}`,
                 'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username: window.currentUsername })
+            }
         });
         
         if (accountResponse.ok) {
-            window.currentUser = await accountResponse.json();
+            AppState.currentUser = await accountResponse.json();
+            window.currentUser = AppState.currentUser; // Sync global
             updateAccountDisplay();
-        } else {
-            console.error('Failed to load account data:', accountResponse.status);
-            if (accountResponse.status === 401) {
-                logout();
-                return;
-            }
+        } else if (accountResponse.status === 401) {
+            logout();
+            return;
         }
         
-        await loadOutstandingBids();
-        await loadCompletedJobs();
+        await Promise.all([loadOutstandingBids(), loadCompletedJobs()]);
         
     } catch (error) {
         console.error('Error loading account data:', error);
-        showError('Failed to load account data. Please try refreshing the page.');
     }
 }
 
 function updateAccountDisplay() {
-    if (!window.currentUser) return;
+    if (!AppState.currentUser) return;
     
-    const accountUsername = document.getElementById('accountUsername');
-    const accountDisplayName = document.getElementById('accountDisplayName');
-    const starDisplay = document.getElementById('starDisplay');
-    const ratingText = document.getElementById('ratingText');
+    const els = {
+        username: document.getElementById('accountUsername'),
+        displayName: document.getElementById('accountDisplayName'),
+        starDisplay: document.getElementById('starDisplay'),
+        ratingText: document.getElementById('ratingText')
+    };
     
-    if (accountUsername) accountUsername.textContent = window.currentUser.username;
-    if (accountDisplayName) accountDisplayName.textContent = window.currentUser.username;
+    if (els.username) els.username.textContent = AppState.currentUser.username;
+    if (els.displayName) els.displayName.textContent = AppState.currentUser.username;
     
-    if (starDisplay && ratingText) {
-        const stars = Math.round(window.currentUser.stars || 0);
+    if (els.starDisplay && els.ratingText) {
+        const stars = Math.round(AppState.currentUser.stars || 0);
         const starDisplayText = '★'.repeat(Math.min(stars, 5)) + '☆'.repeat(Math.max(5 - stars, 0));
-        starDisplay.textContent = starDisplayText;
-        ratingText.textContent = `${window.currentUser.stars || 0} (${window.currentUser.total_ratings || 0} ratings)`;
+        els.starDisplay.textContent = starDisplayText;
+        els.ratingText.textContent = `${(AppState.currentUser.reputation_score || 0).toFixed(1)} (${AppState.currentUser.total_ratings || 0} ratings)`;
     }
 }
 
@@ -357,24 +366,22 @@ async function loadOutstandingBids() {
     
     try {
         const response = await fetch(`${API_URL}/my_bids`, {
-            headers: {'Authorization': `Bearer ${window.authToken}`}
+            headers: {'Authorization': `Bearer ${AppState.authToken}`}
         });
-        
-        if (loadingSpinner) loadingSpinner.style.display = 'none';
         
         if (response.ok) {
             const data = await response.json();
-            outstandingBids = data.bids || [];
+            AppState.outstandingBids = data.bids || [];
             updateBidsDisplay();
         } else if (bidsContainer) {
             bidsContainer.innerHTML = '<p class="text-danger">Error loading requests</p>';
         }
-        
     } catch (error) {
-        if (loadingSpinner) loadingSpinner.style.display = 'none';
         if (bidsContainer) {
-            bidsContainer.innerHTML = '<p class="text-danger">Network error loading requests</p>';
+            bidsContainer.innerHTML = '<p class="text-danger">Network error</p>';
         }
+    } finally {
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
     }
 }
 
@@ -382,17 +389,17 @@ function updateBidsDisplay() {
     const container = document.getElementById('outstandingBids');
     if (!container) return;
     
-    if (outstandingBids.length === 0) {
+    if (AppState.outstandingBids.length === 0) {
         container.innerHTML = '<p class="text-muted mb-0">No outstanding requests</p>';
         return;
     }
     
-    container.innerHTML = outstandingBids.map(bid => `
+    container.innerHTML = AppState.outstandingBids.map(bid => `
         <div class="bid-item">
-            <h6>${typeof bid.service === 'object' ? JSON.stringify(bid.service) : bid.service}</h6>
-            <p>Price: ${bid.currency || 'USD'} ${bid.price} • Expires: ${new Date(bid.end_time * 1000).toLocaleString()}</p>
-            ${bid.location_type !== 'remote' ? `<p class="text-muted">Location: ${bid.address || 'Physical service'}</p>` : '<p class="text-muted">Remote service</p>'}
-            <div class="bid-actions">
+            <h6>${typeof bid.service === 'object' ? escapeHtml(JSON.stringify(bid.service)) : escapeHtml(bid.service)}</h6>
+            <p>Price: ${escapeHtml(bid.currency || 'USD')} ${bid.price} • Expires: ${new Date(bid.end_time * 1000).toLocaleString()}</p>
+            ${bid.location_type !== 'remote' ? `<p class="text-muted">Location: ${escapeHtml(bid.address || 'Physical service')}</p>` : '<p class="text-muted">Remote service</p>'}
+            <div class="bid-actions mt-2">
                 <button class="btn btn-danger btn-xs" onclick="cancelBid('${bid.bid_id}')">Cancel</button>
             </div>
         </div>
@@ -400,39 +407,34 @@ function updateBidsDisplay() {
 }
 
 async function loadCompletedJobs() {
-    const jobsContainer = document.getElementById('completedJobs');
-    const jobsLoadingSpinner = document.getElementById('jobsLoading');
-    const activeJobsContainer = document.getElementById('activeJobs');
-    const activeJobsLoadingSpinner = document.getElementById('activeJobsLoading');
+    const elements = {
+        jobsContainer: document.getElementById('completedJobs'),
+        jobsLoading: document.getElementById('jobsLoading'),
+        activeContainer: document.getElementById('activeJobs'),
+        activeLoading: document.getElementById('activeJobsLoading')
+    };
     
-    if (jobsLoadingSpinner) jobsLoadingSpinner.style.display = 'block';
-    if (activeJobsLoadingSpinner) activeJobsLoadingSpinner.style.display = 'block';
+    if (elements.jobsLoading) elements.jobsLoading.style.display = 'block';
+    if (elements.activeLoading) elements.activeLoading.style.display = 'block';
     
     try {
         const response = await fetch(`${API_URL}/my_jobs`, {
-            headers: {'Authorization': `Bearer ${window.authToken}`}
+            headers: {'Authorization': `Bearer ${AppState.authToken}`}
         });
-        
-        if (jobsLoadingSpinner) jobsLoadingSpinner.style.display = 'none';
-        if (activeJobsLoadingSpinner) activeJobsLoadingSpinner.style.display = 'none';
         
         if (response.ok) {
             const data = await response.json();
-            completedJobs = data.completed_jobs || [];
-            activeJobs = data.active_jobs || [];
+            AppState.completedJobs = data.completed_jobs || [];
+            AppState.activeJobs = data.active_jobs || [];
             updateJobsDisplay();
             updateActiveJobsDisplay();
             updateProviderDashboard();
-        } else {
-            if (jobsContainer) jobsContainer.innerHTML = '<p class="text-danger">Error loading services</p>';
-            if (activeJobsContainer) activeJobsContainer.innerHTML = '<p class="text-danger">Error loading active services</p>';
         }
-        
     } catch (error) {
-        if (jobsLoadingSpinner) jobsLoadingSpinner.style.display = 'none';
-        if (activeJobsLoadingSpinner) activeJobsLoadingSpinner.style.display = 'none';
-        if (jobsContainer) jobsContainer.innerHTML = '<p class="text-danger">Network error loading services</p>';
-        if (activeJobsContainer) activeJobsContainer.innerHTML = '<p class="text-danger">Network error loading active services</p>';
+        console.error('Error loading jobs:', error);
+    } finally {
+        if (elements.jobsLoading) elements.jobsLoading.style.display = 'none';
+        if (elements.activeLoading) elements.activeLoading.style.display = 'none';
     }
 }
 
@@ -440,17 +442,17 @@ function updateActiveJobsDisplay() {
     const container = document.getElementById('activeJobs');
     if (!container) return;
     
-    if (activeJobs.length === 0) {
+    if (AppState.activeJobs.length === 0) {
         container.innerHTML = '<p class="text-muted mb-0">No active services</p>';
         return;
     }
     
-    container.innerHTML = activeJobs.map(job => `
+    container.innerHTML = AppState.activeJobs.map(job => `
         <div class="job-item">
-            <h6>${typeof job.service === 'object' ? JSON.stringify(job.service) : job.service}</h6>
-            <p>Price: ${job.currency || 'USD'} ${job.price} • Accepted: ${new Date(job.accepted_at * 1000).toLocaleDateString()} • Role: ${job.role}</p>
-            <p class="text-muted">Partner: ${job.counterparty}</p>
-            ${job.location_type !== 'remote' ? `<small class="text-muted">Location: ${job.address || 'Physical service'}</small>` : '<small class="text-muted">Remote service</small>'}
+            <h6>${typeof job.service === 'object' ? escapeHtml(JSON.stringify(job.service)) : escapeHtml(job.service)}</h6>
+            <p>Price: ${escapeHtml(job.currency || 'USD')} ${job.price} • Accepted: ${new Date(job.accepted_at * 1000).toLocaleDateString()}</p>
+            <p class="text-muted">Role: ${escapeHtml(job.role)} • Partner: ${escapeHtml(job.counterparty)}</p>
+            ${job.location_type !== 'remote' ? `<small class="text-muted">Location: ${escapeHtml(job.address || 'Physical service')}</small>` : '<small class="text-muted">Remote service</small>'}
         </div>
     `).join('');
 }
@@ -459,18 +461,18 @@ function updateJobsDisplay() {
     const container = document.getElementById('completedJobs');
     if (!container) return;
     
-    if (completedJobs.length === 0) {
+    if (AppState.completedJobs.length === 0) {
         container.innerHTML = '<p class="text-muted mb-0">No completed services</p>';
         return;
     }
     
-    container.innerHTML = completedJobs.map(job => `
+    container.innerHTML = AppState.completedJobs.map(job => `
         <div class="job-item">
-            <h6>${typeof job.service === 'object' ? JSON.stringify(job.service) : job.service}</h6>
-            <p>Price: ${job.currency || 'USD'} ${job.price} • Completed: ${new Date(job.completed_at * 1000).toLocaleDateString()} • Role: ${job.role}</p>
+            <h6>${typeof job.service === 'object' ? escapeHtml(JSON.stringify(job.service)) : escapeHtml(job.service)}</h6>
+            <p>Price: ${escapeHtml(job.currency || 'USD')} ${job.price} • Completed: ${new Date(job.completed_at * 1000).toLocaleDateString()}</p>
             <div class="d-flex justify-content-between">
-                <small>You rated: ${job.my_rating ? '★'.repeat(job.my_rating) + '☆'.repeat(5 - job.my_rating) : 'Not rated'}</small>
-                <small>They rated: ${job.their_rating ? '★'.repeat(job.their_rating) + '☆'.repeat(5 - job.their_rating) : 'Not rated'}</small>
+                <small>Role: ${escapeHtml(job.role)}</small>
+                <small>Rating: ${job.their_rating ? '★'.repeat(job.their_rating) : 'Not rated'}</small>
             </div>
         </div>
     `).join('');
@@ -483,7 +485,7 @@ async function cancelBid(bidId) {
         const response = await fetch(`${API_URL}/cancel_bid`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${window.authToken}`,
+                'Authorization': `Bearer ${AppState.authToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ bid_id: bidId })
@@ -491,7 +493,7 @@ async function cancelBid(bidId) {
         
         if (response.ok) {
             alert('Request cancelled successfully');
-            outstandingBids = outstandingBids.filter(bid => bid.bid_id !== bidId);
+            AppState.outstandingBids = AppState.outstandingBids.filter(bid => bid.bid_id !== bidId);
             updateBidsDisplay();
         } else {
             const error = await response.json();
@@ -523,8 +525,8 @@ async function handleBidSubmission(e) {
         const addressInput = document.getElementById('bidAddress').value.trim();
         if (addressInput) {
             data.address = addressInput;
-        } else if (userLocation) {
-            data.address = `${userLocation.latitude}, ${userLocation.longitude}`;
+        } else if (AppState.userLocation) {
+            data.address = `${AppState.userLocation.latitude}, ${AppState.userLocation.longitude}`;
         } else {
             alert('Please provide an address or allow location access for physical services.');
             return;
@@ -536,7 +538,7 @@ async function handleBidSubmission(e) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
+                'Authorization': `Bearer ${AppState.authToken}`
             },
             body: JSON.stringify(data)
         });
@@ -544,15 +546,15 @@ async function handleBidSubmission(e) {
         if (response.ok) {
             const result = await response.json();
             alert(`Service request submitted! ID: ${result.bid_id}`);
+            
             const bidModal = document.getElementById('bidModal');
             if (bidModal) {
                 bootstrap.Modal.getInstance(bidModal).hide();
             }
+            
             document.getElementById('bidForm').reset();
-            document.getElementById('bidDuration').value = '24';
-            document.getElementById('bidDurationUnit').value = 'hours';
-            document.getElementById('paymentMethod').value = 'USD';
-            if (window.authToken) {
+            
+            if (AppState.authToken) {
                 loadOutstandingBids();
             }
         } else {
@@ -573,24 +575,22 @@ async function loadConversations() {
     
     try {
         const response = await fetch(`${API_URL}/chat/conversations`, {
-            headers: {'Authorization': `Bearer ${window.authToken}`}
+            headers: {'Authorization': `Bearer ${AppState.authToken}`}
         });
-        
-        if (loadingSpinner) loadingSpinner.style.display = 'none';
         
         if (response.ok) {
             const data = await response.json();
-            conversations = data.conversations || [];
+            AppState.conversations = data.conversations || [];
             updateConversationsDisplay();
         } else if (inboxContainer) {
-            inboxContainer.innerHTML = '<p class="text-danger">Error loading conversations</p>';
+            inboxContainer.innerHTML = '<p class="text-danger p-3">Error loading conversations</p>';
         }
-        
     } catch (error) {
-        if (loadingSpinner) loadingSpinner.style.display = 'none';
         if (inboxContainer) {
-            inboxContainer.innerHTML = '<p class="text-danger">Network error loading conversations</p>';
+            inboxContainer.innerHTML = '<p class="text-danger p-3">Network error</p>';
         }
+    } finally {
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
     }
 }
 
@@ -598,52 +598,53 @@ function updateConversationsDisplay() {
     const container = document.getElementById('chatInbox');
     if (!container) return;
     
-    if (conversations.length === 0) {
+    if (AppState.conversations.length === 0) {
         container.innerHTML = '<p class="text-muted text-center p-3">No conversations yet</p>';
         return;
     }
     
-    container.innerHTML = conversations.map((conv, index) => `
-        <div class="conversation-item ${currentConversation === index ? 'active' : ''}" onclick="selectConversation(${index})">
+    container.innerHTML = AppState.conversations.map((conv, index) => `
+        <div class="conversation-item ${AppState.currentConversation === index ? 'active' : ''}" onclick="selectConversation(${index})">
             <div class="conversation-meta">
-                <span class="conversation-user">${conv.user}</span>
+                <span class="conversation-user">${escapeHtml(conv.user)}</span>
                 <span class="conversation-time">${formatTime(conv.timestamp * 1000)}</span>
             </div>
-            <div class="conversation-preview">${conv.lastMessage}</div>
-            ${conv.unread ? '<div class="badge bg-primary">New</div>' : ''}
+            <div class="conversation-preview">${escapeHtml(conv.lastMessage)}</div>
+            ${conv.unread ? '<div class="badge bg-primary mt-1">New</div>' : ''}
         </div>
     `).join('');
 }
 
 function selectConversation(index) {
-    currentConversation = index;
+    AppState.currentConversation = index;
     updateConversationsDisplay();
-    showConversationView(conversations[index]);
+    showConversationView(AppState.conversations[index]);
 }
 
 async function showConversationView(conversation) {
-    const conversationView = document.getElementById('conversationView');
-    const newMessageForm = document.getElementById('newMessageForm');
-    const chatPlaceholder = document.getElementById('chatPlaceholder');
-    const currentConversationUser = document.getElementById('currentConversationUser');
-    const replyForm = document.getElementById('replyForm');
-    const messageHistory = document.getElementById('messageHistory');
+    const views = {
+        conversation: document.getElementById('conversationView'),
+        newForm: document.getElementById('newMessageForm'),
+        placeholder: document.getElementById('chatPlaceholder'),
+        userHeader: document.getElementById('currentConversationUser'),
+        replyForm: document.getElementById('replyForm'),
+        history: document.getElementById('messageHistory')
+    };
     
-    if (conversationView) conversationView.style.display = 'block';
-    if (newMessageForm) newMessageForm.style.display = 'none';
-    if (chatPlaceholder) chatPlaceholder.style.display = 'none';
-    if (currentConversationUser) currentConversationUser.textContent = conversation.user;
-    if (replyForm) replyForm.style.display = 'block';
+    if (views.conversation) views.conversation.style.display = 'block';
+    if (views.newForm) views.newForm.style.display = 'none';
+    if (views.placeholder) views.placeholder.style.display = 'none';
+    if (views.userHeader) views.userHeader.textContent = conversation.user;
+    if (views.replyForm) views.replyForm.style.display = 'block';
     
-    // Load message history from API
-    if (messageHistory) {
-        messageHistory.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm"></div> Loading messages...</div>';
+    if (views.history) {
+        views.history.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm"></div> Loading messages...</div>';
         
         try {
             const response = await fetch(`${API_URL}/chat/messages`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${window.authToken}`,
+                    'Authorization': `Bearer ${AppState.authToken}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ 
@@ -655,25 +656,25 @@ async function showConversationView(conversation) {
                 const data = await response.json();
                 const messages = data.messages || [];
                 
-                messageHistory.innerHTML = messages.map(msg => `
-                    <div class="message-item ${msg.sender === window.currentUsername ? 'sent' : 'received'}">
-                        <div class="message-sender">${msg.sender}</div>
-                        <div class="message-text">${msg.message}</div>
+                views.history.innerHTML = messages.map(msg => `
+                    <div class="message-item ${msg.sender === AppState.currentUsername ? 'sent' : 'received'}">
+                        <div class="message-sender">${escapeHtml(msg.sender)}</div>
+                        <div class="message-text">${escapeHtml(msg.message)}</div>
                         <div class="message-time">${formatTime(msg.timestamp * 1000)}</div>
                     </div>
                 `).join('');
                 
                 if (messages.length === 0) {
-                    messageHistory.innerHTML = '<div class="text-center text-muted p-3">No messages yet</div>';
+                    views.history.innerHTML = '<div class="text-center text-muted p-3">No messages yet</div>';
                 }
             } else {
-                messageHistory.innerHTML = '<div class="text-center text-danger p-3">Error loading messages</div>';
+                views.history.innerHTML = '<div class="text-center text-danger p-3">Error loading messages</div>';
             }
         } catch (error) {
-            messageHistory.innerHTML = '<div class="text-center text-danger p-3">Network error loading messages</div>';
+            views.history.innerHTML = '<div class="text-center text-danger p-3">Network error loading messages</div>';
         }
         
-        messageHistory.scrollTop = messageHistory.scrollHeight;
+        views.history.scrollTop = views.history.scrollHeight;
     }
 }
 
@@ -695,14 +696,14 @@ async function handleChatMessage(e) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
+                'Authorization': `Bearer ${AppState.authToken}`
             },
             body: JSON.stringify(data)
         });
         
         if (response.ok) {
             const result = await response.json();
-            alert(`Message sent successfully! Message ID: ${result.message_id}`);
+            alert('Message sent successfully!');
             document.getElementById('chatForm').reset();
             hideNewMessageForm();
             await loadConversations();
@@ -719,15 +720,15 @@ async function handleReply(e) {
     e.preventDefault();
     
     const message = document.getElementById('replyMessage').value.trim();
-    if (!message || currentConversation === null) return;
+    if (!message || AppState.currentConversation === null) return;
     
-    const conversation = conversations[currentConversation];
+    const conversation = AppState.conversations[AppState.currentConversation];
     
     try {
         const response = await fetch(`${API_URL}/chat/reply`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${window.authToken}`,
+                'Authorization': `Bearer ${AppState.authToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -744,11 +745,10 @@ async function handleReply(e) {
                 messageHistory.innerHTML += `
                     <div class="message-item sent">
                         <div class="message-sender">You</div>
-                        <div class="message-text">${message}</div>
+                        <div class="message-text">${escapeHtml(message)}</div>
                         <div class="message-time">Just now</div>
                     </div>
                 `;
-                
                 messageHistory.scrollTop = messageHistory.scrollHeight;
             }
             
@@ -768,25 +768,17 @@ async function handleReply(e) {
 }
 
 function showNewMessageForm() {
-    const conversationView = document.getElementById('conversationView');
-    const newMessageForm = document.getElementById('newMessageForm');
-    const chatPlaceholder = document.getElementById('chatPlaceholder');
-    
-    if (conversationView) conversationView.style.display = 'none';
-    if (newMessageForm) newMessageForm.style.display = 'block';
-    if (chatPlaceholder) chatPlaceholder.style.display = 'none';
+    document.getElementById('conversationView').style.display = 'none';
+    document.getElementById('newMessageForm').style.display = 'block';
+    document.getElementById('chatPlaceholder').style.display = 'none';
 }
 
 function hideNewMessageForm() {
-    const newMessageForm = document.getElementById('newMessageForm');
-    const conversationView = document.getElementById('conversationView');
-    const chatPlaceholder = document.getElementById('chatPlaceholder');
-    
-    if (newMessageForm) newMessageForm.style.display = 'none';
-    if (currentConversation !== null && conversationView) {
-        conversationView.style.display = 'block';
-    } else if (chatPlaceholder) {
-        chatPlaceholder.style.display = 'block';
+    document.getElementById('newMessageForm').style.display = 'none';
+    if (AppState.currentConversation !== null) {
+        document.getElementById('conversationView').style.display = 'block';
+    } else {
+        document.getElementById('chatPlaceholder').style.display = 'block';
     }
 }
 
@@ -799,24 +791,22 @@ async function loadBulletinFeed() {
     
     try {
         const response = await fetch(`${API_URL}/bulletin/feed`, {
-            headers: {'Authorization': `Bearer ${window.authToken}`}
+            headers: {'Authorization': `Bearer ${AppState.authToken}`}
         });
-        
-        if (loadingSpinner) loadingSpinner.style.display = 'none';
         
         if (response.ok) {
             const data = await response.json();
-            bulletinPosts = data.posts || [];
+            AppState.bulletinPosts = data.posts || [];
             updateBulletinDisplay();
         } else if (feedContainer) {
-            feedContainer.innerHTML = '<p class="text-danger">Error loading bulletin posts</p>';
+            feedContainer.innerHTML = '<p class="text-danger p-3">Error loading bulletin posts</p>';
         }
-        
     } catch (error) {
-        if (loadingSpinner) loadingSpinner.style.display = 'none';
         if (feedContainer) {
-            feedContainer.innerHTML = '<p class="text-danger">Network error loading bulletin posts</p>';
+            feedContainer.innerHTML = '<p class="text-danger p-3">Network error</p>';
         }
+    } finally {
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
     }
 }
 
@@ -824,19 +814,19 @@ function updateBulletinDisplay() {
     const container = document.getElementById('bulletinFeed');
     if (!container) return;
     
-    if (bulletinPosts.length === 0) {
+    if (AppState.bulletinPosts.length === 0) {
         container.innerHTML = '<p class="text-muted text-center p-3">No posts yet</p>';
         return;
     }
     
-    container.innerHTML = bulletinPosts.map(post => `
+    container.innerHTML = AppState.bulletinPosts.map(post => `
         <div class="bulletin-item">
             <div class="bulletin-header">
-                <h6 class="bulletin-title">${post.title}</h6>
-                <span class="bulletin-category">${post.category}</span>
+                <h6 class="bulletin-title">${escapeHtml(post.title)}</h6>
+                <span class="bulletin-category">${escapeHtml(post.category)}</span>
             </div>
-            <div class="bulletin-meta">By ${post.author} • ${formatTime(post.timestamp * 1000)}</div>
-            <div class="bulletin-content">${post.content}</div>
+            <div class="bulletin-meta">By ${escapeHtml(post.author)} • ${formatTime(post.timestamp * 1000)}</div>
+            <div class="bulletin-content">${escapeHtml(post.content)}</div>
         </div>
     `).join('');
 }
@@ -855,14 +845,13 @@ async function handleBulletinPost(e) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
+                'Authorization': `Bearer ${AppState.authToken}`
             },
             body: JSON.stringify(data)
         });
         
         if (response.ok) {
-            const result = await response.json();
-            alert(`Posted to bulletin successfully! Post ID: ${result.post_id}`);
+            alert('Posted to bulletin successfully!');
             hideNewPostForm();
             await loadBulletinFeed();
         } else {
@@ -875,18 +864,16 @@ async function handleBulletinPost(e) {
 }
 
 function showNewPostForm() {
-    const newPostForm = document.getElementById('newPostForm');
-    if (newPostForm) {
-        newPostForm.style.display = 'block';
-    }
+    const form = document.getElementById('newPostForm');
+    if (form) form.style.display = 'block';
 }
 
 function hideNewPostForm() {
-    const newPostForm = document.getElementById('newPostForm');
-    const bulletinForm = document.getElementById('bulletinForm');
+    const form = document.getElementById('newPostForm');
+    const inputForm = document.getElementById('bulletinForm');
     
-    if (newPostForm) newPostForm.style.display = 'none';
-    if (bulletinForm) bulletinForm.reset();
+    if (form) form.style.display = 'none';
+    if (inputForm) inputForm.reset();
 }
 
 // Modal Functions
@@ -896,12 +883,13 @@ function showAuth() {
     
     const authModal = document.getElementById('authModal');
     if (authModal) {
-        new bootstrap.Modal(authModal).show();
+        const modal = new bootstrap.Modal(authModal);
+        modal.show();
     }
 }
 
 async function showBuyerForm() {
-    if (!window.authToken) {
+    if (!AppState.authToken) {
         showAuth();
         return;
     }
@@ -910,50 +898,52 @@ async function showBuyerForm() {
     
     const bidModal = document.getElementById('bidModal');
     if (bidModal) {
-        new bootstrap.Modal(bidModal).show();
+        const modal = new bootstrap.Modal(bidModal);
+        modal.show();
     }
 }
 
 async function showChat() {
-    if (!window.authToken) {
+    if (!AppState.authToken) {
         showAuth();
         return;
     }
     
     const chatModal = document.getElementById('chatModal');
     if (chatModal) {
-        new bootstrap.Modal(chatModal).show();
+        const modal = new bootstrap.Modal(chatModal);
+        modal.show();
         await loadConversations();
     }
 }
 
 async function showBulletin() {
-    if (!window.authToken) {
+    if (!AppState.authToken) {
         showAuth();
         return;
     }
     
     const bulletinModal = document.getElementById('bulletinModal');
     if (bulletinModal) {
-        new bootstrap.Modal(bulletinModal).show();
+        const modal = new bootstrap.Modal(bulletinModal);
+        modal.show();
         await loadBulletinFeed();
     }
 }
 
 function selectService(serviceName) {
     showBuyerForm();
+    // Small delay to ensure modal is ready and form exists
     setTimeout(() => {
         const bidService = document.getElementById('bidService');
         if (bidService) {
             bidService.value = serviceName;
         }
-    }, 100);
+    }, 200);
 }
 
 function escapeHtml(value) {
-    if (value === null || value === undefined) {
-        return '';
-    }
+    if (value === null || value === undefined) return '';
     return String(value)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -964,75 +954,67 @@ function escapeHtml(value) {
 
 // Provider Grab Job Page Functions
 function initializeGrabJobPage() {
-    const capabilitiesEditor = document.getElementById('capabilitiesText');
-    const capabilitiesFile = document.getElementById('capabilitiesFile');
-    const saveBtn = document.getElementById('saveCapabilitiesBtn');
-    const clearBtn = document.getElementById('clearCapabilitiesBtn');
-    const grabJobForm = document.getElementById('grabJobForm');
-    const refreshBtn = document.getElementById('refreshJobsBtn');
+    const elements = {
+        editor: document.getElementById('capabilitiesText'),
+        file: document.getElementById('capabilitiesFile'),
+        saveBtn: document.getElementById('saveCapabilitiesBtn'),
+        clearBtn: document.getElementById('clearCapabilitiesBtn'),
+        form: document.getElementById('grabJobForm'),
+        refreshBtn: document.getElementById('refreshJobsBtn')
+    };
 
-    if (!capabilitiesEditor && !grabJobForm) {
-        return;
+    if (!elements.editor && !elements.form) return;
+
+    const savedProfile = localStorage.getItem(STORAGE_KEYS.PROVIDER_PROFILE);
+    if (savedProfile && elements.editor && !elements.editor.value.trim()) {
+        elements.editor.value = savedProfile;
+        AppState.providerProfile = savedProfile;
+    } else if (elements.editor) {
+        AppState.providerProfile = elements.editor.value.trim();
     }
 
-    const savedProfile = localStorage.getItem('provider_capabilities_profile');
-    if (savedProfile && capabilitiesEditor && !capabilitiesEditor.value.trim()) {
-        capabilitiesEditor.value = savedProfile;
-        providerProfile = savedProfile;
-    } else if (capabilitiesEditor) {
-        providerProfile = capabilitiesEditor.value.trim();
-    }
-
-    if (capabilitiesEditor) {
-        capabilitiesEditor.addEventListener('input', () => {
-            providerProfile = capabilitiesEditor.value.trim();
+    if (elements.editor) {
+        elements.editor.addEventListener('input', () => {
+            AppState.providerProfile = elements.editor.value.trim();
         });
         
-        capabilitiesEditor.addEventListener('blur', () => {
-            const value = capabilitiesEditor.value.trim();
+        elements.editor.addEventListener('blur', () => {
+            const value = elements.editor.value.trim();
             if (value) {
-                localStorage.setItem('provider_capabilities_profile', value);
+                localStorage.setItem(STORAGE_KEYS.PROVIDER_PROFILE, value);
             }
         });
     }
 
-    if (capabilitiesFile) {
-        capabilitiesFile.addEventListener('change', handleCapabilitiesFile);
+    if (elements.file) {
+        elements.file.addEventListener('change', handleCapabilitiesFile);
     }
 
-    if (saveBtn) {
-        saveBtn.addEventListener('click', (e) => {
+    if (elements.saveBtn) {
+        elements.saveBtn.addEventListener('click', (e) => {
             e.preventDefault();
             saveCapabilitiesProfile();
         });
     }
 
-    if (clearBtn) {
-        clearBtn.addEventListener('click', (e) => {
+    if (elements.clearBtn) {
+        elements.clearBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            if (capabilitiesEditor) {
-                capabilitiesEditor.value = '';
-            }
-            providerProfile = null;
-            localStorage.removeItem('provider_capabilities_profile');
+            if (elements.editor) elements.editor.value = '';
+            AppState.providerProfile = null;
+            localStorage.removeItem(STORAGE_KEYS.PROVIDER_PROFILE);
             setCapabilitiesStatus('Capabilities cleared.', false);
         });
     }
 
-    if (grabJobForm) {
-        console.log('Grab Job form found, attaching submit handler');
-        grabJobForm.addEventListener('submit', function(e) {
-            console.log('Grab Job form submitted');
-            handleGrabJobSubmission(e);
-        });
-    } else {
-        console.log('Grab Job form not found on this page');
+    if (elements.form) {
+        elements.form.addEventListener('submit', handleGrabJobSubmission);
     }
 
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', async (e) => {
+    if (elements.refreshBtn) {
+        elements.refreshBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            if (!window.authToken) {
+            if (!AppState.authToken) {
                 showAuth();
                 return;
             }
@@ -1045,16 +1027,12 @@ function initializeGrabJobPage() {
 
 function handleCapabilitiesFile(event) {
     const file = event.target.files && event.target.files[0];
-    if (!file) {
-        return;
-    }
+    if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
         const textarea = document.getElementById('capabilitiesText');
-        if (!textarea) {
-            return;
-        }
+        if (!textarea) return;
 
         const raw = typeof reader.result === 'string' ? reader.result : '';
         let formatted = raw.trim();
@@ -1066,8 +1044,8 @@ function handleCapabilitiesFile(event) {
         }
 
         textarea.value = formatted;
-        providerProfile = formatted;
-        localStorage.setItem('provider_capabilities_profile', formatted);
+        AppState.providerProfile = formatted;
+        localStorage.setItem(STORAGE_KEYS.PROVIDER_PROFILE, formatted);
         setCapabilitiesStatus(`Loaded profile from ${file.name}.`, false);
     };
 
@@ -1080,92 +1058,75 @@ function handleCapabilitiesFile(event) {
 
 function saveCapabilitiesProfile() {
     const textarea = document.getElementById('capabilitiesText');
-    if (!textarea) {
-        return;
-    }
+    if (!textarea) return;
 
     const value = textarea.value.trim();
     if (!value) {
-        localStorage.removeItem('provider_capabilities_profile');
-        providerProfile = null;
+        localStorage.removeItem(STORAGE_KEYS.PROVIDER_PROFILE);
+        AppState.providerProfile = null;
         setCapabilitiesStatus('Capabilities profile removed.', false);
         return;
     }
 
-    localStorage.setItem('provider_capabilities_profile', value);
-    providerProfile = value;
+    localStorage.setItem(STORAGE_KEYS.PROVIDER_PROFILE, value);
+    AppState.providerProfile = value;
     setCapabilitiesStatus('Capabilities profile saved locally.', false);
 }
 
 function prepareCapabilitiesPayload(raw) {
-    if (!raw) {
-        return '';
-    }
+    if (!raw) return '';
 
     const trimmed = raw.trim();
     try {
         const parsed = JSON.parse(trimmed);
-        if (typeof parsed === 'string') {
-            return parsed;
-        }
+        if (typeof parsed === 'string') return parsed;
         return JSON.stringify(parsed);
     } catch (err) {
-        const wrapped = { capabilities: trimmed };
-        return JSON.stringify(wrapped);
+        return JSON.stringify({ capabilities: trimmed });
     }
 }
 
 async function handleGrabJobSubmission(e) {
-    console.log('handleGrabJobSubmission called', e);
     e.preventDefault();
-    e.stopPropagation();
-
-    if (!window.authToken) {
-        console.log('No auth token, showing auth modal');
+    
+    if (!AppState.authToken) {
         showAuth();
         return;
     }
 
-    const textarea = document.getElementById('capabilitiesText');
-    const submitBtn = document.getElementById('grabJobSubmit');
-    const locationTypeEl = document.getElementById('grabLocationType');
-    const addressEl = document.getElementById('grabAddress');
-    const latEl = document.getElementById('grabLatitude');
-    const lonEl = document.getElementById('grabLongitude');
-    const maxDistanceEl = document.getElementById('grabDistance');
+    const elements = {
+        textarea: document.getElementById('capabilitiesText'),
+        submitBtn: document.getElementById('grabJobSubmit'),
+        locationType: document.getElementById('grabLocationType'),
+        address: document.getElementById('grabAddress'),
+        lat: document.getElementById('grabLatitude'),
+        lon: document.getElementById('grabLongitude'),
+        maxDistance: document.getElementById('grabDistance')
+    };
 
-    const capabilitiesText = textarea ? textarea.value.trim() : providerProfile;
+    const capabilitiesText = elements.textarea ? elements.textarea.value.trim() : AppState.providerProfile;
     if (!capabilitiesText) {
         setGrabJobResult('Add your capabilities before grabbing a job.', true);
         return;
     }
 
+    // Auto-save
     if (capabilitiesText) {
-        localStorage.setItem('provider_capabilities_profile', capabilitiesText);
+        localStorage.setItem(STORAGE_KEYS.PROVIDER_PROFILE, capabilitiesText);
     }
 
     const payload = {
         capabilities: prepareCapabilitiesPayload(capabilitiesText)
     };
 
-    const locationType = locationTypeEl ? locationTypeEl.value : 'remote';
-    if (locationType) {
-        payload.location_type = locationType;
-    }
+    if (elements.locationType) payload.location_type = elements.locationType.value || 'remote';
 
-    const address = addressEl ? addressEl.value.trim() : '';
-    const latValue = latEl ? latEl.value.trim() : '';
-    const lonValue = lonEl ? lonEl.value.trim() : '';
-    const distanceValue = maxDistanceEl ? maxDistanceEl.value.trim() : '';
-
-    if (locationType !== 'remote') {
-        if (latValue && lonValue) {
-            const lat = parseFloat(latValue);
-            const lon = parseFloat(lonValue);
-            if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-                setGrabJobResult('Latitude and longitude must be numeric.', true);
-                return;
-            }
+    const address = elements.address ? elements.address.value.trim() : '';
+    const lat = elements.lat ? parseFloat(elements.lat.value) : NaN;
+    const lon = elements.lon ? parseFloat(elements.lon.value) : NaN;
+    
+    if (payload.location_type !== 'remote') {
+        if (!isNaN(lat) && !isNaN(lon)) {
             payload.lat = lat;
             payload.lon = lon;
         } else if (address) {
@@ -1178,16 +1139,13 @@ async function handleGrabJobSubmission(e) {
         payload.address = address;
     }
 
-    if (distanceValue) {
-        const maxDistance = parseFloat(distanceValue);
-        if (Number.isFinite(maxDistance) && maxDistance > 0) {
-            payload.max_distance = maxDistance;
-        }
+    if (elements.maxDistance && elements.maxDistance.value) {
+        payload.max_distance = parseFloat(elements.maxDistance.value);
     }
 
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Grabbing...';
+    if (elements.submitBtn) {
+        elements.submitBtn.disabled = true;
+        elements.submitBtn.textContent = 'Grabbing...';
     }
 
     setGrabJobResult('Looking for the best job match...', false);
@@ -1196,14 +1154,14 @@ async function handleGrabJobSubmission(e) {
         const response = await fetch(`${API_URL}/grab_job`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${window.authToken}`,
+                'Authorization': `Bearer ${AppState.authToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(payload)
         });
 
         if (response.status === 204) {
-            setGrabJobResult('No jobs matched your capabilities. Try again soon.<br><br><strong>Submitted capabilities:</strong><br><pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 5px; overflow-x: auto;">' + escapeHtml(payload.capabilities) + '</pre>', true);
+            setGrabJobResult('No jobs matched your capabilities. Try again soon.', true);
             return;
         }
 
@@ -1212,268 +1170,15 @@ async function handleGrabJobSubmission(e) {
             setGrabJobResult(renderGrabJobSuccess(data, payload.capabilities), false);
             await loadCompletedJobs();
         } else {
-            setGrabJobResult((data.error || 'Unable to grab a job right now.') + '<br><br><strong>Submitted capabilities:</strong><br><pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 5px; overflow-x: auto;">' + escapeHtml(payload.capabilities) + '</pre>', true);
+            setGrabJobResult(data.error || 'Unable to grab a job right now.', true);
         }
     } catch (error) {
-        setGrabJobResult('Network error while grabbing a job.<br><br><strong>Submitted capabilities:</strong><br><pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 5px; overflow-x: auto;">' + escapeHtml(payload.capabilities) + '</pre>', true);
+        setGrabJobResult('Network error while grabbing a job.', true);
     } finally {
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Grab Job';
+        if (elements.submitBtn) {
+            elements.submitBtn.disabled = false;
+            elements.submitBtn.textContent = 'Grab Job';
         }
-    }
-}
-
-function renderGrabJobSuccess(job, submittedCapabilities) {
-    const price = job && job.currency ? `${escapeHtml(job.currency)} ${escapeHtml(job.price)}` : `$${escapeHtml(job.price)}`;
-    const location = job && job.location_type === 'remote' ? 'Remote' : escapeHtml(job.address || 'Physical service');
-    const acceptedTime = job && job.accepted_at ? new Date(job.accepted_at * 1000).toLocaleString() : 'Just now';
-    const service = typeof job.service === 'object' ? escapeHtml(JSON.stringify(job.service)) : escapeHtml(job.service);
-    const buyer = escapeHtml(job.buyer_username || '');
-    
-    let capabilitiesSection = '';
-    if (submittedCapabilities) {
-        capabilitiesSection = `<br><br><strong>Submitted capabilities:</strong><br><pre style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 5px; margin-top: 5px; overflow-x: auto;">${escapeHtml(submittedCapabilities)}</pre>`;
-    }
-    
-    return `
-        <strong>Matched Job:</strong> ${service}<br>
-        <span class="job-meta">Price: ${price}</span><br>
-        <span class="job-meta">Buyer: ${buyer}</span><br>
-        <span class="job-meta">Location: ${location}</span><br>
-        <span class="job-meta">Accepted at: ${acceptedTime}</span>${capabilitiesSection}
-    `;
-}
-
-function setGrabJobResult(message, isError = false) {
-    const result = document.getElementById('grabJobResult');
-    if (!result) {
-        return;
-    }
-
-    result.style.display = 'block';
-    result.className = isError ? 'grab-result error' : 'grab-result';
-    result.innerHTML = message;
-}
-
-function setCapabilitiesStatus(message, isError = false) {
-    const status = document.getElementById('capabilitiesStatus');
-    if (!status) {
-        return;
-    }
-
-    if (!message) {
-        status.style.display = 'none';
-        return;
-    }
-
-    status.style.display = 'block';
-    status.className = isError ? 'grab-result error' : 'grab-result';
-    status.textContent = message;
-}
-
-function updateProviderDashboard() {
-    const activeContainer = document.getElementById('providerActiveJobs');
-    const completedContainer = document.getElementById('providerCompletedJobs');
-    const activeCount = document.getElementById('providerActiveCount');
-    const completedCount = document.getElementById('providerCompletedCount');
-    const reputationEl = document.getElementById('providerReputation');
-    const completedTotalEl = document.getElementById('providerCompletedTotal');
-
-    if (!activeContainer && !completedContainer && !activeCount) {
-        return;
-    }
-
-    if (!window.authToken) {
-        if (activeContainer) {
-            activeContainer.innerHTML = '<p class="text-muted mb-0">Login to view your active jobs.</p>';
-        }
-        if (completedContainer) {
-            completedContainer.innerHTML = '<p class="text-muted mb-0">Login to view completed jobs.</p>';
-        }
-        if (activeCount) activeCount.textContent = '0';
-        if (completedCount) completedCount.textContent = '0';
-        if (reputationEl) reputationEl.textContent = '--';
-        if (completedTotalEl) completedTotalEl.textContent = '--';
-        return;
-    }
-
-    if (activeContainer) {
-        activeContainer.innerHTML = renderJobCards(activeJobs, 'active');
-    }
-
-    if (completedContainer) {
-        completedContainer.innerHTML = renderJobCards(completedJobs, 'completed');
-    }
-
-    if (activeCount) {
-        activeCount.textContent = activeJobs.length.toString();
-    }
-
-    if (completedCount) {
-        completedCount.textContent = completedJobs.length.toString();
-    }
-
-    if (reputationEl) {
-        reputationEl.textContent = window.currentUser && window.currentUser.reputation_score !== undefined ? window.currentUser.reputation_score.toFixed(2) : '--';
-    }
-
-    if (completedTotalEl) {
-        completedTotalEl.textContent = window.currentUser && window.currentUser.completed_jobs !== undefined ? window.currentUser.completed_jobs : '--';
-    }
-}
-
-function renderJobCards(jobs, type) {
-    if (!jobs || jobs.length === 0) {
-        return `<p class="text-muted mb-0">No ${type === 'completed' ? 'completed' : 'active'} jobs yet.</p>`;
-    }
-
-    return jobs.map(job => {
-        const title = typeof job.service === 'object' ? escapeHtml(JSON.stringify(job.service)) : escapeHtml(job.service);
-        const price = job.currency ? `${escapeHtml(job.currency)} ${escapeHtml(job.price)}` : `$${escapeHtml(job.price)}`;
-        const accepted = job.accepted_at ? new Date(job.accepted_at * 1000).toLocaleString() : '';
-        const completed = job.completed_at ? new Date(job.completed_at * 1000).toLocaleString() : '';
-        const partner = job.counterparty ? `Partner: ${escapeHtml(job.counterparty)}` : '';
-        const role = job.role ? escapeHtml(job.role.toUpperCase()) : '';
-        const location = job.location_type === 'remote' ? 'Remote' : escapeHtml(job.address || 'Physical service');
-        const status = job.status ? escapeHtml(job.status.toUpperCase()) : (type === 'completed' ? 'COMPLETED' : 'ACTIVE');
-
-        return `
-            <div class="job-card">
-                <h4>${title}</h4>
-                <div class="job-meta">Price: ${price}</div>
-                <div class="job-meta">Role: ${role}</div>
-                <div class="job-meta">${partner}</div>
-                <div class="job-meta">Location: ${location}</div>
-                ${accepted ? `<div class="job-meta">Accepted: ${accepted}</div>` : ''}
-                ${completed ? `<div class="job-meta">Completed: ${completed}</div>` : ''}
-                <div class="job-status">${status}</div>
-            </div>
-        `;
-    }).join('');
-}
-
-// Nearby Services Functions
-async function handleNearbySearch(e) {
-    e.preventDefault();
-    
-    const address = document.getElementById('searchAddress').value;
-    const radius = parseInt(document.getElementById('searchRadius').value);
-    await searchNearbyByAddress(address, radius);
-}
-
-async function searchNearbyByAddress(address, radius) {
-    const loading = document.getElementById('nearbyLoading');
-    const results = document.getElementById('nearbyResults');
-    
-    if (loading) loading.style.display = 'block';
-    if (results) results.innerHTML = '';
-    
-    try {
-        const response = await fetch(`${API_URL}/nearby`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                address: address,
-                radius: radius || 10
-            })
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            displayNearbyResults(data.services || []);
-            
-            // Center map if available
-            if (typeof geocodeAndCenterMap === 'function') {
-                await geocodeAndCenterMap(address);
-            }
-        } else if (results) {
-            results.innerHTML = '<p class="text-danger">Failed to search for nearby services</p>';
-        }
-        
-    } catch (error) {
-        if (results) {
-            results.innerHTML = '<p class="text-danger">Network error while searching</p>';
-        }
-    } finally {
-        if (loading) loading.style.display = 'none';
-    }
-}
-
-function displayNearbyResults(services) {
-    const results = document.getElementById('nearbyResults');
-    if (!results) return;
-    
-    if (services.length === 0) {
-        results.innerHTML = '<p class="text-muted">No services found in this area.</p>';
-        return;
-    }
-    
-    results.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5>Found ${services.length} service${services.length === 1 ? '' : 's'}</h5>
-        </div>
-        ${services.map(service => `
-            <div class="service-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="flex-grow-1">
-                        <h6>${service.service}</h6>
-                        <p class="service-distance">📍 ${service.distance.toFixed(1)} miles away</p>
-                        ${service.address ? `<p class="text-muted small">${service.address}</p>` : ''}
-                        ${service.buyer_reputation ? `
-                            <div class="reputation-stars">
-                                ${'★'.repeat(Math.round(service.buyer_reputation))}${'☆'.repeat(5 - Math.round(service.buyer_reputation))}
-                                <span class="text-muted ms-1">(${service.buyer_reputation.toFixed(1)})</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="text-end">
-                        <div class="service-price">$${service.price}</div>
-                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="contactProvider('${service.bid_id}')">
-                            Contact
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `).join('')}
-    `;
-}
-
-function contactProvider(bidId) {
-    alert(`Contact functionality would be implemented here for bid: ${bidId}`);
-}
-
-// Filter Functions
-async function handleFilterApplication(e) {
-    e.preventDefault();
-    
-    const category = document.getElementById('categoryFilter').value;
-    const location = document.getElementById('locationFilter').value;
-    const limit = parseInt(document.getElementById('limitFilter').value);
-    const includeCompleted = document.getElementById('includeCompleted').checked;
-    
-    const params = new URLSearchParams();
-    if (category) params.append('category', category);
-    if (location) params.append('location', location);
-    if (limit) params.append('limit', limit.toString());
-    if (includeCompleted) params.append('include_completed', 'true');
-    
-    try {
-        const response = await fetch(`${API_URL}/exchange_data?${params}`);
-        
-        if (response.ok) {
-            const data = await response.json();
-            if (typeof updateExchangeStats === 'function') {
-                updateExchangeStats(data);
-            }
-            if (typeof updateRecentActivity === 'function') {
-                updateRecentActivity(data);
-            }
-        }
-    } catch (error) {
-        console.error('Error applying filters:', error);
     }
 }
 

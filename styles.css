@@ -636,3 +636,105 @@ body {
         width: 300px;
     }
 }
+
+/* Dashboard Specific Styles */
+.dashboard-container {
+    padding: 2rem 0;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.console-container {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: var(--shadow-lg);
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.activity-feed {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.85rem;
+    background: #0f172a;
+    color: #4ade80;
+    padding: 1rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid #1e293b;
+}
+
+.map-controls {
+    background: white;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1;
+    box-shadow: var(--shadow-md);
+    font-size: 0.9rem;
+}
+
+.map-controls label {
+    display: block;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+}
+
+.map-controls label:last-child {
+    margin-bottom: 0;
+}
+
+.button-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.button-container button {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#grab-job {
+    background: var(--primary);
+    color: white;
+}
+
+#submit-bid {
+    background: white;
+    border: 1px solid #cbd5e1;
+    color: var(--dark);
+}
+
+#grab-job:hover {
+    background: var(--primary-hover);
+}
+
+#submit-bid:hover {
+    background: #f1f5f9;
+}
+
+@media (max-width: 992px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .map-container, .console-container {
+        height: 450px;
+    }
+}
