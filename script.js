@@ -1234,6 +1234,71 @@ async function handleGrabJobSubmission(e) {
     }
 }
 
+// Copy Base URL Function
+function copyBaseUrl() {
+    const baseUrl = document.getElementById('baseUrl');
+    const copyIcon = document.getElementById('copyIcon');
+    
+    if (!baseUrl) return;
+    
+    const url = baseUrl.textContent.trim();
+    
+    navigator.clipboard.writeText(url).then(() => {
+        if (copyIcon) {
+            copyIcon.textContent = '✓';
+            setTimeout(() => {
+                copyIcon.textContent = '📋';
+            }, 2000);
+        }
+    }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (copyIcon) {
+            copyIcon.textContent = '✓';
+            setTimeout(() => {
+                copyIcon.textContent = '📋';
+            }, 2000);
+        }
+    });
+}
+
+// API Status Check Function
+async function checkApiStatus() {
+    const indicator = document.getElementById('apiStatusIndicator');
+    if (!indicator) return;
+    
+    indicator.className = 'api-status-indicator checking';
+    indicator.title = 'Checking API status...';
+    
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(`${API_URL}/ping`, {
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+            indicator.className = 'api-status-indicator online';
+            indicator.title = 'API is online';
+        } else {
+            indicator.className = 'api-status-indicator offline';
+            indicator.title = `API returned status ${response.status}`;
+        }
+    } catch (error) {
+        indicator.className = 'api-status-indicator offline';
+        indicator.title = 'API is offline or unreachable';
+    }
+}
+
 // Ping Server Function (for API docs)
 async function pingServer() {
     const btn = document.getElementById('pingBtn');
@@ -1297,3 +1362,10 @@ window.loadPopularServices = loadPopularServices;
 window.loadCompletedJobs = loadCompletedJobs;
 window.updateUIForLoggedInUser = updateUIForLoggedInUser;
 window.updateUIForLoggedOutUser = updateUIForLoggedOutUser;
+window.copyBaseUrl = copyBaseUrl;
+window.checkApiStatus = checkApiStatus;
+
+// Check API status on page load (for API docs page)
+if (document.getElementById('apiStatusIndicator')) {
+    checkApiStatus();
+}
