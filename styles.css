@@ -66,7 +66,8 @@ body {
     padding: 80px 0;
     margin-bottom: 40px;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+    z-index: 1;
 }
 
 .header::before {
@@ -85,6 +86,7 @@ body {
     text-align: center;
     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
     position: relative;
+    z-index: 1;
 }
 
 .hero h1 {
@@ -266,8 +268,8 @@ body {
 
 /* Service tags inside modals */
 .modal .service-tag {
-    background: var(--light);
-    color: var(--primary);
+    background: #e0e7ff;
+    color: #3730a3;
     border: 1px solid var(--primary);
 }
 
