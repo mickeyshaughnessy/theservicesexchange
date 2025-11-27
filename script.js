@@ -900,6 +900,42 @@ async function showBuyerForm() {
     if (bidModal) {
         const modal = new bootstrap.Modal(bidModal);
         modal.show();
+        loadPopularServices();
+    }
+}
+
+async function loadPopularServices() {
+    const container = document.getElementById('popularServicesContainer');
+    if (!container) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/exchange_data?limit=20`);
+        if (response.ok) {
+            const data = await response.json();
+            const bids = data.active_bids || [];
+            
+            // Extract unique service names from recent activity
+            const serviceNames = new Set();
+            for (const bid of bids) {
+                const serviceName = typeof bid.service === 'object' 
+                    ? (bid.service.name || JSON.stringify(bid.service))
+                    : String(bid.service);
+                // Take first 30 chars for display
+                const shortName = serviceName.substring(0, 30);
+                if (shortName.length > 2) {
+                    serviceNames.add(shortName);
+                }
+                if (serviceNames.size >= 6) break;
+            }
+            
+            if (serviceNames.size > 0) {
+                container.innerHTML = Array.from(serviceNames).map(name => 
+                    `<span class="service-tag" onclick="document.getElementById('bidService').value='${escapeHtml(name)}'">${escapeHtml(name)}</span>`
+                ).join('');
+            }
+        }
+    } catch (error) {
+        console.log('Could not load popular services:', error);
     }
 }
 
@@ -950,6 +986,22 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+function contactProvider(bidId) {
+    if (!AppState.authToken) {
+        showAuth();
+        return;
+    }
+    
+    showChat();
+    setTimeout(() => {
+        showNewMessageForm();
+        const jobIdField = document.getElementById('chatJobId');
+        if (jobIdField) {
+            jobIdField.value = bidId;
+        }
+    }, 300);
 }
 
 // Provider Grab Job Page Functions
@@ -1241,6 +1293,7 @@ window.showNewPostForm = showNewPostForm;
 window.hideNewPostForm = hideNewPostForm;
 window.contactProvider = contactProvider;
 window.pingServer = pingServer;
+window.loadPopularServices = loadPopularServices;
 window.loadCompletedJobs = loadCompletedJobs;
 window.updateUIForLoggedInUser = updateUIForLoggedInUser;
 window.updateUIForLoggedOutUser = updateUIForLoggedOutUser;

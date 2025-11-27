@@ -5,6 +5,7 @@ This module contains the core business logic for the Service Exchange Protocol.
 It handles user management, bid/job matching, messaging, and seat verification.
 """
 
+import os
 import uuid
 import json
 import time
@@ -21,8 +22,8 @@ from utils import (
     save_token,
     save_bid, get_bid, delete_bid, get_all_bids, get_user_bids,
     save_job, get_job, get_all_jobs, get_user_jobs,
-    save_message,
-    save_bulletin
+    save_message, get_user_messages,
+    save_bulletin, get_all_bulletins
 )
 
 # Configure logging
