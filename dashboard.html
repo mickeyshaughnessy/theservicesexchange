@@ -5,16 +5,70 @@
     <title>RSE Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Mapbox CSS -->
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto&display=swap" rel="stylesheet">
-    
-    <!-- Custom Stylesheets -->
     <link rel="stylesheet" href="styles.css">
-    
-    <!-- Inline Styles for Initial Setup (Removed NES-Style Activity Feed Inline) -->
+    <style>
+        .simulation-toggle {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+        }
+        .simulation-toggle label {
+            font-weight: 600;
+            color: #856404;
+        }
+        .simulation-badge {
+            background: #ffc107;
+            color: #000;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+        .simulated-section {
+            border: 2px dashed #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            background: #fffef5;
+            margin-top: 15px;
+        }
+        .simulated-section h5 {
+            color: #856404;
+        }
+        .real-data-section {
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f8fff8;
+        }
+        .real-data-section h5 {
+            color: #155724;
+        }
+        .real-badge {
+            background: #28a745;
+            color: #fff;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+        #simulated-activity-log {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            background: #fffbea;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        #simulated-activity-log div {
+            padding: 4px 0;
+            border-bottom: 1px solid #ffe69c;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
@@ -32,9 +86,6 @@
                         <a class="nav-link" href="api_docs.html">API Docs</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="nearby.html">Nearby Services</a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" href="bounty.html">Demo Apps</a>
                     </li>
                     <li class="nav-item">
@@ -44,8 +95,8 @@
                         <a class="nav-link" href="about.html">About</a>
                     </li>
                 </ul>
-                <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
-                <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
+                <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">Inbox</button>
+                <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">Community</button>
                 <div id="accountDropdown" class="account-dropdown ms-3" style="display: none;">
                     <button class="account-btn">
                         <span id="accountUsername">Account</span> ▼
@@ -57,7 +108,7 @@
                                 <button class="logout-btn" onclick="logout()">Logout</button>
                             </div>
                             <div class="reputation-display">
-                                <span class="star-rating" id="starDisplay">★★★★★</span>
+                                <span class="star-rating" id="starDisplay">*****</span>
                                 <span id="ratingText">4.5 (12 ratings)</span>
                             </div>
                         </div>
@@ -101,30 +152,107 @@
     <header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 0; margin-bottom: 30px;">
         <div class="container">
             <h1 style="color: white; text-shadow: 0 2px 6px rgba(0,0,0,0.3);">RSE Activity Dashboard</h1>
+            <p class="lead" style="color: white;">Real-time exchange data and nearby services</p>
         </div>
     </header>
+    
     <main>
-        <div class="container dashboard-container">
-            <div class="dashboard-grid">
-                <div class="map-container" style="height: 600px;">
-                    <div id="map" style="width: 100%; height: 100%;"></div>
-                    <div class="map-controls">
-                        <label><input type="checkbox" id="show-bids" checked> Show Bids</label>
-                        <label><input type="checkbox" id="show-won-jobs" checked> Show Won Jobs</label>
-                        <label><input type="checkbox" id="show-completed-jobs" checked> Show Completed Jobs</label>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <!-- Map -->
+                    <div class="map-container" style="height: 600px; position: relative;">
+                        <div id="map" style="width: 100%; height: 100%;"></div>
+                        <div class="map-controls" style="position: absolute; top: 10px; left: 10px; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <label><input type="checkbox" id="show-active-bids" checked> Show Active Bids (Blue)</label><br>
+                            <label><input type="checkbox" id="show-completed-jobs" checked> Show Completed (Green)</label>
+                        </div>
                     </div>
                 </div>
-                <div class="console-container">
-                    <div class="activity-feed">
-                        <h2>Activity Log</h2>
-                        <div id="activity-log"></div>
+
+                <div class="col-md-4">
+                    <!-- Simulated Traffic Toggle -->
+                    <div class="simulation-toggle">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="simulationToggle">
+                            <label class="form-check-label" for="simulationToggle">
+                                Enable Simulated Traffic Demo
+                            </label>
+                        </div>
+                        <small class="text-muted">Shows fake activity for demonstration purposes</small>
                     </div>
-                    <div class="button-container">
-                        <button id="grab-job">Grab Job</button>
-                        <button id="submit-bid">Submit Bid</button>
+
+                    <!-- Real Exchange Statistics -->
+                    <div class="real-data-section">
+                        <h5>Exchange Stats <span class="real-badge">LIVE DATA</span></h5>
+                        <div class="loading-spinner" id="statsLoading">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <p>Loading statistics...</p>
+                        </div>
+                        <div id="exchangeStats" style="display: none;">
+                            <div class="stat-card">
+                                <div class="stat-number" id="activeBidsCount">-</div>
+                                <div class="stat-label">Active Bids</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="completedTodayCount">-</div>
+                                <div class="stat-label">Completed Today</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <h6>Active Bid Details</h6>
+                            <textarea id="activeBidsDetails" class="form-control" rows="6" readonly style="font-size: 0.85rem; background-color: #f8f9fa;"></textarea>
+                        </div>
                     </div>
-                    <div id="submission-data">
-                        <!-- Submission data will appear here -->
+
+                    <!-- Filters -->
+                    <div class="filter-section mt-3">
+                        <h5>Exchange Data Filters</h5>
+                        <form id="filterForm">
+                            <div class="mb-3">
+                                <select class="form-control" id="categoryFilter">
+                                    <option value="">All Categories</option>
+                                    <option value="cleaning">Cleaning</option>
+                                    <option value="development">Development</option>
+                                    <option value="repair">Repairs</option>
+                                    <option value="tutoring">Tutoring</option>
+                                    <option value="design">Design</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <input type="text" class="form-control" placeholder="Location filter" id="locationFilter">
+                            </div>
+                            <div class="mb-3">
+                                <input type="number" class="form-control" placeholder="Max results" id="limitFilter" value="25" min="1" max="200">
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="includeCompleted" checked>
+                                    <label class="form-check-label" for="includeCompleted">
+                                        Include completed jobs
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        </form>
+                    </div>
+
+                    <!-- Recent Real Activity -->
+                    <div class="real-data-section mt-3">
+                        <h5>Recent Activity <span class="real-badge">LIVE</span></h5>
+                        <div class="loading-spinner" id="activityLoading">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <p>Loading activity...</p>
+                        </div>
+                        <div id="recentActivity" style="display: none; max-height: 250px; overflow-y: auto;">
+                        </div>
+                    </div>
+
+                    <!-- Simulated Activity Section (hidden by default) -->
+                    <div class="simulated-section" id="simulatedSection" style="display: none;">
+                        <h5>Simulated Activity <span class="simulation-badge">DEMO ONLY</span></h5>
+                        <p class="text-muted small">This is fake data for demonstration purposes. Not from the real exchange.</p>
+                        <div id="simulated-activity-log"></div>
                     </div>
                 </div>
             </div>
@@ -146,7 +274,7 @@
                 <div class="col-md-4">
                     <h5>Connect</h5>
                     <a href="https://x.com/RobotServicesX">Twitter</a>
-                    <a href="#">GitHub</a>
+                    <a href="https://github.com/mickeyshaughnessy/theservicesexchange">GitHub</a>
                 </div>
             </div>
             <div class="mt-5 pt-4 border-top border-secondary text-center">
@@ -205,7 +333,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">💬 Inbox</h5>
+                    <h5 class="modal-title">Inbox</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -268,7 +396,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">📢 Community Bulletin</h5>
+                    <h5 class="modal-title">Community Bulletin</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -316,42 +444,22 @@
         // Mapbox access token
         mapboxgl.accessToken = 'pk.eyJ1IjoibWlja2V5c2hhdWdobmVzc3kiLCJhIjoiY2x6NGxyNG93MnptaDJxb2dhOGloenZqeiJ9.ANY7UIu7VTPFwqTD8cEAKQ';
 
-        // Initialize the map
-        const map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/streets-v11',
-            center: [-104.9903, 39.7392], // Default to Denver, CO
-            zoom: 12
-        });
+        // State
+        let map = null;
+        let realMarkers = [];
+        let simulatedMarkers = [];
+        let simulationInterval = null;
+        let simulationEnabled = false;
 
-        // Add navigation controls
-        map.addControl(new mapboxgl.NavigationControl());
+        // Marker colors
+        const markerColors = {
+            activeBid: '#3b82f6',     // blue for active bids
+            completed: '#10b981',     // green for completed
+            simulated: '#f59e0b'      // orange/amber for simulated
+        };
 
-        // Try to center on user's location
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const userLat = position.coords.latitude;
-                    const userLon = position.coords.longitude;
-                    map.flyTo({center: [userLon, userLat], zoom: 13});
-                    new mapboxgl.Marker({color: '#ef4444'})
-                        .setLngLat([userLon, userLat])
-                        .setPopup(new mapboxgl.Popup().setHTML('<p>You are here</p>'))
-                        .addTo(map);
-                },
-                (error) => {
-                    console.warn(`Geolocation error (${error.code}): ${error.message}`);
-                }
-            );
-        }
-
-        // Activity Log Element
-        const activityLog = document.getElementById('activity-log');
-        const markers = [];
-
-        // Predefined Service Requests and Robot Names
+        // Service requests for simulation
         const serviceRequests = [
-            // Original Services (20)
             "Aerial photography of solar farm",
             "Autonomous lawn mowing for golf course",
             "Underwater pipeline inspection",
@@ -372,60 +480,269 @@
             "Snow removal from solar panels",
             "Disaster area assessment",
             "Underground utility mapping",
-            // New Services: Food and Grocery Delivery (10)
             "Autonomous grocery delivery to residential areas",
             "Robotic meal kit preparation and delivery",
             "Drone-based fast food delivery",
             "Automated fresh produce distribution",
-            "Contactless restaurant order pickup and delivery",
-            "Smart fridge restocking service",
-            "Robotic coffee and snack vending",
-            "Autonomous catering service for events",
-            "Drone delivery of emergency food supplies",
-            "Automated bakery goods distribution",
-            // New Services: Human Services (15)
-            "Robotic elder care assistance with daily tasks",
-            "Automated medication delivery and reminders",
-            "Virtual reality entertainment for seniors",
-            "Robotic physical therapy support",
-            "Autonomous patient transport within hospitals",
-            "AI-driven mental health companion services",
-            "Robotic childcare assistance in daycare centers",
-            "Automated home safety monitoring for elderly",
-            "Robotic guide for visually impaired individuals",
-            "AI-powered language tutoring for children",
-            "Robotic pet therapy for hospital patients",
-            "Automated wheelchair navigation assistance",
-            "Robotic music therapy sessions",
-            "AI-driven social engagement for isolated individuals",
-            "Robotic hygiene assistance for disabled persons",
-            // New Services: Unique/Creative Categories (15)
-            "Autonomous urban art installation maintenance",
-            "Robotic 3D printing for on-site repairs",
-            "Drone-based live event streaming",
-            "AI-driven personalized gift delivery",
-            "Robotic archaeological site scanning",
-            "Automated vertical garden maintenance",
-            "Drone swarm light show coordination",
-            "Robotic museum exhibit maintenance",
-            "AI-powered waste-to-art conversion",
-            "Autonomous beekeeping and hive monitoring",
-            "Robotic coral reef restoration",
-            "Drone-based air quality monitoring",
-            "Automated public park cleanup",
-            "Robotic historical site preservation",
-            "AI-driven interactive public art installations"
+            "Contactless restaurant order pickup and delivery"
         ];
 
         const robotNames = [
             "SkyEye-X1", "TurfMaster 3000", "AquaProbe Delta", "ClimboCraft Pro", "UrbanFlow AI",
             "CropCare Quad", "WildernessScout", "StockBot Express", "GeoMapper Plus", "ParkAssist 2.0",
-            "EcoTracker", "RecycleMatic", "SkyWash Ultra", "SecuriGuard X3", "ArborHealth Scanner",
-            "DeliverEagle", "FruitHarvester Pro", "SnowSweep Bot", "DisasterRecon", "SubTerra Mapper",
-            "MarineSentry", "SkySprayer Eco", "RoadMender AI", "PowerLine Inspector", "FireFighter Assist"
+            "EcoTracker", "RecycleMatic", "SkyWash Ultra", "SecuriGuard X3", "ArborHealth Scanner"
         ];
 
-        // Function to get a random location within current map bounds
+        // Initialize the map
+        function initializeMap() {
+            map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/streets-v11',
+                center: [-104.9903, 39.7392],
+                zoom: 12
+            });
+
+            map.addControl(new mapboxgl.NavigationControl());
+
+            // Try to center on user's location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLon = position.coords.longitude;
+                        map.flyTo({center: [userLon, userLat], zoom: 13});
+                        new mapboxgl.Marker({color: '#ef4444'})
+                            .setLngLat([userLon, userLat])
+                            .setPopup(new mapboxgl.Popup().setHTML('<p>You are here</p>'))
+                            .addTo(map);
+                    },
+                    (error) => {
+                        console.warn(`Geolocation error (${error.code}): ${error.message}`);
+                    }
+                );
+            }
+
+            map.on('load', () => {
+                loadExchangeData();
+                loadExchangeDataOnMap();
+            });
+        }
+
+        // Load real exchange data
+        async function loadExchangeData() {
+            const statsLoading = document.getElementById('statsLoading');
+            const activityLoading = document.getElementById('activityLoading');
+            
+            if (statsLoading) statsLoading.style.display = 'block';
+            if (activityLoading) activityLoading.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_URL}/exchange_data?limit=50&include_completed=true`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateExchangeStats(data);
+                    updateRecentActivity(data);
+                } else {
+                    console.error('Failed to load exchange data');
+                }
+            } catch (error) {
+                console.error('Error loading exchange data:', error);
+            } finally {
+                if (statsLoading) {
+                    statsLoading.style.display = 'none';
+                    const exchangeStats = document.getElementById('exchangeStats');
+                    if (exchangeStats) exchangeStats.style.display = 'block';
+                }
+                if (activityLoading) {
+                    activityLoading.style.display = 'none';
+                    const recentActivity = document.getElementById('recentActivity');
+                    if (recentActivity) recentActivity.style.display = 'block';
+                }
+            }
+        }
+
+        // Load real data onto map
+        async function loadExchangeDataOnMap() {
+            try {
+                const categoryFilter = document.getElementById('categoryFilter');
+                const locationFilter = document.getElementById('locationFilter');
+                const limitFilter = document.getElementById('limitFilter');
+                const includeCompleted = document.getElementById('includeCompleted');
+                
+                const params = new URLSearchParams();
+                if (categoryFilter && categoryFilter.value) params.append('category', categoryFilter.value);
+                if (locationFilter && locationFilter.value) params.append('location', locationFilter.value);
+                if (limitFilter && limitFilter.value) params.append('limit', limitFilter.value);
+                if (includeCompleted) params.append('include_completed', includeCompleted.checked);
+                
+                const response = await fetch(`${API_URL}/exchange_data?${params.toString()}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    displayRealServicesOnMap(data);
+                } else {
+                    console.error('Failed to load exchange data for map');
+                }
+            } catch (error) {
+                console.error('Error loading exchange data for map:', error);
+            }
+        }
+
+        // Display real services on map
+        async function displayRealServicesOnMap(data) {
+            clearRealMarkers();
+            
+            const showActiveBids = document.getElementById('show-active-bids')?.checked ?? true;
+            const showCompleted = document.getElementById('show-completed-jobs')?.checked ?? true;
+            
+            const activeBids = showActiveBids ? (data.active_bids || []) : [];
+            const completedJobs = showCompleted ? (data.completed_jobs || []) : [];
+            
+            const allJobs = [...activeBids.map(j => ({...j, isCompleted: false})), 
+                           ...completedJobs.map(j => ({...j, isCompleted: true}))];
+            
+            for (const job of allJobs) {
+                let lat = job.lat;
+                let lon = job.lon;
+                
+                if ((!lat || !lon) && job.address) {
+                    try {
+                        const coords = await geocodeAddress(job.address);
+                        if (coords) {
+                            lat = coords.lat;
+                            lon = coords.lon;
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to geocode address: ${job.address}`, error);
+                    }
+                }
+                
+                if (lat && lon) {
+                    const service = typeof job.service === 'string' ? job.service : 
+                                  (job.service?.type || 'Service');
+                    
+                    const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                        <div style="padding: 10px;">
+                            <h6>${service}</h6>
+                            <p><strong>$${job.price}</strong> ${job.isCompleted ? '- Completed' : '- Active Bid'}</p>
+                            ${job.address || job.location ? `<p class="text-muted small">${job.address || job.location}</p>` : ''}
+                            <span class="badge bg-success">REAL DATA</span>
+                        </div>
+                    `);
+                    
+                    const markerColor = job.isCompleted ? markerColors.completed : markerColors.activeBid;
+                    
+                    const marker = new mapboxgl.Marker({color: markerColor})
+                        .setLngLat([lon, lat])
+                        .setPopup(popup)
+                        .addTo(map);
+                    
+                    realMarkers.push(marker);
+                }
+            }
+        }
+
+        // Update exchange stats
+        function updateExchangeStats(data) {
+            const stats = data.market_stats || {};
+            
+            const activeBidsCount = document.getElementById('activeBidsCount');
+            const completedTodayCount = document.getElementById('completedTodayCount');
+            const activeBidsDetails = document.getElementById('activeBidsDetails');
+            
+            if (activeBidsCount) activeBidsCount.textContent = stats.total_active_bids || 0;
+            if (completedTodayCount) completedTodayCount.textContent = stats.total_completed_today || 0;
+            
+            if (activeBidsDetails) {
+                const activeBids = data.active_bids || [];
+                if (activeBids.length === 0) {
+                    activeBidsDetails.value = 'No active bids available.';
+                } else {
+                    const bidDetails = activeBids.map((bid, index) => {
+                        const service = typeof bid.service === 'string' ? bid.service : 
+                                      (bid.service?.type || 'Service');
+                        const location = bid.address || bid.location || 'No address specified';
+                        const postedDate = bid.posted_at ? new Date(bid.posted_at * 1000).toLocaleString() : 'N/A';
+                        
+                        return `Bid #${index + 1}:\nService: ${service}\nPrice: $${bid.price}\nLocation: ${location}\nPosted: ${postedDate}\n${bid.buyer_reputation ? `Rating: ${bid.buyer_reputation.toFixed(1)} stars` : 'No rating'}\n`;
+                    }).join('\n---\n\n');
+                    
+                    activeBidsDetails.value = bidDetails;
+                }
+            }
+        }
+
+        // Update recent activity
+        function updateRecentActivity(data) {
+            const container = document.getElementById('recentActivity');
+            if (!container) return;
+            
+            const activeBids = data.active_bids || [];
+            const completedJobs = data.completed_jobs || [];
+            
+            const allActivity = [
+                ...activeBids.map(bid => ({...bid, type: 'bid', date: bid.posted_at})),
+                ...completedJobs.map(job => ({...job, type: 'completed', date: job.completed_at}))
+            ].sort((a, b) => b.date - a.date).slice(0, 10);
+            
+            if (allActivity.length === 0) {
+                container.innerHTML = '<p class="text-muted">No recent activity</p>';
+                return;
+            }
+            
+            container.innerHTML = allActivity.map(item => {
+                const isCompleted = item.type === 'completed';
+                const service = typeof item.service === 'string' ? item.service : 
+                              (item.service?.type || 'Service');
+                
+                return `
+                    <div class="job-item ${isCompleted ? 'job-completed' : ''}">
+                        <div class="job-title">${service}</div>
+                        <div class="job-meta">
+                            $${item.price} - ${isCompleted ? 'Completed' : 'Active Bid'} - 
+                            ${new Date(item.date * 1000).toLocaleDateString()}
+                        </div>
+                        ${item.location ? `<div class="job-meta">${item.location}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Clear real markers
+        function clearRealMarkers() {
+            realMarkers.forEach(marker => marker.remove());
+            realMarkers = [];
+        }
+
+        // Clear simulated markers
+        function clearSimulatedMarkers() {
+            simulatedMarkers.forEach(marker => marker.remove());
+            simulatedMarkers = [];
+        }
+
+        // Geocode address
+        async function geocodeAddress(address) {
+            try {
+                const response = await fetch(
+                    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}&limit=1`
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.features && data.features.length > 0) {
+                        const [lon, lat] = data.features[0].center;
+                        return { lat, lon };
+                    }
+                }
+                return null;
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                return null;
+            }
+        }
+
+        // SIMULATION FUNCTIONS
         function getRandomLocation() {
             const bounds = map.getBounds();
             const sw = bounds.getSouthWest();
@@ -435,85 +752,98 @@
             return [lat, lon];
         }
 
-        // Define colors for different marker types
-        const markerColors = {
-            service: '#3b82f6',    // blue
-            completed: '#10b981',  // green
-            robot: '#ef4444'       // red
-        };
-
-        // Function to add a simulated activity
         function addSimulatedActivity() {
-            // Determine activity type based on probabilities
-            const rand = Math.random();
-            let activityType;
-            if (rand < 0.6) {
-                activityType = 'service';
-            } else if (rand < 0.8) {
-                activityType = 'completed';
-            } else {
-                activityType = 'robot';
-            }
-
-            // Get a random location within current map bounds
+            if (!simulationEnabled) return;
+            
+            const activityLog = document.getElementById('simulated-activity-log');
             const [lat, lon] = getRandomLocation();
             const timestamp = new Date().toLocaleTimeString();
-
-            let logEntry, markerColor, popupContent;
-
-            switch(activityType) {
-                case 'service':
-                    const service = serviceRequests[Math.floor(Math.random() * serviceRequests.length)];
-                    logEntry = `[${timestamp}] Simulated service request: ${service} (simulated) at (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-                    markerColor = markerColors.service;
-                    popupContent = `<div style="padding: 8px;"><h6>Service Request</h6><p>${service}</p><p class="text-muted small">Simulated</p></div>`;
-                    break;
-                case 'completed':
-                    const completedService = serviceRequests[Math.floor(Math.random() * serviceRequests.length)];
-                    logEntry = `[${timestamp}] Simulated completed job: ${completedService} (simulated) at (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-                    markerColor = markerColors.completed;
-                    popupContent = `<div style="padding: 8px;"><h6>Completed Job</h6><p>${completedService}</p><p class="text-muted small">Simulated</p></div>`;
-                    break;
-                case 'robot':
-                    const robot = robotNames[Math.floor(Math.random() * robotNames.length)];
-                    logEntry = `[${timestamp}] Simulated robot location: ${robot} (simulated) at (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-                    markerColor = markerColors.robot;
-                    popupContent = `<div style="padding: 8px;"><h6>Robot Location</h6><p>${robot}</p><p class="text-muted small">Simulated</p></div>`;
-                    break;
+            
+            const rand = Math.random();
+            let logEntry, popupContent;
+            
+            if (rand < 0.5) {
+                const service = serviceRequests[Math.floor(Math.random() * serviceRequests.length)];
+                logEntry = `[${timestamp}] Service: ${service}`;
+                popupContent = `<div style="padding: 8px;"><h6>Service Request</h6><p>${service}</p><span class="badge" style="background: #f59e0b;">SIMULATED</span></div>`;
+            } else {
+                const robot = robotNames[Math.floor(Math.random() * robotNames.length)];
+                logEntry = `[${timestamp}] Robot: ${robot}`;
+                popupContent = `<div style="padding: 8px;"><h6>Robot Location</h6><p>${robot}</p><span class="badge" style="background: #f59e0b;">SIMULATED</span></div>`;
             }
-
-            // Add the log entry to the activity feed
+            
+            // Add log entry
             const logItem = document.createElement('div');
             logItem.textContent = logEntry;
             activityLog.appendChild(logItem);
-
-            // Scroll to the bottom to show the latest entry
             activityLog.scrollTop = activityLog.scrollHeight;
-
-            // Limit the activity log to the latest 100 entries
-            if (activityLog.children.length > 100) {
+            
+            if (activityLog.children.length > 50) {
                 activityLog.removeChild(activityLog.firstChild);
             }
-
-            // Add a marker to the map with a popup
+            
+            // Add marker
             const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent);
-            const marker = new mapboxgl.Marker({color: markerColor})
+            const marker = new mapboxgl.Marker({color: markerColors.simulated})
                 .setLngLat([lon, lat])
                 .setPopup(popup)
                 .addTo(map);
             
-            markers.push(marker);
+            simulatedMarkers.push(marker);
             
-            // Limit markers to 100 to prevent performance issues
-            if (markers.length > 100) {
-                markers.shift().remove();
+            if (simulatedMarkers.length > 50) {
+                simulatedMarkers.shift().remove();
             }
         }
 
-        // Wait for map to load before starting simulations
-        map.on('load', () => {
-            // Start adding simulated activities every 2 seconds
-            setInterval(addSimulatedActivity, 2000);
+        function startSimulation() {
+            simulationEnabled = true;
+            document.getElementById('simulatedSection').style.display = 'block';
+            simulationInterval = setInterval(addSimulatedActivity, 2000);
+        }
+
+        function stopSimulation() {
+            simulationEnabled = false;
+            document.getElementById('simulatedSection').style.display = 'none';
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+                simulationInterval = null;
+            }
+            clearSimulatedMarkers();
+            document.getElementById('simulated-activity-log').innerHTML = '';
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMap();
+            
+            // Simulation toggle
+            const simulationToggle = document.getElementById('simulationToggle');
+            if (simulationToggle) {
+                simulationToggle.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        startSimulation();
+                    } else {
+                        stopSimulation();
+                    }
+                });
+            }
+            
+            // Filter form
+            const filterForm = document.getElementById('filterForm');
+            if (filterForm) {
+                filterForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    if (map) {
+                        loadExchangeDataOnMap();
+                    }
+                });
+            }
+            
+            // Checkbox filters
+            document.getElementById('show-active-bids')?.addEventListener('change', () => loadExchangeDataOnMap());
+            document.getElementById('show-completed-jobs')?.addEventListener('change', () => loadExchangeDataOnMap());
+            document.getElementById('includeCompleted')?.addEventListener('change', () => loadExchangeDataOnMap());
         });
     </script>
 </body>

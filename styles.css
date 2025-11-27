@@ -266,6 +266,7 @@ body {
 .account-dropdown {
     position: relative;
     display: inline-block;
+    z-index: 9999;
 }
 
 .account-btn {
