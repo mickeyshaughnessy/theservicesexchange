@@ -355,5 +355,7 @@ def internal_error(error):
     logger.error(f"Internal server error: {str(error)}")
     return flask.jsonify({"error": "Internal server error"}), 500
 
+application = app
+
 if __name__ == '__main__':
     app.run(host=config.API_HOST, port=config.API_PORT, debug=False)
