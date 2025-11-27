@@ -35,6 +35,8 @@ body {
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255,255,255,0.1);
     padding: 0.75rem 0;
+    position: relative;
+    z-index: 1050;
 }
 
 .navbar-brand {
@@ -260,6 +262,18 @@ body {
 .service-tag:hover {
     background: rgba(255,255,255,0.2);
     transform: translateY(-2px);
+}
+
+/* Service tags inside modals */
+.modal .service-tag {
+    background: var(--light);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+}
+
+.modal .service-tag:hover {
+    background: var(--primary);
+    color: white;
 }
 
 /* Account Dropdown Styles */

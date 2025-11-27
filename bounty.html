@@ -971,7 +971,8 @@ asyncio.run(controller.poll_for_jobs())
                             </div>
                             <div id="chatPlaceholder">
                                 <div class="text-center text-muted p-4">
-                                    <p>Select a conversation to view messages or click "New Message" to start chatting.</p>
+                                    <p>Select a conversation to view messages or start a new one.</p>
+                                    <button type="button" class="btn btn-primary" onclick="showNewMessageForm()">New Message</button>
                                 </div>
                             </div>
                         </div>
@@ -992,7 +993,7 @@ asyncio.run(controller.poll_for_jobs())
                 <div class="modal-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6>Recent Posts</h6>
-                        <button class="btn btn-sm btn-primary" onclick="showNewPostForm()">New Post</button>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="showNewPostForm()">New Post</button>
                     </div>
                     
                     <div id="bulletinFeed" class="bulletin-feed">
