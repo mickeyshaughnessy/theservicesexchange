@@ -293,7 +293,7 @@ body {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     width: 380px;
-    z-index: 1100;
+    z-index: 10000;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);

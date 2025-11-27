@@ -56,8 +56,12 @@
             border-radius: 4px;
             margin-left: 8px;
         }
+        #simulatedSection {
+            max-height: 300px;
+            overflow: hidden;
+        }
         #simulated-activity-log {
-            max-height: 200px;
+            max-height: 180px;
             overflow-y: auto;
             font-size: 0.85rem;
             background: #fffbea;
@@ -203,38 +207,6 @@
                             <h6>Active Bid Details</h6>
                             <textarea id="activeBidsDetails" class="form-control" rows="6" readonly style="font-size: 0.85rem; background-color: #f8f9fa;"></textarea>
                         </div>
-                    </div>
-
-                    <!-- Filters -->
-                    <div class="filter-section mt-3">
-                        <h5>Exchange Data Filters</h5>
-                        <form id="filterForm">
-                            <div class="mb-3">
-                                <select class="form-control" id="categoryFilter">
-                                    <option value="">All Categories</option>
-                                    <option value="cleaning">Cleaning</option>
-                                    <option value="development">Development</option>
-                                    <option value="repair">Repairs</option>
-                                    <option value="tutoring">Tutoring</option>
-                                    <option value="design">Design</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <input type="text" class="form-control" placeholder="Location filter" id="locationFilter">
-                            </div>
-                            <div class="mb-3">
-                                <input type="number" class="form-control" placeholder="Max results" id="limitFilter" value="25" min="1" max="200">
-                            </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="includeCompleted" checked>
-                                    <label class="form-check-label" for="includeCompleted">
-                                        Include completed jobs
-                                    </label>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
-                        </form>
                     </div>
 
                     <!-- Recent Real Activity -->
