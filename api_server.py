@@ -34,7 +34,8 @@ from handlers import (
     get_conversations,
     get_chat_history,
     send_reply,
-    get_bulletin_feed
+    get_bulletin_feed,
+    get_platform_stats
 )
 from utils import get_token_username
 
@@ -287,6 +288,12 @@ def exchange_data():
         return flask.jsonify(response), status
     except ValueError:
         return flask.jsonify({"error": "Invalid parameters"}), 400
+
+@app.route('/stats', methods=['GET'])
+def stats():
+    """Public endpoint for platform statistics."""
+    response, status = get_platform_stats()
+    return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
 # Communication Endpoints

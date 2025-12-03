@@ -99,15 +99,45 @@
     <!-- Hero -->
     <section class="hero" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
         <div class="container">
-            <h1 style="color: white;">The Services Exchange</h1>
-            <p style="color: white;">Find any service through intelligent matching</p>
+            <h1 style="color: white;">Get Any Service Done</h1>
+            <p style="color: white;">Post what you need, get matched with the right provider</p>
             <div class="row justify-content-center">
                 <div class="col-md-6">
-                    <button class="btn btn-light btn-lg" onclick="showBuyerForm()">I Need a Service</button>
+                    <button class="btn btn-light btn-lg" onclick="showBuyerForm()">Request a Service</button>
                 </div>
             </div>
             
-            <div class="mt-5">
+            <!-- Live Stats -->
+            <div class="mt-5 mb-4">
+                <div class="row justify-content-center">
+                    <div class="col-auto">
+                        <div class="stat-badge">
+                            <span id="statDemand" class="stat-number">-</span>
+                            <span class="stat-label">Buyers</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="stat-badge">
+                            <span id="statSupply" class="stat-number">-</span>
+                            <span class="stat-label">Providers</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="stat-badge">
+                            <span id="statActive" class="stat-number">-</span>
+                            <span class="stat-label">Active Requests</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="stat-badge">
+                            <span id="statCompleted" class="stat-number">-</span>
+                            <span class="stat-label">Jobs Completed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
                 <span class="service-tag" onclick="selectService('House Cleaning')">House Cleaning</span>
                 <span class="service-tag" onclick="selectService('Web Development')">Web Development</span>
                 <span class="service-tag" onclick="selectService('Tutoring')">Tutoring</span>
@@ -208,6 +238,25 @@
                                 </div>
                                 <div class="mb-3">
                                     <input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">I want to:</label>
+                                    <div class="user-type-selector">
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="demand" id="typeDemand" required>
+                                            <span class="user-type-card">
+                                                <strong>Buy Services</strong>
+                                                <small>Post requests and hire providers</small>
+                                            </span>
+                                        </label>
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="supply" id="typeSupply">
+                                            <span class="user-type-card">
+                                                <strong>Provide Services</strong>
+                                                <small>Find work and earn money</small>
+                                            </span>
+                                        </label>
+                                    </div>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">Register</button>
                             </form>

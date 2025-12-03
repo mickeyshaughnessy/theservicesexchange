@@ -720,6 +720,78 @@ body {
     color: white;
 }
 
+/* Stat Badges */
+.stat-badge {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(4px);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.5rem;
+    text-align: center;
+    min-width: 100px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.8);
+    margin-top: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* User Type Selector */
+.user-type-selector {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.user-type-option {
+    flex: 1;
+    cursor: pointer;
+}
+
+.user-type-option input[type="radio"] {
+    display: none;
+}
+
+.user-type-card {
+    display: block;
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.user-type-card strong {
+    display: block;
+    color: var(--dark);
+    margin-bottom: 0.25rem;
+}
+
+.user-type-card small {
+    color: var(--gray);
+    font-size: 0.8rem;
+}
+
+.user-type-option input[type="radio"]:checked + .user-type-card {
+    border-color: var(--primary);
+    background: #eff6ff;
+}
+
+.user-type-option:hover .user-type-card {
+    border-color: #cbd5e1;
+}
+
 /* Mobile */
 @media (max-width: 768px) {
     .hero h1 {
@@ -736,6 +808,19 @@ body {
     
     .account-window {
         width: 300px;
+    }
+    
+    .stat-badge {
+        padding: 0.75rem 1rem;
+        min-width: 70px;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .user-type-selector {
+        flex-direction: column;
     }
 }
 

@@ -18,7 +18,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 import config
 from utils import (
-    get_account, save_account, account_exists,
+    get_account, save_account, account_exists, get_signup_stats,
     save_token,
     save_bid, get_bid, delete_bid, get_all_bids, get_user_bids,
     save_job, get_job, get_all_jobs, get_user_jobs,
@@ -286,6 +286,7 @@ def register_user(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     try:
         username = data.get('username', '').strip()
         password = data.get('password', '')
+        user_type = data.get('user_type', '').strip().lower()
         
         if not username or not password:
             return {"error": "Username and password required"}, 400
@@ -296,12 +297,16 @@ def register_user(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         if len(password) < 8:
             return {"error": "Password must be at least 8 characters"}, 400
         
+        if user_type not in ['demand', 'supply']:
+            return {"error": "User type must be 'demand' or 'supply'"}, 400
+        
         if account_exists(username):
             return {"error": "Username already exists"}, 400
         
         user_data = {
             'username': username,
             'password': generate_password_hash(password),
+            'user_type': user_type,
             'created_on': int(time.time()),
             'stars': 0,
             'total_ratings': 0,
@@ -309,7 +314,7 @@ def register_user(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         }
         
         save_account(username, user_data)
-        logger.info(f"User registered: {username}")
+        logger.info(f"User registered: {username} (type: {user_type})")
         
         return {"message": "Registration successful"}, 201
         
@@ -1108,4 +1113,26 @@ def get_bulletin_feed(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         return {"posts": posts}, 200
     except Exception as e:
         logger.error(f"Get bulletin feed error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+def get_platform_stats() -> Tuple[Dict[str, Any], int]:
+    """Get platform statistics including signup counts."""
+    try:
+        signup_stats = get_signup_stats()
+        all_bids = get_all_bids()
+        all_jobs = get_all_jobs()
+        current_time = int(time.time())
+        
+        active_bids = len([b for b in all_bids if b['end_time'] > current_time])
+        completed_jobs = len([j for j in all_jobs if j.get('status') == 'completed'])
+        
+        return {
+            'demand_signups': signup_stats['demand'],
+            'supply_signups': signup_stats['supply'],
+            'total_users': signup_stats['total'],
+            'active_requests': active_bids,
+            'completed_jobs': completed_jobs
+        }, 200
+    except Exception as e:
+        logger.error(f"Get platform stats error: {str(e)}")
         return {"error": "Internal server error"}, 500

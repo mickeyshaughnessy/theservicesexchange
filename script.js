@@ -44,7 +44,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up form event listeners
     setupEventListeners();
     initializeGrabJobPage();
+    
+    // Load platform stats for homepage
+    loadPlatformStats();
 });
+
+// Load platform statistics
+async function loadPlatformStats() {
+    try {
+        const response = await fetch(`${API_URL}/stats`);
+        if (response.ok) {
+            const stats = await response.json();
+            const els = {
+                demand: document.getElementById('statDemand'),
+                supply: document.getElementById('statSupply'),
+                active: document.getElementById('statActive'),
+                completed: document.getElementById('statCompleted')
+            };
+            if (els.demand) els.demand.textContent = stats.demand_signups || 0;
+            if (els.supply) els.supply.textContent = stats.supply_signups || 0;
+            if (els.active) els.active.textContent = stats.active_requests || 0;
+            if (els.completed) els.completed.textContent = stats.completed_jobs || 0;
+        }
+    } catch (error) {
+        console.log('Could not load platform stats:', error);
+    }
+}
 
 // Set up all event listeners
 function setupEventListeners() {
@@ -244,6 +269,8 @@ async function handleRegister(e) {
     
     const username = document.getElementById('regUsername').value.trim();
     const password = document.getElementById('regPassword').value;
+    const userTypeEl = document.querySelector('input[name="userType"]:checked');
+    const userType = userTypeEl ? userTypeEl.value : null;
     
     if (!username || !password) {
         showError('Please enter both username and password');
@@ -255,13 +282,18 @@ async function handleRegister(e) {
         return;
     }
     
+    if (!userType) {
+        showError('Please select whether you want to buy or provide services');
+        return;
+    }
+    
     setLoading(true, 'registerSubmitBtn');
     
     try {
         const response = await fetch(`${API_URL}/register`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, user_type: userType })
         });
         
         setLoading(false, 'registerSubmitBtn');

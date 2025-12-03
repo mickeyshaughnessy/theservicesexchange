@@ -55,6 +55,28 @@ def account_exists(username: str) -> bool:
     filepath = os.path.join(ACCOUNTS_DIR, f"{username}.json")
     return os.path.exists(filepath)
 
+def get_signup_stats() -> Dict[str, int]:
+    """Get counts of demand and supply signups."""
+    stats = {'demand': 0, 'supply': 0, 'total': 0}
+    try:
+        for filename in os.listdir(ACCOUNTS_DIR):
+            if filename.endswith('.json'):
+                filepath = os.path.join(ACCOUNTS_DIR, filename)
+                try:
+                    with open(filepath, 'r') as f:
+                        account = json.load(f)
+                        user_type = account.get('user_type', '')
+                        if user_type == 'demand':
+                            stats['demand'] += 1
+                        elif user_type == 'supply':
+                            stats['supply'] += 1
+                        stats['total'] += 1
+                except (IOError, json.JSONDecodeError):
+                    continue
+    except Exception as e:
+        logger.error(f"Error getting signup stats: {e}")
+    return stats
+
 # -----------------------------------------------------------------------------
 # Token Management
 # -----------------------------------------------------------------------------
