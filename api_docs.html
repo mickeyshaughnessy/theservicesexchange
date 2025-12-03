@@ -1308,6 +1308,25 @@ curl -X POST https://rse-api.com:5003/reject_job \
                                 <div class="mb-3">
                                     <input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required>
                                 </div>
+                                <div class="mb-3">
+                                    <label class="form-label">I want to:</label>
+                                    <div class="user-type-selector">
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="demand" id="typeDemand" required>
+                                            <span class="user-type-card">
+                                                <strong>Buy Services</strong>
+                                                <small>Post requests and hire providers</small>
+                                            </span>
+                                        </label>
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="supply" id="typeSupply">
+                                            <span class="user-type-card">
+                                                <strong>Provide Services</strong>
+                                                <small>Find work and earn money</small>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
                                 <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">Register</button>
                             </form>
                         </div>
