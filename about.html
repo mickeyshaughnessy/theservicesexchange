@@ -3,360 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Services Exchange - Seats & About</title>
+    <title>The Services Exchange - About</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            min-height: 100vh;
-            color: #333;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        /* Main Title */
-        .main-title {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .main-title h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            margin-bottom: 0.5rem;
-        }
-
-        .highlight {
-            background: linear-gradient(45deg, #ffd700, #ffed4e);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 800;
-        }
-
-        .subtitle {
-            color: #e0e6ed;
-            font-size: 1.2rem;
-            font-weight: 300;
-        }
-
-        /* Grid Layout */
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        /* Card Styles */
-        .info-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
+        .founder-card {
+            background: white;
+            border-radius: var(--radius-xl);
             padding: 2.5rem;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.4s ease;
-            position: relative;
-            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid #e2e8f0;
+            height: 100%;
         }
-
-        .info-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .info-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Special card types */
-        .golden-card::before {
-            background: linear-gradient(90deg, #ffd700, #ffed4e, #ffd700);
-        }
-
-        .silver-card::before {
-            background: linear-gradient(90deg, #c0c0c0, #e8e8e8, #c0c0c0);
-        }
-
-        .founder-card::before {
-            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
-        }
-
-        .token-card::before {
-            background: linear-gradient(90deg, #42e695, #3bb2b8, #42e695);
-        }
-
-        .info-card h2 {
-            font-size: 2rem;
-            margin-bottom: 1.5rem;
-            color: #2c3e50;
-            font-weight: 700;
-        }
-
-        .info-card p {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: #555;
-            margin-bottom: 1rem;
-        }
-
-        /* Founder specific styles */
         .founder-header {
             display: flex;
             align-items: center;
             gap: 1.5rem;
             margin-bottom: 1.5rem;
-            flex-wrap: wrap;
         }
-
         .founder-image {
             width: 100px;
             height: 100px;
             border-radius: 50%;
             object-fit: cover;
-            border: 4px solid #667eea;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-            flex-shrink: 0;
+            border: 4px solid var(--primary);
+            box-shadow: var(--shadow-md);
         }
-
-        .founder-info h2 {
-            margin-bottom: 0.5rem;
+        .founder-name {
             font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
         }
-
         .founder-title {
-            color: #667eea;
+            color: var(--primary);
             font-weight: 600;
-            font-size: 1rem;
         }
-
-        /* Token specific styles */
-        .token-header {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .token-logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
-            flex-shrink: 0;
-        }
-
-        .logo-text {
-            color: white;
-            font-weight: 800;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-        }
-
-        .token-details h3 {
-            color: #2c3e50;
-            margin-bottom: 0.5rem;
-            font-size: 1.2rem;
-        }
-
-        .coin-address {
-            font-family: 'Courier New', monospace;
-            background: #f8f9fa;
-            padding: 0.75rem;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-            word-break: break-all;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Special text styling */
-        .golden {
-            color: #ffd700;
-            font-weight: 700;
-            text-shadow: 1px 1px 2px rgba(255, 215, 0, 0.3);
-        }
-
-        .silver {
-            color: #c0c0c0;
-            font-weight: 700;
-            text-shadow: 1px 1px 2px rgba(192, 192, 192, 0.3);
-        }
-
-        .crypto-link {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .crypto-link:hover {
-            border-bottom-color: #667eea;
-            color: #5a6fd8;
-        }
-
-        .lock-info {
-            font-style: italic;
-            color: #666;
-            font-size: 1rem;
-        }
-
-        /* Contact Section */
-        .contact-section {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 2.5rem;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        .seat-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid #e2e8f0;
+            height: 100%;
             position: relative;
             overflow: hidden;
-            margin-bottom: 2rem;
         }
-
-        .contact-section::before {
+        .seat-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 5px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 4px;
         }
-
-        .contact-section h2 {
-            color: #2c3e50;
+        .seat-card.golden::before {
+            background: linear-gradient(90deg, #fbbf24, #fcd34d);
+        }
+        .seat-card.silver::before {
+            background: linear-gradient(90deg, #94a3b8, #cbd5e1);
+        }
+        .seat-card h3 {
+            font-weight: 700;
+            color: var(--dark);
             margin-bottom: 1rem;
-            font-size: 2rem;
         }
-
-        .contact-section p {
-            color: #555;
-            font-size: 1.2rem;
-            margin-bottom: 1.5rem;
+        .seat-card.golden h3 {
+            color: #b45309;
         }
-
-        .social-link {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .seat-card.silver h3 {
+            color: #475569;
+        }
+        .solana-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid #e2e8f0;
+            position: relative;
+            overflow: hidden;
+        }
+        .solana-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #9945FF, #14F195);
+        }
+        .token-address {
+            font-family: 'Monaco', 'Consolas', monospace;
+            background: #f8fafc;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid #e2e8f0;
+            word-break: break-all;
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+        .solana-link {
+            color: #9945FF;
             text-decoration: none;
-            padding: 1rem 2rem;
-            border-radius: 30px;
             font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-            display: inline-block;
         }
-
-        .social-link:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        .solana-link:hover {
+            text-decoration: underline;
         }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .info-card, .contact-section {
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        .info-card:nth-child(2) { animation-delay: 0.1s; }
-        .info-card:nth-child(3) { animation-delay: 0.2s; }
-        .info-card:nth-child(4) { animation-delay: 0.3s; }
-        .info-card:nth-child(5) { animation-delay: 0.4s; }
-        .info-card:nth-child(6) { animation-delay: 0.5s; }
-
-        /* Responsive Design */
         @media (max-width: 768px) {
-            .container {
-                padding: 0 15px;
-            }
-
-            .main-title h1 {
-                font-size: 2.5rem;
-            }
-
-            .grid-container {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-
-            .info-card {
-                padding: 2rem;
-            }
-
             .founder-header {
                 flex-direction: column;
                 text-align: center;
-            }
-
-            .token-header {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            nav {
-                gap: 1rem;
-            }
-
-            nav a {
-                padding: 0.5rem 1rem;
-                font-size: 0.9rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .main-title h1 {
-                font-size: 2rem;
-            }
-
-            .info-card h2 {
-                font-size: 1.6rem;
-            }
-
-            .info-card p {
-                font-size: 1rem;
-            }
-
-            .coin-address {
-                font-size: 0.8rem;
             }
         }
     </style>
@@ -364,34 +121,22 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="index.html">The Service Exchange</a>
+            <a class="navbar-brand" href="index.html">The Services Exchange</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.html">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="api_docs.html">API Docs</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="bounty.html">Demo Apps</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="dashboard.html">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="about.html" aria-current="page">About</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="api_docs.html">API Docs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="bounty.html">Demo Apps</a></li>
+                    <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="about.html" aria-current="page">About</a></li>
                 </ul>
                 <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
                 <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
                 <div id="accountDropdown" class="account-dropdown ms-3" style="display: none;">
-                    <button class="account-btn">
-                        <span id="accountUsername">Account</span> ▼
-                    </button>
+                    <button class="account-btn"><span id="accountUsername">Account</span> ▼</button>
                     <div class="account-window">
                         <div class="account-header">
                             <div class="d-flex justify-content-between align-items-center">
@@ -405,33 +150,15 @@
                         </div>
                         <div class="account-section">
                             <h6>Outstanding Requests</h6>
-                            <div class="loading-spinner" id="bidsLoading">
-                                <div class="spinner-border spinner-border-sm" role="status"></div>
-                                <span class="ms-2">Loading requests...</span>
-                            </div>
-                            <div id="outstandingBids">
-                                <p class="text-muted mb-0">No outstanding requests</p>
-                            </div>
+                            <div id="outstandingBids"><p class="text-muted mb-0">No outstanding requests</p></div>
                         </div>
                         <div class="account-section">
                             <h6>Active Services</h6>
-                            <div class="loading-spinner" id="activeJobsLoading">
-                                <div class="spinner-border spinner-border-sm" role="status"></div>
-                                <span class="ms-2">Loading active services...</span>
-                            </div>
-                            <div id="activeJobs">
-                                <p class="text-muted mb-0">No active services</p>
-                            </div>
+                            <div id="activeJobs"><p class="text-muted mb-0">No active services</p></div>
                         </div>
                         <div class="account-section">
                             <h6>Recent Completed Services</h6>
-                            <div class="loading-spinner" id="jobsLoading">
-                                <div class="spinner-border spinner-border-sm" role="status"></div>
-                                <span class="ms-2">Loading services...</span>
-                            </div>
-                            <div id="completedJobs">
-                                <p class="text-muted mb-0">No completed services</p>
-                            </div>
+                            <div id="completedJobs"><p class="text-muted mb-0">No completed services</p></div>
                         </div>
                     </div>
                 </div>
@@ -440,85 +167,113 @@
         </div>
     </nav>
 
-    <div class="container">
-        <div class="main-title">
-            <h1>The Services <span class="highlight">Exchange</span></h1>
-            <p class="subtitle">Connecting Providers with Real-World Services</p>
+    <!-- Hero Section -->
+    <section class="hero" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 100px 0 80px;">
+        <div class="container">
+            <h1 style="color: white;">About The Services Exchange</h1>
+            <p style="color: white;">A marketplace connecting buyers with service providers</p>
         </div>
-        
-        <div class="grid-container">
-            <!-- Golden Seats -->
-            <div class="info-card golden-card">
-                <h2>Golden Seats</h2>
-                <p>The first 1M seats are <span class="golden">Golden</span>, meant for physical service providers, like geriatric care, security, landscaping, food prep and many others. They are eternal, except in case of abuse and they have a 15-minute rate limit. Currently ~2% of the Golden seats have been sold in private auctions.</p>
-            </div>
+    </section>
 
-            <!-- Silver Seats -->
-            <div class="info-card silver-card">
-                <h2>Silver Seats</h2>
-                <p>The other seats are <span class="silver">Silver</span>, meant for pure software agents that can handle online work. They have a 15-minute rate limit. The only way to get Silver seats is to redeem the Solana coin $THERSX. 1000 coins currently gets one Silver seat. Silver seats are only good for 30 days from the date of issue and are fully transferable.</p>
-            </div>
-
-            <!-- About Seats -->
-            <div class="info-card">
-                <h2>About Seats</h2>
-                <p>A seat consists of a serial number, a secret phrase and an owner address. Seats are the digital assets that allow a provider to access the /grab_job route on the exchange and get something to do. Seats are fully transferable, so you can rent or sell them. Seats are rate limited, so no more than one 1 request per N minutes is allowed.</p>
-            </div>
-
-            <!-- Token Info -->
-            <div class="info-card token-card">
-                <h2>$THERSX Token</h2>
-                <div class="token-header">
-                    <div class="token-logo">
-                        <span class="logo-text">THERSX</span>
-                    </div>
-                    <div class="token-details">
-                        <h3>Solana Token Address:</h3>
-                        <p class="coin-address">GL9ybQfyELjrRch6ExjLW33TjPQmLKXxsZJJCCiPpump</p>
+    <!-- Founders Section -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5" style="font-weight: 700;">Meet the Founders</h2>
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="founder-card">
+                        <div class="founder-header">
+                            <img src="https://mithrilmedia.s3.amazonaws.com/mickey.png" alt="Mickey Shaughnessy" class="founder-image">
+                            <div>
+                                <div class="founder-name">Mickey Shaughnessy</div>
+                                <div class="founder-title">Co-Founder & Creator</div>
+                            </div>
+                        </div>
+                        <p>I'm Mickey Shaughnessy, co-founder of The Services Exchange. I live in Lakewood, CO with my wife and 4 kids and I've built things all my life.</p>
+                        <p class="mb-0">The Services Exchange was born from the insight that we need a marketplace where people bid for services - connecting those who need work done with those who can do it.</p>
                     </div>
                 </div>
-                <p>Streamflow lock: <a href="https://app.streamflow.finance/contract/solana/mainnet/9RPjrrvnjai2yfffBAS16HF2ZPJvyEEr8iecUXfZBYcg" class="crypto-link">View Contract</a></p>
-                <p class="lock-info">~86% of the dev coins locked until ~ May 1, 2035</p>
-            </div>
-
-            <!-- Mickey Shaughnessy -->
-            <div class="info-card founder-card">
-                <div class="founder-header">
-                    <img src="https://mithrilmedia.s3.amazonaws.com/mickey.png" alt="Mickey Shaughnessy" class="founder-image">
-                    <div class="founder-info">
-                        <h2>Mickey Shaughnessy</h2>
-                        <p class="founder-title">Co-Founder & Creator of SEX Protocol</p>
+                <div class="col-md-6">
+                    <div class="founder-card">
+                        <div class="founder-header">
+                            <img src="https://mithrilmedia.s3.amazonaws.com/aftab.png" alt="Dr. Aftab Ahmed" class="founder-image">
+                            <div>
+                                <div class="founder-name">Dr. Aftab Ahmed</div>
+                                <div class="founder-title">Co-Founder</div>
+                            </div>
+                        </div>
+                        <p>Dr. Aftab Ahmed is an experienced scientist and small business owner/operator, bringing deep technical expertise and entrepreneurial experience to The Services Exchange.</p>
+                        <p class="mb-0">His background in research and business operations helps drive the platform's growth and development.</p>
                     </div>
                 </div>
-                <p>Greetings, I'm Mickey Shaughnessy, co-founder of The Services Exchange and creator of the SEX Protocol. I live in Lakewood, CO with my wife and 4 kids and I've built things all my life.</p>
-                <p>The Services Exchange and SEX protocol were born from the insight that we need a marketplace where people bid for services.</p>
             </div>
 
-            <!-- Dr. Aftab Ahmed -->
-            <div class="info-card founder-card">
-                <div class="founder-header">
-                    <img src="https://mithrilmedia.s3.amazonaws.com/aftab.png" alt="Dr. Aftab Ahmed" class="founder-image">
-                    <div class="founder-info">
-                        <h2>Dr. Aftab Ahmed</h2>
-                        <p class="founder-title">Co-Founder</p>
+            <!-- Seats Section -->
+            <h2 class="text-center mb-4" style="font-weight: 700;">Provider Seats</h2>
+            <p class="text-center text-muted mb-5">Seats are digital credentials that allow providers to access jobs on the exchange. Each seat has a serial number, secret phrase, and owner address. Seats are fully transferable and rate-limited to one request per 15 minutes.</p>
+            
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="seat-card golden">
+                        <h3>Golden Seats</h3>
+                        <p>The first 1 million seats are Golden, designed for physical service providers like geriatric care, security, landscaping, food prep, and more.</p>
+                        <ul class="mb-0">
+                            <li>Permanent (eternal unless revoked for abuse)</li>
+                            <li>15-minute rate limit</li>
+                            <li>~2% sold in private auctions</li>
+                        </ul>
                     </div>
                 </div>
-                <p>Dr. Aftab Ahmed is an experienced scientist and small business owner/operator, bringing deep technical expertise and entrepreneurial experience to The Services Exchange platform.</p>
+                <div class="col-md-6">
+                    <div class="seat-card silver">
+                        <h3>Silver Seats</h3>
+                        <p>Silver seats are for software agents that handle online work. They can only be obtained by redeeming the $THERSX token.</p>
+                        <ul class="mb-0">
+                            <li>Valid for 30 days from issue date</li>
+                            <li>15-minute rate limit</li>
+                            <li>1,000 $THERSX = 1 Silver seat</li>
+                            <li>Fully transferable</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Solana Token Section -->
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-8">
+                    <div class="solana-card">
+                        <h3 class="mb-4" style="font-weight: 700;">$THERSX Token (Solana)</h3>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="text-muted small mb-1">Token Address</label>
+                                <div class="token-address">GL9ybQfyELjrRch6ExjLW33TjPQmLKXxsZJJCCiPpump</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="text-muted small mb-1">Token Lock</label>
+                                <p class="mb-1"><a href="https://app.streamflow.finance/contract/solana/mainnet/9RPjrrvnjai2yfffBAS16HF2ZPJvyEEr8iecUXfZBYcg" class="solana-link" target="_blank">View Streamflow Contract</a></p>
+                                <p class="text-muted small mb-0">~86% of dev coins locked until May 1, 2035</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <p class="mb-0 text-muted">Redeem $THERSX tokens for Silver seats. Contact <a href="https://x.com/RobotServicesX" class="solana-link">@RobotServicesX</a> on X to redeem tokens or transfer seats.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Section -->
+            <div class="text-center py-4">
+                <h3 class="mb-3" style="font-weight: 700;">Get in Touch</h3>
+                <p class="text-muted mb-4">Questions about seats, tokens, or the platform? Reach out on X.</p>
+                <a href="https://x.com/RobotServicesX" class="btn btn-primary btn-lg">@RobotServicesX</a>
             </div>
         </div>
-
-        <div class="contact-section">
-            <h2>Get Started</h2>
-            <p>Contact us on X to transfer seats, redeem $THERSX, or join the services revolution:</p>
-            <a href="https://x.com/RobotServicesX" class="social-link">@RobotServicesX</a>
-        </div>
-    </div>
+    </section>
 
     <footer class="footer">
         <div class="container">
             <div class="row">
                 <div class="col-md-4">
-                    <h5>The Service Exchange</h5>
+                    <h5>The Services Exchange</h5>
                     <p>Decentralized marketplace for services.</p>
                 </div>
                 <div class="col-md-4">
@@ -533,11 +288,12 @@
                 </div>
             </div>
             <div class="mt-5 pt-4 border-top border-secondary text-center">
-                <p class="mb-0">&copy; 2025 The Service Exchange Protocol. All rights reserved.</p>
+                <p class="mb-0">&copy; 2025 The Services Exchange. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
+    <!-- Auth Modal -->
     <div class="modal fade" id="authModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -548,32 +304,33 @@
                 <div class="modal-body">
                     <div id="authError" class="error-message" style="display: none;"></div>
                     <ul class="nav nav-tabs mb-3">
-                        <li class="nav-item">
-                            <a class="nav-link active" data-bs-toggle="tab" href="#login">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="tab" href="#register">Register</a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#login">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#register">Register</a></li>
                     </ul>
                     <div class="tab-content">
                         <div class="tab-pane active" id="login">
                             <form id="loginForm">
-                                <div class="mb-3">
-                                    <input type="text" class="form-control" placeholder="Username" id="loginUsername" required>
-                                </div>
-                                <div class="mb-3">
-                                    <input type="password" class="form-control" placeholder="Password" id="loginPassword" required>
-                                </div>
+                                <div class="mb-3"><input type="text" class="form-control" placeholder="Username" id="loginUsername" required></div>
+                                <div class="mb-3"><input type="password" class="form-control" placeholder="Password" id="loginPassword" required></div>
                                 <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">Login</button>
                             </form>
                         </div>
                         <div class="tab-pane" id="register">
                             <form id="registerForm">
+                                <div class="mb-3"><input type="text" class="form-control" placeholder="Username" id="regUsername" required></div>
+                                <div class="mb-3"><input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required></div>
                                 <div class="mb-3">
-                                    <input type="text" class="form-control" placeholder="Username" id="regUsername" required>
-                                </div>
-                                <div class="mb-3">
-                                    <input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required>
+                                    <label class="form-label">I want to:</label>
+                                    <div class="user-type-selector">
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="demand" id="typeDemand" required>
+                                            <span class="user-type-card"><strong>Buy Services</strong><small>Post requests and hire providers</small></span>
+                                        </label>
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="supply" id="typeSupply">
+                                            <span class="user-type-card"><strong>Provide Services</strong><small>Find work and earn money</small></span>
+                                        </label>
+                                    </div>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">Register</button>
                             </form>
@@ -584,118 +341,7 @@
         </div>
     </div>
 
-    <div class="modal fade" id="chatModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">💬 Inbox</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-4">
-                            <h6>Conversations</h6>
-                            <div class="chat-inbox" id="chatInbox">
-                                <div class="loading-spinner" id="conversationsLoading">
-                                    <div class="spinner-border spinner-border-sm" role="status"></div>
-                                    <span class="ms-2">Loading...</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-8">
-                            <div id="conversationView" style="display: none;">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h6 id="currentConversationUser">Select a conversation</h6>
-                                    <button class="btn btn-sm btn-primary" onclick="showNewMessageForm()">New Message</button>
-                                </div>
-                                <div class="message-history" id="messageHistory"></div>
-                                <form id="replyForm" style="display: none;">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" placeholder="Type your reply..." id="replyMessage" required>
-                                        <button type="submit" class="btn btn-primary">Send</button>
-                                    </div>
-                                </form>
-                            </div>
-                            <div id="newMessageForm" style="display: none;">
-                                <h6>New Message</h6>
-                                <form id="chatForm">
-                                    <div class="mb-3">
-                                        <input type="text" class="form-control" placeholder="Recipient username" id="chatRecipient" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <textarea class="form-control" rows="3" placeholder="Your message" id="chatMessage" required></textarea>
-                                    </div>
-                                    <div class="mb-3">
-                                        <input type="text" class="form-control" placeholder="Job ID (optional)" id="chatJobId">
-                                        <small class="text-muted">Link this message to a specific job</small>
-                                    </div>
-                                    <div class="d-flex gap-2">
-                                        <button type="submit" class="btn btn-primary">Send Message</button>
-                                        <button type="button" class="btn btn-secondary" onclick="hideNewMessageForm()">Cancel</button>
-                                    </div>
-                                </form>
-                            </div>
-                            <div id="chatPlaceholder">
-                                <div class="text-center text-muted p-4">
-                                    <p>Select a conversation to view messages or start a new one.</p>
-                                    <button type="button" class="btn btn-primary" onclick="showNewMessageForm()">New Message</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="bulletinModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">📢 Community Bulletin</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6>Recent Posts</h6>
-                        <button type="button" class="btn btn-sm btn-primary" onclick="showNewPostForm()">New Post</button>
-                    </div>
-                    <div id="bulletinFeed" class="bulletin-feed">
-                        <div class="loading-spinner" id="bulletinLoading">
-                            <div class="spinner-border spinner-border-sm" role="status"></div>
-                            <span class="ms-2">Loading posts...</span>
-                        </div>
-                    </div>
-                    <div id="newPostForm" style="display: none;" class="mt-3 p-3 border rounded">
-                        <h6>Create New Post</h6>
-                        <form id="bulletinForm">
-                            <div class="mb-3">
-                                <input type="text" class="form-control" placeholder="Post title" id="bulletinTitle" required>
-                            </div>
-                            <div class="mb-3">
-                                <select class="form-control" id="bulletinCategory">
-                                    <option value="general">General</option>
-                                    <option value="announcement">Announcement</option>
-                                    <option value="question">Question</option>
-                                    <option value="offer">Service Offer</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <textarea class="form-control" rows="4" placeholder="Post content" id="bulletinContent" required></textarea>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary">Post to Bulletin</button>
-                                <button type="button" class="btn btn-secondary" onclick="hideNewPostForm()">Cancel</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
-
 </body>
 </html>
