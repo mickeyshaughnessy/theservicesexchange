@@ -122,6 +122,7 @@
                     <a href="#register">Register</a>
                     <a href="#login">Login</a>
                     <a href="#account">Account</a>
+                    <a href="#stats">Platform Stats</a>
                     <a href="#my-bids">My Bids</a>
                     <a href="#my-jobs">My Jobs</a>
                     <a href="#submit-bid">Submit Bid</a>
@@ -308,7 +309,7 @@ echo -n "your-seat-phrase" | md5sum</div>
                 <!-- Register -->
                 <div id="register" class="endpoint">
                     <h3><span class="method post">POST</span> <span class="path">/register</span></h3>
-                    <p>Create a new user account.</p>
+                    <p>Create a new user account. Users must choose to register as either a buyer (demand) or provider (supply) - not both.</p>
                     
                     <h4>Request Body</h4>
                     <table class="param-table">
@@ -316,6 +317,7 @@ echo -n "your-seat-phrase" | md5sum</div>
                             <tr>
                                 <th>Parameter</th>
                                 <th>Type</th>
+                                <th>Required</th>
                                 <th>Description</th>
                             </tr>
                         </thead>
@@ -323,24 +325,42 @@ echo -n "your-seat-phrase" | md5sum</div>
                             <tr>
                                 <td><code>username</code></td>
                                 <td>string</td>
+                                <td>Yes</td>
                                 <td>Unique username (3-20 characters)</td>
                             </tr>
                             <tr>
                                 <td><code>password</code></td>
                                 <td>string</td>
+                                <td>Yes</td>
                                 <td>Password (minimum 8 characters)</td>
+                            </tr>
+                            <tr>
+                                <td><code>user_type</code></td>
+                                <td>string</td>
+                                <td>Yes</td>
+                                <td>Account type: <code>"demand"</code> (buyer) or <code>"supply"</code> (provider)</td>
                             </tr>
                         </tbody>
                     </table>
 
-                    <h4>Example Request</h4>
+                    <h4>Example Request (Buyer)</h4>
                     <div class="code-block">curl -X POST https://rse-api.com:5003/register \
   -H "Content-Type: application/json" \
-  -d '{"username": "john_doe", "password": "securepass123"}'</div>
+  -d '{"username": "john_doe", "password": "securepass123", "user_type": "demand"}'</div>
+
+                    <h4>Example Request (Provider)</h4>
+                    <div class="code-block">curl -X POST https://rse-api.com:5003/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "alice_cleaner", "password": "securepass123", "user_type": "supply"}'</div>
 
                     <h4>Example Response</h4>
                     <div class="code-block">{
   "message": "Registration successful"
+}</div>
+
+                    <h4>Error Response (Missing user_type)</h4>
+                    <div class="code-block">{
+  "error": "User type must be 'demand' or 'supply'"
 }</div>
                 </div>
 
@@ -396,11 +416,30 @@ echo -n "your-seat-phrase" | md5sum</div>
                     <h4>Example Response</h4>
                     <div class="code-block">{
   "username": "john_doe",
+  "user_type": "demand",
   "created_on": 1703001600,
   "stars": 4.5,
   "total_ratings": 12,
   "completed_jobs": 10,
   "reputation_score": 4.2
+}</div>
+                </div>
+
+                <!-- Platform Stats -->
+                <div id="stats" class="endpoint">
+                    <h3><span class="method get">GET</span> <span class="path">/stats</span></h3>
+                    <p>Get public platform statistics including signup counts and activity metrics. No authentication required.</p>
+                    
+                    <h4>Example Request</h4>
+                    <div class="code-block">curl https://rse-api.com:5003/stats</div>
+
+                    <h4>Example Response</h4>
+                    <div class="code-block">{
+  "demand_signups": 42,
+  "supply_signups": 18,
+  "total_users": 60,
+  "active_requests": 15,
+  "completed_jobs": 127
 }</div>
                 </div>
 
