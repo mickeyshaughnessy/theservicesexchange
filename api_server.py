@@ -183,6 +183,18 @@ def root():
         "status": "operational"
     }), 200
 
+@app.route('/api_docs.html')
+def serve_docs():
+    return flask.send_from_directory('.', 'api_docs.html')
+
+@app.route('/styles.css')
+def serve_css():
+    return flask.send_from_directory('.', 'styles.css')
+
+@app.route('/script.js')
+def serve_js():
+    return flask.send_from_directory('.', 'script.js')
+
 # -----------------------------------------------------------------------------
 # Authentication Endpoints
 # -----------------------------------------------------------------------------
