@@ -105,6 +105,12 @@ function setupEventListeners() {
     if (forms.bulletin) forms.bulletin.addEventListener('submit', handleBulletinPost);
     if (forms.nearby) forms.nearby.addEventListener('submit', handleNearbySearch);
     if (forms.filter) forms.filter.addEventListener('submit', handleFilterApplication);
+
+    // Setup click listener for Base URL copy
+    const baseUrlSpan = document.getElementById('baseUrl');
+    if (baseUrlSpan) {
+        baseUrlSpan.addEventListener('click', copyBaseUrl);
+    }
 }
 
 // Utility Functions
