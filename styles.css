@@ -748,6 +748,12 @@ body {
     letter-spacing: 0.05em;
 }
 
+.letter-spacing-2 {
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
 /* User Type Selector */
 .user-type-selector {
     display: flex;
