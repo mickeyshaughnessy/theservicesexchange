@@ -97,43 +97,13 @@
     </nav>
 
     <!-- Hero -->
-    <section class="hero" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <section class="hero" style="background: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);">
         <div class="container">
             <h1 style="color: white;">Get Any Service Done</h1>
             <p style="color: white;">Post what you need, get matched with the right provider</p>
             <div class="row justify-content-center">
                 <div class="col-md-6">
                     <button class="btn btn-light btn-lg" onclick="showBuyerForm()">Request a Service</button>
-                </div>
-            </div>
-            
-            <!-- Live Stats -->
-            <div class="mt-5 mb-4">
-                <div class="row justify-content-center">
-                    <div class="col-auto">
-                        <div class="stat-badge">
-                            <span id="statDemand" class="stat-number">-</span>
-                            <span class="stat-label">Buyers</span>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <div class="stat-badge">
-                            <span id="statSupply" class="stat-number">-</span>
-                            <span class="stat-label">Providers</span>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <div class="stat-badge">
-                            <span id="statActive" class="stat-number">-</span>
-                            <span class="stat-label">Active Requests</span>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <div class="stat-badge">
-                            <span id="statCompleted" class="stat-number">-</span>
-                            <span class="stat-label">Jobs Completed</span>
-                        </div>
-                    </div>
                 </div>
             </div>
             
@@ -144,6 +114,38 @@
                 <span class="service-tag" onclick="selectService('Graphic Design')">Graphic Design</span>
                 <span class="service-tag" onclick="selectService('Home Repairs')">Home Repairs</span>
                 <span class="service-tag" onclick="selectService('Photography')">Photography</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Stats -->
+    <section class="py-4 border-bottom" style="background: #f8fafc;">
+        <div class="container">
+            <div class="row justify-content-center g-3">
+                <div class="col-auto">
+                    <div class="stat-badge">
+                        <span id="statDemand" class="stat-number">-</span>
+                        <span class="stat-label">Buyers</span>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="stat-badge">
+                        <span id="statSupply" class="stat-number">-</span>
+                        <span class="stat-label">Providers</span>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="stat-badge">
+                        <span id="statActive" class="stat-number">-</span>
+                        <span class="stat-label">Active Requests</span>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="stat-badge">
+                        <span id="statCompleted" class="stat-number">-</span>
+                        <span class="stat-label">Jobs Completed</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

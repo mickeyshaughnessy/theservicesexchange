@@ -1,6 +1,6 @@
 :root {
-    --primary: #4f46e5;
-    --primary-hover: #4338ca;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
     --secondary: #ec4899;
     --dark: #0f172a;
     --dark-lighter: #1e293b;
@@ -61,7 +61,7 @@ body {
 
 /* Header Styles */
 .header {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);
     color: white;
     padding: 80px 0;
     margin-bottom: 40px;
@@ -84,7 +84,7 @@ body {
     padding: 160px 0 120px;
     color: white;
     text-align: center;
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);
     position: relative;
     z-index: 1;
 }
@@ -268,8 +268,8 @@ body {
 
 /* Service tags inside modals */
 .modal .service-tag {
-    background: #e0e7ff;
-    color: #3730a3;
+    background: #dbeafe;
+    color: #1e40af;
     border: 1px solid var(--primary);
 }
 
@@ -722,27 +722,27 @@ body {
 
 /* Stat Badges */
 .stat-badge {
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(4px);
+    background: white;
     border-radius: var(--radius-lg);
     padding: 1rem 1.5rem;
     text-align: center;
     min-width: 100px;
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid #e2e8f0;
+    box-shadow: var(--shadow-sm);
 }
 
 .stat-number {
     display: block;
     font-size: 2rem;
     font-weight: 800;
-    color: white;
+    color: var(--primary);
     line-height: 1;
 }
 
 .stat-label {
     display: block;
     font-size: 0.8rem;
-    color: rgba(255,255,255,0.8);
+    color: var(--gray);
     margin-top: 0.25rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
