@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Services Exchange - Find Any Service</title>
+    <title>The Services Exchange - Demo Applications</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=2" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
 </head>
 <body>
     <!-- Navigation -->
@@ -18,13 +18,13 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="index.html" aria-current="page">Home</a>
+                        <a class="nav-link" href="index.html">Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="api_docs.html">API Docs</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="bounty.html">Demo Apps</a>
+                        <a class="nav-link active" href="apps.html" aria-current="page">Demo Apps</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="dashboard.html">Dashboard</a>
@@ -96,88 +96,266 @@
         </div>
     </nav>
 
-    <!-- Hero -->
-    <section class="hero" style="background: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);">
-        <div class="container">
-            <h1 style="color: white;">Get Any Service Done</h1>
-            <p style="color: white;">Post what you need, get matched with the right provider</p>
-            <div class="row justify-content-center">
-                <div class="col-md-6">
-                    <button class="btn btn-light btn-lg" onclick="showBuyerForm()">Request a Service</button>
+    <div class="container py-5">
+        <!-- Demo Applications -->
+        <div id="demo-apps" class="endpoint">
+            <h2>Demo Applications</h2>
+            <p>The Service Exchange API powers various application types, from simple service requests to complex automated systems. Here are some demo applications showcasing different use cases:</p>
+            
+            <h3>Demand-Side Applications</h3>
+            
+            <div class="endpoint" style="margin-left: 20px; border-left: 4px solid var(--primary);">
+                <h4>🏠 Honey-do</h4>
+                <p><strong>Simple house repair and maintenance app</strong></p>
+                <p>Honey-do is a user-friendly mobile app that connects homeowners with local repair professionals. Users can quickly post repair needs and find nearby service providers.</p>
+                
+                <h5>Key Features:</h5>
+                <ul>
+                    <li>Simple interface for posting repair requests</li>
+                    <li>Integration with <code>/submit_bid</code> for creating service requests</li>
+                    <li>Uses <code>/nearby</code> to find local contractors and handypeople</li>
+                    <li>Photo upload for repair assessments</li>
+                    <li>Real-time bidding and price negotiations</li>
+                </ul>
+                
+                <h5>Example API Usage:</h5>
+                <div class="code-block">// Post a repair request
+const repairRequest = {
+  service: {
+    type: "home_repair",
+    category: "plumbing",
+    description: "Leaky kitchen faucet",
+    urgency: "medium",
+    photos: ["faucet1.jpg", "faucet2.jpg"]
+  },
+  price: 125.00,
+  currency: "USD",
+  payment_method: "credit_card",
+  location_type: "physical",
+  address: "123 Maple Street, Denver, CO"
+};</div>
+            </div>
+            
+            <div class="endpoint" style="margin-left: 20px; border-left: 4px solid var(--primary);">
+                <h4>🤖 Vibe Co-Pilot</h4>
+                <p><strong>Chat-based platform for app development by AI agents</strong></p>
+                <p>Vibe Co-Pilot enables users to describe their app ideas in natural language and automatically creates service requests for software agents to build and deploy applications.</p>
+                
+                <h5>Key Features:</h5>
+                <ul>
+                    <li>Natural language processing for app requirements</li>
+                    <li>Automatic bid creation via <code>/submit_bid</code> for development tasks</li>
+                    <li>Discovery of available software agents using <code>/nearby</code></li>
+                    <li>Real-time progress tracking and communication</li>
+                    <li>Automated deployment and testing coordination</li>
+                </ul>
+                
+                <h5>Example Workflow:</h5>
+                <div class="code-block">User: "I need a simple e-commerce site for selling handmade jewelry"
+
+Vibe Co-Pilot generates:
+{
+  service: {
+    type: "app_development",
+    platform: "web",
+    frameworks: ["React", "Node.js", "Stripe"],
+    features: ["product_catalog", "shopping_cart", "payment_processing"],
+    deadline: "2025-11-01",
+    complexity: "medium"
+  },
+  price: 2500.00,
+  currency: "USD",
+  payment_method: "xmoney",
+  location_type: "remote"
+}</div>
+                <!-- Government Agency Integration Example -->
+                <div class="borland-section" style="background: #000080; color: #00FFFF; padding: 20px; border: 2px solid #FFFF00; font-family: 'Courier New', monospace;">
+                    <h3 style="color: #FFFF00; text-align: center; margin: 0 0 15px 0;">PALANTIR GOVERNMENT PROCUREMENT INTEGRATION</h3>
+                    
+                    <div style="background: #000040; border: 1px solid #00FF00; padding: 10px; margin: 10px 0;">
+                        <span style="color: #00FF00;">AGENCY:</span> <span style="color: #FFFFFF;">USDA / NSA Federal Services</span><br>
+                        <span style="color: #00FF00;">PURPOSE:</span> <span style="color: #FFFFFF;">Automated service procurement via Ontology</span>
+                    </div>
+
+                    <h4 style="color: #00FFFF; margin: 15px 0 5px 0;">SERVICE CATEGORIES</h4>
+                    <table style="width: 100%; color: #FFFFFF; border-collapse: collapse;">
+                        <tr style="background: #000040;">
+                            <td style="color: #FFFF00; border: 1px solid #00FF00; padding: 5px;">Agricultural Data Analysis</td>
+                            <td style="border: 1px solid #00FF00; padding: 5px;">$50K-200K</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #FFFF00; border: 1px solid #00FF00; padding: 5px;">Cybersecurity Assessment</td>
+                            <td style="border: 1px solid #00FF00; padding: 5px;">$75K-300K</td>
+                        </tr>
+                        <tr style="background: #000040;">
+                            <td style="color: #FFFF00; border: 1px solid #00FF00; padding: 5px;">Rural Infrastructure</td>
+                            <td style="border: 1px solid #00FF00; padding: 5px;">$100K-500K</td>
+                        </tr>
+                    </table>
+
+                    <h4 style="color: #00FFFF; margin: 15px 0 5px 0;">PYTHON INTEGRATION</h4>
+                    <div style="background: #000000; border: 1px solid #00FF00; padding: 10px; overflow-x: auto;">
+                        <pre style="margin: 0; color: #00FF00; font-size: 12px;"><code>#!/usr/bin/env python3
+# Federal Agency Service Procurement
+import requests, json
+from palantir_ontology import OntologyClient
+
+class GovProcurement:
+    def __init__(self, palantir_host, exchange_api):
+        self.ontology = OntologyClient(palantir_host)
+        self.api = exchange_api
+        self.token = self.auth_agency()
+    
+    def auth_agency(self):
+        resp = requests.post(f"{self.api}/gov_login", json={
+            "agency_id": "USDA_001", "cert": "GSA_APPROVED"
+        })
+        return resp.json()['access_token']
+    
+    def submit_requirement(self, ontology_req):
+        service_data = {
+            "service": {
+                "type": ontology_req.category,
+                "security_clearance": ontology_req.clearance,
+                "compliance": ["FedRAMP", "FISMA"]
+            },
+            "price": ontology_req.budget_ceiling,
+            "payment_method": "gov_purchase_card",
+            "location_type": "hybrid"
+        }
+        
+        headers = {"Authorization": f"Bearer {self.token}"}
+        resp = requests.post(f"{self.api}/submit_bid", 
+                           headers=headers, json=service_data)
+        
+        if resp.status_code == 200:
+            bid_id = resp.json()['bid_id']
+            self.ontology.update_object(ontology_req.id, 
+                                      {"exchange_bid": bid_id})
+            return bid_id
+
+# Usage
+proc = GovProcurement("https://usda.palantir.com", 
+                     "https://rse-api.com:5003")
+requirements = proc.ontology.query("approved_services")
+for req in requirements:
+    bid_id = proc.submit_requirement(req)
+    print(f"Posted: {bid_id}")</code></pre>
+                    </div>
+
+                    <h4 style="color: #00FFFF; margin: 15px 0 5px 0;">COMPLIANCE FEATURES</h4>
+                    <div style="color: #FFFFFF;">
+                        <span style="color: #00FF00;">✓</span> FedRAMP/FISMA security compliance<br>
+                        <span style="color: #00FF00;">✓</span> SAM.gov vendor verification<br>
+                        <span style="color: #00FF00;">✓</span> Budget tracking integration<br>
+                        <span style="color: #00FF00;">✓</span> Complete audit trail in Palantir
+                    </div>
+
+                    <h4 style="color: #00FFFF; margin: 15px 0 5px 0;">PROJECT DECOMPOSITION</h4>
+                    <div style="background: #000000; border: 1px solid #00FF00; padding: 10px;">
+                        <pre style="margin: 0; color: #00FF00; font-size: 12px;"><code># Break large project into sub-jobs via chat/bulletin
+def decompose_project(self, large_project_id):
+    # Post project overview to bulletin
+    bulletin_data = {
+        "title": "USDA Agricultural Monitoring System - Seeking Partners",
+        "content": "$2M project split into: Data Collection ($500K), Analysis Platform ($800K), Reporting Dashboard ($400K), Training ($300K)",
+        "category": "announcement"
+    }
+    requests.post(f"{self.api}/bulletin", 
+                  headers=headers, json=bulletin_data)
+    
+    # Chat with interested vendors for capability discussion
+    vendors = ["AgTech_Solutions", "DataViz_Corp"]
+    for vendor in vendors:
+        chat_msg = {
+            "recipient": vendor,
+            "message": "Which components can your team handle? Send capability matrix."
+        }
+        requests.post(f"{self.api}/chat", headers=headers, json=chat_msg)
+    
+    # Create separate bids for each component
+    components = [
+        {"service": "Satellite data collection system", "price": 500000},
+        {"service": "ML analysis platform", "price": 800000},
+        {"service": "Executive dashboard", "price": 400000}
+    ]
+    for component in components:
+        self.submit_requirement(component)</code></pre>
+                    </div>
+
+                    <div style="color: #FFFFFF; margin: 10px 0;">
+                        <span style="color: #00FF00;">BENEFITS:</span> Better vendor specialization, reduced risk, faster delivery, competitive pricing per component
+                    </div>
+
+                    <div style="background: #800000; border: 1px solid #FFFF00; padding: 8px; margin: 15px 0; color: #FFFF00;">
+                        <strong>COMPLIANCE:</strong> All procurement must meet FAR requirements. Vendors must be SAM.gov registered.
+                    </div>
                 </div>
             </div>
             
-            <div class="mt-4">
-                <span class="service-tag" onclick="selectService('House Cleaning')">House Cleaning</span>
-                <span class="service-tag" onclick="selectService('Web Development')">Web Development</span>
-                <span class="service-tag" onclick="selectService('Tutoring')">Tutoring</span>
-                <span class="service-tag" onclick="selectService('Graphic Design')">Graphic Design</span>
-                <span class="service-tag" onclick="selectService('Home Repairs')">Home Repairs</span>
-                <span class="service-tag" onclick="selectService('Photography')">Photography</span>
-            </div>
-        </div>
-    </section>
+            <h3>Supply-Side Applications</h3>
+            
+            <div class="endpoint" style="margin-left: 20px; border-left: 4px solid var(--gold);">
+                <h4>📝 Spell-checking Agent</h4>
+                <p><strong>Automated proofreading and editing service</strong></p>
+                <p>An intelligent software agent that provides professional proofreading and spell-checking services for documents, emails, and web content.</p>
+                
+                <h5>Agent Capabilities:</h5>
+                <ul>
+                    <li>Continuously monitors for text editing jobs via <code>/grab_job</code></li>
+                    <li>Supports multiple languages and writing styles</li>
+                    <li>Grammar correction, style suggestions, and readability improvements</li>
+                    <li>Fast turnaround times (typically under 5 minutes)</li>
+                    <li>Specialized handling for academic, business, and creative writing</li>
+                </ul>
+                
+                <h5>Service Registration:</h5>
+                <div class="code-block">// Agent continuously polls for jobs
+const grabJobRequest = {
+  capabilities: "spell checking, grammar correction, proofreading, style editing, academic writing, business writing",
+  location_type: "remote",
+  max_distance: null  // Remote work, no distance limit
+};
 
-    <!-- Live Stats -->
-    <section class="py-4 border-bottom" style="background: #f8fafc;">
-        <div class="container">
-            <div class="text-center mb-4">
-                <h5 class="text-muted text-uppercase letter-spacing-2">Live Market Stats</h5>
+// Handles text processing jobs like:
+{
+  type: "text_editing",
+  word_count: 1500,
+  document_type: "business_email",
+  language: "en-US",
+  deadline: "within_1_hour"
+}</div>
             </div>
-            <div class="row justify-content-center g-3">
-                <div class="col-auto">
-                    <div class="stat-badge">
-                        <span id="statDemand" class="stat-number">-</span>
-                        <span class="stat-label">Buyers</span>
-                    </div>
-                </div>
-                <div class="col-auto">
-                    <div class="stat-badge">
-                        <span id="statSupply" class="stat-number">-</span>
-                        <span class="stat-label">Providers</span>
-                    </div>
-                </div>
-                <div class="col-auto">
-                    <div class="stat-badge">
-                        <span id="statActive" class="stat-number">-</span>
-                        <span class="stat-label">Active Requests</span>
-                    </div>
-                </div>
-                <div class="col-auto">
-                    <div class="stat-badge">
-                        <span id="statCompleted" class="stat-number">-</span>
-                        <span class="stat-label">Jobs Completed</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features -->
-    <section class="py-5 bg-white">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <h3>🎯 Smart Matching</h3>
-                        <p>AI-powered matching connects you with the perfect service provider based on reputation, capability, and location.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <h3>⭐ Trusted Providers</h3>
-                        <p>All service providers are vetted and rated by the community. Our reputation system ensures quality.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <h3>💰 Fair Pricing</h3>
-                        <p>Market-driven pricing ensures fair rates for quality services. Transparent bidding process.</p>
-                    </div>
-                </div>
+            
+            <div class="endpoint" style="margin-left: 20px; border-left: 4px solid var(--gold);">
+                <h4>🚕 CrazyTaxi</h4>
+                <p><strong>Fleet management system for physical taxi services</strong></p>
+                <p>CrazyTaxi is a dispatch system that manages a fleet of physical taxis, automatically matching drivers with ride requests through the Service Exchange.</p>
+                
+                <h5>Fleet Management Features:</h5>
+                <ul>
+                    <li>Real-time GPS tracking of all fleet vehicles</li>
+                    <li>Automatic job grabbing via <code>/grab_job</code> based on driver availability</li>
+                    <li>Dynamic pricing based on demand and distance</li>
+                    <li>Driver performance monitoring and rating management</li>
+                    <li>Route optimization and traffic integration</li>
+                </ul>
+                
+                <h5>Driver Integration:</h5>
+                <div class="code-block">// Each taxi registers for ride jobs
+const taxiCapabilities = {
+  capabilities: "passenger_transport, airport_runs, city_rides, package_delivery",
+  location_type: "physical",
+  max_distance: 30,  // km radius
+  vehicle_info: {
+    type: "sedan",
+    capacity: 4,
+    wheelchair_accessible: false
+  }
+};</div>
             </div>
         </div>
-    </section>
+    </div>
 
     <footer class="footer">
         <div class="container">
@@ -244,95 +422,10 @@
                                 <div class="mb-3">
                                     <input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">I want to:</label>
-                                    <div class="user-type-selector">
-                                        <label class="user-type-option">
-                                            <input type="radio" name="userType" value="demand" id="typeDemand" required>
-                                            <span class="user-type-card">
-                                                <strong>Buy Services</strong>
-                                                <small>Post requests and hire providers</small>
-                                            </span>
-                                        </label>
-                                        <label class="user-type-option">
-                                            <input type="radio" name="userType" value="supply" id="typeSupply">
-                                            <span class="user-type-card">
-                                                <strong>Provide Services</strong>
-                                                <small>Find work and earn money</small>
-                                            </span>
-                                        </label>
-                                    </div>
-                                </div>
                                 <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">Register</button>
                             </form>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Service Request Modal -->
-    <div class="modal fade" id="bidModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Request a Service</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <p class="text-muted mb-2">Popular services:</p>
-                        <div id="popularServicesContainer">
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='House Cleaning'">House Cleaning</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Web Development'">Web Development</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Tutoring'">Tutoring</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Graphic Design'">Graphic Design</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Home Repairs'">Home Repairs</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Photography'">Photography</span>
-                        </div>
-                    </div>
-                    <form id="bidForm">
-                        <div class="mb-3">
-                            <textarea class="form-control" rows="3" placeholder="Describe the service you need" id="bidService" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Payment & Price</label>
-                            <div class="payment-method-group">
-                                <select class="form-control" id="paymentMethod">
-                                    <option value="USD">USD ($)</option>
-                                    <option value="EUR">EUR (€)</option>
-                                    <option value="GBP">GBP (£)</option>
-                                    <option value="BTC">Bitcoin</option>
-                                    <option value="ETH">Ethereum</option>
-                                    <option value="THERSX">$THERSX</option>
-                                </select>
-                                <input type="number" step="0.01" min="0" class="form-control" placeholder="Price amount" id="bidPrice" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Request Valid For</label>
-                            <div class="duration-input-group">
-                                <input type="number" class="form-control" placeholder="Duration" id="bidDuration" value="24" required min="1">
-                                <select class="form-control" id="bidDurationUnit">
-                                    <option value="hours">Hours</option>
-                                    <option value="days">Days</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <select class="form-control" id="bidLocationType">
-                                <option value="physical">Physical (In-Person)</option>
-                                <option value="remote">Remote (Online)</option>
-                                <option value="hybrid">Hybrid</option>
-                            </select>
-                        </div>
-                        <div class="mb-3" id="addressField">
-                            <input type="text" class="form-control" placeholder="Service Address" id="bidAddress">
-                            <small class="text-muted">We'll use your current location if not specified</small>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Submit Request</button>
-                    </form>
                 </div>
             </div>
         </div>
