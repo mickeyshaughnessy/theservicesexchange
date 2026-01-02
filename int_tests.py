@@ -54,17 +54,27 @@ class ServiceExchangeAPITester:
         assert response.status_code == 200, "API ping failed"
         print("✓ API health check passed")
         
-        # Create test users
-        buyer_username = f"test_buyer_{uuid.uuid4().hex[:8]}"
-        provider_username = f"test_provider_{uuid.uuid4().hex[:8]}"
+        # Create test users (max 20 chars for username)
+        buyer_username = f"buyer_{uuid.uuid4().hex[:8]}"
+        provider_username = f"provider_{uuid.uuid4().hex[:8]}"
         
-        for username in [buyer_username, provider_username]:
-            response = requests.post(f"{self.api_url}/register", json={
-                "username": username,
-                "password": "TestPass123"
-            }, verify=False)
-            assert response.status_code == 201, f"Registration failed for {username}"
-            self.created_users.append(username)
+        # Register buyer (demand)
+        response = requests.post(f"{self.api_url}/register", json={
+            "username": buyer_username,
+            "password": "TestPass123",
+            "user_type": "demand"
+        }, verify=False)
+        assert response.status_code == 201, f"Registration failed for {buyer_username}: {response.status_code} - {response.text}"
+        self.created_users.append(buyer_username)
+        
+        # Register provider (supply)
+        response = requests.post(f"{self.api_url}/register", json={
+            "username": provider_username,
+            "password": "TestPass123",
+            "user_type": "supply"
+        }, verify=False)
+        assert response.status_code == 201, f"Registration failed for {provider_username}: {response.status_code} - {response.text}"
+        self.created_users.append(provider_username)
         
         print(f"✓ Test users created: {len(self.created_users)}")
         
@@ -164,9 +174,8 @@ class ServiceExchangeAPITester:
             print("✓ No matching software jobs (expected)")
         
         # Test account info
-        response = requests.post(f"{self.api_url}/account",
-            headers=buyer_headers,
-            json={"username": buyer_username}, verify=False)
+        response = requests.get(f"{self.api_url}/account",
+            headers=buyer_headers, verify=False)
         assert response.status_code == 200, "Account info failed"
         account_data = response.json()
         assert account_data['username'] == buyer_username
@@ -193,13 +202,26 @@ class ServiceExchangeAPITester:
         assert response.status_code == 200, "Bulletin posting failed"
         print("✓ Bulletin posting working")
         
-        # Test bid cancellation
-        if bid_ids:
-            response = requests.post(f"{self.api_url}/cancel_bid",
-                headers=buyer_headers,
-                json={"bid_id": bid_ids[0]}, verify=False)
-            assert response.status_code == 200, "Bid cancellation failed"
-            print("✓ Bid cancellation working")
+        # Test bid cancellation (create a new bid specifically for cancellation)
+        response = requests.post(f"{self.api_url}/submit_bid", 
+                               headers=buyer_headers, 
+                               json={
+                                   "service": "TEST: Bid for cancellation test",
+                                   "price": 100,
+                                   "currency": "USD",
+                                   "payment_method": "cash",
+                                   "end_time": int(time.time()) + 3600,
+                                   "location_type": "remote"
+                               }, verify=False)
+        assert response.status_code == 200, "Test cancellation bid creation failed"
+        cancel_bid_id = response.json()['bid_id']
+        self.created_bids.append(cancel_bid_id)
+        
+        response = requests.post(f"{self.api_url}/cancel_bid",
+            headers=buyer_headers,
+            json={"bid_id": cancel_bid_id}, verify=False)
+        assert response.status_code == 200, f"Bid cancellation failed: {response.status_code} - {response.text}"
+        print("✓ Bid cancellation working")
         
         # Test error handling
         response = requests.post(f"{self.api_url}/submit_bid", 
@@ -223,11 +245,12 @@ class ServiceExchangeAPITester:
         """Test advanced features with enhanced data"""
         print(f"\n=== Advanced Feature Tests ===")
         
-        # Create advanced test user
-        advanced_user = f"advanced_test_{uuid.uuid4().hex[:8]}"
+        # Create advanced test user (demand side for submitting bids, max 20 chars)
+        advanced_user = f"adv_{uuid.uuid4().hex[:8]}"
         response = requests.post(f"{self.api_url}/register", json={
             "username": advanced_user,
-            "password": "TestPass123"
+            "password": "TestPass123",
+            "user_type": "demand"
         }, verify=False)
         assert response.status_code == 201
         self.created_users.append(advanced_user)
