@@ -160,7 +160,8 @@ class SupplyMonitor:
             # Register
             response = requests.post(f"{self.api_url}/register", json={
                 "username": username,
-                "password": "SupplyBot123!"
+                "password": "SupplyBot123!",
+                "user_type": "supply"
             }, verify=False)
             
             if response.status_code != 201:

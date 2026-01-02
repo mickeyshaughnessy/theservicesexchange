@@ -167,7 +167,8 @@ class DemandMonitor:
             # Register
             response = requests.post(f"{self.api_url}/register", json={
                 "username": username,
-                "password": "DemandBot123!"
+                "password": "DemandBot123!",
+                "user_type": "demand"
             }, verify=False)
             
             if response.status_code != 201:
@@ -201,9 +202,10 @@ class DemandMonitor:
         
         # Generate service description with variations
         description = service_template["template"]
+        format_values = {}
         for key, values in service_template["variations"].items():
-            value = random.choice(values)
-            description = description.format(**{key: value})
+            format_values[key] = random.choice(values)
+        description = description.format(**format_values)
         
         # Random price within range
         price = random.uniform(*service_template["price_range"])
@@ -232,9 +234,10 @@ class DemandMonitor:
         
         # Generate service description
         description = service_template["template"]
+        format_values = {}
         for key, values in service_template["variations"].items():
-            value = random.choice(values)
-            description = description.format(**{key: value})
+            format_values[key] = random.choice(values)
+        description = description.format(**format_values)
         
         # Create structured service object for software
         service_obj = {
