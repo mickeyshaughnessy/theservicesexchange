@@ -1,7 +1,7 @@
 """
 Utility functions for Service Exchange - Enhanced Storage
 -------------------------------------------------------
-Handles file-based persistence for the application...
+Handles file-based persistence for the application....
 Includes management for accounts, tokens, bids, jobs, messages, and bulletins.
 """
 
