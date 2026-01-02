@@ -25,11 +25,7 @@ OPENROUTER_MODEL = os.environ.get('OPENROUTER_MODEL', "x-ai/grok-4-fast:free")
 LLM_TEMPERATURE = float(os.environ.get('LLM_TEMPERATURE', '0.7'))
 LLM_MAX_TOKENS = int(os.environ.get('LLM_MAX_TOKENS', '800'))
 
-# AWS S3 Configuration
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
-AWS_DEFAULT_REGION = os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
-S3_BUCKET = os.environ.get('S3_BUCKET', 'mithrilmedia')
+# Storage Configuration
 S3_PREFIX = os.environ.get('S3_PREFIX', 'theservicesexchange')
 
 # Application Settings
