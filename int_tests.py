@@ -58,13 +58,23 @@ class ServiceExchangeAPITester:
         buyer_username = f"test_buyer_{uuid.uuid4().hex[:8]}"
         provider_username = f"test_provider_{uuid.uuid4().hex[:8]}"
         
-        for username in [buyer_username, provider_username]:
-            response = requests.post(f"{self.api_url}/register", json={
-                "username": username,
-                "password": "TestPass123"
-            }, verify=False)
-            assert response.status_code == 201, f"Registration failed for {username}"
-            self.created_users.append(username)
+        # Register buyer (demand)
+        response = requests.post(f"{self.api_url}/register", json={
+            "username": buyer_username,
+            "password": "TestPass123",
+            "user_type": "demand"
+        }, verify=False)
+        assert response.status_code == 201, f"Registration failed for {buyer_username}"
+        self.created_users.append(buyer_username)
+        
+        # Register provider (supply)
+        response = requests.post(f"{self.api_url}/register", json={
+            "username": provider_username,
+            "password": "TestPass123",
+            "user_type": "supply"
+        }, verify=False)
+        assert response.status_code == 201, f"Registration failed for {provider_username}"
+        self.created_users.append(provider_username)
         
         print(f"✓ Test users created: {len(self.created_users)}")
         
@@ -164,9 +174,8 @@ class ServiceExchangeAPITester:
             print("✓ No matching software jobs (expected)")
         
         # Test account info
-        response = requests.post(f"{self.api_url}/account",
-            headers=buyer_headers,
-            json={"username": buyer_username}, verify=False)
+        response = requests.get(f"{self.api_url}/account",
+            headers=buyer_headers, verify=False)
         assert response.status_code == 200, "Account info failed"
         account_data = response.json()
         assert account_data['username'] == buyer_username
@@ -223,11 +232,12 @@ class ServiceExchangeAPITester:
         """Test advanced features with enhanced data"""
         print(f"\n=== Advanced Feature Tests ===")
         
-        # Create advanced test user
+        # Create advanced test user (demand side for submitting bids)
         advanced_user = f"advanced_test_{uuid.uuid4().hex[:8]}"
         response = requests.post(f"{self.api_url}/register", json={
             "username": advanced_user,
-            "password": "TestPass123"
+            "password": "TestPass123",
+            "user_type": "demand"
         }, verify=False)
         assert response.status_code == 201
         self.created_users.append(advanced_user)
