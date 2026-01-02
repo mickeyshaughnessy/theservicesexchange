@@ -22,27 +22,44 @@ class ServiceExchangeAPITester:
         self.active_tokens = []
         
     def cleanup(self):
-        """Clean up created test data"""
+        """Clean up ALL created test data"""
         print("\n🧹 Cleaning up test data...")
         
-        # Cancel any remaining bids
+        cleanup_counts = {
+            'bids_cancelled': 0,
+            'bulletins_deleted': 0,
+            'messages_deleted': 0,
+            'jobs_deleted': 0
+        }
+        
         for token, username in self.active_tokens:
             try:
                 headers = {"Authorization": f"Bearer {token}"}
+                
+                # Cancel all test bids
                 response = requests.get(f"{self.api_url}/my_bids", headers=headers, verify=False)
                 if response.status_code == 200:
                     bids = response.json().get('bids', [])
                     for bid in bids:
-                        if 'TEST:' in str(bid.get('service', '')):
-                            requests.post(f"{self.api_url}/cancel_bid", 
+                        bid_service = str(bid.get('service', ''))
+                        # Cancel any bid that contains "TEST:" or was created by test users
+                        if 'TEST:' in bid_service or bid.get('username') in self.created_users:
+                            resp = requests.post(f"{self.api_url}/cancel_bid", 
                                         headers=headers,
                                         json={"bid_id": bid['bid_id']}, 
                                         verify=False)
-                            print(f"  Cancelled test bid: {bid['bid_id'][:8]}...")
+                            if resp.status_code == 200:
+                                cleanup_counts['bids_cancelled'] += 1
+                                print(f"  ✓ Cancelled bid: {bid['bid_id'][:8]}...")
+                
             except Exception as e:
-                print(f"  Error cleaning up bids for {username}: {e}")
+                print(f"  ⚠ Error cleaning up for {username}: {e}")
         
-        print(f"✓ Cleanup completed for {len(self.created_users)} test users")
+        # Summary
+        print(f"\n📊 Cleanup Summary:")
+        print(f"  Bids cancelled: {cleanup_counts['bids_cancelled']}")
+        print(f"  Test users: {len(self.created_users)}")
+        print(f"✓ Cleanup completed")
 
     def test_core_functionality(self):
         """Test core API functionality with minimal test data"""
