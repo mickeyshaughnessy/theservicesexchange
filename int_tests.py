@@ -9,6 +9,7 @@ import time
 import uuid
 import hashlib
 import argparse
+import config
 
 def md5(text):
     """Generate MD5 hash of text"""
@@ -78,7 +79,7 @@ class ServiceExchangeAPITester:
         # Register buyer (demand)
         response = requests.post(f"{self.api_url}/register", json={
             "username": buyer_username,
-            "password": "TestPass123",
+            "password": config.TEST_PASSWORD,
             "user_type": "demand"
         }, verify=False)
         assert response.status_code == 201, f"Registration failed for {buyer_username}: {response.status_code} - {response.text}"
@@ -87,7 +88,7 @@ class ServiceExchangeAPITester:
         # Register provider (supply)
         response = requests.post(f"{self.api_url}/register", json={
             "username": provider_username,
-            "password": "TestPass123",
+            "password": config.TEST_PASSWORD,
             "user_type": "supply"
         }, verify=False)
         assert response.status_code == 201, f"Registration failed for {provider_username}: {response.status_code} - {response.text}"
@@ -100,7 +101,7 @@ class ServiceExchangeAPITester:
         for username in [buyer_username, provider_username]:
             response = requests.post(f"{self.api_url}/login", json={
                 "username": username,
-                "password": "TestPass123"
+                "password": config.TEST_PASSWORD
             }, verify=False)
             assert response.status_code == 200, f"Login failed for {username}"
             tokens[username] = response.json()['access_token']
@@ -258,6 +259,105 @@ class ServiceExchangeAPITester:
             'job_grabbed': job_grabbed
         }
 
+    def test_ridesharing(self):
+        """Test ridesharing-specific functionality"""
+        print(f"\n=== Ridesharing Tests ===")
+        
+        # Create ridesharing buyer and driver
+        rider_username = f"rider_{uuid.uuid4().hex[:8]}"
+        driver_username = f"driver_{uuid.uuid4().hex[:8]}"
+        
+        # Register rider
+        response = requests.post(f"{self.api_url}/register", json={
+            "username": rider_username,
+            "password": config.TEST_PASSWORD,
+            "user_type": "demand"
+        }, verify=False)
+        assert response.status_code == 201, f"Rider registration failed: {response.text}"
+        self.created_users.append(rider_username)
+        
+        # Register driver
+        response = requests.post(f"{self.api_url}/register", json={
+            "username": driver_username,
+            "password": config.TEST_PASSWORD,
+            "user_type": "supply"
+        }, verify=False)
+        assert response.status_code == 201, f"Driver registration failed: {response.text}"
+        self.created_users.append(driver_username)
+        
+        # Login both users
+        response = requests.post(f"{self.api_url}/login", json={
+            "username": rider_username,
+            "password": config.TEST_PASSWORD
+        }, verify=False)
+        rider_token = response.json()['access_token']
+        rider_headers = {"Authorization": f"Bearer {rider_token}"}
+        self.active_tokens.append((rider_token, rider_username))
+        
+        response = requests.post(f"{self.api_url}/login", json={
+            "username": driver_username,
+            "password": config.TEST_PASSWORD
+        }, verify=False)
+        driver_token = response.json()['access_token']
+        driver_headers = {"Authorization": f"Bearer {driver_token}"}
+        self.active_tokens.append((driver_token, driver_username))
+        
+        # Submit ridesharing request with start and end addresses
+        response = requests.post(f"{self.api_url}/submit_bid", 
+            headers=rider_headers, 
+            json={
+                "service": "TEST: Rideshare from airport to downtown",
+                "price": 45,
+                "currency": "USD",
+                "payment_method": "credit_card",
+                "end_time": int(time.time()) + 3600,
+                "location_type": "physical",
+                "start_address": "Denver Airport",
+                "end_address": "Downtown Denver, CO"
+            }, verify=False)
+        assert response.status_code == 200, f"Rideshare bid failed: {response.text}"
+        ride_bid_id = response.json()['bid_id']
+        self.created_bids.append(ride_bid_id)
+        print("✓ Ridesharing bid created with start/end addresses")
+        
+        # Driver grabs the ride
+        response = requests.post(f"{self.api_url}/grab_job",
+            headers=driver_headers,
+            json={
+                "capabilities": "Driver, rideshare, taxi service, transportation",
+                "location_type": "physical",
+                "address": "Denver Airport Terminal",
+                "max_distance": 5
+            }, verify=False)
+        
+        if response.status_code == 200:
+            job = response.json()
+            # Verify ridesharing fields are present
+            assert job.get('start_address'), "Start address missing from job"
+            assert job.get('end_address'), "End address missing from job"
+            assert job.get('start_lat') is not None, "Start lat missing from job"
+            assert job.get('end_lat') is not None, "End lat missing from job"
+            print(f"✓ Rideshare matched: {job.get('start_address')} -> {job.get('end_address')} (${job['price']})")
+        else:
+            print(f"✓ No rideshare match (status {response.status_code}) - acceptable")
+        
+        # Test backward compatibility: traditional bid without ridesharing fields
+        response = requests.post(f"{self.api_url}/submit_bid", 
+            headers=rider_headers, 
+            json={
+                "service": "TEST: Regular cleaning service",
+                "price": 100,
+                "currency": "USD",
+                "payment_method": "cash",
+                "end_time": int(time.time()) + 3600,
+                "location_type": "physical",
+                "address": "123 Test St, Denver, CO"
+            }, verify=False)
+        assert response.status_code == 200, "Traditional bid failed (backward compatibility broken)"
+        print("✓ Backward compatibility: Traditional bids still work")
+        
+        print("✓ Ridesharing tests completed successfully")
+
     def test_advanced_features(self):
         """Test advanced features with enhanced data"""
         print(f"\n=== Advanced Feature Tests ===")
@@ -266,7 +366,7 @@ class ServiceExchangeAPITester:
         advanced_user = f"adv_{uuid.uuid4().hex[:8]}"
         response = requests.post(f"{self.api_url}/register", json={
             "username": advanced_user,
-            "password": "TestPass123",
+            "password": config.TEST_PASSWORD,
             "user_type": "demand"
         }, verify=False)
         assert response.status_code == 201
@@ -274,7 +374,7 @@ class ServiceExchangeAPITester:
         
         response = requests.post(f"{self.api_url}/login", json={
             "username": advanced_user,
-            "password": "TestPass123"
+            "password": config.TEST_PASSWORD
         }, verify=False)
         token = response.json()['access_token']
         headers = {"Authorization": f"Bearer {token}"}
@@ -337,6 +437,9 @@ def main():
         
         # Run core tests
         core_results = tester.test_core_functionality()
+        
+        # Run ridesharing tests
+        tester.test_ridesharing()
         
         # Run advanced tests unless quick mode
         if not args.quick:

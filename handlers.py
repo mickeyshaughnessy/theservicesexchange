@@ -487,7 +487,24 @@ def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         lat, lon = None, None
         address = None
         
-        if location_type in ['physical', 'hybrid']:
+        # Ridesharing-specific fields
+        start_address = data.get('start_address')
+        end_address = data.get('end_address')
+        start_lat, start_lon = None, None
+        end_lat, end_lon = None, None
+        
+        # Handle ridesharing requests with start/end locations
+        if start_address and end_address:
+            # Geocode pickup location
+            start_lat, start_lon = simple_geocode(start_address)
+            # Geocode dropoff location
+            end_lat, end_lon = simple_geocode(end_address)
+            # For ridesharing, the primary location is the pickup point
+            lat, lon = start_lat, start_lon
+            address = start_address
+            logger.info(f"Ridesharing bid: {start_address} -> {end_address}")
+        elif location_type in ['physical', 'hybrid']:
+            # Traditional physical service with single location
             if 'lat' in data and 'lon' in data:
                 lat = data['lat']
                 lon = data['lon']
@@ -515,7 +532,14 @@ def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'lon': lon,
             'address': address,
             'created_at': int(time.time()),
-            'buyer_reputation': reputation
+            'buyer_reputation': reputation,
+            # Ridesharing-specific fields (None for non-ridesharing)
+            'start_address': start_address,
+            'end_address': end_address,
+            'start_lat': start_lat,
+            'start_lon': start_lon,
+            'end_lat': end_lat,
+            'end_lon': end_lon
         }
         
         save_bid(bid_id, bid)
@@ -675,7 +699,14 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'provider_username': username,
             'accepted_at': int(time.time()),
             'buyer_reputation': best_bid['buyer_reputation'],
-            'provider_reputation': provider_reputation
+            'provider_reputation': provider_reputation,
+            # Ridesharing fields (None for non-ridesharing jobs)
+            'start_address': best_bid.get('start_address'),
+            'end_address': best_bid.get('end_address'),
+            'start_lat': best_bid.get('start_lat'),
+            'start_lon': best_bid.get('start_lon'),
+            'end_lat': best_bid.get('end_lat'),
+            'end_lon': best_bid.get('end_lon')
         }
         
         save_job(job_id, job_record)

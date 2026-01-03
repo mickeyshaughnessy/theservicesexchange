@@ -97,23 +97,36 @@
     </nav>
 
     <!-- Hero -->
-    <section class="hero" style="background: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);">
+    <section class="hero" style="background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);">
         <div class="container">
-            <h1 style="color: white;">Get Any Service Done</h1>
-            <p style="color: white;">Post what you need, get matched with the right provider</p>
-            <div class="row justify-content-center">
-                <div class="col-md-6">
-                    <button class="btn btn-light btn-lg" onclick="showBuyerForm()">Request a Service</button>
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <h1 style="color: white; font-size: 56px; font-weight: 700; margin-bottom: 20px;">Need a Ride?</h1>
+                    <p style="color: #999; font-size: 20px; margin-bottom: 30px;">Get matched with nearby drivers instantly. Fast, reliable, and affordable.</p>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <a href="rides.html" class="btn btn-light btn-lg px-5" style="border-radius: 50px; font-weight: 600;">
+                            🚗 Request a Ride
+                        </a>
+                        <button class="btn btn-outline-light btn-lg px-5" onclick="showBuyerForm()" style="border-radius: 50px; font-weight: 600;">
+                            Request Other Services
+                        </button>
+                    </div>
+                </div>
+                <div class="col-lg-5 text-center mt-4 mt-lg-0">
+                    <div style="font-size: 120px; opacity: 0.8;">🚕</div>
                 </div>
             </div>
             
-            <div class="mt-4">
-                <span class="service-tag" onclick="selectService('House Cleaning')">House Cleaning</span>
-                <span class="service-tag" onclick="selectService('Web Development')">Web Development</span>
-                <span class="service-tag" onclick="selectService('Tutoring')">Tutoring</span>
-                <span class="service-tag" onclick="selectService('Graphic Design')">Graphic Design</span>
-                <span class="service-tag" onclick="selectService('Home Repairs')">Home Repairs</span>
-                <span class="service-tag" onclick="selectService('Photography')">Photography</span>
+            <div class="mt-5 pt-4 border-top" style="border-color: #333 !important;">
+                <p style="color: #666; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Popular Services</p>
+                <div>
+                    <span class="service-tag" onclick="window.location.href='rides.html'" style="background: white; color: #000;">🚗 Rideshare</span>
+                    <span class="service-tag" onclick="selectService('House Cleaning')">House Cleaning</span>
+                    <span class="service-tag" onclick="selectService('Web Development')">Web Development</span>
+                    <span class="service-tag" onclick="selectService('Tutoring')">Tutoring</span>
+                    <span class="service-tag" onclick="selectService('Graphic Design')">Graphic Design</span>
+                    <span class="service-tag" onclick="selectService('Home Repairs')">Home Repairs</span>
+                </div>
             </div>
         </div>
     </section>
