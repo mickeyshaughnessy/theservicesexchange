@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-Robotaxi Fleet Manager for The Services Exchange
--------------------------------------------------
+RoboRides Fleet Manager for The Services Exchange
+--------------------------------------------------
 Production-ready script demonstrating how autonomous vehicle fleets
 can integrate with the Service Exchange API to grab ridesharing jobs.
 
 Usage:
     # Test mode - creates and grabs test jobs
-    python robotaxi_fleet.py --test
+    python roborides_fleet.py --test
     
     # Production mode - grabs real jobs from the exchange
-    python robotaxi_fleet.py --production
+    python roborides_fleet.py --production
     
     # Specify number of vehicles (default: 3)
-    python robotaxi_fleet.py --test --vehicles 5
+    python roborides_fleet.py --test --vehicles 5
 """
 
 import argparse
@@ -53,16 +53,16 @@ TEST_SEATS = [
 
 
 def print_logo():
-    """Display ASCII art logo for the robotaxi fleet manager."""
+    """Display ASCII art logo for the roborides fleet manager."""
     logo = """
     ╔═══════════════════════════════════════════════════════════════╗
     ║                                                               ║
-    ║    ██████╗  ██████╗ ██████╗  ██████╗ ████████╗ █████╗ ██╗  ██╗██╗  ║
-    ║    ██╔══██╗██╔═══██╗██╔══██╗██╔═══██╗╚══██╔══╝██╔══██╗╚██╗██╔╝██║  ║
-    ║    ██████╔╝██║   ██║██████╔╝██║   ██║   ██║   ███████║ ╚███╔╝ ██║  ║
-    ║    ██╔══██╗██║   ██║██╔══██╗██║   ██║   ██║   ██╔══██║ ██╔██╗ ██║  ║
-    ║    ██║  ██║╚██████╔╝██████╔╝╚██████╔╝   ██║   ██║  ██║██╔╝ ██╗██║  ║
-    ║    ╚═╝  ╚═╝ ╚═════╝ ╚═════╝  ╚═════╝    ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ║
+    ║    ██████╗  ██████╗ ██████╗  ██████╗ ██████╗ ██╗██████╗ ███████╗███████╗  ║
+    ║    ██╔══██╗██╔═══██╗██╔══██╗██╔═══██╗██╔══██╗██║██╔══██╗██╔════╝██╔════╝  ║
+    ║    ██████╔╝██║   ██║██████╔╝██║   ██║██████╔╝██║██║  ██║█████╗  ███████╗  ║
+    ║    ██╔══██╗██║   ██║██╔══██╗██║   ██║██╔══██╗██║██║  ██║██╔══╝  ╚════██║  ║
+    ║    ██║  ██║╚██████╔╝██████╔╝╚██████╔╝██║  ██║██║██████╔╝███████╗███████║  ║
+    ║    ╚═╝  ╚═╝ ╚═════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝ ╚══════╝╚══════╝  ║
     ║                                                               ║
     ║           🚕  Fleet Manager for The Services Exchange  🚕     ║
     ║                                                               ║
@@ -76,7 +76,7 @@ def md5(text: str) -> str:
     return hashlib.md5(text.encode()).hexdigest()
 
 
-class RobotaxiVehicle:
+class RoboridesVehicle:
     """Represents a single autonomous vehicle in the fleet."""
     
     def __init__(self, vehicle_id: int, seat_data: Dict, api_url: str):
@@ -88,6 +88,7 @@ class RobotaxiVehicle:
         self.access_token = None
         # Short username to stay within 20 char limit
         self.username = f"robo_{vehicle_id}_{int(time.time()) % 10000}"
+        self.password = f"secure_pass_{vehicle_id}_{int(time.time())}"
         self.current_job = None
         
     def register(self) -> bool:
@@ -97,7 +98,7 @@ class RobotaxiVehicle:
                 f"{self.api_url}/register",
                 json={
                     "username": self.username,
-                    "password": f"secure_pass_{self.vehicle_id}_{int(time.time())}",
+                    "password": self.password,
                     "user_type": "supply"
                 },
                 verify=False,
@@ -115,14 +116,14 @@ class RobotaxiVehicle:
             print(f"  ✗ Vehicle {self.vehicle_id} registration error: {e}")
             return False
     
-    def login(self, password: str) -> bool:
+    def login(self) -> bool:
         """Authenticate vehicle with the exchange."""
         try:
             response = requests.post(
                 f"{self.api_url}/login",
                 json={
                     "username": self.username,
-                    "password": password
+                    "password": self.password
                 },
                 verify=False,
                 timeout=10
@@ -189,14 +190,14 @@ class RobotaxiVehicle:
             return None
 
 
-class RobotaxiFleet:
+class RoboridesFleet:
     """Manages a fleet of autonomous vehicles on the Service Exchange."""
     
     def __init__(self, num_vehicles: int, api_url: str, test_mode: bool = True):
         self.num_vehicles = min(num_vehicles, len(TEST_SEATS))
         self.api_url = api_url
         self.test_mode = test_mode
-        self.vehicles: List[RobotaxiVehicle] = []
+        self.vehicles: List[RoboridesVehicle] = []
         self.test_rider_token = None
         self.test_rider_username = None
         
@@ -207,7 +208,7 @@ class RobotaxiFleet:
         print(f"   API: {self.api_url}\n")
         
         for i in range(self.num_vehicles):
-            vehicle = RobotaxiVehicle(i + 1, TEST_SEATS[i], self.api_url)
+            vehicle = RoboridesVehicle(i + 1, TEST_SEATS[i], self.api_url)
             
             # Register vehicle
             if not vehicle.register():
@@ -215,8 +216,7 @@ class RobotaxiFleet:
                 continue
             
             # Login vehicle
-            password = f"secure_pass_{i + 1}_{int(time.time())}"
-            if not vehicle.login(password):
+            if not vehicle.login():
                 print(f"Failed to login vehicle {i + 1}")
                 continue
             
@@ -271,19 +271,19 @@ class RobotaxiFleet:
             # Create test ride requests
             test_rides = [
                 {
-                    "service": "TEST: Airport pickup for robotaxi demo",
+                    "service": "TEST: Airport pickup for roborides demo",
                     "price": 45,
                     "start_address": "Denver Airport",
                     "end_address": "Downtown Denver, CO"
                 },
                 {
-                    "service": "TEST: City ride for robotaxi demo",
+                    "service": "TEST: City ride for roborides demo",
                     "price": 35,
                     "start_address": "Downtown Denver, CO",
                     "end_address": "Denver Tech Center"
                 },
                 {
-                    "service": "TEST: Short trip for robotaxi demo",
+                    "service": "TEST: Short trip for roborides demo",
                     "price": 25,
                     "start_address": "Denver Convention Center",
                     "end_address": "Union Station Denver"
@@ -361,9 +361,9 @@ class RobotaxiFleet:
 
 
 def main():
-    """Main entry point for the robotaxi fleet manager."""
+    """Main entry point for the roborides fleet manager."""
     parser = argparse.ArgumentParser(
-        description="Robotaxi Fleet Manager for The Services Exchange",
+        description="RoboRides Fleet Manager for The Services Exchange",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
@@ -399,7 +399,7 @@ def main():
     print_logo()
     
     # Initialize fleet
-    fleet = RobotaxiFleet(
+    fleet = RoboridesFleet(
         num_vehicles=args.vehicles,
         api_url=API_URL,
         test_mode=args.test

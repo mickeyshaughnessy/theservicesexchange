@@ -1,10 +1,10 @@
-# Robotaxi Fleet Manager
+# RoboRides Fleet Manager
 
 Production-ready demonstration of how autonomous vehicle fleets can integrate with The Services Exchange API to grab ridesharing jobs.
 
 ## Overview
 
-This script shows how a robotaxi fleet can:
+This script shows how a roborides fleet can:
 - Register vehicles as service providers
 - Authenticate with the exchange
 - Monitor for available ridesharing jobs
@@ -26,14 +26,14 @@ This script shows how a robotaxi fleet can:
 Creates test ridesharing jobs and attempts to grab them:
 
 ```bash
-python3 robotaxi_fleet.py --test --vehicles 2
+python3 roborides_fleet.py --test --vehicles 2
 ```
 
 ### Production Mode
 Attempts to grab real ridesharing jobs from the exchange:
 
 ```bash
-python3 robotaxi_fleet.py --production --vehicles 3
+python3 roborides_fleet.py --production --vehicles 3
 ```
 
 ### Options
@@ -97,12 +97,12 @@ Seat credentials include:
 ```
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║    ██████╗  ██████╗ ██████╗  ██████╗ ████████╗ █████╗ ██╗  ██╗██╗  ║
-║    ██╔══██╗██╔═══██╗██╔══██╗██╔═══██╗╚══██╔══╝██╔══██╗╚██╗██╔╝██║  ║
-║    ██████╔╝██║   ██║██████╔╝██║   ██║   ██║   ███████║ ╚███╔╝ ██║  ║
-║    ██╔══██╗██║   ██║██╔══██╗██║   ██║   ██║   ██╔══██║ ██╔██╗ ██║  ║
-║    ██║  ██║╚██████╔╝██████╔╝╚██████╔╝   ██║   ██║  ██║██╔╝ ██╗██║  ║
-║    ╚═╝  ╚═╝ ╚═════╝ ╚═════╝  ╚═════╝    ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ║
+║    ██████╗  ██████╗ ██████╗  ██████╗ ██████╗ ██╗██████╗ ███████╗███████╗  ║
+║    ██╔══██╗██╔═══██╗██╔══██╗██╔═══██╗██╔══██╗██║██╔══██╗██╔════╝██╔════╝  ║
+║    ██████╔╝██║   ██║██████╔╝██║   ██║██████╔╝██║██║  ██║█████╗  ███████╗  ║
+║    ██╔══██╗██║   ██║██╔══██╗██║   ██║██╔══██╗██║██║  ██║██╔══╝  ╚════██║  ║
+║    ██║  ██║╚██████╔╝██████╔╝╚██████╔╝██║  ██║██║██████╔╝███████╗███████║  ║
+║    ╚═╝  ╚═╝ ╚═════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝ ╚══════╝╚══════╝  ║
 ║                                                               ║
 ║           🚕  Fleet Manager for The Services Exchange  🚕     ║
 ║                                                               ║
@@ -148,11 +148,11 @@ Seat credentials include:
 
 ## Integration Guide
 
-To integrate this with your robotaxi fleet:
+To integrate this with your roborides fleet:
 
 1. **Obtain Seats**: Get golden or silver seats for your fleet
 2. **Update Configuration**: Replace test seats with your production seats
-3. **Add Vehicle Logic**: Extend the `RobotaxiVehicle` class with:
+3. **Add Vehicle Logic**: Extend the `RoboridesVehicle` class with:
    - Real vehicle location tracking
    - Route navigation integration
    - Passenger pickup/dropoff logic

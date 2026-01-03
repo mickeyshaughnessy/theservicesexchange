@@ -44,6 +44,8 @@ systemctl restart theservicesexchange.service
 
 ## Important Notes
 
+- **Domain Separation**: HTML files at theservicesexchange.com, API at rse-api.com:5003
 - HTML files reference API_URL = 'https://rse-api.com:5003' in JavaScript
 - All API calls from frontend go to rse-api.com:5003
 - CORS is configured to allow theservicesexchange.com origin
+- **DO NOT serve HTML files from rse-api.com** - they belong at theservicesexchange.com only

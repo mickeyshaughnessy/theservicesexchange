@@ -189,9 +189,15 @@
             <div class="ride-card">
                 <form id="rideRequestForm">
                     <div class="mb-3">
-                        <label class="form-label">Pickup Location</label>
+                        <label class="form-label">
+                            Pickup Location
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" 
+                                    onclick="useCurrentLocation()" id="useLocationBtn">
+                                📍 Use Current Location
+                            </button>
+                        </label>
                         <input type="text" class="location-input" id="pickupLocation" 
-                               placeholder="Enter pickup address" required>
+                               placeholder="Getting your location..." required>
                     </div>
                     
                     <div class="mb-3">
@@ -241,6 +247,21 @@
         // Check authentication on page load
         document.addEventListener('DOMContentLoaded', () => {
             checkAuth();
+            
+            // Check if user is logged in, redirect to login if not
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                // Store the return URL so user can come back after login
+                sessionStorage.setItem('returnUrl', window.location.href);
+                showError('Please log in to request a ride');
+                setTimeout(() => {
+                    showAuth();
+                }, 1000);
+                return;
+            }
+            
+            // Try to get user's current location
+            getCurrentLocation();
         });
         
         // Handle ride request form submission
@@ -338,6 +359,114 @@
                 document.getElementById('loginButton').style.display = 'block';
                 document.getElementById('accountDropdown').style.display = 'none';
             }
+        }
+        
+        // Get current location using browser geolocation API
+        async function getCurrentLocation() {
+            const pickupInput = document.getElementById('pickupLocation');
+            
+            if (!navigator.geolocation) {
+                pickupInput.placeholder = 'Enter pickup address';
+                return;
+            }
+            
+            try {
+                pickupInput.placeholder = 'Getting your location...';
+                
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    });
+                });
+                
+                const { latitude, longitude } = position.coords;
+                
+                // Use reverse geocoding to get address
+                const address = await reverseGeocode(latitude, longitude);
+                pickupInput.value = address;
+                pickupInput.placeholder = 'Enter pickup address';
+                
+            } catch (error) {
+                console.log('Location permission denied or unavailable:', error);
+                pickupInput.placeholder = 'Enter pickup address';
+            }
+        }
+        
+        // Reverse geocode coordinates to address using Nominatim (OpenStreetMap)
+        async function reverseGeocode(lat, lon) {
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
+                    {
+                        headers: {
+                            'User-Agent': 'TheServicesExchange/1.0'
+                        }
+                    }
+                );
+                
+                const data = await response.json();
+                
+                if (data.display_name) {
+                    return data.display_name;
+                }
+                
+                return `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+            } catch (error) {
+                console.error('Reverse geocoding failed:', error);
+                return `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+            }
+        }
+        
+        // Manual button to use current location
+        function useCurrentLocation() {
+            const btn = document.getElementById('useLocationBtn');
+            btn.disabled = true;
+            btn.textContent = '📍 Getting location...';
+            
+            getCurrentLocation().finally(() => {
+                btn.disabled = false;
+                btn.textContent = '📍 Use Current Location';
+            });
+        }
+        
+        // Simple autocomplete for location inputs using datalist
+        function initAutocomplete() {
+            const pickupInput = document.getElementById('pickupLocation');
+            const dropoffInput = document.getElementById('dropoffLocation');
+            
+            // Add datalist elements for common locations
+            const commonLocations = [
+                'Denver Airport',
+                'Downtown Denver, CO',
+                'Denver Tech Center',
+                'Denver Convention Center',
+                'Union Station Denver',
+                'Red Rocks Amphitheatre',
+                'Boulder, CO',
+                'Colorado Springs, CO'
+            ];
+            
+            // Create datalist for autocomplete
+            const datalist = document.createElement('datalist');
+            datalist.id = 'locationSuggestions';
+            commonLocations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                datalist.appendChild(option);
+            });
+            document.body.appendChild(datalist);
+            
+            pickupInput.setAttribute('list', 'locationSuggestions');
+            dropoffInput.setAttribute('list', 'locationSuggestions');
+        }
+        
+        // Initialize autocomplete when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAutocomplete);
+        } else {
+            initAutocomplete();
         }
     </script>
 </body>
