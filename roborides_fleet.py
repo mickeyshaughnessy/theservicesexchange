@@ -6,14 +6,14 @@ Production-ready script demonstrating how autonomous vehicle fleets
 can integrate with the Service Exchange API to grab ridesharing jobs.
 
 Usage:
-    # Test mode - creates and grabs test jobs
-    python roborides_fleet.py --test
+    # Test mode (DEFAULT) - creates and grabs test jobs
+    python roborides_fleet.py
     
     # Production mode - grabs real jobs from the exchange
     python roborides_fleet.py --production
     
     # Specify number of vehicles (default: 3)
-    python roborides_fleet.py --test --vehicles 5
+    python roborides_fleet.py --vehicles 5
 """
 
 import argparse
@@ -362,6 +362,9 @@ class RoboridesFleet:
 
 def main():
     """Main entry point for the roborides fleet manager."""
+    # Print logo first, before anything else
+    print_logo()
+    
     parser = argparse.ArgumentParser(
         description="RoboRides Fleet Manager for The Services Exchange",
         formatter_class=argparse.RawDescriptionHelpFormatter
@@ -369,7 +372,8 @@ def main():
     parser.add_argument(
         '--test',
         action='store_true',
-        help='Run in test mode (creates test jobs and grabs them)'
+        default=True,
+        help='Run in test mode (creates test jobs and grabs them) - DEFAULT'
     )
     parser.add_argument(
         '--production',
@@ -385,18 +389,14 @@ def main():
     
     args = parser.parse_args()
     
-    # Validate arguments
-    if not args.test and not args.production:
-        print("Error: Must specify --test or --production mode")
-        parser.print_help()
-        sys.exit(1)
+    # If production is specified, disable test mode
+    if args.production:
+        args.test = False
     
+    # Validate arguments
     if args.test and args.production:
         print("Error: Cannot specify both --test and --production")
         sys.exit(1)
-    
-    # Print logo
-    print_logo()
     
     # Initialize fleet
     fleet = RoboridesFleet(

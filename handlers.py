@@ -180,12 +180,15 @@ def simple_geocode(address: str) -> Tuple[float, float]:
     logger.info(f"Using default coordinates for address: {address}")
     return address_map["unknown"]
 
-def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 10) -> Optional[str]:
-    """Call OpenRouter API for LLM inference."""
+def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 10, use_fallback: bool = False) -> Optional[str]:
+    """Call OpenRouter API for LLM inference with fallback on rate limiting."""
     try:
         if not config.OPENROUTER_API_KEY:
             logger.warning("OpenRouter API key not configured")
             return None
+        
+        # Use fallback model if requested, otherwise use primary model
+        model = config.OPENROUTER_FALLBACK_MODEL if use_fallback else config.OPENROUTER_MODEL
         
         headers = {
             "Authorization": f"Bearer {config.OPENROUTER_API_KEY}",
@@ -195,7 +198,7 @@ def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 1
         }
         
         data = {
-            "model": config.OPENROUTER_MODEL,
+            "model": model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": temperature,
             "max_tokens": max_tokens
@@ -212,7 +215,25 @@ def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 1
             result = response.json()
             if 'choices' in result and len(result['choices']) > 0:
                 return result['choices'][0]['message']['content'].strip()
+        elif response.status_code == 429:
+            # Rate limited - try fallback if we haven't already
+            if not use_fallback:
+                logger.warning(f"OpenRouter rate limited on {model}, falling back to {config.OPENROUTER_FALLBACK_MODEL}")
+                return call_openrouter_llm(prompt, temperature, max_tokens, use_fallback=True)
+            else:
+                logger.error(f"OpenRouter rate limited on fallback model {model}")
         else:
+            # Check if error response indicates rate limiting
+            try:
+                error_data = response.json()
+                error_message = error_data.get('error', {}).get('message', '').lower()
+                if 'rate' in error_message or 'limit' in error_message or 'quota' in error_message:
+                    if not use_fallback:
+                        logger.warning(f"OpenRouter rate/quota issue on {model}: {error_message}, falling back to {config.OPENROUTER_FALLBACK_MODEL}")
+                        return call_openrouter_llm(prompt, temperature, max_tokens, use_fallback=True)
+            except:
+                pass
+            
             logger.error(f"OpenRouter API error: {response.status_code} - {response.text}")
             
     except requests.exceptions.RequestException as e:
