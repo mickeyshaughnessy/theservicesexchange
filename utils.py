@@ -15,6 +15,49 @@ import config
 
 logger = logging.getLogger(__name__)
 
+# -----------------------------------------------------------------------------
+# In-memory TTL Cache
+# -----------------------------------------------------------------------------
+
+_mem_cache: Dict[str, Any] = {}
+_mem_cache_ts: Dict[str, float] = {}
+
+# TTL per key prefix (seconds)
+_TTL_ACCOUNTS = 60
+_TTL_TOKENS = 300
+_TTL_BIDS = 30
+_TTL_JOBS = 30
+_TTL_STATS = 30
+
+
+def _cache_ttl_for(key: str) -> float:
+    if '/accounts/' in key:
+        return _TTL_ACCOUNTS
+    if '/tokens/' in key:
+        return _TTL_TOKENS
+    if '/bids/' in key:
+        return _TTL_BIDS
+    if '/jobs/' in key:
+        return _TTL_JOBS
+    return _TTL_STATS
+
+
+def _cache_get(key: str) -> Optional[Any]:
+    ts = _mem_cache_ts.get(key, 0)
+    if time.time() - ts < _cache_ttl_for(key):
+        return _mem_cache.get(key)
+    return None
+
+
+def _cache_set(key: str, value: Any) -> None:
+    _mem_cache[key] = value
+    _mem_cache_ts[key] = time.time()
+
+
+def _cache_delete(key: str) -> None:
+    _mem_cache.pop(key, None)
+    _mem_cache_ts.pop(key, None)
+
 # Parse Digital Ocean Spaces URL to extract bucket and region
 # Format: https://{bucket}.{region}.digitaloceanspaces.com
 def _parse_do_url(url: str):
@@ -59,7 +102,7 @@ BULLETINS_PREFIX = f"{S3_PREFIX}/bulletins"
 # -----------------------------------------------------------------------------
 
 def _s3_put(key: str, data: Dict[str, Any]) -> bool:
-    """Save JSON data to S3."""
+    """Save JSON data to S3 and update cache."""
     try:
         s3_client.put_object(
             Bucket=S3_BUCKET,
@@ -67,16 +110,21 @@ def _s3_put(key: str, data: Dict[str, Any]) -> bool:
             Body=json.dumps(data),
             ContentType='application/json'
         )
+        _cache_set(key, data)
         return True
     except ClientError as e:
         logger.error(f"S3 PUT error for {key}: {e}")
         return False
 
 def _s3_get(key: str) -> Optional[Dict[str, Any]]:
-    """Retrieve JSON data from S3."""
+    """Retrieve JSON data from S3, with in-memory TTL cache."""
+    cached = _cache_get(key)
+    if cached is not None:
+        return cached
     try:
         response = s3_client.get_object(Bucket=S3_BUCKET, Key=key)
         data = json.loads(response['Body'].read().decode('utf-8'))
+        _cache_set(key, data)
         return data
     except ClientError as e:
         if e.response['Error']['Code'] == 'NoSuchKey':
@@ -88,7 +136,9 @@ def _s3_get(key: str) -> Optional[Dict[str, Any]]:
         return None
 
 def _s3_exists(key: str) -> bool:
-    """Check if an object exists in S3."""
+    """Check if an object exists in S3 (cache-aware)."""
+    if _cache_get(key) is not None:
+        return True
     try:
         s3_client.head_object(Bucket=S3_BUCKET, Key=key)
         return True
@@ -96,9 +146,10 @@ def _s3_exists(key: str) -> bool:
         return False
 
 def _s3_delete(key: str) -> bool:
-    """Delete an object from S3."""
+    """Delete an object from S3 and evict cache."""
     try:
         s3_client.delete_object(Bucket=S3_BUCKET, Key=key)
+        _cache_delete(key)
         return True
     except ClientError as e:
         logger.error(f"S3 DELETE error for {key}: {e}")
