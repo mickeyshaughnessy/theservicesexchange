@@ -210,8 +210,8 @@ def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 1
         headers = {
             "Authorization": f"Bearer {config.OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://rse-api.com",
-            "X-Title": "ServiceExchange"
+            "HTTP-Referer": "https://theservicesexchange.com",
+            "X-Title": "The Services Exchange"
         }
         
         data = {
@@ -225,7 +225,7 @@ def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 1
             config.OPENROUTER_API_URL,
             headers=headers,
             json=data,
-            timeout=10
+            timeout=15
         )
         
         if response.status_code == 200:
