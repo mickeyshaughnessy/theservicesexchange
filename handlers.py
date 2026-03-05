@@ -12,6 +12,7 @@ import time
 import logging
 import hashlib
 import math
+import threading
 import requests
 from typing import Dict, List, Optional, Tuple, Union, Any
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -57,6 +58,22 @@ def load_seat_data(filename: str) -> Dict[str, Any]:
 # Load seats at module level
 golden_seats = load_seat_data('seats.dat')
 silver_seats = load_seat_data('silver_seats.dat')
+
+_SEATS_REFRESH_INTERVAL = 86400  # 24 hours
+
+
+def _seats_refresh_loop():
+    """Background thread to reload seat data every 24 hours."""
+    while True:
+        time.sleep(_SEATS_REFRESH_INTERVAL)
+        global golden_seats, silver_seats
+        logger.info("Refreshing seat data...")
+        golden_seats = load_seat_data('seats.dat')
+        silver_seats = load_seat_data('silver_seats.dat')
+        logger.info(f"Seat data refreshed: {len(golden_seats)} golden, {len(silver_seats)} silver")
+
+
+threading.Thread(target=_seats_refresh_loop, daemon=True).start()
 
 # -----------------------------------------------------------------------------
 # Helper Functions

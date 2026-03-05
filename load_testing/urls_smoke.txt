@@ -1,0 +1,12 @@
+# Smoke Test URLs - Quick validation of all endpoints
+# Format: URL METHOD [optional POST body]
+
+# Health checks
+http://localhost:5003/ping GET
+http://localhost:5003/health GET
+http://localhost:5003/metrics GET
+
+# Public endpoints
+http://localhost:5003/ GET
+
+# Note: Auth-required endpoints need tokens generated via prepare_test_users.py

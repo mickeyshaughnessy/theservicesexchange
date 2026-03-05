@@ -51,6 +51,8 @@ Thumbs.db
 
 # Local config
 config_local.py
+config.py
+.env
 
 # Seat data (keep in repo but could be sensitive)
 # seats.dat

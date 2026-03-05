@@ -297,7 +297,7 @@ The system is now in production-ready state:
 After verification period (e.g., 30 days):
 ```bash
 # Can safely delete the backup archive
-ssh root@143.110.131.237
+ssh -i ~/.ssh/id_ed25519 root@143.110.131.237
 rm /var/www/theservicesexchange/data_backup_20260102_1431.tar.gz
 ```
 

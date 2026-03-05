@@ -190,7 +190,7 @@ The old local data files still exist at `/var/www/theservicesexchange/data/`.
 These can be safely archived or deleted:
 
 ```bash
-ssh root@143.110.131.237
+ssh -i ~/.ssh/id_ed25519 root@143.110.131.237
 cd /var/www/theservicesexchange
 tar -czf data_backup_$(date +%Y%m%d).tar.gz data/
 rm -rf data/

@@ -54,6 +54,10 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
+# Per-endpoint overrides applied via decorator
+_CHAT_LIMIT = "120 per minute"
+_STRICT_LIMIT = "20 per minute"
+
 # Performance tracking
 request_metrics = {
     'total_requests': 0,
@@ -200,11 +204,13 @@ def serve_js():
 # -----------------------------------------------------------------------------
 
 @app.route('/register', methods=['POST'])
+@limiter.limit(_STRICT_LIMIT)
 def register():
     response, status = register_user(flask.request.get_json() or {})
     return flask.jsonify(response), status
 
 @app.route('/login', methods=['POST'])
+@limiter.limit(_STRICT_LIMIT)
 def login():
     response, status = login_user(flask.request.get_json() or {})
     return flask.jsonify(response), status
@@ -313,6 +319,7 @@ def stats():
 
 @app.route('/chat', methods=['POST'])
 @token_required
+@limiter.limit(_CHAT_LIMIT)
 def chat(current_user):
     data = flask.request.get_json() or {}
     data['username'] = current_user
@@ -321,6 +328,7 @@ def chat(current_user):
 
 @app.route('/chat/conversations', methods=['GET'])
 @token_required
+@limiter.limit(_CHAT_LIMIT)
 def chat_conversations(current_user):
     data = {'username': current_user}
     response, status = get_conversations(data)
@@ -328,6 +336,7 @@ def chat_conversations(current_user):
 
 @app.route('/chat/messages', methods=['POST'])
 @token_required
+@limiter.limit(_CHAT_LIMIT)
 def chat_messages(current_user):
     data = flask.request.get_json() or {}
     data['username'] = current_user
@@ -336,6 +345,7 @@ def chat_messages(current_user):
 
 @app.route('/chat/reply', methods=['POST'])
 @token_required
+@limiter.limit(_CHAT_LIMIT)
 def chat_reply(current_user):
     data = flask.request.get_json() or {}
     data['username'] = current_user
