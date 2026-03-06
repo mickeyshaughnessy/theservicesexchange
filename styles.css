@@ -798,6 +798,192 @@ body {
     border-color: #cbd5e1;
 }
 
+/* Hero Light Theme */
+.hero-light {
+    padding: 100px 0 80px;
+    background: linear-gradient(150deg, #f8f6f2 0%, #eef7f5 100%) !important;
+    color: var(--dark);
+    text-align: left;
+}
+
+.hero-eyebrow {
+    color: #0d9488;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: #1c1917;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 1.25rem;
+    text-shadow: none;
+}
+
+.hero-subtitle {
+    font-size: 1.15rem;
+    color: #57534e;
+    margin-bottom: 2.5rem;
+    max-width: 520px;
+    line-height: 1.75;
+}
+
+.btn-hero-primary {
+    background: #0d9488;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    padding: 14px 36px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3);
+}
+
+.btn-hero-primary:hover {
+    background: #0f766e;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4);
+}
+
+.btn-hero-secondary {
+    background: transparent;
+    color: #1c1917;
+    border: 2px solid #d6d3d1;
+    border-radius: 50px;
+    font-weight: 600;
+    padding: 12px 34px;
+    transition: all 0.2s ease;
+}
+
+.btn-hero-secondary:hover {
+    background: #f5f5f4;
+    color: #1c1917;
+    border-color: #a8a29e;
+    transform: translateY(-2px);
+}
+
+/* Service Grid */
+.service-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.service-grid-item {
+    background: white;
+    border-radius: 16px;
+    padding: 22px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid #e7e5e4;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #44403c;
+}
+
+.service-grid-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.1);
+    border-color: #0d9488;
+    color: #0d9488;
+}
+
+.sg-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+/* Hero Tags Row */
+.hero-tags-row {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e7e5e4;
+}
+
+.hero-tags-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #a8a29e;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.hero-light .service-tag {
+    background: rgba(0,0,0,0.05);
+    color: #44403c;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.hero-light .service-tag:hover {
+    background: rgba(13, 148, 136, 0.1);
+    color: #0d9488;
+    border-color: rgba(13, 148, 136, 0.3);
+}
+
+/* How it works */
+.how-it-works-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #1c1917;
+    letter-spacing: -0.02em;
+}
+
+.how-it-works-sub {
+    color: #78716c;
+    font-size: 1.1rem;
+    margin-bottom: 0;
+}
+
+.feature-card-new {
+    background: #fafaf8;
+    border-radius: 20px;
+    padding: 2.5rem;
+    height: 100%;
+    border: 1px solid #e7e5e4;
+    transition: all 0.25s ease;
+}
+
+.feature-card-new:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+    border-color: #0d9488;
+    background: white;
+}
+
+.feature-number {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #e7e5e4;
+    line-height: 1;
+    margin-bottom: 1.25rem;
+}
+
+.feature-card-new h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1c1917;
+    margin-bottom: 0.75rem;
+}
+
+.feature-card-new p {
+    color: #78716c;
+    margin-bottom: 0;
+    line-height: 1.7;
+}
+
 /* Mobile */
 @media (max-width: 768px) {
     .hero h1 {
@@ -806,6 +992,28 @@ body {
     
     .hero p {
         font-size: 1.1rem;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+    }
+
+    .hero-light {
+        padding: 70px 0 60px;
+    }
+
+    .service-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .service-grid-item {
+        padding: 16px 10px;
+        font-size: 0.75rem;
+    }
+
+    .sg-icon {
+        font-size: 1.5rem;
     }
     
     .header {
