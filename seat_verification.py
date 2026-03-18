@@ -27,7 +27,7 @@ _RPC_URL = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
 _ABI_PATH = Path(__file__).parent / "abi" / "RSESeat.json"
 
 # Module-level cached instances — initialized on first call
-_w3: Optional[Web3] = None
+_w3 = None
 _contract = None
 
 
@@ -42,8 +42,8 @@ def _get_contract():
     with open(_ABI_PATH) as f:
         abi = json.load(f)
 
-    _w3 = Web3(Web3.HTTPProvider(_RPC_URL))  # type: ignore[name-defined]
-    _w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)  # type: ignore[name-defined]
+    _w3 = Web3(Web3.HTTPProvider(_RPC_URL))
+    _w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
     _contract = _w3.eth.contract(
         address=Web3.to_checksum_address(_CONTRACT_ADDRESS),
         abi=abi,
