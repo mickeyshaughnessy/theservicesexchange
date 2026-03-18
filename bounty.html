@@ -102,11 +102,6 @@
             opacity: 0.2;
         }
         
-        .roborides-app {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #00d4ff;
-            border: 2px solid #00d4ff;
-        }
         
         .legal-app {
             background: linear-gradient(135deg, #8b4513 0%, #d2691e 100%);
@@ -575,52 +570,6 @@ const birthdayParty = {
     ]
   },
   price: 1500.00,
-  currency: "USD"
-};
-                </div>
-            </div>
-
-            <!-- RoboRides -->
-            <div class="app-card roborides-app">
-                <h3>🚗 AutoRide Network</h3>
-                <h4>Autonomous Vehicle Fleet Coordination</h4>
-                <p style="margin: 15px 0;">
-                    Next-generation transportation platform managing fleets of autonomous vehicles for passenger and cargo transport.
-                </p>
-                
-                <h5>Fleet Capabilities:</h5>
-                <ul style="margin: 10px 0 20px 20px; color: #00d4ff;">
-                    <li>Level 4/5 autonomous vehicles</li>
-                    <li>Multi-modal trip planning</li>
-                    <li>Dynamic route optimization</li>
-                    <li>Cargo & passenger services</li>
-                    <li>Emergency vehicle priority</li>
-                </ul>
-                
-                <div class="code-block">
-// Submit autonomous ride bid
-const roboridesRequest = {
-  service: {
-    type: "autonomous_transport",
-    category: "passenger",
-    trip_details: {
-      passenger_count: 2,
-      luggage: "2_suitcases",
-      accessibility: "wheelchair_accessible",
-      vehicle_preference: "sedan"
-    },
-    route: {
-      pickup: {lat: 39.7392, lng: -104.9903},
-      destination: {lat: 39.7642, lng: -104.9951},
-      waypoints: [],
-      avoid: ["tolls", "highways"]
-    },
-    scheduling: {
-      type: "immediate",
-      pickup_window: "5_minutes"
-    }
-  },
-  price: 18.50,
   currency: "USD"
 };
                 </div>

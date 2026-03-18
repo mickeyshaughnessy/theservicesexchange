@@ -3,7 +3,7 @@
 ## Domain Structure
 
 - **Website (HTML/Frontend)**: https://theservicesexchange.com
-  - All HTML pages (index.html, rides.html, api_docs.html, etc.)
+  - All HTML pages (index.html, api_docs.html, etc.)
   - Static assets (styles.css, script.js)
   - User-facing interface
 
