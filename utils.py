@@ -321,13 +321,17 @@ def save_message(message_id: str, data: Dict[str, Any]) -> None:
 def get_user_messages(username: str) -> List[Dict[str, Any]]:
     """Retrieve messages for a user from S3."""
     messages = []
+    seen_ids: set = set()
     try:
         keys = _s3_list(MESSAGES_PREFIX)
         for key in keys:
             if key.endswith('.json'):
                 msg = _s3_get(key)
                 if msg and (msg.get('sender') == username or msg.get('recipient') == username):
-                    messages.append(msg)
+                    msg_id = msg.get('message_id')
+                    if msg_id not in seen_ids:
+                        seen_ids.add(msg_id)
+                        messages.append(msg)
     except Exception as e:
         logger.error(f"Error loading messages: {e}")
     return messages
