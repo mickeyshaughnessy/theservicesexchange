@@ -672,7 +672,7 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         username = data.get('username')
 
         if config.SEAT_VERIFICATION_ENABLED:
-            # NFT seat verification (new system)
+            # NFT seat gate (new system)
             acct = get_account(username)
             if not acct:
                 return {"error": "User not found"}, 404
@@ -689,8 +689,8 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                 return {"error": f"Your RSE Seat (#{nft['token_id']}) has been revoked."}, 403
             elif not nft["valid"]:
                 return {"error": f"No valid RSE Seat NFT found for wallet {wallet}"}, 403
-
-            # Legacy seat credentials (old id/phrase/secret system)
+        else:
+            # Legacy file-based seat gate (seats.dat / silver_seats.dat)
             seat_data = data.get('seat')
             is_valid, message = verify_seat_credentials(seat_data)
             if not is_valid:
