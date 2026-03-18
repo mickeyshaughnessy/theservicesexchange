@@ -57,3 +57,6 @@ config_local.py
 # Seat data (keep in repo but could be sensitive)
 # seats.dat
 # silver_seats.dat
+
+# Generated NFT metadata (re-create with generate_metadata.py)
+seat_admin/metadata/
