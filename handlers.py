@@ -18,6 +18,7 @@ from typing import Dict, List, Optional, Tuple, Union, Any
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import config
+import seat_verification
 from utils import (
     get_account, save_account, account_exists, get_signup_stats,
     save_token,
@@ -391,26 +392,74 @@ def get_account_info(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     """Get account information."""
     try:
         username = data.get('username')
-        
+
         user_data = get_account(username)
         if not user_data:
             return {"error": "User not found"}, 404
-        
+
         avg_rating = 0
         if user_data['total_ratings'] > 0:
             avg_rating = user_data['stars'] / user_data['total_ratings']
-        
+
+        wallet_address = user_data.get('wallet_address') or None
+        seat_status = "no_wallet"
+        seat_token_id = None
+
+        if wallet_address:
+            result = seat_verification.verify_seat(wallet_address)
+            if result["error"]:
+                seat_status = "unknown"
+            elif result["valid"]:
+                seat_status = "valid"
+                seat_token_id = result["token_id"]
+            elif result["revoked"]:
+                seat_status = "revoked"
+                seat_token_id = result["token_id"]
+            else:
+                seat_status = "no_seat"
+
         return {
             'username': username,
             'created_on': user_data['created_on'],
             'stars': round(avg_rating, 2),
             'total_ratings': user_data['total_ratings'],
             'completed_jobs': user_data.get('completed_jobs', 0),
-            'reputation_score': round(calculate_reputation_score(user_data), 2)
+            'reputation_score': round(calculate_reputation_score(user_data), 2),
+            'wallet_address': wallet_address,
+            'seat_status': seat_status,
+            'seat_token_id': seat_token_id,
         }, 200
-        
+
     except Exception as e:
         logger.error(f"Account error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def set_wallet(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Link an Ethereum wallet address to the authenticated user's account."""
+    try:
+        username = data.get('username')
+        raw_address = (data.get('wallet_address') or '').strip()
+
+        if not raw_address:
+            return {"error": "wallet_address required"}, 400
+
+        address = seat_verification.normalize_address(raw_address)
+        if address is None:
+            return {"error": "Invalid Ethereum address"}, 400
+
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        user_data['wallet_address'] = address
+        save_account(username, user_data)
+
+        logger.info(f"Wallet linked for {username}: {address}")
+        return {"message": "Wallet address linked", "wallet_address": address}, 200
+
+    except Exception as e:
+        logger.error(f"Set wallet error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
 def get_my_bids(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
@@ -623,14 +672,33 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     4. Price (Highest first)
     """
     try:
-        # Verify seat credentials if enabled
+        username = data.get('username')
+
         if os.environ.get('SEAT_VERIFICATION_ENABLED', 'False').lower() == 'true':
+            # NFT seat verification (new system)
+            acct = get_account(username)
+            if not acct:
+                return {"error": "User not found"}, 404
+
+            wallet = acct.get('wallet_address')
+            if not wallet:
+                return {"error": "No wallet address linked. Use /set_wallet to link your Ethereum wallet."}, 403
+
+            nft = seat_verification.verify_seat(wallet)
+            if nft["error"]:
+                # RPC outage — fail open so the marketplace keeps running
+                logger.warning(f"NFT seat RPC error for {username} ({wallet}): {nft['error']}")
+            elif nft["revoked"]:
+                return {"error": f"Your RSE Seat (#{nft['token_id']}) has been revoked."}, 403
+            elif not nft["valid"]:
+                return {"error": f"No valid RSE Seat NFT found for wallet {wallet}"}, 403
+
+            # Legacy seat credentials (old id/phrase/secret system)
             seat_data = data.get('seat')
             is_valid, message = verify_seat_credentials(seat_data)
             if not is_valid:
                 return {"error": f"Seat verification failed: {message}"}, 403
-        
-        username = data.get('username')
+
         capabilities = data.get('capabilities', '').strip()
         location_type = data.get('location_type', 'physical')
         

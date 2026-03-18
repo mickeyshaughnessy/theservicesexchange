@@ -17,6 +17,9 @@ geopy==2.4.1
 # HTTP Requests (for OpenRouter)
 requests==2.31.0
 
+# Blockchain (RSE Seat NFT verification)
+web3>=6.0
+
 # Production Server
 gunicorn==21.2.0
 

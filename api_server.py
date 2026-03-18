@@ -24,6 +24,7 @@ from handlers import (
     grab_job,
     reject_job,
     get_account_info,
+    set_wallet,
     nearby_services,
     sign_job,
     get_my_bids,
@@ -219,6 +220,14 @@ def login():
 @token_required
 def account(current_user):
     response, status = get_account_info({'username': current_user})
+    return flask.jsonify(response), status
+
+@app.route('/set_wallet', methods=['POST'])
+@token_required
+def handle_set_wallet(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = set_wallet(data)
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------

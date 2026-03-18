@@ -3,46 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Service Exchange API Documentation</title>
+    <title>RSE API Documentation - Robot Services Exchange</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
+    <style>
+        /* ── API Docs Specific ── */
+        .try-it-panel {
+            margin-top: 1.5rem;
+            border: 1px solid rgba(255,0,255,0.35);
+            border-radius: 0;
+            overflow: hidden;
+        }
+        .try-it-header {
+            background: rgba(255,0,255,0.08);
+            border-bottom: 1px solid rgba(255,0,255,0.3);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .try-it-header span {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: #ff00ff;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 6px #ff00ff;
+        }
+        .try-it-toggle {
+            background: transparent;
+            border: 1px solid #ff00ff;
+            color: #ff00ff;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            padding: 3px 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.15s;
+            text-shadow: 0 0 4px #ff00ff;
+            box-shadow: 0 0 6px rgba(255,0,255,0.2);
+        }
+        .try-it-toggle:hover {
+            background: rgba(255,0,255,0.15);
+            box-shadow: 0 0 12px rgba(255,0,255,0.4);
+        }
+        .try-it-body {
+            background: #080820;
+            padding: 1.25rem;
+        }
+        .try-field {
+            margin-bottom: 0.75rem;
+        }
+        .try-field label {
+            display: block;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            color: #5566aa;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+        .try-field input,
+        .try-field select,
+        .try-field textarea {
+            width: 100%;
+            background: #0a0a2e;
+            border: 1px solid rgba(0,255,255,0.25);
+            color: #b0c8ff;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            padding: 6px 10px;
+            border-radius: 0;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .try-field input:focus,
+        .try-field textarea:focus,
+        .try-field select:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 8px rgba(0,255,255,0.2);
+            color: #ffffff;
+        }
+        .try-field select option {
+            background: #0a0a2e;
+        }
+        .try-field textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .run-btn {
+            background: transparent;
+            border: 2px solid #39ff14;
+            color: #39ff14;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            padding: 6px 20px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.15s;
+            text-shadow: 0 0 6px #39ff14;
+            box-shadow: 0 0 10px rgba(57,255,20,0.2);
+            margin-top: 0.5rem;
+        }
+        .run-btn:hover {
+            background: rgba(57,255,20,0.12);
+            box-shadow: 0 0 18px rgba(57,255,20,0.4);
+        }
+        .run-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .response-area {
+            margin-top: 1rem;
+            background: #000010;
+            border: 1px solid rgba(57,255,20,0.3);
+            padding: 1rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            min-height: 60px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #39ff14;
+            display: none;
+            border-radius: 0;
+            position: relative;
+        }
+        .response-area.has-error {
+            border-color: rgba(255,51,51,0.4);
+            color: #ff3333;
+        }
+        .response-area.loading-resp {
+            color: #ffff00;
+            border-color: rgba(255,255,0,0.3);
+        }
+        .response-status {
+            font-size: 0.7rem;
+            color: #5566aa;
+            margin-bottom: 0.5rem;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .response-status.ok { color: #39ff14; text-shadow: 0 0 4px #39ff14; }
+        .response-status.err { color: #ff3333; text-shadow: 0 0 4px #ff3333; }
+
+        /* Auth Status Banner */
+        #authBanner {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #0a0a2e;
+            border-bottom: 2px solid rgba(0,255,255,0.2);
+            padding: 0.6rem 0;
+        }
+        .auth-banner-inner {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .auth-status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 0;
+            background: #5566aa;
+            flex-shrink: 0;
+        }
+        .auth-status-dot.connected {
+            background: #39ff14;
+            box-shadow: 0 0 8px #39ff14;
+        }
+        #authStatusText {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: #5566aa;
+        }
+        #authStatusText.connected {
+            color: #39ff14;
+            text-shadow: 0 0 4px #39ff14;
+        }
+        #authTokenDisplay {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            color: rgba(0,255,255,0.5);
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .clear-auth-btn {
+            background: transparent;
+            border: 1px solid rgba(255,51,51,0.4);
+            color: #ff3333;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            padding: 2px 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            display: none;
+        }
+        .clear-auth-btn:hover {
+            background: rgba(255,51,51,0.1);
+        }
+
+        /* Flow hint */
+        .flow-badge {
+            display: inline-block;
+            background: rgba(255,255,0,0.08);
+            border: 1px solid rgba(255,255,0,0.35);
+            color: #ffff00;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+
+        /* Section dividers */
+        .doc-section-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.7rem;
+            color: #ffff00;
+            text-shadow: 0 0 8px rgba(255,255,0,0.5);
+            background: rgba(255,255,0,0.04);
+            border-left: 3px solid #ffff00;
+            padding: 0.6rem 1rem;
+            margin: 2.5rem 0 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        /* Override header hero for api docs */
+        .api-header {
+            background: var(--bg-dark);
+            border-bottom: 2px solid var(--primary);
+            padding: 60px 0 50px;
+        }
+        .api-header h1 {
+            font-size: 1.2rem;
+        }
+
+        /* Scrollspy sidebar */
+        .nav-sidebar {
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        /* JSON keyword highlighting */
+        .json-key { color: #00ffff; }
+        .json-string { color: #ffff00; }
+        .json-number { color: #ff00ff; }
+        .json-bool { color: #39ff14; }
+        .json-null { color: #ff3333; }
+
+        /* Try-it fields grid for 2-col */
+        .try-fields-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 1rem;
+        }
+        @media (max-width: 768px) {
+            .try-fields-grid { grid-template-columns: 1fr; }
+        }
+
+        .chain-note {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            color: #ff00ff;
+            opacity: 0.8;
+            margin-top: 0.4rem;
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="index.html">The Service Exchange</a>
+            <a class="navbar-brand" href="index.html">RSE</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.html">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="api_docs.html" aria-current="page">API Docs</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="bounty.html">Demo Apps</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="dashboard.html">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="about.html">About</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="api_docs.html" aria-current="page">API Docs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="bounty.html">Demo Apps</a></li>
+                    <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
                 </ul>
-                
-                <!-- Chat and Bulletin buttons (shown when logged in) -->
                 <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
                 <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
-                
-                <!-- Account dropdown (shown when logged in) -->
                 <div id="accountDropdown" class="account-dropdown ms-3" style="display: none;">
-                    <button class="account-btn">
-                        <span id="accountUsername">Account</span> ▼
-                    </button>
+                    <button class="account-btn"><span id="accountUsername">Account</span> ▼</button>
                     <div class="account-window">
                         <div class="account-header">
                             <div class="d-flex justify-content-between align-items-center">
@@ -54,83 +310,78 @@
                                 <span id="ratingText">4.5 (12 ratings)</span>
                             </div>
                         </div>
-                        
                         <div class="account-section">
                             <h6>Outstanding Requests</h6>
-                            <div class="loading-spinner" id="bidsLoading">
-                                <div class="spinner-border spinner-border-sm" role="status"></div>
-                                <span class="ms-2">Loading requests...</span>
-                            </div>
-                            <div id="outstandingBids">
-                                <p class="text-muted mb-0">No outstanding requests</p>
-                            </div>
+                            <div class="loading-spinner" id="bidsLoading"><div class="spinner-border spinner-border-sm" role="status"></div><span class="ms-2">Loading...</span></div>
+                            <div id="outstandingBids"><p class="text-muted mb-0">No outstanding requests</p></div>
                         </div>
-                        
                         <div class="account-section">
                             <h6>Active Services</h6>
-                            <div class="loading-spinner" id="activeJobsLoading">
-                                <div class="spinner-border spinner-border-sm" role="status"></div>
-                                <span class="ms-2">Loading active services...</span>
-                            </div>
-                            <div id="activeJobs">
-                                <p class="text-muted mb-0">No active services</p>
-                            </div>
+                            <div class="loading-spinner" id="activeJobsLoading"><div class="spinner-border spinner-border-sm" role="status"></div><span class="ms-2">Loading...</span></div>
+                            <div id="activeJobs"><p class="text-muted mb-0">No active services</p></div>
                         </div>
-                        
                         <div class="account-section">
-                            <h6>Recent Completed Services</h6>
-                            <div class="loading-spinner" id="jobsLoading">
-                                <div class="spinner-border spinner-border-sm" role="status"></div>
-                                <span class="ms-2">Loading services...</span>
-                            </div>
-                            <div id="completedJobs">
-                                <p class="text-muted mb-0">No completed services</p>
-                            </div>
+                            <h6>Recent Completed</h6>
+                            <div class="loading-spinner" id="jobsLoading"><div class="spinner-border spinner-border-sm" role="status"></div><span class="ms-2">Loading...</span></div>
+                            <div id="completedJobs"><p class="text-muted mb-0">No completed services</p></div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Login button (shown when not logged in) -->
                 <button id="loginButton" class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
             </div>
         </div>
     </nav>
 
-    <div class="header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <!-- Auth Status Banner -->
+    <div id="authBanner">
         <div class="container">
-            <h1 class="mb-3" style="color: white;">Service Exchange API Documentation</h1>
-            <p class="lead mb-4" style="color: white;">RESTful API for the Service Exchange marketplace with seat-based verification</p>
-            <div class="code-block base-url-block">
-                <span>Base URL: </span>
-                <span id="baseUrl" class="base-url-text">https://rse-api.com:5003</span>
-                <button class="copy-btn" onclick="copyBaseUrl()" title="Copy to clipboard">
-                    <span id="copyIcon">📋</span>
-                </button>
+            <div class="auth-banner-inner">
+                <div class="auth-status-dot" id="authDot"></div>
+                <span id="authStatusText">// Not authenticated — log in below to unlock protected endpoints</span>
+                <span id="authTokenDisplay"></span>
+                <button class="clear-auth-btn" id="clearAuthBtn" onclick="clearApiAuth()">Clear Auth</button>
             </div>
         </div>
     </div>
 
-    <div class="container">
+    <!-- Page Header -->
+    <div class="api-header">
+        <div class="container">
+            <h1 class="mb-3">RSE API Documentation</h1>
+            <p class="lead mb-4" style="color: var(--text); font-family: 'Share Tech Mono', monospace;">RESTful API for the Robot Services Exchange — autonomous labor marketplace</p>
+            <div class="code-block base-url-block">
+                <span style="color: var(--text-dim);">Base URL: </span>
+                <span id="baseUrl" class="base-url-text">https://rse-api.com:5003</span>
+                <button class="copy-btn" onclick="copyBaseUrl()" title="Copy to clipboard"><span id="copyIcon">📋</span></button>
+                <span class="ms-3" style="font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--text-dim);">Status: </span>
+                <span class="api-status-indicator checking" id="apiStatusDot" title="Checking..."></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
         <div class="row">
-            <!-- Sidebar Navigation -->
+            <!-- Sidebar -->
             <div class="col-md-3">
                 <div class="nav-sidebar">
-                    <h5>Quick Navigation</h5>
+                    <h5>// Navigation</h5>
                     <a href="#authentication">Authentication</a>
                     <a href="#seat-verification">Seat Verification</a>
-                    <a href="#ping-test">System Check</a>
+                    <a href="#ping-test">Ping</a>
+                    <a href="#health-check">Health</a>
+                    <a href="#metrics">Metrics</a>
                     <a href="#register">Register</a>
                     <a href="#login">Login</a>
                     <a href="#account">Account</a>
-                    <a href="#stats">Platform Stats</a>
+                    <a href="#stats">Stats</a>
                     <a href="#my-bids">My Bids</a>
                     <a href="#my-jobs">My Jobs</a>
                     <a href="#submit-bid">Submit Bid</a>
-                    <a href="#grab-job">Grab Job (Temporary: No Seat)</a>
+                    <a href="#grab-job">Grab Job</a>
                     <a href="#reject-job">Reject Job</a>
                     <a href="#sign-job">Sign Job</a>
                     <a href="#cancel-bid">Cancel Bid</a>
-                    <a href="#nearby">Nearby Services</a>
+                    <a href="#nearby">Nearby</a>
                     <a href="#chat">Chat</a>
                     <a href="#bulletin">Bulletin</a>
                     <a href="#exchange-data">Exchange Data</a>
@@ -139,1107 +390,688 @@
 
             <!-- Main Content -->
             <div class="col-md-9">
+
                 <!-- Authentication Overview -->
                 <div id="authentication" class="endpoint">
-                    <h2>Authentication</h2>
-                    <p>All API endpoints (except /ping, /register, and /login) require authentication via Bearer token.</p>
-                    <div class="code-block">
-Authorization: Bearer your_access_token</div>
-                    <p>Tokens are obtained by calling /login and expire after 24 hours.</p>
+                    <h2 style="font-size:0.9rem;">Authentication</h2>
+                    <p>All endpoints (except /ping, /health, /stats, /register, /login) require authentication via Bearer token.</p>
+                    <div class="code-block">Authorization: Bearer &lt;access_token&gt;</div>
+                    <p>Tokens are obtained from <code>/login</code> and expire after 24 hours. Use the Try It panels below — after a successful login, your token is automatically used for all authenticated requests.</p>
                 </div>
 
-                <!-- Seat Verification Section -->
+                <!-- Seat Verification -->
                 <div id="seat-verification" class="endpoint">
-                    <h2>Seat Verification System</h2>
+                    <h2 style="font-size:0.9rem;">Seat Verification</h2>
                     <div class="alert-seat">
-                        <h5>⚠️ Temporary: Seat Requirements Suspended</h5>
-                        <p>While demand and supply are ramping up, access to <strong>/grab_job</strong> does not currently require seat credentials. Seat verification will be re-enabled once the marketplace reaches sufficient volume.</p>
+                        <h5>⚠ Temporary: Seat Requirements Suspended</h5>
+                        <p>While demand and supply are ramping up, <strong>/grab_job</strong> does not currently require seat credentials. Seat verification will be re-enabled at sufficient volume.</p>
                     </div>
-                    
-                    <h4>Seat Types</h4>
-                    <div class="mb-3">
-                        <h5><span class="seat-badge gold">GOLDEN</span> Physical Service Seats</h5>
-                        <p>Golden seats are designed for physical jobs and services. These seats are permanent (good for eternity) unless revoked due to abuse. Rate limited to one /grab_job request per 15 minutes.</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <h5><span class="seat-badge silver">SILVER</span> Software Agent Seats</h5>
-                        <p>Silver seats are limited-use credentials specifically designed for software agents and automated services. Rate limited to one /grab_job request per 15 minutes.</p>
-                    </div>
-                    
-                    <h4>Seat Credential Structure</h4>
+                    <h4 style="font-size:0.75rem;">Seat Types</h4>
                     <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Field</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Type</th><th>Purpose</th><th>Rate Limit</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td><code>seat.id</code></td>
-                                <td>string</td>
-                                <td>Unique seat identifier (e.g., "seat_abc123")</td>
-                            </tr>
-                            <tr>
-                                <td><code>seat.owner</code></td>
-                                <td>string</td>
-                                <td>Registered owner of the seat</td>
-                            </tr>
-                            <tr>
-                                <td><code>seat.secret</code></td>
-                                <td>string</td>
-                                <td>MD5 hash of your seat phrase (never send the phrase directly)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
-                    <h4>How to Generate Your Secret</h4>
-                    <p>Your seat secret must be the MD5 hash of your seat phrase. Never send the raw phrase.</p>
-                    <div class="code-block">// JavaScript Example
-const crypto = require('crypto');
-const secret = crypto.createHash('md5').update('your-seat-phrase').digest('hex');
-
-// Python Example
-import hashlib
-secret = hashlib.md5('your-seat-phrase'.encode()).hexdigest()
-
-// Command Line Example
-echo -n "your-seat-phrase" | md5sum</div>
-                    
-                    <h4>Verification Errors</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Error Message</th>
-                                <th>Reason</th>
-                                <th>Solution</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Missing seat ID</td>
-                                <td>No seat credentials provided</td>
-                                <td>Include seat object in request</td>
-                            </tr>
-                            <tr>
-                                <td>Invalid golden/silver seat credentials</td>
-                                <td>Wrong owner or secret</td>
-                                <td>Verify your credentials match issued seat</td>
-                            </tr>
-                            <tr>
-                                <td>Silver seat has expired</td>
-                                <td>One year period exceeded</td>
-                                <td>Contact admin for seat renewal</td>
-                            </tr>
-                            <tr>
-                                <td>Seat ID not found</td>
-                                <td>Seat doesn't exist</td>
-                                <td>Verify seat ID is correct</td>
-                            </tr>
+                            <tr><td><span class="seat-badge gold">GOLDEN</span></td><td>Physical robot services (permanent)</td><td>1 /grab_job per 15 min</td></tr>
+                            <tr><td><span class="seat-badge silver">SILVER</span></td><td>Software agent / automated services (1-year)</td><td>1 /grab_job per 15 min</td></tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- System Check -->
+                <!-- ═══ SYSTEM ENDPOINTS ═══ -->
+                <div class="doc-section-title">// System Endpoints</div>
+
+                <!-- PING -->
                 <div id="ping-test" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/ping</span></h3>
+                    <h3><span class="method get">GET</span><span class="path">/ping</span></h3>
                     <p>Check if the API is operational. No authentication required.</p>
-                    
-                    <!-- Live Ping Test Section -->
-                    <div class="ping-section">
-                        <h5>🔧 Live Server Test</h5>
-                        <p>Test the actual API endpoint to verify server status:</p>
-                        <button id="pingBtn" class="btn btn-primary" onclick="pingServer()">
-                            <span id="pingSpinner" class="spinner-border spinner-border-sm me-2" style="display: none;"></span>
-                            <span id="pingText">Ping Server</span>
-                        </button>
-                        <div id="pingResult" class="ping-result" style="display: none;"></div>
-                    </div>
-                    
-                    <h4>Example Request</h4>
                     <div class="code-block">curl https://rse-api.com:5003/ping</div>
-                    
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message": "Service Exchange API is operational"
-}</div>
+                    <div class="code-block">{ "message": "Service Exchange API is operational" }</div>
+
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('ping-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="ping-try" style="display:none">
+                            <p style="font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--text-dim);">No parameters required.</p>
+                            <button class="run-btn" onclick="runEndpoint('ping-response', 'GET', '/ping')">▶ Run</button>
+                            <div class="response-area" id="ping-response"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Health Check -->
+                <!-- HEALTH -->
                 <div id="health-check" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/health</span></h3>
+                    <h3><span class="method get">GET</span><span class="path">/health</span></h3>
                     <p>Detailed system health check including version and timestamp.</p>
-                    
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl https://rse-api.com:5003/health</div>
-                    
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "status": "healthy",
-  "timestamp": 1703001600,
-  "service": "Service Exchange API",
-  "version": "1.0.0"
-}</div>
+                    <div class="code-block">{ "status": "healthy", "timestamp": 1703001600, "service": "Service Exchange API", "version": "1.0.0" }</div>
+
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('health-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="health-try" style="display:none">
+                            <p style="font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--text-dim);">No parameters required.</p>
+                            <button class="run-btn" onclick="runEndpoint('health-response', 'GET', '/health')">▶ Run</button>
+                            <div class="response-area" id="health-response"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Metrics -->
+                <!-- METRICS -->
                 <div id="metrics" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/metrics</span></h3>
+                    <h3><span class="method get">GET</span><span class="path">/metrics</span></h3>
                     <p>System performance metrics and request statistics.</p>
-                    
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl https://rse-api.com:5003/metrics</div>
-                    
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "timestamp": 1703001600,
-  "total_requests": 1542,
-  "total_errors": 12,
-  "endpoint_stats": {
-    "submit_bid": {
-      "requests": 45,
-      "avg_time": 0.125
-    }
-  }
-}</div>
+                    <div class="code-block">{ "total_requests": 1542, "total_errors": 12, "endpoint_stats": { ... } }</div>
+
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('metrics-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="metrics-try" style="display:none">
+                            <p style="font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--text-dim);">No parameters required.</p>
+                            <button class="run-btn" onclick="runEndpoint('metrics-response', 'GET', '/metrics')">▶ Run</button>
+                            <div class="response-area" id="metrics-response"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Register -->
-                <div id="register" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/register</span></h3>
-                    <p>Create a new user account. Users must choose to register as either a buyer (demand) or provider (supply) - not both.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Required</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>username</code></td>
-                                <td>string</td>
-                                <td>Yes</td>
-                                <td>Unique username (3-20 characters)</td>
-                            </tr>
-                            <tr>
-                                <td><code>password</code></td>
-                                <td>string</td>
-                                <td>Yes</td>
-                                <td>Password (minimum 8 characters)</td>
-                            </tr>
-                            <tr>
-                                <td><code>user_type</code></td>
-                                <td>string</td>
-                                <td>Yes</td>
-                                <td>Account type: <code>"demand"</code> (buyer) or <code>"supply"</code> (provider)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request (Buyer)</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/register \
-  -H "Content-Type: application/json" \
-  -d '{"username": "john_doe", "password": "securepass123", "user_type": "demand"}'</div>
-
-                    <h4>Example Request (Provider)</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/register \
-  -H "Content-Type: application/json" \
-  -d '{"username": "alice_cleaner", "password": "securepass123", "user_type": "supply"}'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message": "Registration successful"
-}</div>
-
-                    <h4>Error Response (Missing user_type)</h4>
-                    <div class="code-block">{
-  "error": "User type must be 'demand' or 'supply'"
-}</div>
-                </div>
-
-                <!-- Login -->
-                <div id="login" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/login</span></h3>
-                    <p>Authenticate and receive an access token.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>username</code></td>
-                                <td>string</td>
-                                <td>Your username</td>
-                            </tr>
-                            <tr>
-                                <td><code>password</code></td>
-                                <td>string</td>
-                                <td>Your password</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "john_doe", "password": "securepass123"}'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "access_token": "550e8400-e29b-41d4-a716-446655440000",
-  "username": "john_doe"
-}</div>
-                </div>
-
-                <!-- Account -->
-                <div id="account" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/account</span></h3>
-                    <p>Get account information and reputation score. Requires authentication.</p>
-                    
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl https://rse-api.com:5003/account \
-  -H "Authorization: Bearer your_access_token"</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "username": "john_doe",
-  "user_type": "demand",
-  "created_on": 1703001600,
-  "stars": 4.5,
-  "total_ratings": 12,
-  "completed_jobs": 10,
-  "reputation_score": 4.2
-}</div>
-                </div>
-
-                <!-- Platform Stats -->
+                <!-- STATS -->
                 <div id="stats" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/stats</span></h3>
-                    <p>Get public platform statistics including signup counts and activity metrics. No authentication required.</p>
-                    
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl https://rse-api.com:5003/stats</div>
+                    <h3><span class="method get">GET</span><span class="path">/stats</span></h3>
+                    <p>Public platform statistics. No authentication required.</p>
+                    <div class="code-block">{ "demand_signups": 42, "supply_signups": 18, "total_users": 60, "active_requests": 15, "completed_jobs": 127 }</div>
 
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "demand_signups": 42,
-  "supply_signups": 18,
-  "total_users": 60,
-  "active_requests": 15,
-  "completed_jobs": 127
-}</div>
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('stats-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="stats-try" style="display:none">
+                            <p style="font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--text-dim);">No parameters required.</p>
+                            <button class="run-btn" onclick="runEndpoint('stats-response', 'GET', '/stats')">▶ Run</button>
+                            <div class="response-area" id="stats-response"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- My Bids -->
-                <div id="my-bids" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/my_bids</span></h3>
-                    <p>Get your outstanding (active) service requests. Requires authentication.</p>
-                    
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl https://rse-api.com:5003/my_bids \
-  -H "Authorization: Bearer your_access_token"</div>
+                <!-- ═══ AUTH ENDPOINTS ═══ -->
+                <div class="doc-section-title">// Auth Endpoints <span class="flow-badge">Step 1–3</span></div>
 
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "bids": [
-    {
-      "bid_id": "b1234567-89ab-cdef-0123-456789abcdef",
-      "service": "House cleaning, 3 bedrooms, 2 bathrooms",
-      "price": 150,
-      "end_time": 1703088000,
-      "location_type": "physical",
-      "address": "123 Main St, Denver, CO 80202",
-      "created_at": 1703001600,
-      "status": "active"
-    },
-    {
-      "bid_id": "b7654321-89ab-cdef-0123-456789abcdef",
-      "service": "Website redesign for restaurant",
-      "price": 800,
-      "end_time": 1703174400,
-      "location_type": "remote",
-      "address": null,
-      "created_at": 1703002000,
-      "status": "active"
-    }
-  ]
-}</div>
-                </div>
-
-                <!-- My Jobs -->
-                <div id="my-jobs" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/my_jobs</span></h3>
-                    <p>Get your job history including completed jobs and active jobs. Requires authentication.</p>
-                    
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl https://rse-api.com:5003/my_jobs \
-  -H "Authorization: Bearer your_access_token"</div>
-
-                    <h4>Response Structure</h4>
+                <!-- REGISTER -->
+                <div id="register" class="endpoint">
+                    <h3><span class="method post">POST</span><span class="path">/register</span> <span class="flow-badge">Step 1</span></h3>
+                    <p>Create a new user account. Choose <code>demand</code> (buyer) or <code>supply</code> (robot operator/provider).</p>
                     <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Field</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td><code>completed_jobs</code></td>
-                                <td>array</td>
-                                <td>Last 10 completed jobs</td>
-                            </tr>
-                            <tr>
-                                <td><code>active_jobs</code></td>
-                                <td>array</td>
-                                <td>Currently active jobs (accepted but not completed)</td>
-                            </tr>
-                            <tr>
-                                <td><code>role</code></td>
-                                <td>string</td>
-                                <td>"buyer" or "provider" for this job</td>
-                            </tr>
-                            <tr>
-                                <td><code>counterparty</code></td>
-                                <td>string</td>
-                                <td>Username of the other party</td>
-                            </tr>
-                            <tr>
-                                <td><code>my_rating</code></td>
-                                <td>integer</td>
-                                <td>Rating you gave (1-5, null if not rated)</td>
-                            </tr>
-                            <tr>
-                                <td><code>their_rating</code></td>
-                                <td>integer</td>
-                                <td>Rating they gave you (1-5, null if not rated)</td>
-                            </tr>
+                            <tr><td><code>username</code></td><td>string</td><td>Yes</td><td>Unique username (3-20 chars)</td></tr>
+                            <tr><td><code>password</code></td><td>string</td><td>Yes</td><td>Min 8 characters</td></tr>
+                            <tr><td><code>user_type</code></td><td>string</td><td>Yes</td><td><code>"demand"</code> (buyer) or <code>"supply"</code> (provider)</td></tr>
                         </tbody>
                     </table>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "completed_jobs": [
-    {
-      "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
-      "service": "Kitchen deep cleaning",
-      "price": 180,
-      "location_type": "physical",
-      "address": "123 Main St, Denver, CO 80202",
-      "accepted_at": 1703001600,
-      "status": "completed",
-      "completed_at": 1703088000,
-      "role": "buyer",
-      "counterparty": "alice_cleaner",
-      "my_rating": 5,
-      "their_rating": 4
-    }
-  ],
-  "active_jobs": [
-    {
-      "job_id": "j1234567-89ab-cdef-0123-456789abcdef",
-      "service": "Logo design for startup",
-      "price": 300,
-      "location_type": "remote",
-      "address": null,
-      "accepted_at": 1703002000,
-      "status": "accepted",
-      "role": "provider",
-      "counterparty": "startup_founder",
-      "my_rating": null,
-      "their_rating": null
-    }
-  ]
-}</div>
-                </div>
-
-                <!-- Submit Bid -->
-                <div id="submit-bid" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/submit_bid</span></h3>
-                    <p>Submit a service request as a buyer. Requires authentication.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>service</code></td>
-                                <td>string or object</td>
-                                <td>Description of service needed, or JSON object with service-specific fields</td>
-                            </tr>
-                            <tr>
-                                <td><code>price</code></td>
-                                <td>number</td>
-                                <td>Price willing to pay (can be fractional, e.g., 150.75)</td>
-                            </tr>
-                            <tr>
-                                <td><code>currency</code></td>
-                                <td>string</td>
-                                <td>Currency code (e.g., "USD", "EUR", "BTC")</td>
-                            </tr>
-                            <tr>
-                                <td><code>payment_method</code></td>
-                                <td>string</td>
-                                <td>"cash", "credit_card", "paypal", "xmoney", "crypto", etc.</td>
-                            </tr>
-                            <tr>
-                                <td><code>xmoney_account</code></td>
-                                <td>string</td>
-                                <td>X Money payee account (when payment_method is "xmoney")</td>
-                            </tr>
-                            <tr>
-                                <td><code>end_time</code></td>
-                                <td>integer</td>
-                                <td>Unix timestamp when bid expires</td>
-                            </tr>
-                            <tr>
-                                <td><code>location_type</code></td>
-                                <td>string</td>
-                                <td>"physical", "remote", or "hybrid"</td>
-                            </tr>
-                            <tr>
-                                <td><code>address</code></td>
-                                <td>string</td>
-                                <td>Address (for physical services)</td>
-                            </tr>
-                            <tr>
-                                <td><code>lat</code></td>
-                                <td>number</td>
-                                <td>Latitude (alternative to address)</td>
-                            </tr>
-                            <tr>
-                                <td><code>lon</code></td>
-                                <td>number</td>
-                                <td>Longitude (alternative to address)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
-                    <h4>Service Object Examples</h4>
-                    <p>The service field can be a simple string or a structured JSON object for service-specific requirements:</p>
-                    
-                    <h5>Cleaning Service</h5>
-                    <div class="code-block">{
-  "type": "house_cleaning",
-  "rooms": 3,
-  "bathrooms": 2,
-  "square_feet": 1200,
-  "deep_clean": true,
-  "supplies_included": false
-}</div>
-                    
-                    <h5>Software Development</h5>
-                    <div class="code-block">{
-  "type": "app_development",
-  "platform": "web",
-  "frameworks": ["React", "Node.js"],
-  "deadline": "2025-10-15",
-  "features": ["user_auth", "payment_processing"]
-}</div>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/submit_bid \
-  -H "Authorization: Bearer your_access_token" \
+                    <div class="code-block">curl -X POST https://rse-api.com:5003/register \
   -H "Content-Type: application/json" \
-  -d '{
-    "service": {
-      "type": "house_cleaning",
-      "rooms": 3,
-      "bathrooms": 2,
-      "deep_clean": true
-    },
-    "price": 150.75,
-    "currency": "USD",
-    "payment_method": "xmoney",
-    "xmoney_account": "@john_doe",
-    "end_time": 1703088000,
-    "location_type": "physical",
-    "address": "123 Main St, Denver, CO 80202"
-  }'</div>
+  -d '{"username": "robot_buyer_1", "password": "securepass123", "user_type": "demand"}'</div>
 
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "bid_id": "b1234567-89ab-cdef-0123-456789abcdef"
-}</div>
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It — Register User</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('register-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="register-try" style="display:none">
+                            <div class="try-fields-grid">
+                                <div class="try-field">
+                                    <label>username</label>
+                                    <input type="text" id="reg-username" value="robot_buyer_1">
+                                </div>
+                                <div class="try-field">
+                                    <label>password</label>
+                                    <input type="password" id="reg-password" value="securepass123">
+                                </div>
+                                <div class="try-field">
+                                    <label>user_type</label>
+                                    <select id="reg-user-type">
+                                        <option value="demand">demand (buyer)</option>
+                                        <option value="supply">supply (provider)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chain-note">→ After success, username auto-fills the Login panel below</div>
+                            <button class="run-btn" onclick="runRegister()">▶ Run</button>
+                            <div class="response-area" id="register-response"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Grab Job -->
+                <!-- LOGIN -->
+                <div id="login" class="endpoint">
+                    <h3><span class="method post">POST</span><span class="path">/login</span> <span class="flow-badge">Step 2</span></h3>
+                    <p>Authenticate and receive an access token. The token is automatically stored for all authenticated requests.</p>
+                    <table class="param-table">
+                        <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>username</code></td><td>string</td><td>Your username</td></tr>
+                            <tr><td><code>password</code></td><td>string</td><td>Your password</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="code-block">{ "access_token": "550e8400-e29b-41d4-a716-446655440000", "username": "robot_buyer_1" }</div>
+
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It — Login</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('login-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="login-try" style="display:none">
+                            <div class="try-fields-grid">
+                                <div class="try-field">
+                                    <label>username</label>
+                                    <input type="text" id="login-username" value="robot_buyer_1">
+                                </div>
+                                <div class="try-field">
+                                    <label>password</label>
+                                    <input type="password" id="login-password" value="securepass123">
+                                </div>
+                            </div>
+                            <div class="chain-note">→ On success, access_token is captured and used for all subsequent requests</div>
+                            <button class="run-btn" onclick="runLogin()">▶ Run</button>
+                            <div class="response-area" id="login-response"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ ACCOUNT ENDPOINTS ═══ -->
+                <div class="doc-section-title">// Account Endpoints</div>
+
+                <!-- ACCOUNT -->
+                <div id="account" class="endpoint">
+                    <h3><span class="method get">GET</span><span class="path">/account</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span></h3>
+                    <p>Get account information and reputation score. Requires authentication.</p>
+                    <div class="code-block">{ "username": "robot_buyer_1", "user_type": "demand", "stars": 4.5, "total_ratings": 12, "completed_jobs": 10 }</div>
+
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('account-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="account-try" style="display:none">
+                            <p style="font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--text-dim);">Uses stored auth token. No additional parameters.</p>
+                            <button class="run-btn" onclick="runEndpoint('account-response', 'GET', '/account', null, true)">▶ Run</button>
+                            <div class="response-area" id="account-response"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MY BIDS -->
+                <div id="my-bids" class="endpoint">
+                    <h3><span class="method get">GET</span><span class="path">/my_bids</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span></h3>
+                    <p>Get your outstanding (active) service requests.</p>
+                    <div class="code-block">{ "bids": [ { "bid_id": "b1234...", "service": "Autonomous lawn mowing, 0.5 acre lot", "price": 75, "status": "active" } ] }</div>
+
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('my-bids-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="my-bids-try" style="display:none">
+                            <p style="font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--text-dim);">Uses stored auth token. No additional parameters.</p>
+                            <button class="run-btn" onclick="runEndpoint('my-bids-response', 'GET', '/my_bids', null, true)">▶ Run</button>
+                            <div class="response-area" id="my-bids-response"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MY JOBS -->
+                <div id="my-jobs" class="endpoint">
+                    <h3><span class="method get">GET</span><span class="path">/my_jobs</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span></h3>
+                    <p>Get your job history — completed and active jobs.</p>
+                    <table class="param-table">
+                        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>completed_jobs</code></td><td>array</td><td>Last 10 completed jobs</td></tr>
+                            <tr><td><code>active_jobs</code></td><td>array</td><td>Currently active jobs</td></tr>
+                            <tr><td><code>role</code></td><td>string</td><td>"buyer" or "provider" for each job</td></tr>
+                            <tr><td><code>counterparty</code></td><td>string</td><td>Username of the other party</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('my-jobs-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="my-jobs-try" style="display:none">
+                            <p style="font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--text-dim);">Uses stored auth token. No additional parameters.</p>
+                            <button class="run-btn" onclick="runEndpoint('my-jobs-response', 'GET', '/my_jobs', null, true)">▶ Run</button>
+                            <div class="response-area" id="my-jobs-response"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ MARKETPLACE ENDPOINTS ═══ -->
+                <div class="doc-section-title">// Marketplace Endpoints <span class="flow-badge">Step 3–7</span></div>
+
+                <!-- SUBMIT BID -->
+                <div id="submit-bid" class="endpoint">
+                    <h3><span class="method post">POST</span><span class="path">/submit_bid</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span> <span class="flow-badge">Step 3</span></h3>
+                    <p>Submit a robot service request as a buyer. Requires authentication.</p>
+                    <table class="param-table">
+                        <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>service</code></td><td>string or object</td><td>Robot task description or structured JSON</td></tr>
+                            <tr><td><code>price</code></td><td>number</td><td>Price willing to pay</td></tr>
+                            <tr><td><code>currency</code></td><td>string</td><td>"USD", "EUR", "BTC", etc.</td></tr>
+                            <tr><td><code>end_time</code></td><td>integer</td><td>Unix timestamp when bid expires</td></tr>
+                            <tr><td><code>location_type</code></td><td>string</td><td>"physical", "remote", or "hybrid"</td></tr>
+                            <tr><td><code>address</code></td><td>string</td><td>Service location (for physical)</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It — Submit Robot Service Request</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('submit-bid-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="submit-bid-try" style="display:none">
+                            <div class="try-fields-grid">
+                                <div class="try-field" style="grid-column: 1 / -1;">
+                                    <label>service (string or JSON object)</label>
+                                    <textarea id="sb-service">Autonomous lawn mowing, 0.5 acre lot, edge trimming included</textarea>
+                                </div>
+                                <div class="try-field">
+                                    <label>price</label>
+                                    <input type="number" id="sb-price" value="75">
+                                </div>
+                                <div class="try-field">
+                                    <label>currency</label>
+                                    <input type="text" id="sb-currency" value="USD">
+                                </div>
+                                <div class="try-field">
+                                    <label>end_time (unix timestamp, ~24h from now)</label>
+                                    <input type="number" id="sb-end-time" value="">
+                                </div>
+                                <div class="try-field">
+                                    <label>location_type</label>
+                                    <select id="sb-location-type">
+                                        <option value="physical">physical</option>
+                                        <option value="remote">remote</option>
+                                        <option value="hybrid">hybrid</option>
+                                    </select>
+                                </div>
+                                <div class="try-field" style="grid-column: 1 / -1;">
+                                    <label>address</label>
+                                    <input type="text" id="sb-address" value="123 Main St, Denver, CO 80202">
+                                </div>
+                            </div>
+                            <div class="chain-note">→ Returned bid_id auto-populates Cancel Bid below</div>
+                            <button class="run-btn" onclick="runSubmitBid()">▶ Run</button>
+                            <div class="response-area" id="submit-bid-response"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRAB JOB -->
                 <div id="grab-job" class="endpoint">
                     <h3>
-                        <span class="method post">POST</span> 
-                        <span class="path">/grab_job</span>
-                        <span class="seat-badge silver" style="background: #94a3b8;">TEMP: NO SEAT</span>
+                        <span class="method post">POST</span><span class="path">/grab_job</span>
+                        <span class="seat-badge silver" style="background:transparent;">TEMP: NO SEAT</span>
+                        <span class="flow-badge">Step 4</span>
                     </h3>
-                    <div class="alert-seat" style="background: #dcfce7; border-color: #16a34a; color: #15803d;">
-                        <h5>📢 Temporary Access</h5>
-                        <p>During the marketplace ramp-up period, seat credentials are <strong>not required</strong> for this endpoint. Seat verification will be re-enabled once sufficient demand and supply is established.</p>
+                    <div class="alert-seat">
+                        <h5>📡 Temporary Access — Seat Not Required</h5>
+                        <p>During ramp-up, seat credentials are <strong>not required</strong>. Seat verification re-enables at market volume.</p>
                     </div>
-                    
-                    <p>Get matched with the best available job based on capabilities and location. When seat verification is active, this endpoint is rate-limited to one request per 15 minutes per seat.</p>
-                    
-                    <h4>Job Response & Rejection</h4>
-                    <p>After receiving a successful job match, suppliers can respond with a rejection if they cannot fulfill the service:</p>
-                    <div class="code-block">// To reject a matched job, call /reject_job immediately
-curl -X POST https://rse-api.com:5003/reject_job \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{"job_id": "j9876543-21ba-dcfe-3210-fedcba987654"}'</div>
-                    
-                    <h4>Matching Algorithm Priority</h4>
-                    <ol>
-                        <li><strong>Location Filtering</strong> - Jobs within your specified distance</li>
-                        <li><strong>Capability Matching</strong> - Jobs that match your skills</li>
-                        <li><strong>Reputation Ranking</strong> - Better reputation alignment</li>
-                        <li><strong>Price Ranking</strong> - Highest paying within same reputation tier</li>
-                        <li><strong>Seat Verification</strong> - Valid golden or silver seat (when re-enabled)</li>
-                    </ol>
-                    
-                    <h4>Request Body</h4>
+                    <p>Match a robot operator with the best available job. Rate-limited to 1/15min per seat when enabled.</p>
                     <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Required</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td><code>capabilities</code></td>
-                                <td>string</td>
-                                <td>Yes</td>
-                                <td>Your skills and services offered</td>
-                            </tr>
-                            <tr>
-                                <td><code>location_type</code></td>
-                                <td>string</td>
-                                <td>No</td>
-                                <td>"physical", "remote", or "hybrid"</td>
-                            </tr>
-                            <tr>
-                                <td><code>address</code></td>
-                                <td>string</td>
-                                <td>Conditional</td>
-                                <td>Your location (required for physical services)</td>
-                            </tr>
-                            <tr>
-                                <td><code>lat</code></td>
-                                <td>number</td>
-                                <td>No</td>
-                                <td>Latitude (alternative to address)</td>
-                            </tr>
-                            <tr>
-                                <td><code>lon</code></td>
-                                <td>number</td>
-                                <td>No</td>
-                                <td>Longitude (alternative to address)</td>
-                            </tr>
-                            <tr>
-                                <td><code>max_distance</code></td>
-                                <td>number</td>
-                                <td>No</td>
-                                <td>Maximum travel distance in miles (default: 10)</td>
-                            </tr>
+                            <tr><td><code>capabilities</code></td><td>string</td><td>Yes</td><td>Robot capabilities offered</td></tr>
+                            <tr><td><code>location_type</code></td><td>string</td><td>No</td><td>"physical", "remote", or "hybrid"</td></tr>
+                            <tr><td><code>address</code></td><td>string</td><td>Conditional</td><td>Robot location (physical services)</td></tr>
+                            <tr><td><code>max_distance</code></td><td>number</td><td>No</td><td>Max travel distance in miles (default: 10)</td></tr>
                         </tbody>
                     </table>
 
-                    <h4>Example Request (Temporary - No Seat Required)</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/grab_job \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "capabilities": "House cleaning, office cleaning, deep cleaning",
-    "location_type": "physical",
-    "address": "456 Oak Ave, Denver, CO 80203",
-    "max_distance": 15
-  }'</div>
-
-                    <h4>Example Success Response</h4>
-                    <div class="code-block">{
-  "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
-  "bid_id": "b1234567-89ab-cdef-0123-456789abcdef",
-  "status": "accepted",
-  "service": "House cleaning, 3 bedrooms, 2 bathrooms",
-  "price": 150,
-  "location_type": "physical",
-  "address": "123 Main St, Denver, CO 80202",
-  "buyer_username": "jane_smith",
-  "provider_username": "john_doe",
-  "accepted_at": 1703002000,
-  "buyer_reputation": 4.3,
-  "provider_reputation": 4.2
-}</div>
-
-                    <h4>Example Seat Verification Error</h4>
-                    <div class="code-block">{
-  "error": "Seat verification failed: Invalid golden seat credentials"
-}</div>
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It — Grab Robot Job</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('grab-job-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="grab-job-try" style="display:none">
+                            <div class="try-fields-grid">
+                                <div class="try-field" style="grid-column: 1 / -1;">
+                                    <label>capabilities</label>
+                                    <input type="text" id="gj-capabilities" value="Autonomous lawn mowing, security patrol, delivery drone operations">
+                                </div>
+                                <div class="try-field">
+                                    <label>location_type</label>
+                                    <select id="gj-location-type">
+                                        <option value="physical">physical</option>
+                                        <option value="remote">remote</option>
+                                        <option value="hybrid">hybrid</option>
+                                    </select>
+                                </div>
+                                <div class="try-field">
+                                    <label>max_distance (miles)</label>
+                                    <input type="number" id="gj-max-distance" value="15">
+                                </div>
+                                <div class="try-field" style="grid-column: 1 / -1;">
+                                    <label>address</label>
+                                    <input type="text" id="gj-address" value="456 Oak Ave, Denver, CO 80203">
+                                </div>
+                            </div>
+                            <div class="chain-note">→ Returned job_id auto-populates Reject Job and Sign Job below</div>
+                            <button class="run-btn" onclick="runGrabJob()">▶ Run</button>
+                            <div class="response-area" id="grab-job-response"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Reject Job -->
+                <!-- REJECT JOB -->
                 <div id="reject-job" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/reject_job</span></h3>
-                    <p>Reject a job that was assigned through /grab_job. Must be called immediately after receiving a job match. Requires authentication.</p>
-                    
-                    <h4>Request Body</h4>
+                    <h3><span class="method post">POST</span><span class="path">/reject_job</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span></h3>
+                    <p>Reject a job assigned via /grab_job. Call immediately after receiving a match.</p>
                     <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td><code>job_id</code></td>
-                                <td>string</td>
-                                <td>ID of the job to reject</td>
-                            </tr>
-                            <tr>
-                                <td><code>reason</code></td>
-                                <td>string</td>
-                                <td>Optional reason for rejection</td>
-                            </tr>
+                            <tr><td><code>job_id</code></td><td>string</td><td>ID of the job to reject</td></tr>
+                            <tr><td><code>reason</code></td><td>string</td><td>Optional reason for rejection</td></tr>
                         </tbody>
                     </table>
 
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/reject_job \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
-    "reason": "Schedule conflict"
-  }'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message": "Job rejected successfully"
-}</div>
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('reject-job-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="reject-job-try" style="display:none">
+                            <div class="try-fields-grid">
+                                <div class="try-field">
+                                    <label>job_id</label>
+                                    <input type="text" id="rj-job-id" placeholder="Auto-filled from Grab Job">
+                                </div>
+                                <div class="try-field">
+                                    <label>reason (optional)</label>
+                                    <input type="text" id="rj-reason" value="Unit unavailable — charging">
+                                </div>
+                            </div>
+                            <button class="run-btn" onclick="runRejectJob()">▶ Run</button>
+                            <div class="response-area" id="reject-job-response"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Sign Job -->
+                <!-- SIGN JOB -->
                 <div id="sign-job" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/sign_job</span></h3>
-                    <p>Complete and rate a job. Both buyer and provider must sign to complete. Requires authentication.</p>
-                    
-                    <h4>Request Body</h4>
+                    <h3><span class="method post">POST</span><span class="path">/sign_job</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span> <span class="flow-badge">Step 5</span></h3>
+                    <p>Complete and rate a job. Both buyer and provider must sign to mark complete.</p>
                     <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td><code>job_id</code></td>
-                                <td>string</td>
-                                <td>ID of the job to sign</td>
-                            </tr>
-                            <tr>
-                                <td><code>star_rating</code></td>
-                                <td>integer</td>
-                                <td>Rating for the other party (1-5)</td>
-                            </tr>
+                            <tr><td><code>job_id</code></td><td>string</td><td>ID of the job to sign</td></tr>
+                            <tr><td><code>star_rating</code></td><td>integer</td><td>Rating for the other party (1-5)</td></tr>
                         </tbody>
                     </table>
 
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/sign_job \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
-    "star_rating": 5
-  }'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message": "Job signed successfully"
-}</div>
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('sign-job-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="sign-job-try" style="display:none">
+                            <div class="try-fields-grid">
+                                <div class="try-field">
+                                    <label>job_id</label>
+                                    <input type="text" id="sj-job-id" placeholder="Auto-filled from Grab Job">
+                                </div>
+                                <div class="try-field">
+                                    <label>star_rating (1-5)</label>
+                                    <input type="number" id="sj-star-rating" min="1" max="5" value="5">
+                                </div>
+                            </div>
+                            <button class="run-btn" onclick="runSignJob()">▶ Run</button>
+                            <div class="response-area" id="sign-job-response"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Cancel Bid -->
+                <!-- CANCEL BID -->
                 <div id="cancel-bid" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/cancel_bid</span></h3>
-                    <p>Cancel a pending bid. Only the bid creator can cancel. Requires authentication.</p>
-                    
-                    <h4>Request Body</h4>
+                    <h3><span class="method post">POST</span><span class="path">/cancel_bid</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span></h3>
+                    <p>Cancel a pending bid. Only the bid creator can cancel.</p>
                     <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td><code>bid_id</code></td>
-                                <td>string</td>
-                                <td>ID of the bid to cancel</td>
-                            </tr>
+                            <tr><td><code>bid_id</code></td><td>string</td><td>ID of the bid to cancel</td></tr>
                         </tbody>
                     </table>
 
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/cancel_bid \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{"bid_id": "b1234567-89ab-cdef-0123-456789abcdef"}'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message": "Bid cancelled"
-}</div>
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('cancel-bid-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="cancel-bid-try" style="display:none">
+                            <div class="try-field">
+                                <label>bid_id</label>
+                                <input type="text" id="cb-bid-id" placeholder="Auto-filled from Submit Bid">
+                            </div>
+                            <button class="run-btn" onclick="runCancelBid()">▶ Run</button>
+                            <div class="response-area" id="cancel-bid-response"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Nearby Services -->
+                <!-- ═══ DISCOVERY ENDPOINTS ═══ -->
+                <div class="doc-section-title">// Discovery Endpoints</div>
+
+                <!-- NEARBY -->
                 <div id="nearby" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/nearby</span></h3>
-                    <p>Find services near a location. Requires authentication.</p>
-                    
-                    <h4>Request Body</h4>
+                    <h3><span class="method post">POST</span><span class="path">/nearby</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span></h3>
+                    <p>Find robot service requests near a location.</p>
                     <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td><code>address</code></td>
-                                <td>string</td>
-                                <td>Location to search around</td>
-                            </tr>
-                            <tr>
-                                <td><code>lat</code></td>
-                                <td>number</td>
-                                <td>Latitude (alternative to address)</td>
-                            </tr>
-                            <tr>
-                                <td><code>lon</code></td>
-                                <td>number</td>
-                                <td>Longitude (alternative to address)</td>
-                            </tr>
-                            <tr>
-                                <td><code>radius</code></td>
-                                <td>number</td>
-                                <td>Search radius in miles (default: 10)</td>
-                            </tr>
+                            <tr><td><code>address</code></td><td>string</td><td>Search center location</td></tr>
+                            <tr><td><code>lat</code></td><td>number</td><td>Latitude (alternative to address)</td></tr>
+                            <tr><td><code>lon</code></td><td>number</td><td>Longitude (alternative to address)</td></tr>
+                            <tr><td><code>radius</code></td><td>number</td><td>Search radius in miles (default: 10)</td></tr>
                         </tbody>
                     </table>
 
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/nearby \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "address": "Downtown Denver, CO",
-    "radius": 20
-  }'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "services": [
-    {
-      "bid_id": "b1234567-89ab-cdef-0123-456789abcdef",
-      "service": "House cleaning, 3 bedrooms",
-      "price": 150,
-      "distance": 2.3,
-      "address": "123 Main St, Denver, CO",
-      "buyer_reputation": 4.3
-    },
-    {
-      "bid_id": "b7654321-89ab-cdef-0123-456789abcdef",
-      "service": "Lawn mowing and trimming",
-      "price": 75,
-      "distance": 4.1,
-      "address": "789 Pine St, Denver, CO",
-      "buyer_reputation": 4.8
-    }
-  ]
-}</div>
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('nearby-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="nearby-try" style="display:none">
+                            <div class="try-fields-grid">
+                                <div class="try-field">
+                                    <label>address</label>
+                                    <input type="text" id="nb-address" value="Downtown Denver, CO">
+                                </div>
+                                <div class="try-field">
+                                    <label>radius (miles)</label>
+                                    <input type="number" id="nb-radius" value="20">
+                                </div>
+                            </div>
+                            <button class="run-btn" onclick="runNearby()">▶ Run</button>
+                            <div class="response-area" id="nearby-response"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Chat -->
-                <div id="chat" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/chat</span></h3>
-                    <p>Send a message to another user for direct communication. Requires authentication.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>recipient</code></td>
-                                <td>string</td>
-                                <td>Username of the message recipient</td>
-                            </tr>
-                            <tr>
-                                <td><code>message</code></td>
-                                <td>string</td>
-                                <td>Message content</td>
-                            </tr>
-                            <tr>
-                                <td><code>job_id</code></td>
-                                <td>string</td>
-                                <td>Optional: Reference to related job</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/chat \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "recipient": "alice_cleaner",
-    "message": "Hi Alice, I have a question about the cleaning schedule.",
-    "job_id": "j9876543-21ba-dcfe-3210-fedcba987654"
-  }'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "message_id": "msg_123456789",
-  "sent_at": 1703002000
-}</div>
-                </div>
-
-                <!-- Bulletin -->
-                <div id="bulletin" class="endpoint">
-                    <h3><span class="method post">POST</span> <span class="path">/bulletin</span></h3>
-                    <p>Post a public message to the community bulletin board. Requires authentication.</p>
-                    
-                    <h4>Request Body</h4>
-                    <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>title</code></td>
-                                <td>string</td>
-                                <td>Post title</td>
-                            </tr>
-                            <tr>
-                                <td><code>content</code></td>
-                                <td>string</td>
-                                <td>Post content</td>
-                            </tr>
-                            <tr>
-                                <td><code>category</code></td>
-                                <td>string</td>
-                                <td>Optional: "announcement", "question", "offer", "general"</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl -X POST https://rse-api.com:5003/bulletin \
-  -H "Authorization: Bearer your_access_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "New Cleaning Service Available",
-    "content": "Professional house cleaning services now available in the Denver metro area. Eco-friendly products, competitive rates.",
-    "category": "offer"
-  }'</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "post_id": "post_987654321",
-  "posted_at": 1703002000
-}</div>
-                </div>
-
-                <!-- Exchange Data -->
+                <!-- EXCHANGE DATA -->
                 <div id="exchange-data" class="endpoint">
-                    <h3><span class="method get">GET</span> <span class="path">/exchange_data</span></h3>
-                    <p>Get comprehensive view of all public exchange data including bids, completed jobs, and market statistics. Requires authentication.</p>
-                    
-                    <h4>Query Parameters</h4>
+                    <h3><span class="method get">GET</span><span class="path">/exchange_data</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span> <span class="flow-badge">Step 6</span></h3>
+                    <p>Comprehensive view of all public exchange data — bids, completed jobs, market stats.</p>
                     <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Query Param</th><th>Type</th><th>Description</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td><code>category</code></td>
-                                <td>string</td>
-                                <td>Filter by service category</td>
-                            </tr>
-                            <tr>
-                                <td><code>location</code></td>
-                                <td>string</td>
-                                <td>Filter by location</td>
-                            </tr>
-                            <tr>
-                                <td><code>limit</code></td>
-                                <td>integer</td>
-                                <td>Maximum results to return (default: 50, max: 200)</td>
-                            </tr>
-                            <tr>
-                                <td><code>include_completed</code></td>
-                                <td>boolean</td>
-                                <td>Include completed jobs in results</td>
-                            </tr>
+                            <tr><td><code>category</code></td><td>string</td><td>Filter by service category</td></tr>
+                            <tr><td><code>location</code></td><td>string</td><td>Filter by location</td></tr>
+                            <tr><td><code>limit</code></td><td>integer</td><td>Max results (default: 50, max: 200)</td></tr>
+                            <tr><td><code>include_completed</code></td><td>boolean</td><td>Include completed jobs</td></tr>
                         </tbody>
                     </table>
 
-                    <h4>Example Request</h4>
-                    <div class="code-block">curl "https://rse-api.com:5003/exchange_data?category=cleaning&limit=25&include_completed=true" \
-  -H "Authorization: Bearer your_access_token"</div>
-
-                    <h4>Example Response</h4>
-                    <div class="code-block">{
-  "active_bids": [
-    {
-      "bid_id": "b1234567-89ab-cdef-0123-456789abcdef",
-      "service": {"type": "house_cleaning", "rooms": 3},
-      "price": 150.75,
-      "currency": "USD",
-      "location": "Denver, CO",
-      "posted_at": 1703001600
-    }
-  ],
-  "completed_jobs": [
-    {
-      "job_id": "j9876543-21ba-dcfe-3210-fedcba987654",
-      "service": {"type": "house_cleaning", "rooms": 2},
-      "price": 120.00,
-      "currency": "USD",
-      "avg_rating": 4.5,
-      "completed_at": 1703000000
-    }
-  ],
-  "market_stats": {
-    "total_active_bids": 127,
-    "avg_price_cleaning": 142.50,
-    "total_completed_today": 43
-  }
-}</div>
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('exchange-data-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="exchange-data-try" style="display:none">
+                            <div class="try-fields-grid">
+                                <div class="try-field">
+                                    <label>category (optional)</label>
+                                    <input type="text" id="ed-category" placeholder="e.g. lawn_mowing">
+                                </div>
+                                <div class="try-field">
+                                    <label>location (optional)</label>
+                                    <input type="text" id="ed-location" placeholder="e.g. Denver, CO">
+                                </div>
+                                <div class="try-field">
+                                    <label>limit</label>
+                                    <input type="number" id="ed-limit" value="25">
+                                </div>
+                                <div class="try-field">
+                                    <label>include_completed</label>
+                                    <select id="ed-include-completed">
+                                        <option value="false">false</option>
+                                        <option value="true">true</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="run-btn" onclick="runExchangeData()">▶ Run</button>
+                            <div class="response-area" id="exchange-data-response"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Error Responses -->
-                <div class="endpoint">
-                    <h2>Error Responses</h2>
-                    <p>All errors follow a consistent format:</p>
-                    <div class="code-block">{
-  "error": "Error message describing what went wrong"
-}</div>
-                    
-                    <h4>Common HTTP Status Codes</h4>
+                <!-- ═══ COMMUNICATION ENDPOINTS ═══ -->
+                <div class="doc-section-title">// Communication Endpoints</div>
+
+                <!-- CHAT -->
+                <div id="chat" class="endpoint">
+                    <h3><span class="method post">POST</span><span class="path">/chat</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span></h3>
+                    <p>Send a direct message to another user. Optionally reference a job.</p>
                     <table class="param-table">
-                        <thead>
-                            <tr>
-                                <th>Code</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td><code>200</code></td>
-                                <td>Success</td>
-                            </tr>
-                            <tr>
-                                <td><code>201</code></td>
-                                <td>Created (successful registration)</td>
-                            </tr>
-                            <tr>
-                                <td><code>204</code></td>
-                                <td>No Content (no matching jobs available)</td>
-                            </tr>
-                            <tr>
-                                <td><code>400</code></td>
-                                <td>Bad Request (invalid parameters)</td>
-                            </tr>
-                            <tr>
-                                <td><code>401</code></td>
-                                <td>Unauthorized (invalid or missing token)</td>
-                            </tr>
-                            <tr>
-                                <td><code>403</code></td>
-                                <td>Forbidden (not authorized for this action, includes seat verification failures)</td>
-                            </tr>
-                            <tr>
-                                <td><code>404</code></td>
-                                <td>Not Found</td>
-                            </tr>
-                            <tr>
-                                <td><code>500</code></td>
-                                <td>Internal Server Error</td>
-                            </tr>
+                            <tr><td><code>recipient</code></td><td>string</td><td>Username of recipient</td></tr>
+                            <tr><td><code>message</code></td><td>string</td><td>Message content</td></tr>
+                            <tr><td><code>job_id</code></td><td>string</td><td>Optional: reference to related job</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('chat-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="chat-try" style="display:none">
+                            <div class="try-fields-grid">
+                                <div class="try-field">
+                                    <label>recipient</label>
+                                    <input type="text" id="ch-recipient" value="robot_operator_1">
+                                </div>
+                                <div class="try-field">
+                                    <label>job_id (optional)</label>
+                                    <input type="text" id="ch-job-id" placeholder="Auto-filled from Grab Job">
+                                </div>
+                                <div class="try-field" style="grid-column: 1 / -1;">
+                                    <label>message</label>
+                                    <textarea id="ch-message">Unit confirmed on-site. Ready to begin lawn mowing protocol.</textarea>
+                                </div>
+                            </div>
+                            <button class="run-btn" onclick="runChat()">▶ Run</button>
+                            <div class="response-area" id="chat-response"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BULLETIN -->
+                <div id="bulletin" class="endpoint">
+                    <h3><span class="method post">POST</span><span class="path">/bulletin</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span></h3>
+                    <p>Post a public message to the community bulletin board.</p>
+                    <table class="param-table">
+                        <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>title</code></td><td>string</td><td>Post title</td></tr>
+                            <tr><td><code>content</code></td><td>string</td><td>Post content</td></tr>
+                            <tr><td><code>category</code></td><td>string</td><td>"announcement", "question", "offer", "general"</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('bulletin-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="bulletin-try" style="display:none">
+                            <div class="try-fields-grid">
+                                <div class="try-field">
+                                    <label>title</label>
+                                    <input type="text" id="bl-title" value="Autonomous Lawn Mowing Fleet — Now Operational">
+                                </div>
+                                <div class="try-field">
+                                    <label>category</label>
+                                    <select id="bl-category">
+                                        <option value="offer">offer</option>
+                                        <option value="announcement">announcement</option>
+                                        <option value="question">question</option>
+                                        <option value="general">general</option>
+                                    </select>
+                                </div>
+                                <div class="try-field" style="grid-column: 1 / -1;">
+                                    <label>content</label>
+                                    <textarea id="bl-content">Deploying autonomous lawn mowing units across the Denver metro area. Competitive rates, GPS-precision cutting, real-time status via RSE API.</textarea>
+                                </div>
+                            </div>
+                            <button class="run-btn" onclick="runBulletin()">▶ Run</button>
+                            <div class="response-area" id="bulletin-response"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ ERRORS & RATE LIMITING ═══ -->
+                <div class="doc-section-title">// Errors & Rate Limiting</div>
+
+                <div class="endpoint">
+                    <h2 style="font-size:0.9rem;">Error Responses</h2>
+                    <p>All errors use a consistent format:</p>
+                    <div class="code-block">{ "error": "Error message describing what went wrong" }</div>
+                    <table class="param-table">
+                        <thead><tr><th>Code</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>200</code></td><td>Success</td></tr>
+                            <tr><td><code>201</code></td><td>Created (successful registration)</td></tr>
+                            <tr><td><code>204</code></td><td>No Content (no matching jobs available)</td></tr>
+                            <tr><td><code>400</code></td><td>Bad Request</td></tr>
+                            <tr><td><code>401</code></td><td>Unauthorized (invalid or missing token)</td></tr>
+                            <tr><td><code>403</code></td><td>Forbidden (seat verification failure)</td></tr>
+                            <tr><td><code>404</code></td><td>Not Found</td></tr>
+                            <tr><td><code>500</code></td><td>Internal Server Error</td></tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Rate Limiting -->
                 <div class="endpoint">
-                    <h2>Rate Limiting</h2>
-                    <p>API requests are subject to the following rate limits:</p>
-                    
-                    <h4>General Endpoints</h4>
-                    <p>Most API endpoints are limited to 60 requests per minute per IP address. Exceeding this limit will result in a 429 Too Many Requests response.</p>
-                    
-                    <h4>Seat-Protected Endpoints</h4>
-                    <p>When seat verification is active, the <code>/grab_job</code> endpoint has special rate limiting:</p>
-                    <ul>
-                        <li><strong>Golden Seats:</strong> One request per 15 minutes</li>
-                        <li><strong>Silver Seats:</strong> One request per 15 minutes</li>
-                    </ul>
-                    <p><em>Note: During the temporary access period (while seats are not required), standard rate limits apply to /grab_job.</em></p>
+                    <h2 style="font-size:0.9rem;">Rate Limiting</h2>
+                    <p>Most endpoints: 60 requests/minute per IP. <code>/grab_job</code> with seats: 1 request/15 min per seat.</p>
                 </div>
 
-            </div>
-        </div>
-    </div>
+            </div><!-- /col-md-9 -->
+        </div><!-- /row -->
+    </div><!-- /container -->
 
     <footer class="footer">
         <div class="container">
             <div class="row">
                 <div class="col-md-4">
-                    <h5>The Service Exchange</h5>
-                    <p>Decentralized marketplace for services.</p>
+                    <h5>RSE</h5>
+                    <p>Decentralized robot labor marketplace.</p>
                 </div>
                 <div class="col-md-4">
                     <h5>Links</h5>
@@ -1253,12 +1085,12 @@ curl -X POST https://rse-api.com:5003/reject_job \
                 </div>
             </div>
             <div class="mt-5 pt-4 border-top border-secondary text-center">
-                <p class="mb-0">&copy; 2025 The Service Exchange Protocol. All rights reserved.</p>
+                <p class="mb-0">&copy; 2025 Robot Services Exchange Protocol. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
-    <!-- Auth Modal -->
+    <!-- Auth Modal (for site-level auth via script.js) -->
     <div class="modal fade" id="authModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -1268,53 +1100,32 @@ curl -X POST https://rse-api.com:5003/reject_job \
                 </div>
                 <div class="modal-body">
                     <div id="authError" class="error-message" style="display: none;"></div>
-                    
                     <ul class="nav nav-tabs mb-3">
-                        <li class="nav-item">
-                            <a class="nav-link active" data-bs-toggle="tab" href="#login">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="tab" href="#register">Register</a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#login-tab">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#register-tab">Register</a></li>
                     </ul>
-                    
                     <div class="tab-content">
-                        <div class="tab-pane active" id="login">
+                        <div class="tab-pane active" id="login-tab">
                             <form id="loginForm">
-                                <div class="mb-3">
-                                    <input type="text" class="form-control" placeholder="Username" id="loginUsername" required>
-                                </div>
-                                <div class="mb-3">
-                                    <input type="password" class="form-control" placeholder="Password" id="loginPassword" required>
-                                </div>
+                                <div class="mb-3"><input type="text" class="form-control" placeholder="Username" id="loginUsername" required></div>
+                                <div class="mb-3"><input type="password" class="form-control" placeholder="Password" id="loginPassword" required></div>
                                 <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">Login</button>
                             </form>
                         </div>
-                        
-                        <div class="tab-pane" id="register">
+                        <div class="tab-pane" id="register-tab">
                             <form id="registerForm">
-                                <div class="mb-3">
-                                    <input type="text" class="form-control" placeholder="Username" id="regUsername" required>
-                                </div>
-                                <div class="mb-3">
-                                    <input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required>
-                                </div>
+                                <div class="mb-3"><input type="text" class="form-control" placeholder="Username" id="regUsername" required></div>
+                                <div class="mb-3"><input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required></div>
                                 <div class="mb-3">
                                     <label class="form-label">I want to:</label>
                                     <div class="user-type-selector">
                                         <label class="user-type-option">
                                             <input type="radio" name="userType" value="demand" id="typeDemand" required>
-                                            <span class="user-type-card">
-                                                <strong>Buy Services</strong>
-                                                <small>Post requests and hire providers</small>
-                                            </span>
+                                            <span class="user-type-card"><strong>Deploy Robots</strong><small>Post requests &amp; hire robot operators</small></span>
                                         </label>
                                         <label class="user-type-option">
                                             <input type="radio" name="userType" value="supply" id="typeSupply">
-                                            <span class="user-type-card">
-                                                <strong>Provide Services</strong>
-                                                <small>Find work and earn money</small>
-                                            </span>
+                                            <span class="user-type-card"><strong>Operate Robots</strong><small>Find jobs &amp; earn with your fleet</small></span>
                                         </label>
                                     </div>
                                 </div>
@@ -1340,10 +1151,7 @@ curl -X POST https://rse-api.com:5003/reject_job \
                         <div class="col-4">
                             <h6>Conversations</h6>
                             <div class="chat-inbox" id="chatInbox">
-                                <div class="loading-spinner" id="conversationsLoading">
-                                    <div class="spinner-border spinner-border-sm" role="status"></div>
-                                    <span class="ms-2">Loading...</span>
-                                </div>
+                                <div class="loading-spinner" id="conversationsLoading"><div class="spinner-border spinner-border-sm" role="status"></div><span class="ms-2">Loading...</span></div>
                             </div>
                         </div>
                         <div class="col-8">
@@ -1363,16 +1171,9 @@ curl -X POST https://rse-api.com:5003/reject_job \
                             <div id="newMessageForm" style="display: none;">
                                 <h6>New Message</h6>
                                 <form id="chatForm">
-                                    <div class="mb-3">
-                                        <input type="text" class="form-control" placeholder="Recipient username" id="chatRecipient" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <textarea class="form-control" rows="3" placeholder="Your message" id="chatMessage" required></textarea>
-                                    </div>
-                                    <div class="mb-3">
-                                        <input type="text" class="form-control" placeholder="Job ID (optional)" id="chatJobId">
-                                        <small class="text-muted">Link this message to a specific job</small>
-                                    </div>
+                                    <div class="mb-3"><input type="text" class="form-control" placeholder="Recipient username" id="chatRecipient" required></div>
+                                    <div class="mb-3"><textarea class="form-control" rows="3" placeholder="Your message" id="chatMessage" required></textarea></div>
+                                    <div class="mb-3"><input type="text" class="form-control" placeholder="Job ID (optional)" id="chatJobId"><small class="text-muted">Link message to a job</small></div>
                                     <div class="d-flex gap-2">
                                         <button type="submit" class="btn btn-primary">Send Message</button>
                                         <button type="button" class="btn btn-secondary" onclick="hideNewMessageForm()">Cancel</button>
@@ -1381,7 +1182,7 @@ curl -X POST https://rse-api.com:5003/reject_job \
                             </div>
                             <div id="chatPlaceholder">
                                 <div class="text-center text-muted p-4">
-                                    <p>Select a conversation to view messages or start a new one.</p>
+                                    <p>Select a conversation or start a new one.</p>
                                     <button type="button" class="btn btn-primary" onclick="showNewMessageForm()">New Message</button>
                                 </div>
                             </div>
@@ -1405,20 +1206,13 @@ curl -X POST https://rse-api.com:5003/reject_job \
                         <h6>Recent Posts</h6>
                         <button type="button" class="btn btn-sm btn-primary" onclick="showNewPostForm()">New Post</button>
                     </div>
-                    
                     <div id="bulletinFeed" class="bulletin-feed">
-                        <div class="loading-spinner" id="bulletinLoading">
-                            <div class="spinner-border spinner-border-sm" role="status"></div>
-                            <span class="ms-2">Loading posts...</span>
-                        </div>
+                        <div class="loading-spinner" id="bulletinLoading"><div class="spinner-border spinner-border-sm" role="status"></div><span class="ms-2">Loading posts...</span></div>
                     </div>
-                    
                     <div id="newPostForm" style="display: none;" class="mt-3 p-3 border rounded">
                         <h6>Create New Post</h6>
                         <form id="bulletinForm">
-                            <div class="mb-3">
-                                <input type="text" class="form-control" placeholder="Post title" id="bulletinTitle" required>
-                            </div>
+                            <div class="mb-3"><input type="text" class="form-control" placeholder="Post title" id="bulletinTitle" required></div>
                             <div class="mb-3">
                                 <select class="form-control" id="bulletinCategory">
                                     <option value="general">General</option>
@@ -1427,9 +1221,7 @@ curl -X POST https://rse-api.com:5003/reject_job \
                                     <option value="offer">Service Offer</option>
                                 </select>
                             </div>
-                            <div class="mb-3">
-                                <textarea class="form-control" rows="4" placeholder="Post content" id="bulletinContent" required></textarea>
-                            </div>
+                            <div class="mb-3"><textarea class="form-control" rows="4" placeholder="Post content" id="bulletinContent" required></textarea></div>
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary">Post to Bulletin</button>
                                 <button type="button" class="btn btn-secondary" onclick="hideNewPostForm()">Cancel</button>
@@ -1442,6 +1234,336 @@ curl -X POST https://rse-api.com:5003/reject_job \
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js?v=1.0.1"></script>
+    <script src="script.js?v=1.0.2"></script>
+    <script>
+    // ═══════════════════════════════════════════════
+    // RSE API Docs — Interactive Try It Engine
+    // ═══════════════════════════════════════════════
+    const RSE_BASE = 'https://rse-api.com:5003';
+
+    // API session state (separate from site auth)
+    const ApiSession = {
+        token: null,
+        username: null,
+        lastBidId: null,
+        lastJobId: null
+    };
+
+    // ── Auth Banner ──
+    function updateAuthBanner() {
+        const dot = document.getElementById('authDot');
+        const txt = document.getElementById('authStatusText');
+        const tokenDisplay = document.getElementById('authTokenDisplay');
+        const clearBtn = document.getElementById('clearAuthBtn');
+
+        if (ApiSession.token) {
+            dot.classList.add('connected');
+            txt.textContent = '// Authenticated as: ' + ApiSession.username;
+            txt.className = 'connected';
+            tokenDisplay.textContent = 'token: ' + ApiSession.token.substring(0, 16) + '...';
+            clearBtn.style.display = 'inline-block';
+        } else {
+            dot.classList.remove('connected');
+            txt.textContent = '// Not authenticated — log in below to unlock protected endpoints';
+            txt.className = '';
+            tokenDisplay.textContent = '';
+            clearBtn.style.display = 'none';
+        }
+    }
+
+    function clearApiAuth() {
+        ApiSession.token = null;
+        ApiSession.username = null;
+        updateAuthBanner();
+    }
+
+    // ── Toggle Try-It panels ──
+    function toggleTryIt(panelId) {
+        const panel = document.getElementById(panelId);
+        const btn = panel.previousElementSibling.querySelector('.try-it-toggle');
+        if (panel.style.display === 'none') {
+            panel.style.display = 'block';
+            btn.textContent = '▼ Close';
+        } else {
+            panel.style.display = 'none';
+            btn.textContent = '▶ Open';
+        }
+    }
+
+    // ── Core API call helper ──
+    async function apiCall(method, path, body, useAuth) {
+        const url = RSE_BASE + path;
+        const headers = { 'Content-Type': 'application/json' };
+        if (useAuth && ApiSession.token) {
+            headers['Authorization'] = 'Bearer ' + ApiSession.token;
+        }
+        const opts = { method, headers };
+        if (body) opts.body = JSON.stringify(body);
+
+        try {
+            const res = await fetch(url, opts);
+            let data;
+            try { data = await res.json(); } catch(e) { data = { raw: await res.text() }; }
+            return { ok: res.ok, status: res.status, data };
+        } catch (err) {
+            return { ok: false, status: 0, data: { error: 'Network error: ' + err.message } };
+        }
+    }
+
+    // ── Syntax-highlight JSON ──
+    function highlightJson(obj) {
+        let str = JSON.stringify(obj, null, 2);
+        str = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return str.replace(
+            /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+            function(match) {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    cls = /:$/.test(match) ? 'json-key' : 'json-string';
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-bool';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            }
+        );
+    }
+
+    // ── Display response ──
+    function showResponse(elId, result) {
+        const el = document.getElementById(elId);
+        el.style.display = 'block';
+        el.classList.remove('has-error', 'loading-resp');
+        const statusCls = result.ok ? 'ok' : 'err';
+        const statusTxt = result.ok ? '✓ ' + result.status + ' OK' : '✗ ' + result.status + (result.status === 0 ? ' Network Error' : ' Error');
+        el.innerHTML = '<span class="response-status ' + statusCls + '">' + statusTxt + '</span>' + highlightJson(result.data);
+        if (!result.ok) el.classList.add('has-error');
+    }
+
+    function showLoadingResponse(elId) {
+        const el = document.getElementById(elId);
+        el.style.display = 'block';
+        el.classList.add('loading-resp');
+        el.classList.remove('has-error');
+        el.innerHTML = '// Sending request...';
+    }
+
+    // ── Generic endpoint runner (GET/no-body) ──
+    async function runEndpoint(respId, method, path, body, useAuth) {
+        showLoadingResponse(respId);
+        const result = await apiCall(method, path, body || null, useAuth || false);
+        showResponse(respId, result);
+    }
+
+    // ── Register ──
+    async function runRegister() {
+        const body = {
+            username: document.getElementById('reg-username').value.trim(),
+            password: document.getElementById('reg-password').value,
+            user_type: document.getElementById('reg-user-type').value
+        };
+        showLoadingResponse('register-response');
+        const result = await apiCall('POST', '/register', body, false);
+        showResponse('register-response', result);
+        if (result.ok) {
+            // Chain: pre-fill login fields
+            document.getElementById('login-username').value = body.username;
+            document.getElementById('login-password').value = body.password;
+        }
+    }
+
+    // ── Login ──
+    async function runLogin() {
+        const body = {
+            username: document.getElementById('login-username').value.trim(),
+            password: document.getElementById('login-password').value
+        };
+        showLoadingResponse('login-response');
+        const result = await apiCall('POST', '/login', body, false);
+        showResponse('login-response', result);
+        if (result.ok && result.data.access_token) {
+            ApiSession.token = result.data.access_token;
+            ApiSession.username = result.data.username || body.username;
+            updateAuthBanner();
+        }
+    }
+
+    // ── Submit Bid ──
+    async function runSubmitBid() {
+        const endTimeVal = document.getElementById('sb-end-time').value;
+        const endTime = endTimeVal ? parseInt(endTimeVal) : Math.floor(Date.now()/1000) + 86400;
+        const serviceRaw = document.getElementById('sb-service').value.trim();
+        let service;
+        try { service = JSON.parse(serviceRaw); } catch(e) { service = serviceRaw; }
+        const body = {
+            service: service,
+            price: parseFloat(document.getElementById('sb-price').value),
+            currency: document.getElementById('sb-currency').value,
+            end_time: endTime,
+            location_type: document.getElementById('sb-location-type').value,
+            address: document.getElementById('sb-address').value
+        };
+        showLoadingResponse('submit-bid-response');
+        const result = await apiCall('POST', '/submit_bid', body, true);
+        showResponse('submit-bid-response', result);
+        if (result.ok && result.data.bid_id) {
+            ApiSession.lastBidId = result.data.bid_id;
+            document.getElementById('cb-bid-id').value = result.data.bid_id;
+        }
+    }
+
+    // ── Grab Job ──
+    async function runGrabJob() {
+        const body = {
+            capabilities: document.getElementById('gj-capabilities').value,
+            location_type: document.getElementById('gj-location-type').value,
+            address: document.getElementById('gj-address').value,
+            max_distance: parseFloat(document.getElementById('gj-max-distance').value) || 15
+        };
+        showLoadingResponse('grab-job-response');
+        const result = await apiCall('POST', '/grab_job', body, true);
+        showResponse('grab-job-response', result);
+        if (result.ok && result.data.job_id) {
+            ApiSession.lastJobId = result.data.job_id;
+            // Chain: populate reject_job and sign_job
+            document.getElementById('rj-job-id').value = result.data.job_id;
+            document.getElementById('sj-job-id').value = result.data.job_id;
+            document.getElementById('ch-job-id').value = result.data.job_id;
+        }
+    }
+
+    // ── Reject Job ──
+    async function runRejectJob() {
+        const body = {
+            job_id: document.getElementById('rj-job-id').value.trim(),
+            reason: document.getElementById('rj-reason').value
+        };
+        if (!body.reason) delete body.reason;
+        showLoadingResponse('reject-job-response');
+        const result = await apiCall('POST', '/reject_job', body, true);
+        showResponse('reject-job-response', result);
+    }
+
+    // ── Sign Job ──
+    async function runSignJob() {
+        const body = {
+            job_id: document.getElementById('sj-job-id').value.trim(),
+            star_rating: parseInt(document.getElementById('sj-star-rating').value)
+        };
+        showLoadingResponse('sign-job-response');
+        const result = await apiCall('POST', '/sign_job', body, true);
+        showResponse('sign-job-response', result);
+    }
+
+    // ── Cancel Bid ──
+    async function runCancelBid() {
+        const body = { bid_id: document.getElementById('cb-bid-id').value.trim() };
+        showLoadingResponse('cancel-bid-response');
+        const result = await apiCall('POST', '/cancel_bid', body, true);
+        showResponse('cancel-bid-response', result);
+    }
+
+    // ── Nearby ──
+    async function runNearby() {
+        const body = {
+            address: document.getElementById('nb-address').value,
+            radius: parseFloat(document.getElementById('nb-radius').value) || 20
+        };
+        showLoadingResponse('nearby-response');
+        const result = await apiCall('POST', '/nearby', body, true);
+        showResponse('nearby-response', result);
+    }
+
+    // ── Exchange Data ──
+    async function runExchangeData() {
+        const params = new URLSearchParams();
+        const cat = document.getElementById('ed-category').value.trim();
+        const loc = document.getElementById('ed-location').value.trim();
+        const limit = document.getElementById('ed-limit').value;
+        const inc = document.getElementById('ed-include-completed').value;
+        if (cat) params.set('category', cat);
+        if (loc) params.set('location', loc);
+        if (limit) params.set('limit', limit);
+        params.set('include_completed', inc);
+        showLoadingResponse('exchange-data-response');
+        const result = await apiCall('GET', '/exchange_data?' + params.toString(), null, true);
+        showResponse('exchange-data-response', result);
+    }
+
+    // ── Chat ──
+    async function runChat() {
+        const body = {
+            recipient: document.getElementById('ch-recipient').value.trim(),
+            message: document.getElementById('ch-message').value.trim()
+        };
+        const jobId = document.getElementById('ch-job-id').value.trim();
+        if (jobId) body.job_id = jobId;
+        showLoadingResponse('chat-response');
+        const result = await apiCall('POST', '/chat', body, true);
+        showResponse('chat-response', result);
+    }
+
+    // ── Bulletin ──
+    async function runBulletin() {
+        const body = {
+            title: document.getElementById('bl-title').value.trim(),
+            content: document.getElementById('bl-content').value.trim(),
+            category: document.getElementById('bl-category').value
+        };
+        showLoadingResponse('bulletin-response');
+        const result = await apiCall('POST', '/bulletin', body, true);
+        showResponse('bulletin-response', result);
+    }
+
+    // ── Copy Base URL ──
+    function copyBaseUrl() {
+        navigator.clipboard.writeText('https://rse-api.com:5003').then(() => {
+            const icon = document.getElementById('copyIcon');
+            icon.textContent = '✓';
+            setTimeout(() => { icon.textContent = '📋'; }, 1500);
+        });
+    }
+
+    // ── Ping Server (legacy compat) ──
+    async function pingServer() {
+        const btn = document.getElementById('pingBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Pinging...';
+        }
+        const result = await apiCall('GET', '/ping', null, false);
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Ping Server';
+        }
+        // Show in ping-response if panel open
+        const respEl = document.getElementById('ping-response');
+        if (respEl && respEl.style.display !== 'none') {
+            showResponse('ping-response', result);
+        }
+        return result;
+    }
+
+    // ── Check API status on load ──
+    async function checkApiStatus() {
+        const dot = document.getElementById('apiStatusDot');
+        if (dot) {
+            dot.className = 'api-status-indicator checking';
+            const result = await apiCall('GET', '/ping', null, false);
+            dot.className = 'api-status-indicator ' + (result.ok ? 'online' : 'offline');
+            dot.title = result.ok ? 'API online' : 'API offline or unreachable';
+        }
+    }
+
+    // ── Init ──
+    document.addEventListener('DOMContentLoaded', function() {
+        updateAuthBanner();
+        checkApiStatus();
+        // Pre-fill end_time with 24h from now
+        const endTimeEl = document.getElementById('sb-end-time');
+        if (endTimeEl) endTimeEl.value = Math.floor(Date.now()/1000) + 86400;
+    });
+    </script>
 </body>
 </html>

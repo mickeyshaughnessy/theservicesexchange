@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=3" rel="stylesheet">
-    <title>The Services Exchange - Connect with Skilled People</title>
+    <link href="styles.css?v=4" rel="stylesheet">
+    <title>Robot Services Exchange - Robot Labor, On Demand</title>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="index.html">The Services Exchange</a>
+            <a class="navbar-brand" href="index.html">RSE</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -102,63 +102,63 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6">
-                    <p class="hero-eyebrow">Your community marketplace</p>
-                    <h1 class="hero-title">Skills &amp; services,<br>from real people.</h1>
-                    <p class="hero-subtitle">Find trusted help for anything — home repairs, tutoring, design, development, and more. Post a request and get matched with skilled people near you.</p>
+                    <p class="hero-eyebrow">// Automated workforce marketplace</p>
+                    <h1 class="hero-title">Robot labor,<br>on demand.</h1>
+                    <p class="hero-subtitle">Deploy robot workers for any task. Post a request and get matched with the right autonomous unit — vetted, rated, and ready to execute.</p>
                     <div class="d-flex gap-3 flex-wrap">
-                        <button class="btn btn-hero-primary btn-lg" onclick="showBuyerForm()">Post a Request</button>
-                        <a href="dashboard.html" class="btn btn-hero-secondary btn-lg">Browse Providers</a>
+                        <button class="btn btn-hero-primary btn-lg" onclick="showBuyerForm()">Deploy a Robot</button>
+                        <a href="dashboard.html" class="btn btn-hero-secondary btn-lg">Browse Fleet</a>
                     </div>
                 </div>
                 <div class="col-lg-6 mt-5 mt-lg-0">
                     <div class="service-grid">
-                        <div class="service-grid-item" onclick="selectService('Home Repairs')">
-                            <span class="sg-icon">🔧</span>
-                            <span>Home Repairs</span>
+                        <div class="service-grid-item" onclick="selectService('Security Patrol Bot')">
+                            <span class="sg-icon">🤖</span>
+                            <span>Security Patrol</span>
                         </div>
-                        <div class="service-grid-item" onclick="selectService('Web Development')">
-                            <span class="sg-icon">💻</span>
-                            <span>Web Dev</span>
+                        <div class="service-grid-item" onclick="selectService('Lawn Mowing Bot')">
+                            <span class="sg-icon">🌿</span>
+                            <span>Lawn Mowing Bot</span>
                         </div>
-                        <div class="service-grid-item" onclick="selectService('House Cleaning')">
-                            <span class="sg-icon">🧹</span>
-                            <span>Cleaning</span>
+                        <div class="service-grid-item" onclick="selectService('Delivery Drone')">
+                            <span class="sg-icon">🚁</span>
+                            <span>Delivery Drone</span>
                         </div>
-                        <div class="service-grid-item" onclick="selectService('Tutoring')">
-                            <span class="sg-icon">📚</span>
-                            <span>Tutoring</span>
+                        <div class="service-grid-item" onclick="selectService('Warehouse Pick and Pack')">
+                            <span class="sg-icon">📦</span>
+                            <span>Pick &amp; Pack</span>
                         </div>
-                        <div class="service-grid-item" onclick="selectService('Graphic Design')">
-                            <span class="sg-icon">🎨</span>
-                            <span>Design</span>
+                        <div class="service-grid-item" onclick="selectService('Drone Photography')">
+                            <span class="sg-icon">📡</span>
+                            <span>Drone Photo</span>
                         </div>
-                        <div class="service-grid-item" onclick="selectService('Photography')">
-                            <span class="sg-icon">📷</span>
-                            <span>Photography</span>
+                        <div class="service-grid-item" onclick="selectService('Autonomous Rideshare')">
+                            <span class="sg-icon">🚗</span>
+                            <span>Auto Rideshare</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="hero-tags-row">
-                <p class="hero-tags-label">More services</p>
+                <p class="hero-tags-label">// more robot services</p>
                 <div>
-                    <span class="service-tag" onclick="selectService('Moving Help')">Moving Help</span>
-                    <span class="service-tag" onclick="selectService('Lawn Care')">Lawn Care</span>
-                    <span class="service-tag" onclick="selectService('Personal Training')">Personal Training</span>
-                    <span class="service-tag" onclick="selectService('Pet Care')">Pet Care</span>
-                    <span class="service-tag" onclick="selectService('Event Planning')">Event Planning</span>
-                    <span class="service-tag" onclick="window.location.href='rides.html'">Rideshare</span>
+                    <span class="service-tag" onclick="selectService('Automated Food Prep')">Food Prep Bot</span>
+                    <span class="service-tag" onclick="selectService('Robotic Welding')">Robotic Welding</span>
+                    <span class="service-tag" onclick="selectService('Geriatric Care Robot')">Care Robot</span>
+                    <span class="service-tag" onclick="selectService('Industrial Inspection Bot')">Inspection Bot</span>
+                    <span class="service-tag" onclick="selectService('Agricultural Drone')">Agri Drone</span>
+                    <span class="service-tag" onclick="window.location.href='rides.html'">Auto Rideshare</span>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Live Stats -->
-    <section class="py-4 border-bottom" style="background: #f8fafc;">
+    <section class="py-4 border-bottom" style="background: var(--bg-dark);">
         <div class="container">
             <div class="text-center mb-4">
-                <h5 class="text-muted text-uppercase letter-spacing-2">Live Market Stats</h5>
+                <h5 class="letter-spacing-2">// Live Market Stats</h5>
             </div>
             <div class="row justify-content-center g-3">
                 <div class="col-auto">
@@ -190,32 +190,32 @@
     </section>
 
     <!-- How it works -->
-    <section class="py-5" style="background: white;">
+    <section class="py-5" style="background: var(--bg-deep);">
         <div class="container">
             <div class="text-center mb-5">
-                <h2 class="how-it-works-title">How it works</h2>
-                <p class="how-it-works-sub">Simple, fast, and fair.</p>
+                <h2 class="how-it-works-title">HOW IT WORKS</h2>
+                <p class="how-it-works-sub">// Deploy. Execute. Complete.</p>
             </div>
             <div class="row g-4">
                 <div class="col-md-4">
                     <div class="feature-card-new">
                         <div class="feature-number">01</div>
                         <h3>Smart Matching</h3>
-                        <p>AI-powered matching connects you with the right provider based on reputation, skill, and location.</p>
+                        <p>AI matching deploys the optimal robot unit for your task — based on capability rating, proximity, and mission history.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card-new">
                         <div class="feature-number">02</div>
-                        <h3>Trusted Providers</h3>
-                        <p>Every provider is community-rated. Our reputation system ensures you always get quality service.</p>
+                        <h3>Trusted Robots</h3>
+                        <p>Every robot is community-rated. Our on-chain reputation system guarantees consistent, verifiable performance data.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card-new">
                         <div class="feature-number">03</div>
                         <h3>Fair Pricing</h3>
-                        <p>Market-driven rates and transparent bidding mean fair prices for both buyers and providers.</p>
+                        <p>Open-market bidding drives competitive robot labor rates. Transparent pricing — no hidden fees, no intermediaries.</p>
                     </div>
                 </div>
             </div>
@@ -226,8 +226,8 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4">
-                    <h5>The Service Exchange</h5>
-                    <p>Decentralized marketplace for services.</p>
+                    <h5>RSE</h5>
+                    <p>Decentralized robot labor marketplace.</p>
                 </div>
                 <div class="col-md-4">
                     <h5>Links</h5>
@@ -241,7 +241,7 @@
                 </div>
             </div>
             <div class="mt-5 pt-4 border-top border-secondary text-center">
-                <p class="mb-0">&copy; 2025 The Service Exchange Protocol. All rights reserved.</p>
+                <p class="mb-0">&copy; 2025 Robot Services Exchange Protocol. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -320,24 +320,24 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Request a Service</h5>
+                    <h5 class="modal-title">Deploy a Robot</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
                         <p class="text-muted mb-2">Popular services:</p>
                         <div id="popularServicesContainer">
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='House Cleaning'">House Cleaning</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Web Development'">Web Development</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Tutoring'">Tutoring</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Graphic Design'">Graphic Design</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Home Repairs'">Home Repairs</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Photography'">Photography</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Security Patrol Bot'">Security Patrol</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Lawn Mowing Bot, 0.5 acre lot'">Lawn Mowing Bot</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Delivery Drone, 5 mile radius'">Delivery Drone</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Warehouse Pick and Pack'">Pick &amp; Pack</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Drone Photography, aerial survey'">Drone Photography</span>
+                            <span class="service-tag" onclick="document.getElementById('bidService').value='Industrial Inspection Bot'">Inspection Bot</span>
                         </div>
                     </div>
                     <form id="bidForm">
                         <div class="mb-3">
-                            <textarea class="form-control" rows="3" placeholder="Describe the service you need" id="bidService" required></textarea>
+                            <textarea class="form-control" rows="3" placeholder="Describe the robot task required" id="bidService" required></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Payment & Price</label>
