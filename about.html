@@ -39,77 +39,6 @@
             color: var(--primary);
             font-weight: 600;
         }
-        .seat-card {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 2rem;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid #e2e8f0;
-            height: 100%;
-            position: relative;
-            overflow: hidden;
-        }
-        .seat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-        }
-        .seat-card.golden::before {
-            background: linear-gradient(90deg, #fbbf24, #fcd34d);
-        }
-        .seat-card.silver::before {
-            background: linear-gradient(90deg, #94a3b8, #cbd5e1);
-        }
-        .seat-card h3 {
-            font-weight: 700;
-            color: var(--dark);
-            margin-bottom: 1rem;
-        }
-        .seat-card.golden h3 {
-            color: #b45309;
-        }
-        .seat-card.silver h3 {
-            color: #475569;
-        }
-        .solana-card {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 2rem;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid #e2e8f0;
-            position: relative;
-            overflow: hidden;
-        }
-        .solana-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #9945FF, #14F195);
-        }
-        .token-address {
-            font-family: 'Monaco', 'Consolas', monospace;
-            background: #f8fafc;
-            padding: 0.75rem 1rem;
-            border-radius: var(--radius-md);
-            border: 1px solid #e2e8f0;
-            word-break: break-all;
-            font-size: 0.9rem;
-            color: var(--dark);
-        }
-        .solana-link {
-            color: #9945FF;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .solana-link:hover {
-            text-decoration: underline;
-        }
         @media (max-width: 768px) {
             .founder-header {
                 flex-direction: column;
@@ -204,58 +133,6 @@
                         </div>
                         <p>Dr. Aftab Ahmed is an experienced scientist and small business owner/operator, bringing deep technical expertise and entrepreneurial experience to The Services Exchange.</p>
                         <p class="mb-0">His background in research and business operations helps drive the platform's growth and development.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Seats Section -->
-            <h2 class="text-center mb-4" style="font-weight: 700;">Provider Seats</h2>
-            <p class="text-center text-muted mb-5">Seats are digital credentials that allow providers to access jobs on the exchange. Each seat has a serial number, secret phrase, and owner address. Seats are fully transferable and rate-limited to one request per 15 minutes.</p>
-            
-            <div class="row g-4 mb-5">
-                <div class="col-md-6">
-                    <div class="seat-card golden">
-                        <h3>Golden Seats</h3>
-                        <p>The first 1 million seats are Golden, designed for physical service providers like geriatric care, security, landscaping, food prep, and more.</p>
-                        <ul class="mb-0">
-                            <li>Permanent (eternal unless revoked for abuse)</li>
-                            <li>15-minute rate limit</li>
-                            <li>~2% sold in private auctions</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="seat-card silver">
-                        <h3>Silver Seats</h3>
-                        <p>Silver seats are for software agents that handle online work. They can only be obtained by redeeming the $THERSX token.</p>
-                        <ul class="mb-0">
-                            <li>Valid for 30 days from issue date</li>
-                            <li>15-minute rate limit</li>
-                            <li>1,000 $THERSX = 1 Silver seat</li>
-                            <li>Fully transferable</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Solana Token Section -->
-            <div class="row justify-content-center mb-5">
-                <div class="col-lg-8">
-                    <div class="solana-card">
-                        <h3 class="mb-4" style="font-weight: 700;">$THERSX Token (Solana)</h3>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="text-muted small mb-1">Token Address</label>
-                                <div class="token-address">GL9ybQfyELjrRch6ExjLW33TjPQmLKXxsZJJCCiPpump</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="text-muted small mb-1">Token Lock</label>
-                                <p class="mb-1"><a href="https://app.streamflow.finance/contract/solana/mainnet/9RPjrrvnjai2yfffBAS16HF2ZPJvyEEr8iecUXfZBYcg" class="solana-link" target="_blank">View Streamflow Contract</a></p>
-                                <p class="text-muted small mb-0">~86% of dev coins locked until May 1, 2035</p>
-                            </div>
-                        </div>
-                        <hr>
-                        <p class="mb-0 text-muted">Redeem $THERSX tokens for Silver seats. Contact <a href="mailto:mickeyshaughnessy@gmail.com" class="solana-link">mickeyshaughnessy@gmail.com</a> to redeem tokens or transfer seats.</p>
                     </div>
                 </div>
             </div>
