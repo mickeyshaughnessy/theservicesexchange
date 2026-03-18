@@ -18,7 +18,7 @@ Provider access to `/grab_job` is gated by ERC-721 NFT ownership on Base (Ethere
 
 - **Contract**: [`0x151fEB62F0D3085617a086130cc67f7f18Ce33CE`](https://basescan.org/address/0x151fEB62F0D3085617a086130cc67f7f18Ce33CE)
 - **Network**: Base mainnet (chain ID 8453)
-- **Supply**: 100 Golden Seats minted
+- **Supply**: 100 seats minted
 - **To get a seat**: email mickeyshaughnessy@gmail.com with your wallet address
 
 After receiving a seat, link your wallet once:
