@@ -1,20 +1,20 @@
 import json
-import os
+import runpy
 from pathlib import Path
 
-from dotenv import load_dotenv
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
 
-load_dotenv()
+# Load root config.py (gitignored, holds all live credentials)
+_root = runpy.run_path(str(Path(__file__).parent.parent / "config.py"))
 
 _ABI_PATH = Path(__file__).parent / "abi" / "RSESeat.json"
 
-NETWORK = os.getenv("NETWORK", "base_sepolia")
-BASE_RPC_URL = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
-BASE_SEPOLIA_RPC_URL = os.getenv("BASE_SEPOLIA_RPC_URL", "https://sepolia.base.org")
-CONTRACT_ADDRESS = os.getenv("RSE_SEAT_CONTRACT_ADDRESS", "")
-OWNER_PRIVATE_KEY = os.getenv("ETH_PRIVATE_KEY", "") or os.getenv("RSE_SEAT_OWNER_PRIVATE_KEY", "")
+NETWORK = _root.get("SEAT_NETWORK", "base_sepolia")
+BASE_RPC_URL = _root.get("BASE_RPC_URL", "https://mainnet.base.org")
+BASE_SEPOLIA_RPC_URL = _root.get("BASE_SEPOLIA_RPC_URL", "https://sepolia.base.org")
+CONTRACT_ADDRESS = _root.get("RSE_SEAT_CONTRACT_ADDRESS", "")
+OWNER_PRIVATE_KEY = str(_root.get("ETH_PRIVATE_KEY", ""))
 
 
 def rpc_url() -> str:
@@ -27,7 +27,7 @@ def get_w3() -> Web3:
     w3 = Web3(Web3.HTTPProvider(rpc_url()))
     w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
     if not w3.is_connected():
-        raise ConnectionError(f"Cannot connect to RPC: {_rpc_url()}")
+        raise ConnectionError(f"Cannot connect to RPC: {rpc_url()}")
     return w3
 
 
@@ -38,7 +38,7 @@ def _load_abi() -> list:
 
 def get_contract(w3: Web3 | None = None):
     if not CONTRACT_ADDRESS:
-        raise ValueError("RSE_SEAT_CONTRACT_ADDRESS is not set")
+        raise ValueError("RSE_SEAT_CONTRACT_ADDRESS is not set in config.py")
     w3 = w3 or get_w3()
     return w3.eth.contract(
         address=Web3.to_checksum_address(CONTRACT_ADDRESS),
@@ -48,7 +48,7 @@ def get_contract(w3: Web3 | None = None):
 
 def get_signer(w3: Web3 | None = None):
     if not OWNER_PRIVATE_KEY:
-        raise ValueError("ETH_PRIVATE_KEY is not set")
+        raise ValueError("ETH_PRIVATE_KEY is not set in config.py")
     w3 = w3 or get_w3()
     account = w3.eth.account.from_key(OWNER_PRIVATE_KEY)
     return w3, account

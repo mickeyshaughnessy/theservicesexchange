@@ -5,7 +5,6 @@ This module contains the core business logic for the Service Exchange Protocol.
 It handles user management, bid/job matching, messaging, and seat verification.
 """
 
-import os
 import uuid
 import json
 import time
@@ -94,9 +93,7 @@ def verify_seat_credentials(seat_data: Dict[str, Any]) -> Tuple[bool, str]:
     Returns:
         Tuple[bool, str]: (isValid, message)
     """
-    # TEMPORARY: Skip verification during ramp-up period
-    # This should be enabled in production via config
-    if not os.environ.get('SEAT_VERIFICATION_ENABLED', 'False').lower() == 'true':
+    if not config.SEAT_VERIFICATION_ENABLED:
         return True, "Seat verification temporarily disabled"
     
     if not seat_data or 'id' not in seat_data:
@@ -674,7 +671,7 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     try:
         username = data.get('username')
 
-        if os.environ.get('SEAT_VERIFICATION_ENABLED', 'False').lower() == 'true':
+        if config.SEAT_VERIFICATION_ENABLED:
             # NFT seat verification (new system)
             acct = get_account(username)
             if not acct:

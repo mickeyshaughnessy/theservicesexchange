@@ -9,7 +9,6 @@ Config loaded from environment variables:
 
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -20,10 +19,10 @@ try:
 except ImportError:
     _WEB3_AVAILABLE = False
 
+import config
+
 logger = logging.getLogger(__name__)
 
-_CONTRACT_ADDRESS = os.getenv("RSE_SEAT_CONTRACT_ADDRESS", "")
-_RPC_URL = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
 _ABI_PATH = Path(__file__).parent / "abi" / "RSESeat.json"
 
 # Module-level cached instances — initialized on first call
@@ -36,16 +35,16 @@ def _get_contract():
     if _contract is not None:
         return _contract
 
-    if not _CONTRACT_ADDRESS:
+    if not config.RSE_SEAT_CONTRACT_ADDRESS:
         raise ValueError("RSE_SEAT_CONTRACT_ADDRESS is not configured")
 
     with open(_ABI_PATH) as f:
         abi = json.load(f)
 
-    _w3 = Web3(Web3.HTTPProvider(_RPC_URL))
+    _w3 = Web3(Web3.HTTPProvider(config.BASE_RPC_URL))
     _w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
     _contract = _w3.eth.contract(
-        address=Web3.to_checksum_address(_CONTRACT_ADDRESS),
+        address=Web3.to_checksum_address(config.RSE_SEAT_CONTRACT_ADDRESS),
         abi=abi,
     )
     return _contract
@@ -85,7 +84,7 @@ def verify_seat(wallet_address: str) -> dict:
             "error": f"Invalid Ethereum address: {wallet_address}",
         }
 
-    if not _CONTRACT_ADDRESS:
+    if not config.RSE_SEAT_CONTRACT_ADDRESS:
         return {
             "valid": False,
             "token_id": None,
