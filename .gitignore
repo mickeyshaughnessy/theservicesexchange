@@ -49,9 +49,9 @@ Thumbs.db
 # Logs
 *.log
 
-# Local config
+# Local config (root only — contains live API keys)
 config_local.py
-config.py
+/config.py
 .env
 
 # Seat data (keep in repo but could be sensitive)
