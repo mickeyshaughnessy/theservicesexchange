@@ -106,11 +106,7 @@ function setupEventListeners() {
     if (forms.nearby) forms.nearby.addEventListener('submit', handleNearbySearch);
     if (forms.filter) forms.filter.addEventListener('submit', handleFilterApplication);
 
-    // Setup click listener for Base URL copy
-    const baseUrlSpan = document.getElementById('baseUrl');
-    if (baseUrlSpan) {
-        baseUrlSpan.addEventListener('click', copyBaseUrl);
-    }
+    // Base URL span is selectable via CSS user-select:all; copy button handles clipboard
 }
 
 // Utility Functions
