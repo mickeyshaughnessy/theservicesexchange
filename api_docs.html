@@ -239,9 +239,19 @@
 
         /* Override header hero for api docs */
         .api-header {
-            background: var(--bg-dark);
+            background: var(--bg-dark) url('https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robot_jump.jpeg') center/cover no-repeat;
             border-bottom: 2px solid var(--primary);
             padding: 60px 0 50px;
+            position: relative;
+        }
+        .api-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(10,10,46,0.82);
+        }
+        .api-header > * {
+            position: relative;
         }
         .api-header h1 {
             font-size: 1.2rem;

@@ -126,7 +126,7 @@
                 <div class="col-md-6">
                     <div class="founder-card">
                         <div class="founder-header">
-                            <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/mickey.png" alt="Mickey Shaughnessy" class="founder-image">
+                            <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/mickey.png" alt="Mickey Shaughnessy" class="founder-image" onclick="document.getElementById('bartModal').style.display='flex'" style="cursor:pointer;" title="Click to play video">
                             <div>
                                 <div class="founder-name">Mickey Shaughnessy</div>
                                 <div class="founder-title">Co-Founder & Creator</div>
@@ -230,6 +230,15 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Bart video modal -->
+    <div id="bartModal" onclick="this.style.display='none';this.querySelector('video').pause()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;">
+        <video src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/bart.mp4"
+               controls autoplay
+               onclick="event.stopPropagation()"
+               style="max-width:90vw;max-height:85vh;border:2px solid var(--primary);box-shadow:0 0 40px rgba(0,255,255,0.4);">
+        </video>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
