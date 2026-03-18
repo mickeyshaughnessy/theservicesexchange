@@ -1,164 +1,129 @@
-# Service Exchange Protocol
+# Robot Services Exchange
 
-## Overview
+An open marketplace where autonomous robots are the workforce. Buyers post service requests; robot operators call `/grab_job` to claim the best matching job.
 
-The Service Exchange (SE) is an open marketplace protocol that connects service buyers with service providers through a transparent bidding system. Whether you need home repairs, tutoring, graphic design, or any other service, SE enables efficient price discovery and quality-based matching.
-
-## Key Features
-
-- **Universal Service Marketplace**: Buy or sell any type of service - from physical tasks to digital work
-- **Reputation-Based Matching**: Quality providers are matched with quality buyers based on ratings
-- **Flexible Location Support**: Works for local in-person services, remote work, or location-agnostic tasks
-- **AI-Powered Matching**: Uses LLM technology to intelligently match service requests with provider capabilities
-- **Simple Integration**: RESTful API with standard authentication
+Live API: **https://rse-api.com:5003**
+Docs: **https://rse-api.com:5003/api_docs.html**
 
 ## How It Works
 
-### For Service Buyers
-1. Create an account and authenticate
-2. Submit a bid describing the service you need, your price, and location (if applicable)
-3. Wait for a qualified provider to accept your job
-4. Rate the provider upon completion
+1. **Buyers** register, post a bid (`/submit_bid`) with a service description, price, and location
+2. **Providers** (robot operators) register, link their wallet (`/set_wallet`), and call `/grab_job`
+3. The API matches the provider with the best compatible job using AI capability matching and reputation alignment
+4. Both parties complete the job and rate each other (`/sign_job`)
 
-### For Service Providers
-1. Create an account and describe your capabilities
-2. Call `/grab_job` to get matched with the highest-paying compatible job
-3. Complete the service
-4. Get rated by the buyer
+## RSE Seat NFTs
 
-## Quick Start
+Provider access to `/grab_job` is gated by ERC-721 NFT ownership on Base (Ethereum L2).
 
-### Prerequisites
+- **Contract**: [`0x151fEB62F0D3085617a086130cc67f7f18Ce33CE`](https://basescan.org/address/0x151fEB62F0D3085617a086130cc67f7f18Ce33CE)
+- **Network**: Base mainnet (chain ID 8453)
+- **Supply**: 100 Golden Seats minted
+- **To get a seat**: email mickeyshaughnessy@gmail.com with your wallet address
+
+After receiving a seat, link your wallet once:
+```bash
+curl -X POST https://rse-api.com:5003/set_wallet \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"wallet_address": "0xYourAddress"}'
+```
+
+## Running Locally
+
+### Requirements
+
 - Python 3.8+
-- AWS account with S3 access (optional for production storage)
-- OpenRouter API key (for LLM matching)
+- `pip install -r requirements.txt`
 
-### Installation
+### Configuration
+
+Copy `config_example.py` to `config.py` and fill in your values. `config.py` is gitignored — never commit it.
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/service-exchange.git
-cd service-exchange
+cp config_example.py config.py
+# edit config.py with your API keys, DO Spaces credentials, ETH private key
+```
 
-# Install dependencies
-pip install -r requirements.txt
+### Start the API
 
-# Set up environment variables
-export OPENROUTER_API_KEY="your-api-key"
-
-# Run the server
+```bash
 python api_server.py
+# or in production:
+gunicorn -c gunicorn_config.py api_server:application
 ```
-
-### Basic Usage
-
-```python
-import requests
-
-# Register a new user
-response = requests.post('https://rse-api.com:5003/register', json={
-    'username': 'john_doe',
-    'password': 'secure_password'
-})
-
-# Login
-response = requests.post('https://rse-api.com:5003/login', json={
-    'username': 'john_doe',
-    'password': 'secure_password'
-})
-token = response.json()['access_token']
-
-# Submit a service request
-headers = {'Authorization': f'Bearer {token}'}
-response = requests.post('https://rse-api.com:5003/submit_bid', 
-    headers=headers,
-    json={
-        'service': 'I need my website redesigned with modern UI/UX',
-        'price': 500,
-        'location_type': 'remote',
-        'end_time': 1735689600
-    }
-)
-
-# For providers - grab a job
-response = requests.post('https://rse-api.com:5003/grab_job',
-    headers=headers,
-    json={
-        'capabilities': 'Web design, UI/UX, React, Figma, responsive design',
-        'location_type': 'remote'
-    }
-)
-```
-
-## API Documentation
-
-Full API documentation is available at [https://rse-api.com:5003/api_docs.html](https://rse-api.com:5003/api_docs.html)
-
-### Core Endpoints
-
-- `POST /register` - Create a new account
-- `POST /login` - Authenticate and receive access token
-- `GET /account` - Get account information and ratings
-- `POST /submit_bid` - Create a service request
-- `POST /grab_job` - Get matched with a compatible job
-- `POST /sign_job` - Complete and rate a transaction
-- `GET /nearby` - Find services in your area (for location-based services)
-
-## Configuration
-
-Create a `config.py` file with your settings:
-
-```python
-# API Configuration
-API_PORT = 5003
-API_HOST = '0.0.0.0'
-
-# OpenRouter API for matching
-OPENROUTER_API_KEY = 'your-key-here'
-```
-
-## Testing
 
 ### Integration Tests
-
-Run the integration tests:
 
 ```bash
 python int_tests.py
 ```
 
-### Load Testing
+## API Endpoints
 
-Comprehensive load testing infrastructure is available to validate API performance and scalability.
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | /register | — | Create account |
+| POST | /login | — | Get access token |
+| GET | /account | ✓ | Account info + seat status |
+| POST | /set_wallet | ✓ | Link Ethereum wallet |
+| POST | /submit_bid | ✓ | Post a service request |
+| POST | /grab_job | ✓ + seat | Claim a matching job |
+| POST | /sign_job | ✓ | Complete and rate a job |
+| POST | /reject_job | ✓ | Reject an assigned job |
+| GET | /nearby | — | Services near a location |
+| GET | /exchange_data | — | Active bids + market stats |
+| GET | /stats | — | Platform statistics |
+| POST | /chat | ✓ | Send a message |
+| POST | /bulletin | ✓ | Post to community board |
 
-**Quick Start:**
+## Smart Contract
+
+The RSESeat ERC-721 contract is in `contracts/`. It is built with Hardhat and OpenZeppelin 5.x.
 
 ```bash
-# 1. Install dependencies
-pip install Flask-Limiter
-
-# 2. Run smoke test
-./load_testing/run_smoke_test.sh
+cd contracts
+npm install
+npm test          # run 39 tests
+npm run compile
 ```
 
-## Security Considerations
+Deploy to Base mainnet:
+```bash
+# set ETH_PRIVATE_KEY in contracts/.env (see contracts/.env.example)
+npm run deploy:base
+```
 
-- All passwords are hashed using bcrypt
-- Bearer token authentication for all API calls
-- Automatic token expiration
+## Seat Admin CLI
 
-## Protocol Specification
+Management scripts are in `seat_admin/`:
 
-The complete Service Exchange Protocol specification is available in the documentation.
+```bash
+cd seat_admin
+python info.py                          # contract info + supply
+python mint.py 0xWalletAddress          # mint a seat
+python check.py 0xWalletAddress         # check seat status
+python revoke.py <tokenId>              # revoke a seat
+python unrevoke.py <tokenId>            # restore a seat
+python list_seats.py                    # list all seats
+```
 
-## Contributing
+## Project Structure
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-## Support
-
-- Documentation: [https://rse-api.com:5003/api_docs.html](https://rse-api.com:5003/api_docs.html)
+```
+├── api_server.py         Flask API server
+├── handlers.py           Business logic
+├── seat_verification.py  On-chain NFT seat verification (Base L2)
+├── config_example.py     Config template (copy to config.py)
+├── requirements.txt
+├── int_tests.py          Integration tests
+├── contracts/            Hardhat project: RSESeat ERC-721
+│   ├── contracts/RSESeat.sol
+│   ├── test/RSESeat.test.ts  (39 tests)
+│   └── scripts/deploy.ts
+├── seat_admin/           Python CLI for seat management
+│   ├── mint.py, revoke.py, check.py, list_seats.py, info.py
+│   ├── generate_metadata.py
+│   └── upload_metadata.py
+└── abi/RSESeat.json      Contract ABI for seat_verification.py
+```

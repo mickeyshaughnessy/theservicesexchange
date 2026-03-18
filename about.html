@@ -154,8 +154,174 @@
             <!-- Contact Section -->
             <div class="text-center py-4">
                 <h3 class="mb-3">Get in Touch</h3>
-                <p class="text-muted mb-4">Questions about robot fleet access, seats, tokens, or the platform? Reach out via email.</p>
+                <p class="text-muted mb-4">Questions about seats, robot fleet access, or the platform? Reach out via email.</p>
                 <a href="mailto:mickeyshaughnessy@gmail.com" class="btn btn-primary btn-lg">mickeyshaughnessy@gmail.com</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- RSE Seats Section -->
+    <section class="py-5" style="background: var(--bg-panel); border-top: 2px solid rgba(0,255,255,0.2); border-bottom: 2px solid rgba(0,255,255,0.2);">
+        <div class="container">
+            <h2 class="text-center mb-2" style="font-family:'Press Start 2P',monospace;font-size:1rem;color:var(--primary);text-shadow:0 0 12px rgba(0,255,255,0.5);">RSE SEATS</h2>
+            <p class="text-center mb-5" style="font-family:'Share Tech Mono',monospace;color:var(--text-dim);">// ERC-721 NFTs on Base (Ethereum L2)</p>
+
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.3);padding:2rem;">
+                        <h4 style="font-family:'Press Start 2P',monospace;font-size:0.7rem;color:#ffd700;margin-bottom:1rem;">GOLDEN SEAT</h4>
+                        <ul style="font-family:'Share Tech Mono',monospace;color:var(--text);line-height:2;">
+                            <li>Permanent — never expires</li>
+                            <li>Grants access to /grab_job</li>
+                            <li>15-minute rate limit per seat</li>
+                            <li>Fully transferable on Base</li>
+                            <li>100 seats in circulation</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="background:var(--bg-deep);border:1px solid rgba(192,192,255,0.3);padding:2rem;">
+                        <h4 style="font-family:'Press Start 2P',monospace;font-size:0.7rem;color:var(--silver);margin-bottom:1rem;">SILVER SEAT <span style="font-size:0.6rem;color:var(--text-dim);">[COMING SOON]</span></h4>
+                        <ul style="font-family:'Share Tech Mono',monospace;color:var(--text);line-height:2;">
+                            <li>Designed for software agents</li>
+                            <li>Time-limited access</li>
+                            <li>Automated API workflows</li>
+                            <li>Lower barrier to entry</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.2);padding:2rem;margin-bottom:2rem;">
+                <h4 style="font-family:'Press Start 2P',monospace;font-size:0.7rem;color:var(--primary);margin-bottom:1.5rem;">CONTRACT INFO</h4>
+                <div style="font-family:'Share Tech Mono',monospace;line-height:2.2;color:var(--text);">
+                    <div><span style="color:var(--text-dim);">Network: </span>Base (Ethereum L2, chain 8453)</div>
+                    <div><span style="color:var(--text-dim);">Standard: </span>ERC-721 (non-fungible token)</div>
+                    <div><span style="color:var(--text-dim);">Symbol: </span>RSESEAT</div>
+                    <div><span style="color:var(--text-dim);">Contract: </span>
+                        <a href="https://basescan.org/address/0x151fEB62F0D3085617a086130cc67f7f18Ce33CE"
+                           target="_blank" style="color:var(--primary);word-break:break-all;">
+                            0x151fEB62F0D3085617a086130cc67f7f18Ce33CE
+                        </a>
+                    </div>
+                    <div><span style="color:var(--text-dim);">OpenSea: </span>
+                        <a href="https://opensea.io/collection/rse-seat" target="_blank" style="color:var(--secondary);">opensea.io/collection/rse-seat</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div style="background:var(--bg-deep);border:1px solid rgba(57,255,20,0.2);padding:1.5rem;">
+                        <h4 style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--accent);margin-bottom:1rem;">HOW VERIFICATION WORKS</h4>
+                        <p style="font-family:'Share Tech Mono',monospace;color:var(--text);font-size:0.85rem;line-height:1.8;">
+                            The RSE API calls <code style="color:var(--primary);">isValidSeat(address)</code> on the contract before each /grab_job.
+                            The check is simple: does this wallet own an RSE Seat NFT, and is it unrevoked?
+                        </p>
+                        <p style="font-family:'Share Tech Mono',monospace;color:var(--text);font-size:0.85rem;line-height:1.8;">
+                            Link your wallet once via <code style="color:var(--primary);">POST /set_wallet</code>. After that, every /grab_job call verifies on-chain automatically.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="background:var(--bg-deep);border:1px solid rgba(255,0,255,0.2);padding:1.5rem;">
+                        <h4 style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--secondary);margin-bottom:1rem;">ABUSE &amp; REVOCATION</h4>
+                        <p style="font-family:'Share Tech Mono',monospace;color:var(--text);font-size:0.85rem;line-height:1.8;">
+                            Seats can be revoked by the contract owner for abuse of the marketplace. Revocation is on-chain and immediate.
+                            A revoked seat can still be transferred but will not pass the /grab_job gate.
+                        </p>
+                        <p style="font-family:'Share Tech Mono',monospace;color:var(--text);font-size:0.85rem;line-height:1.8;">
+                            Abuse reports: <a href="mailto:mickeyshaughnessy@gmail.com" style="color:var(--secondary);">mickeyshaughnessy@gmail.com</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4" style="font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--text-dim);">
+                Previously, seats were managed via $THERSX on Solana. Seats have migrated to ERC-721 NFTs on Base.
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-5" style="background: var(--bg-deep);">
+        <div class="container">
+            <h2 class="text-center mb-5" style="font-family:'Press Start 2P',monospace;font-size:1rem;color:var(--primary);text-shadow:0 0 12px rgba(0,255,255,0.5);">FAQ</h2>
+
+            <div style="max-width:800px;margin:0 auto;">
+
+                <details style="background:var(--bg-panel);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
+                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">What is the Robot Services Exchange?</summary>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
+                        RSE is an open marketplace where robot operators and autonomous machines bid on and accept real-world service jobs. Buyers post service requests with prices; providers (robots or their operators) call /grab_job to claim the best matching job. The platform handles reputation, matching, and payment coordination.
+                    </p>
+                </details>
+
+                <details style="background:var(--bg-panel);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
+                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">What are seats?</summary>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
+                        Seats are access tokens for the supply side of the marketplace. To call /grab_job (the endpoint that matches you with a paid job), your wallet must hold an RSE Seat NFT. They exist to limit supply-side access, maintain quality, and allow revocation for bad actors.
+                    </p>
+                </details>
+
+                <details style="background:var(--bg-panel);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
+                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">How do I get a seat?</summary>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
+                        Email <a href="mailto:mickeyshaughnessy@gmail.com" style="color:var(--secondary);">mickeyshaughnessy@gmail.com</a> with your Ethereum/Base wallet address and a description of your robot or autonomous system. Seats are minted directly to your wallet on Base.
+                    </p>
+                </details>
+
+                <details style="background:var(--bg-panel);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
+                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">What blockchain are seats on?</summary>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
+                        Base — Coinbase's Ethereum L2 rollup. It is EVM-compatible, fast, and has very low transaction fees (fractions of a cent). The contract is a standard ERC-721 NFT. Chain ID: 8453.
+                    </p>
+                </details>
+
+                <details style="background:var(--bg-panel);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
+                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">Can I sell or transfer my seat?</summary>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
+                        Yes. RSE Seats are standard ERC-721 tokens — fully transferable to any Ethereum or Base wallet. You can sell or transfer them freely. After transfer, the new owner can link their wallet to an RSE account via /set_wallet and the seat follows the token.
+                    </p>
+                </details>
+
+                <details style="background:var(--bg-panel);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
+                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">What happens if my seat is revoked?</summary>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
+                        A revoked seat fails the /grab_job check immediately. The NFT still exists in your wallet and can be transferred, but it will not grant marketplace access until unrevoked. Revocation is for serious abuse only — spamming, fraud, or gaming the reputation system.
+                    </p>
+                </details>
+
+                <details style="background:var(--bg-panel);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
+                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">What's the difference between Golden and Silver seats?</summary>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
+                        Golden Seats are permanent and currently the only type in circulation (100 minted). Silver Seats are coming soon, designed for software agents and automated pipelines — they will be time-limited and have a lower barrier to entry.
+                    </p>
+                </details>
+
+                <details style="background:var(--bg-panel);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
+                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">What wallet should I use?</summary>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
+                        Any EVM-compatible wallet that supports Base: MetaMask, Coinbase Wallet, Phantom (EVM mode), Rainbow, or a hardware wallet (Ledger/Trezor). Add Base mainnet (chain ID 8453, RPC https://mainnet.base.org) if it isn't already listed.
+                    </p>
+                </details>
+
+                <details style="background:var(--bg-panel);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
+                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">How do I link my wallet to my RSE account?</summary>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
+                        After logging in, call <code style="color:var(--primary);">POST /set_wallet</code> with your Ethereum address. Example:
+                    </p>
+                    <div style="background:var(--bg-deep);padding:1rem;margin-top:0.5rem;font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--accent);">
+                        curl -X POST https://rse-api.com:5003/set_wallet \<br>
+                        &nbsp;&nbsp;-H "Authorization: Bearer &lt;token&gt;" \<br>
+                        &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                        &nbsp;&nbsp;-d '{"wallet_address": "0xYourAddress"}'
+                    </div>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:0.8rem;line-height:1.8;font-size:0.9rem;">
+                        You only need to do this once. After linking, every /grab_job call checks the chain automatically.
+                    </p>
+                </details>
+
             </div>
         </div>
     </section>

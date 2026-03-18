@@ -389,6 +389,7 @@
                     <a href="#register">Register</a>
                     <a href="#login">Login</a>
                     <a href="#account">Account</a>
+                    <a href="#set-wallet">Set Wallet</a>
                     <a href="#stats">Stats</a>
                     <a href="#my-bids">My Bids</a>
                     <a href="#my-jobs">My Jobs</a>
@@ -417,19 +418,28 @@
 
                 <!-- Seat Verification -->
                 <div id="seat-verification" class="endpoint">
-                    <h2 style="font-size:0.9rem;">Seat Verification</h2>
-                    <div class="alert-seat">
-                        <h5>⚠ Temporary: Seat Requirements Suspended</h5>
-                        <p>While demand and supply are ramping up, <strong>/grab_job</strong> does not currently require seat credentials. Seat verification will be re-enabled at sufficient volume.</p>
+                    <h2 style="font-size:0.9rem;">RSE Seat NFTs</h2>
+                    <p>Provider access to <code>/grab_job</code> is gated by ERC-721 NFT ownership on Base (Ethereum L2).</p>
+                    <div style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.25);padding:1rem;margin-bottom:1rem;font-family:'Share Tech Mono',monospace;font-size:0.82rem;line-height:1.9;">
+                        <div><span style="color:var(--text-dim);">Contract: </span>
+                            <a href="https://basescan.org/address/0x151fEB62F0D3085617a086130cc67f7f18Ce33CE" target="_blank" style="color:var(--primary);">0x151fEB62F0D3085617a086130cc67f7f18Ce33CE</a>
+                        </div>
+                        <div><span style="color:var(--text-dim);">Network: </span>Base mainnet (chain 8453)</div>
+                        <div><span style="color:var(--text-dim);">OpenSea: </span>
+                            <a href="https://opensea.io/collection/rse-seat" target="_blank" style="color:var(--secondary);">opensea.io/collection/rse-seat</a>
+                        </div>
                     </div>
                     <h4 style="font-size:0.75rem;">Seat Types</h4>
                     <table class="param-table">
-                        <thead><tr><th>Type</th><th>Purpose</th><th>Rate Limit</th></tr></thead>
+                        <thead><tr><th>Type</th><th>Purpose</th><th>Supply</th><th>Rate Limit</th></tr></thead>
                         <tbody>
-                            <tr><td><span class="seat-badge gold">GOLDEN</span></td><td>Physical robot services (permanent)</td><td>1 /grab_job per 15 min</td></tr>
-                            <tr><td><span class="seat-badge silver">SILVER</span></td><td>Software agent / automated services (1-year)</td><td>1 /grab_job per 15 min</td></tr>
+                            <tr><td><span class="seat-badge gold">GOLDEN</span></td><td>Robot operator access (permanent)</td><td>100 minted</td><td>1/15 min</td></tr>
+                            <tr><td><span class="seat-badge silver">SILVER</span></td><td>Software agents (coming soon)</td><td>TBD</td><td>1/15 min</td></tr>
                         </tbody>
                     </table>
+                    <p style="margin-top:1rem;font-family:'Share Tech Mono',monospace;font-size:0.82rem;color:var(--text-dim);">
+                        To get a seat: email <a href="mailto:mickeyshaughnessy@gmail.com" style="color:var(--secondary);">mickeyshaughnessy@gmail.com</a> with your wallet address. After receiving a seat, link it with <code>POST /set_wallet</code>.
+                    </p>
                 </div>
 
                 <!-- ═══ SYSTEM ENDPOINTS ═══ -->
@@ -603,8 +613,25 @@
                 <!-- ACCOUNT -->
                 <div id="account" class="endpoint">
                     <h3><span class="method get">GET</span><span class="path">/account</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span></h3>
-                    <p>Get account information and reputation score. Requires authentication.</p>
-                    <div class="code-block">{ "username": "robot_buyer_1", "user_type": "demand", "stars": 4.5, "total_ratings": 12, "completed_jobs": 10 }</div>
+                    <p>Get account information, reputation score, and NFT seat status. Requires authentication.</p>
+                    <div class="code-block">{
+  "username": "robot_operator_1",
+  "stars": 4.5,
+  "total_ratings": 12,
+  "completed_jobs": 10,
+  "reputation_score": 4.1,
+  "wallet_address": "0x6B2D765cfB33Aa5736e96231eD078f9D01917A03",
+  "seat_status": "valid",
+  "seat_token_id": 7
+}</div>
+                    <table class="param-table" style="margin-top:0.75rem;">
+                        <thead><tr><th>Field</th><th>Values</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>wallet_address</code></td><td>string or null</td><td>Linked Ethereum address</td></tr>
+                            <tr><td><code>seat_status</code></td><td>"valid" | "revoked" | "no_seat" | "no_wallet"</td><td>Current NFT seat state</td></tr>
+                            <tr><td><code>seat_token_id</code></td><td>integer or null</td><td>Token ID of the active seat</td></tr>
+                        </tbody>
+                    </table>
 
                     <div class="try-it-panel">
                         <div class="try-it-header">
@@ -615,6 +642,40 @@
                             <p style="font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--text-dim);">Uses stored auth token. No additional parameters.</p>
                             <button class="run-btn" onclick="runEndpoint('account-response', 'GET', '/account', null, true)">▶ Run</button>
                             <div class="response-area" id="account-response"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SET WALLET -->
+                <div id="set-wallet" class="endpoint">
+                    <h3><span class="method post">POST</span><span class="path">/set_wallet</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span></h3>
+                    <p>Link an Ethereum/Base wallet address to your account. Required before /grab_job can verify your RSE Seat NFT. Supply-side users only. You only need to do this once.</p>
+                    <table class="param-table">
+                        <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>wallet_address</code></td><td>string</td><td>Yes</td><td>Your Ethereum address (0x + 40 hex chars)</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="code-block">curl -X POST https://rse-api.com:5003/set_wallet \
+  -H "Authorization: Bearer &lt;token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"wallet_address": "0x6B2D765cfB33Aa5736e96231eD078f9D01917A03"}'</div>
+                    <div class="code-block">{ "message": "Wallet address linked", "wallet_address": "0x6B2D765cfB33Aa5736e96231eD078f9D01917A03" }</div>
+
+                    <div class="try-it-panel">
+                        <div class="try-it-header">
+                            <span>// Try It — Link Wallet</span>
+                            <button class="try-it-toggle" onclick="toggleTryIt('set-wallet-try')">▶ Open</button>
+                        </div>
+                        <div class="try-it-body" id="set-wallet-try" style="display:none">
+                            <div class="try-fields-grid">
+                                <div class="try-field" style="grid-column: 1 / -1;">
+                                    <label>wallet_address</label>
+                                    <input type="text" id="sw-address" placeholder="0x...your Base wallet address">
+                                </div>
+                            </div>
+                            <button class="run-btn" onclick="runEndpoint('set-wallet-response', 'POST', '/set_wallet', {wallet_address: document.getElementById('sw-address').value}, true)">▶ Run</button>
+                            <div class="response-area" id="set-wallet-response"></div>
                         </div>
                     </div>
                 </div>
@@ -731,14 +792,13 @@
                 <div id="grab-job" class="endpoint">
                     <h3>
                         <span class="method post">POST</span><span class="path">/grab_job</span>
-                        <span class="seat-badge silver" style="background:transparent;">TEMP: NO SEAT</span>
+                        <span class="seat-badge gold">SEAT</span>
                         <span class="flow-badge">Step 4</span>
                     </h3>
-                    <div class="alert-seat">
-                        <h5>📡 Temporary Access — Seat Not Required</h5>
-                        <p>During ramp-up, seat credentials are <strong>not required</strong>. Seat verification re-enables at market volume.</p>
+                    <div style="background:rgba(0,255,255,0.06);border:1px solid rgba(0,255,255,0.25);padding:0.75rem 1rem;margin-bottom:1rem;font-family:'Share Tech Mono',monospace;font-size:0.82rem;line-height:1.8;">
+                        <strong style="color:var(--primary);">NFT Seat Required</strong> — when seat verification is enabled, your account must have a linked wallet (via <code>/set_wallet</code>) holding a valid, unrevoked RSE Seat NFT on Base. The API calls <code>isValidSeat(address)</code> on-chain before each match. If the Base RPC is unreachable, the check fails open (request proceeds).
                     </div>
-                    <p>Match a robot operator with the best available job. Rate-limited to 1/15min per seat when enabled.</p>
+                    <p>Match a robot operator with the best available job. Uses AI capability matching and reputation alignment. Rate-limited to 1/15min per seat.</p>
                     <table class="param-table">
                         <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                         <tbody>
