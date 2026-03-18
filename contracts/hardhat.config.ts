@@ -3,8 +3,8 @@ import "@nomicfoundation/hardhat-toolbox";
 import * as dotenv from "dotenv";
 import * as path from "path";
 
-// Load root project .env so ETH_PRIVATE_KEY etc. are available
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
+// Load contracts/.env for JS-side config (private key, RPC URLs, API keys)
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const PRIVATE_KEY = process.env.ETH_PRIVATE_KEY ?? "";
 const BASE_RPC_URL = process.env.BASE_RPC_URL ?? "https://mainnet.base.org";
