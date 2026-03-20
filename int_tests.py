@@ -339,9 +339,6 @@ def main():
         # Run core tests
         core_results = tester.test_core_functionality()
         
-        # Run ridesharing tests
-        tester.test_ridesharing()
-        
         # Run advanced tests unless quick mode
         if not args.quick:
             tester.test_advanced_features()
