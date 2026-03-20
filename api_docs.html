@@ -436,8 +436,13 @@
                             <tr><td><span class="seat-badge gold">SEAT</span></td><td>Robot operator access (permanent)</td><td>100 minted</td><td>1/15 min</td></tr>
                         </tbody>
                     </table>
+                    <div style="background:rgba(57,255,20,0.05);border:1px solid rgba(57,255,20,0.2);padding:0.85rem 1rem;margin-top:1rem;font-family:'Share Tech Mono',monospace;font-size:0.8rem;line-height:1.9;">
+                        <span style="color:var(--accent);">// How it works</span><br>
+                        The API calls <code>isValidSeat(address)</code> on the contract — a Solidity <code>view</code> function. This is a free read-only <code>eth_call</code>. <strong>No ETH is ever spent per request, no gas, no transaction.</strong> Results are cached for 15 minutes (matching the /grab_job rate limit), so the RPC is only hit once per rate-limit window per wallet.<br><br>
+                        Suppliers set their wallet address once via <code>POST /set_wallet</code> and never touch it again. They don't need a private key, don't sign anything, and don't pay gas. The wallet is just an address used to look up NFT ownership.
+                    </div>
                     <p style="margin-top:1rem;font-family:'Share Tech Mono',monospace;font-size:0.82rem;color:var(--text-dim);">
-                        To get a seat: email <a href="mailto:mickeyshaughnessy@gmail.com" style="color:var(--secondary);">mickeyshaughnessy@gmail.com</a> with your wallet address. After receiving a seat, link it with <code>POST /set_wallet</code>.
+                        To get a seat: email <a href="mailto:mickeyshaughnessy@gmail.com" style="color:var(--secondary);">mickeyshaughnessy@gmail.com</a> with your wallet address. After receiving a seat, link it once with <code>POST /set_wallet</code>.
                     </p>
                 </div>
 
