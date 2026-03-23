@@ -419,6 +419,13 @@ class ServiceExchangeAPITester:
                           json={"wallet_address": wallet_address}, verify=False)
         return r.status_code == 200
 
+    def _reject_job(self, token, job_id, reason="Test: returning to exchange"):
+        """Reject a job so it goes back on the exchange for the real buyer."""
+        requests.post(f"{self.api_url}/reject_job",
+                      headers=self._headers(token),
+                      json={"job_id": job_id, "reason": reason},
+                      verify=False)
+
     # ── Cleanup ───────────────────────────────────────────────────────────────
 
     def cleanup(self):
@@ -588,13 +595,14 @@ class ServiceExchangeAPITester:
             print(f"✓ Provider wallet linked ({config.TEST_WALLET_ADDRESS[:10]}… seats #1-100)")
 
         results = []  # list of (name, non_match_ok, match_ok, notes)
+        external_grabs = 0   # jobs grabbed from other users and rejected back
 
         for i, case in enumerate(MATCHING_TEST_CASES, 1):
             name = case["name"]
             bid_data = case["bid"]
             loc = bid_data.get("location_type", "physical")
             addr = bid_data.get("address")
-            matching_caps    = case["matching_caps"]
+            matching_caps     = case["matching_caps"]
             non_matching_caps = case["non_matching_caps"]
 
             # ── 1. Post bid ──────────────────────────────────────────────────
@@ -605,30 +613,65 @@ class ServiceExchangeAPITester:
                 continue
 
             # ── 2. Non-matching provider should get 204 ──────────────────────
+            # If grab returns 200 we check whose bid was consumed:
+            #   • Our bid  → genuine false-positive; re-post for step 3.
+            #   • Someone else's bid (demand-monitor etc.) → reject it back to
+            #     the exchange immediately so the real buyer isn't stranded, and
+            #     treat our non-match test as passing (our bid was untouched).
             r = self._grab_job(prov_token, non_matching_caps, loc, addr)
-            non_match_ok = r.status_code == 204
             non_match_note = ""
-            if r.status_code == 200:
-                # Accidentally matched — track job and note it
-                job = r.json()
-                self.created_jobs.append((job["job_id"], buyer_token, prov_token))
-                non_match_note = "⚠ false-positive match"
-                # Bid is consumed; re-post for the positive test
-                try:
-                    bid_id = self._post_bid(buyer_token, bid_data)
-                except AssertionError:
-                    results.append((name, non_match_ok, False, non_match_note + "; re-post failed"))
-                    continue
 
-            # ── 3. Matching provider should get 200 ──────────────────────────
-            r = self._grab_job(prov_token, matching_caps, loc, addr)
-            match_ok = r.status_code == 200
-            if match_ok:
+            if r.status_code == 204:
+                non_match_ok = True
+
+            elif r.status_code == 200:
                 job = r.json()
-                self.created_jobs.append((job["job_id"], buyer_token, prov_token))
+                if job.get("buyer_username") == buyer_username:
+                    # True false-positive: wrong caps grabbed our bid.
+                    non_match_ok = False
+                    non_match_note = "FP: wrong caps grabbed our bid"
+                    self.created_jobs.append((job["job_id"], buyer_token, prov_token))
+                    # Re-post so step 3 still has something to grab.
+                    try:
+                        bid_id = self._post_bid(buyer_token, bid_data)
+                    except AssertionError:
+                        results.append((name, False, False,
+                                        non_match_note + "; re-post failed"))
+                        continue
+                else:
+                    # Grabbed an external bid — return it to the exchange.
+                    self._reject_job(prov_token, job["job_id"])
+                    external_grabs += 1
+                    non_match_ok = True   # our bid was never consumed
+                    non_match_note = f"(grabbed+rejected external bid from {job.get('buyer_username','?')})"
+
+            else:
+                non_match_ok = False
+                non_match_note = f"unexpected status {r.status_code}"
+
+            # ── 3. Matching provider should get 200 on OUR bid ───────────────
+            # Same buyer_username check: if we land on an external bid we
+            # reject it back and record a false-negative.
+            r = self._grab_job(prov_token, matching_caps, loc, addr)
+            match_ok = False
+
+            if r.status_code == 200:
+                job = r.json()
+                if job.get("buyer_username") == buyer_username:
+                    match_ok = True
+                    self.created_jobs.append((job["job_id"], buyer_token, prov_token))
+                else:
+                    # Grabbed wrong external bid; reject back and cancel ours.
+                    self._reject_job(prov_token, job["job_id"])
+                    external_grabs += 1
+                    non_match_note = (non_match_note +
+                                      " FN: matched external bid instead of ours").strip()
+                    requests.post(f"{self.api_url}/cancel_bid",
+                                  headers=self._headers(buyer_token),
+                                  json={"bid_id": bid_id}, verify=False)
+
             elif r.status_code == 204:
-                # No match found — clean up the bid if still present
-                non_match_note = (non_match_note + " ⚠ false-negative").strip()
+                # Our bid is still in pool but LLM said no — cancel it.
                 requests.post(f"{self.api_url}/cancel_bid",
                               headers=self._headers(buyer_token),
                               json={"bid_id": bid_id}, verify=False)
@@ -637,7 +680,7 @@ class ServiceExchangeAPITester:
 
             status = "✓" if (non_match_ok and match_ok) else "✗"
             print(f"  [{i:02d}] {status} {name}")
-            if non_match_note:
+            if non_match_note and not non_match_note.startswith("(grabbed+rejected"):
                 print(f"         {non_match_note}")
 
         # ── Summary table ─────────────────────────────────────────────────────
@@ -647,8 +690,9 @@ class ServiceExchangeAPITester:
 
         print(f"\n{'─'*60}")
         print(f"  Matching test results: {passed}/{len(results)} passed")
-        print(f"  False positives (wrong caps matched): {fp_count}")
-        print(f"  False negatives (right caps didn't match): {fn_count}")
+        print(f"  False positives (wrong caps grabbed our bid): {fp_count}")
+        print(f"  False negatives (right caps didn't match our bid): {fn_count}")
+        print(f"  External bids grabbed & rejected back: {external_grabs}")
         print(f"{'─'*60}")
 
         if fp_count + fn_count > 0:
@@ -663,7 +707,8 @@ class ServiceExchangeAPITester:
                         print(f"          {note}")
 
         return {"passed": passed, "total": len(results),
-                "false_positives": fp_count, "false_negatives": fn_count}
+                "false_positives": fp_count, "false_negatives": fn_count,
+                "external_grabs": external_grabs}
 
     # ── Advanced features ─────────────────────────────────────────────────────
 
@@ -733,7 +778,8 @@ def main():
         print(f"ALL TESTS PASSED  ({duration:.1f}s)")
         if not args.quick:
             print(f"Matching accuracy: {matching['passed']}/{matching['total']} "
-                  f"(FP={matching['false_positives']} FN={matching['false_negatives']})")
+                  f"(FP={matching['false_positives']} FN={matching['false_negatives']} "
+                  f"ext={matching['external_grabs']})")
         print(f"{'='*60}")
 
     except AssertionError as e:
