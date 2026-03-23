@@ -838,9 +838,13 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         for bid in all_bids:
             if bid['end_time'] <= time.time():
                 continue
-            
+
+            # Skip bids previously rejected by this provider
+            if username in bid.get('rejected_by', []):
+                continue
+
             # Filter by location type compatibility
-            if location_type == 'remote' and bid['location_type'] == 'physical':
+            if location_type == 'remote' and bid['location_type'] in ['physical', 'hybrid']:
                 continue
             if location_type == 'physical' and bid['location_type'] == 'remote':
                 continue
@@ -956,6 +960,9 @@ def reject_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         
         # Restore the bid, preserving the original bid_id so the buyer can still track it
         bid_id = job['bid_id']
+        rejected_by = list(job.get('rejected_by', []))
+        if username not in rejected_by:
+            rejected_by.append(username)
         bid = {
             'bid_id': bid_id,
             'username': job['buyer_username'],
@@ -976,7 +983,8 @@ def reject_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'end_lat': job.get('end_lat'),
             'end_lon': job.get('end_lon'),
             'created_at': int(time.time()),
-            'buyer_reputation': job['buyer_reputation']
+            'buyer_reputation': job['buyer_reputation'],
+            'rejected_by': rejected_by
         }
         save_bid(bid_id, bid)
         
@@ -1004,8 +1012,8 @@ def sign_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         if not job_id or star_rating is None:
             return {"error": "Job ID and rating required"}, 400
         
-        if star_rating < 1 or star_rating > 5:
-            return {"error": "Rating must be 1-5"}, 400
+        if not isinstance(star_rating, int) or star_rating < 1 or star_rating > 5:
+            return {"error": "Rating must be an integer between 1 and 5"}, 400
         
         job = get_job(job_id)
         if not job:
@@ -1065,9 +1073,11 @@ def nearby_services(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             user_lon = data['lon']
         elif 'address' in data:
             user_lat, user_lon = simple_geocode(data['address'])
+            if user_lat is None or user_lon is None:
+                return {"error": f"Could not geocode address: '{data['address']}'"}, 400
         else:
             return {"error": "Location required"}, 400
-        
+
         radius = data.get('radius', 10)
         
         nearby_bids = []
@@ -1197,10 +1207,10 @@ def get_exchange_data(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                     if category_filter.lower() not in service_str.lower():
                         continue
                 
-                if location_filter and bid.get('address'):
-                    if location_filter.lower() not in bid['address'].lower():
+                if location_filter:
+                    if not bid.get('address') or location_filter.lower() not in bid['address'].lower():
                         continue
-                
+
                 active_bids.append({
                     'bid_id': bid['bid_id'],
                     'service': bid['service'],
