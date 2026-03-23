@@ -161,39 +161,106 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     except ValueError:
         return float('inf')
 
-def simple_geocode(address: str) -> Tuple[float, float]:
+# ── Geocoding ─────────────────────────────────────────────────────────────────
+# Uses Nominatim (OpenStreetMap) via plain HTTP requests with:
+#   • Fast-path lookup table for common test addresses (no I/O)
+#   • In-process cache (up to 2000 entries; evicts oldest when full)
+#   • 1.1 s rate-limit gate between Nominatim requests (ToS requirement)
+#   • Returns (None, None) on failure so callers skip distance filtering
+#     rather than silently collapsing every unknown address to one point.
+
+_GEOCODE_CACHE: Dict[str, Tuple[Optional[float], Optional[float]]] = {}
+_GEOCODE_LOCK = threading.Lock()
+_GEOCODE_LAST_REQ: float = 0.0
+_NOMINATIM_MIN_INTERVAL = 1.1   # seconds between requests
+_GEOCODE_CACHE_MAX = 2000
+
+# Hardcoded fast-path for addresses that appear frequently in tests/examples.
+_KNOWN_COORDS: Dict[str, Tuple[float, float]] = {
+    "123 main st, denver, co 80202": (39.7392, -104.9903),
+    "456 oak ave, denver, co 80203": (39.7431, -104.9792),
+    "789 pine st, denver, co 80204": (39.7391, -105.0178),
+    "downtown denver, co":           (39.7392, -104.9903),
+    "denver airport":                (39.8561, -104.6737),
+    "denver, co":                    (39.7392, -104.9903),
+    "colorado":                      (39.5501, -105.7821),
+}
+
+
+def geocode_address(address: str) -> Tuple[Optional[float], Optional[float]]:
     """
-    Simple geocoding for common test addresses - no external API calls.
-    In production, this should use a real geocoding service.
+    Geocode an address string to (lat, lon).
+
+    Resolution order:
+      1. Hardcoded fast-path table  (instant)
+      2. In-process cache           (instant)
+      3. Nominatim / OpenStreetMap  (HTTP, rate-limited to 1 req/sec, free)
+
+    Returns (None, None) when geocoding fails.  Callers that receive None
+    coords should skip distance filtering (fail-open) rather than treating
+    the bid/provider as being at an arbitrary default location.
     """
-    # Mock geocoding for testing - maps common addresses to coordinates
-    address_map = {
-        # Denver area coordinates for testing
-        "123 main st, denver, co 80202": (39.7392, -104.9903),
-        "456 oak ave, denver, co 80203": (39.7431, -104.9792),
-        "789 pine st, denver, co 80204": (39.7391, -105.0178),
-        "downtown denver, co": (39.7392, -104.9903),
-        "denver airport": (39.8561, -104.6737),
-        "denver, co": (39.7392, -104.9903),
-        "colorado": (39.5501, -105.7821),
-        # Default coordinates for unknown addresses
-        "unknown": (39.7392, -104.9903)
-    }
-    
-    address_lower = address.lower().strip() if address else ""
-    
-    # Try exact match first
-    if address_lower in address_map:
-        return address_map[address_lower]
-    
-    # Try partial matches
-    for key, coords in address_map.items():
-        if key in address_lower or address_lower in key:
+    global _GEOCODE_LAST_REQ
+
+    if not address:
+        return None, None
+
+    key = address.lower().strip()
+
+    # 1. Hardcoded fast path
+    for known_key, coords in _KNOWN_COORDS.items():
+        if known_key in key or key in known_key:
             return coords
-    
-    # Default to Denver coordinates
-    logger.info(f"Using default coordinates for address: {address}")
-    return address_map["unknown"]
+
+    # 2. In-process cache (read without lock — worst case a duplicate request)
+    if key in _GEOCODE_CACHE:
+        return _GEOCODE_CACHE[key]
+
+    # 3. Nominatim HTTP request (serialised by lock to respect rate limit)
+    with _GEOCODE_LOCK:
+        if key in _GEOCODE_CACHE:          # double-checked
+            return _GEOCODE_CACHE[key]
+
+        wait = _NOMINATIM_MIN_INTERVAL - (time.time() - _GEOCODE_LAST_REQ)
+        if wait > 0:
+            time.sleep(wait)
+
+        result: Tuple[Optional[float], Optional[float]] = (None, None)
+        try:
+            resp = requests.get(
+                "https://nominatim.openstreetmap.org/search",
+                params={"q": address, "format": "json", "limit": 1},
+                headers={"User-Agent": "TheServicesExchange/1.0 contact@theservicesexchange.com"},
+                timeout=5,
+            )
+            _GEOCODE_LAST_REQ = time.time()
+            if resp.status_code == 200:
+                hits = resp.json()
+                if hits:
+                    result = (float(hits[0]["lat"]), float(hits[0]["lon"]))
+                    logger.info(f"Geocoded '{address}' → {result}")
+                else:
+                    logger.info(f"Nominatim: no results for '{address}'")
+            else:
+                logger.warning(f"Nominatim returned HTTP {resp.status_code} for '{address}'")
+        except Exception as exc:
+            _GEOCODE_LAST_REQ = time.time()
+            logger.warning(f"Geocoding error for '{address}': {exc}")
+
+        # Evict oldest entry when cache is at capacity
+        if len(_GEOCODE_CACHE) >= _GEOCODE_CACHE_MAX:
+            try:
+                _GEOCODE_CACHE.pop(next(iter(_GEOCODE_CACHE)))
+            except StopIteration:
+                pass
+
+        _GEOCODE_CACHE[key] = result
+        return result
+
+
+# Keep old name as an alias so any remaining call sites still work
+def simple_geocode(address: str) -> Tuple[Optional[float], Optional[float]]:
+    return geocode_address(address)
 
 def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 20, fallback_level: int = 0) -> Optional[str]:
     """
@@ -526,16 +593,21 @@ def get_my_jobs(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         for job in user_jobs:
             job_info = {
                 'job_id': job['job_id'],
+                'bid_id': job.get('bid_id'),
                 'service': job['service'],
                 'price': job['price'],
                 'currency': job.get('currency', 'USD'),
                 'payment_method': job.get('payment_method', 'cash'),
                 'location_type': job['location_type'],
                 'address': job.get('address'),
+                'start_address': job.get('start_address'),
+                'end_address': job.get('end_address'),
                 'accepted_at': job['accepted_at'],
                 'status': job['status'],
                 'buyer_username': job['buyer_username'],
-                'provider_username': job['provider_username']
+                'provider_username': job['provider_username'],
+                'buyer_reputation': job.get('buyer_reputation'),
+                'provider_reputation': job.get('provider_reputation'),
             }
             
             # Add role information
@@ -621,8 +693,11 @@ def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                 return {"error": "Location required for physical services"}, 400
         
         user_data = get_account(username)
+        if not user_data or user_data.get('user_type') != 'demand':
+            return {"error": "Only demand-type accounts can submit bids"}, 403
+
         reputation = calculate_reputation_score(user_data)
-        
+
         bid_id = str(uuid.uuid4())
         bid = {
             'bid_id': bid_id,
@@ -668,8 +743,19 @@ def cancel_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         
         bid = get_bid(bid_id)
         if not bid:
+            # Check if the bid was already accepted (turned into an active job)
+            active_job = next(
+                (j for j in get_user_jobs(username)
+                 if j.get('bid_id') == bid_id and j.get('status') == 'accepted'),
+                None
+            )
+            if active_job:
+                return {
+                    "error": "Bid has already been accepted by a provider",
+                    "job_id": active_job['job_id'],
+                }, 409
             return {"error": "Bid not found"}, 404
-        
+
         if bid['username'] != username:
             return {"error": "Not authorized"}, 403
         
