@@ -359,7 +359,7 @@ def register_user(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             return {"error": "User type must be 'demand' or 'supply'"}, 400
         
         if account_exists(username):
-            return {"error": "Username already exists"}, 400
+            return {"error": "Username already exists"}, 409
         
         user_data = {
             'username': username,
@@ -727,7 +727,10 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         user_data = get_account(username)
         if not user_data:
             return {"error": "User not found"}, 404
-            
+
+        if user_data.get('user_type') != 'supply':
+            return {"error": "Only supply-type accounts can grab jobs"}, 403
+
         provider_reputation = calculate_reputation_score(user_data)
         
         provider_lat, provider_lon = None, None
@@ -865,8 +868,8 @@ def reject_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         if job['status'] != 'accepted':
             return {"error": "Can only reject jobs in accepted state"}, 400
         
-        # Restore the bid with new ID
-        bid_id = str(uuid.uuid4())
+        # Restore the bid, preserving the original bid_id so the buyer can still track it
+        bid_id = job['bid_id']
         bid = {
             'bid_id': bid_id,
             'username': job['buyer_username'],
@@ -880,6 +883,12 @@ def reject_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'lat': job.get('lat'),
             'lon': job.get('lon'),
             'address': job.get('address'),
+            'start_address': job.get('start_address'),
+            'end_address': job.get('end_address'),
+            'start_lat': job.get('start_lat'),
+            'start_lon': job.get('start_lon'),
+            'end_lat': job.get('end_lat'),
+            'end_lon': job.get('end_lon'),
             'created_at': int(time.time()),
             'buyer_reputation': job['buyer_reputation']
         }
@@ -903,8 +912,9 @@ def sign_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     try:
         username = data.get('username')
         job_id = data.get('job_id')
-        star_rating = data.get('star_rating')
-        
+        # Accept both 'rating' (documented) and 'star_rating' (legacy field name)
+        star_rating = data.get('rating') if data.get('rating') is not None else data.get('star_rating')
+
         if not job_id or star_rating is None:
             return {"error": "Job ID and rating required"}, 400
         
@@ -920,7 +930,10 @@ def sign_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         
         if not (is_buyer or is_provider):
             return {"error": "Not authorized"}, 403
-        
+
+        if job.get('status') not in ('accepted',):
+            return {"error": f"Cannot sign a job with status '{job.get('status')}'"}, 400
+
         sign_field = 'buyer_signed' if is_buyer else 'provider_signed'
         if job.get(sign_field):
             return {"error": "Already signed"}, 400
