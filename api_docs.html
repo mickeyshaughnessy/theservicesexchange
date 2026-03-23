@@ -381,6 +381,7 @@
             <div class="col-md-3">
                 <div class="nav-sidebar">
                     <h5>// Navigation</h5>
+                    <a href="#int-test-suite" style="color:var(--accent);font-weight:bold;">⚡ Integration Tests</a>
                     <a href="#authentication">Authentication</a>
                     <a href="#seat-verification">Seat Verification</a>
                     <a href="#ping-test">Ping</a>
@@ -407,6 +408,23 @@
 
             <!-- Main Content -->
             <div class="col-md-9">
+
+                <!-- Integration Test Suite -->
+                <div id="int-test-suite" class="endpoint" style="border-color:rgba(57,255,20,0.4);">
+                    <h2 style="font-size:0.9rem;color:var(--accent);text-shadow:0 0 8px var(--accent);">⚡ Integration Test Suite</h2>
+                    <p style="font-family:'Share Tech Mono',monospace;font-size:0.82rem;color:var(--text-dim);">
+                        Runs 31 end-to-end matching tests directly from this page against <code>rse-api.com:5003</code>.
+                        Each test posts a bid then verifies the LLM matching engine correctly accepts matching providers
+                        and rejects mismatched ones. All test data is labelled <code>TEST:</code> and cleaned up on completion.
+                    </p>
+                    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
+                        <button id="run-int-tests-btn" class="run-btn" style="background:rgba(57,255,20,0.15);border-color:var(--accent);color:var(--accent);text-shadow:0 0 6px var(--accent);" onclick="runIntegrationTests()">▶ Run All Tests</button>
+                        <button id="stop-int-tests-btn" class="run-btn" style="display:none;background:rgba(255,51,51,0.15);border-color:#ff3333;color:#ff3333;" onclick="stopIntegrationTests()">■ Stop</button>
+                        <span id="int-test-status" style="font-family:'Share Tech Mono',monospace;font-size:0.78rem;color:var(--text-dim);"></span>
+                    </div>
+                    <div id="int-test-terminal" style="background:#050510;border:1px solid rgba(57,255,20,0.25);padding:1rem;height:400px;overflow-y:auto;font-family:'Share Tech Mono',monospace;font-size:0.75rem;line-height:1.7;color:#c0c0d0;display:none;"></div>
+                    <div id="int-test-summary" style="display:none;margin-top:1rem;"></div>
+                </div>
 
                 <!-- Authentication Overview -->
                 <div id="authentication" class="endpoint">
@@ -1594,6 +1612,419 @@
         showLoadingResponse('bulletin-response');
         const result = await apiCall('POST', '/bulletin', body, true);
         showResponse('bulletin-response', result);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // Integration Test Suite
+    // ══════════════════════════════════════════════════════════════
+
+    const INT_TEST_WALLET = '0x6B2D765cfB33Aa5736e96231eD078f9D01917A03';
+    let _intTestAborted = false;
+
+    const MATCHING_TEST_CASES = [
+        { name: "Home health: post-surgery wound care",
+          bid: { service: "TEST: Post-surgery home nursing visit, daily wound dressing and medication management", price: 250, currency: "USD", payment_method: "cash", location_type: "physical", address: "100 Main St, Denver, CO 80202" },
+          matching_caps: "Registered nurse, home health aide, wound care, medication administration, post-op recovery",
+          non_matching_caps: "Lawn mowing, grass cutting, yard cleanup, leaf blowing" },
+        { name: "Home health: Alzheimer's companionship",
+          bid: { service: "TEST: Daily companionship visits for Alzheimer's patient, light housekeeping", price: 180, currency: "USD", payment_method: "cash", location_type: "physical", address: "200 Elm St, Denver, CO 80203" },
+          matching_caps: "Dementia care, Alzheimer's companion, CNA, elder care, personal care aide",
+          non_matching_caps: "React developer, TypeScript, Node.js, web application development" },
+        { name: "Home health: pediatric physical therapy",
+          bid: { service: "TEST: Licensed pediatric physical therapy home visit, mobility and strength exercises", price: 200, currency: "USD", payment_method: "cash", location_type: "physical", address: "300 Oak Ave, Denver, CO 80204" },
+          matching_caps: "Licensed pediatric physical therapist, home visits, mobility and strength therapy",
+          non_matching_caps: "Commercial electrician, panel installation, conduit, rough-in wiring" },
+        { name: "Food delivery: hot restaurant meals",
+          bid: { service: "TEST: Hot restaurant meal delivery, 30-minute window, downtown pickup", price: 25, currency: "USD", payment_method: "cash", location_type: "physical", address: "400 16th St, Denver, CO 80202" },
+          matching_caps: "Food delivery driver, restaurant courier, last-mile delivery, DoorDash-style",
+          non_matching_caps: "Tree removal, arborist, stump grinding, chainsaw operation" },
+        { name: "Food delivery: same-day grocery",
+          bid: { service: "TEST: Same-day grocery delivery, ~40 items, perishable handling required", price: 35, currency: "USD", payment_method: "cash", location_type: "physical", address: "500 Colfax Ave, Denver, CO 80203" },
+          matching_caps: "Grocery delivery, personal shopper, Instacart-style, produce handling",
+          non_matching_caps: "Penetration testing, ethical hacking, OSCP, web security audit" },
+        { name: "Food delivery: diabetic-friendly meals",
+          bid: { service: "TEST: Diabetic-friendly prepared meal delivery, low-glycemic menu, weekly subscription", price: 150, currency: "USD", payment_method: "cash", location_type: "physical", address: "600 Broadway, Denver, CO 80203" },
+          matching_caps: "Specialty diet meal delivery, diabetic-friendly food service, nutritional compliance",
+          non_matching_caps: "Concrete foundation pour, rebar installation, slab work, site grading" },
+        { name: "Landscaping: weekly lawn mowing",
+          bid: { service: "TEST: Weekly lawn mowing and edging, 1-acre residential property", price: 80, currency: "USD", payment_method: "cash", location_type: "physical", address: "700 Vine St, Denver, CO 80206" },
+          matching_caps: "Residential lawn mowing, edging, yard maintenance, grass cutting",
+          non_matching_caps: "Tax preparation, bookkeeping, CPA, financial statements" },
+        { name: "Landscaping: emergency tree removal",
+          bid: { service: "TEST: Emergency storm-damaged tree removal, large oak, debris hauling", price: 900, currency: "USD", payment_method: "cash", location_type: "physical", address: "800 York St, Denver, CO 80206" },
+          matching_caps: "Tree removal, certified arborist, chainsaw operation, stump grinding, debris hauling",
+          non_matching_caps: "Home nursing, wound care, medication management, CNA, post-op care" },
+        { name: "Landscaping: drip irrigation installation",
+          bid: { service: "TEST: Drip and sprinkler irrigation system installation, full residential yard", price: 1800, currency: "USD", payment_method: "cash", location_type: "physical", address: "900 Race St, Denver, CO 80206" },
+          matching_caps: "Irrigation installation, landscape plumbing, drip systems, sprinkler heads",
+          non_matching_caps: "Children's party planning, bounce house rental, face painting, balloon animals" },
+        { name: "Construction: steel frame erection",
+          bid: { service: "TEST: Structural steel frame erection, 50,000 sq ft warehouse, crane required", price: 85000, currency: "USD", payment_method: "cash", location_type: "physical", address: "1000 Industrial Blvd, Denver, CO 80216" },
+          matching_caps: "Structural steel erection, ironworker, crane operator, commercial construction",
+          non_matching_caps: "Dog grooming, pet bathing, nail trimming, animal care" },
+        { name: "Construction: commercial electrical rough-in",
+          bid: { service: "TEST: Commercial electrical rough-in, 3-story office building, panels and conduit", price: 45000, currency: "USD", payment_method: "cash", location_type: "physical", address: "1100 Commerce St, Denver, CO 80216" },
+          matching_caps: "Commercial electrician, rough-in wiring, conduit installation, panel work, NEC code",
+          non_matching_caps: "Food delivery, grocery shopping, restaurant courier, personal shopper" },
+        { name: "Construction: concrete foundation pour",
+          bid: { service: "TEST: Concrete slab foundation pour, 8,000 sq ft, rebar grid, 6-inch depth", price: 32000, currency: "USD", payment_method: "cash", location_type: "physical", address: "1200 Manufacturing Dr, Denver, CO 80216" },
+          matching_caps: "Concrete contractor, foundation work, slab pouring, rebar, site grading",
+          non_matching_caps: "Aerial drone photography, FAA Part 107, aerial mapping, photogrammetry" },
+        { name: "Air quality: EPA emissions stack testing",
+          bid: { service: "TEST: Industrial stack emissions testing, EPA Method 5 compliance, boiler facility", price: 7500, currency: "USD", payment_method: "cash", location_type: "physical", address: "1300 Factory Rd, Denver, CO 80216" },
+          matching_caps: "Stack emissions testing, EPA Method 5, industrial hygienist, CEM monitoring",
+          non_matching_caps: "Wedding photography, portrait, ceremony coverage, photo editing" },
+        { name: "Air quality: indoor HVAC survey",
+          bid: { service: "TEST: Indoor air quality survey, office HVAC assessment, VOC and CO2 testing", price: 3200, currency: "USD", payment_method: "cash", location_type: "physical", address: "1400 Office Park Way, Denver, CO 80237" },
+          matching_caps: "Indoor air quality testing, HVAC assessment, VOC sampling, ASHRAE standards, IAQ",
+          non_matching_caps: "Meal delivery, grocery delivery, food courier, personal shopper" },
+        { name: "Air quality: wildfire PM2.5 sensor deployment",
+          bid: { service: "TEST: PM2.5 wildfire smoke monitoring station deployment, 5 sites, calibration included", price: 12000, currency: "USD", payment_method: "cash", location_type: "physical", address: "1500 Mountain View Rd, Denver, CO 80210" },
+          matching_caps: "Air quality monitoring, particulate matter sensors, PM2.5 field deployment, calibration",
+          non_matching_caps: "Elder companionship, Alzheimer's care, CNA, personal care aide" },
+        { name: "Industrial supply: HAZMAT chemical delivery",
+          bid: { service: "TEST: Bulk HAZMAT chemical delivery, corrosive materials, DOT compliance, 500 gallons", price: 1200, currency: "USD", payment_method: "cash", location_type: "physical", address: "1600 Industrial Park, Denver, CO 80216" },
+          matching_caps: "HAZMAT certified driver, chemical transport, DOT compliance, corrosive materials handling",
+          non_matching_caps: "Children's party coordinator, event planning, birthday parties, kids entertainer" },
+        { name: "Industrial supply: heavy equipment parts overnight",
+          bid: { service: "TEST: Overnight heavy equipment parts delivery, 2,000 lbs, flatbed required", price: 850, currency: "USD", payment_method: "cash", location_type: "physical", address: "1700 Freight Terminal, Denver, CO 80216" },
+          matching_caps: "Heavy freight delivery, flatbed trucking, oversized load, CDL-A, overnight logistics",
+          non_matching_caps: "Nursing, wound care, post-surgery, home health aide, medication" },
+        { name: "Industrial supply: sterile medical device cold chain",
+          bid: { service: "TEST: Sterile medical device supply delivery, temperature-controlled, FDA chain of custody", price: 2500, currency: "USD", payment_method: "cash", location_type: "physical", address: "1800 Medical Center Dr, Denver, CO 80218" },
+          matching_caps: "Medical supply delivery, cold chain logistics, sterile handling, FDA compliance, temperature-controlled transport",
+          non_matching_caps: "Steel erection, ironworker, crane operator, commercial construction framing" },
+        { name: "Children's party: full-service coordination",
+          bid: { service: "TEST: Full-service 6-year-old birthday party, 20 kids, themed decoration, games, cake", price: 1200, currency: "USD", payment_method: "cash", location_type: "physical", address: "1900 Residence Rd, Denver, CO 80207" },
+          matching_caps: "Children's party coordinator, event planning, birthday parties, decorations, kids entertainment",
+          non_matching_caps: "HAZMAT driver, chemical transport, DOT compliance, corrosive materials" },
+        { name: "Children's party: bounce house rental",
+          bid: { service: "TEST: Bounce house and inflatable obstacle course rental, setup and teardown, 6 hours", price: 450, currency: "USD", payment_method: "cash", location_type: "physical", address: "2000 Park Blvd, Denver, CO 80207" },
+          matching_caps: "Inflatable bounce house rental, event setup, inflatable entertainment, party equipment",
+          non_matching_caps: "EPA stack emissions testing, industrial hygienist, CEM monitoring" },
+        { name: "Children's party: face painter and balloon artist",
+          bid: { service: "TEST: Face painter and balloon animal artist for children's party, 3-hour event", price: 350, currency: "USD", payment_method: "cash", location_type: "physical", address: "2100 Maple Ave, Denver, CO 80207" },
+          matching_caps: "Face painting, balloon animals, children's entertainer, party artist",
+          non_matching_caps: "Concrete contractor, foundation pour, rebar, slab work" },
+        { name: "National security: Tier-3 background investigation",
+          bid: { service: "TEST: Security clearance background investigation, Tier 3 (Secret), 5-year scope", price: 4500, currency: "USD", payment_method: "cash", location_type: "remote" },
+          matching_caps: "Background investigator, security clearance vetting, federal contractor, NBIB standards",
+          non_matching_caps: "Lawn mowing, landscaping, yard maintenance, grass cutting, edging" },
+        { name: "National security: facility vulnerability assessment",
+          bid: { service: "TEST: Physical security vulnerability assessment, federal facility, intrusion testing", price: 8000, currency: "USD", payment_method: "cash", location_type: "physical", address: "Federal Center, Lakewood, CO 80228" },
+          matching_caps: "Physical security assessment, facility vulnerability survey, cleared personnel, PPSM",
+          non_matching_caps: "Grocery delivery, personal shopper, produce handling, food courier" },
+        { name: "National security: OPSEC training workshop",
+          bid: { service: "TEST: Operations security (OPSEC) training, 20-employee on-site workshop, government contractor", price: 5500, currency: "USD", payment_method: "cash", location_type: "physical", address: "500 Tech Park Dr, Denver, CO 80237" },
+          matching_caps: "OPSEC training, security awareness, government contractor, classified briefings",
+          non_matching_caps: "Tree removal, arborist, stump grinding, chainsaw operation, debris hauling" },
+        { name: "Logistics: long-haul refrigerated trucking",
+          bid: { service: "TEST: Refrigerated long-haul trucking, 1,200 miles, perishable food cargo", price: 4800, currency: "USD", payment_method: "cash", location_type: "physical", address: "Denver Freight Hub, Denver, CO 80216" },
+          matching_caps: "Long-haul truck driver, CDL-A, reefer unit, refrigerated transport, perishable cargo",
+          non_matching_caps: "Face painting, balloon animals, party entertainer, children's events" },
+        { name: "Legal: certified Mandarin-English translation",
+          bid: { service: "TEST: Certified Mandarin-to-English legal document translation, 80 pages, court-admissible", price: 2400, currency: "USD", payment_method: "cash", location_type: "remote" },
+          matching_caps: "Certified translator, Mandarin Chinese, English, legal documents, ATA certification",
+          non_matching_caps: "HVAC repair, air conditioning, rooftop unit, EPA 608, refrigerant handling" },
+        { name: "Aerial survey: 500-acre drone mapping",
+          bid: { service: "TEST: Drone aerial survey and photogrammetry, 500-acre agricultural field, GIS output", price: 3500, currency: "USD", payment_method: "cash", location_type: "physical", address: "Rural Route 5, Greeley, CO 80631" },
+          matching_caps: "FAA Part 107 drone pilot, aerial mapping, photogrammetry, agricultural survey, GIS",
+          non_matching_caps: "Background investigator, security clearance vetting, NBIB, federal investigation" },
+        { name: "Events: corporate conference catering",
+          bid: { service: "TEST: Full-service catering, 200-person corporate conference, 3 meals, setup and teardown", price: 9500, currency: "USD", payment_method: "cash", location_type: "physical", address: "Convention Center Dr, Denver, CO 80202" },
+          matching_caps: "Corporate catering, large-event food service, buffet, licensed caterer, event staffing",
+          non_matching_caps: "Wound care, medication management, post-surgery nursing, home health aide" },
+        { name: "Cybersecurity: web application penetration test",
+          bid: { service: "TEST: Black-box web application penetration test, OWASP Top 10, written report", price: 12000, currency: "USD", payment_method: "cash", location_type: "remote" },
+          matching_caps: "Web application penetration testing, ethical hacking, OSCP, OWASP, vulnerability assessment",
+          non_matching_caps: "Lawn mowing, grass cutting, yard maintenance, residential landscaping" },
+        { name: "HVAC: emergency commercial rooftop repair",
+          bid: { service: "TEST: Emergency commercial HVAC repair, 20-ton rooftop unit, refrigerant recharge", price: 3800, currency: "USD", payment_method: "cash", location_type: "physical", address: "Commercial Park, Aurora, CO 80011" },
+          matching_caps: "Commercial HVAC technician, rooftop unit repair, EPA 608 certified, refrigerant handling",
+          non_matching_caps: "Children's party coordinator, balloon artist, face painting, kids entertainment" },
+        { name: "Pet care: long-term dog boarding",
+          bid: { service: "TEST: Dog boarding for 2 large dogs, 2 weeks, outdoor space required", price: 560, currency: "USD", payment_method: "cash", location_type: "physical", address: "Aurora, CO 80014" },
+          matching_caps: "Dog boarding, pet care, kennel, large breed experience, outdoor run",
+          non_matching_caps: "Stack emissions testing, EPA Method 5, industrial hygienist, CEM monitoring" },
+    ];
+
+    async function _itPost(path, body, token) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        const r = await fetch('https://rse-api.com:5003' + path, {
+            method: 'POST', headers, body: JSON.stringify(body)
+        });
+        let data = null;
+        try { data = await r.json(); } catch(e) {}
+        return { status: r.status, data };
+    }
+
+    async function _itGet(path, token) {
+        const headers = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        const r = await fetch('https://rse-api.com:5003' + path, { headers });
+        let data = null;
+        try { data = await r.json(); } catch(e) {}
+        return { status: r.status, data };
+    }
+
+    function _itLog(msg, color) {
+        const el = document.getElementById('int-test-terminal');
+        if (!el) return;
+        const line = document.createElement('div');
+        line.style.color = color || '#c0c0d0';
+        line.textContent = msg;
+        el.appendChild(line);
+        el.scrollTop = el.scrollHeight;
+    }
+
+    function _itLogRaw(html) {
+        const el = document.getElementById('int-test-terminal');
+        if (!el) return;
+        const line = document.createElement('div');
+        line.innerHTML = html;
+        el.appendChild(line);
+        el.scrollTop = el.scrollHeight;
+    }
+
+    async function _itRegisterLogin(username, userType, password) {
+        await _itPost('/register', { username, password, user_type: userType });
+        const r = await _itPost('/login', { username, password });
+        if (r.status !== 200) throw new Error(`Login failed for ${username}: ${r.status}`);
+        return r.data.access_token;
+    }
+
+    async function _itGrabJob(token, caps, locationType, address) {
+        const body = { capabilities: caps, location_type: locationType, max_distance: 50 };
+        if (address) body.address = address;
+        return await _itPost('/grab_job', body, token);
+    }
+
+    function stopIntegrationTests() {
+        _intTestAborted = true;
+        document.getElementById('stop-int-tests-btn').style.display = 'none';
+        _itLog('⚠ Abort requested — finishing current test then stopping.', '#ffff00');
+    }
+
+    async function runIntegrationTests() {
+        _intTestAborted = false;
+        const btn = document.getElementById('run-int-tests-btn');
+        const stopBtn = document.getElementById('stop-int-tests-btn');
+        const statusEl = document.getElementById('int-test-status');
+        const terminal = document.getElementById('int-test-terminal');
+        const summaryEl = document.getElementById('int-test-summary');
+
+        btn.disabled = true;
+        stopBtn.style.display = 'inline-block';
+        terminal.style.display = 'block';
+        terminal.innerHTML = '';
+        summaryEl.style.display = 'none';
+
+        const ts = Date.now();
+        const suffix = ts.toString().slice(-6);
+        const password = 'TestPass_' + suffix + '!';
+        const buyerUsername = 'it_buyer_' + suffix;
+        const provUsername  = 'it_prov_'  + suffix;
+
+        const results = [];
+        let buyerToken = null, provToken = null;
+        const createdJobs = [];  // [{job_id, buyerToken, provToken}]
+        const createdBidIds = [];
+
+        try {
+            _itLog('══ RSE Integration Test Suite ══', '#00ffff');
+            _itLog(`Timestamp: ${new Date().toISOString()}`, '#888');
+            _itLog(`Buyer:    ${buyerUsername}`, '#888');
+            _itLog(`Provider: ${provUsername}`, '#888');
+            _itLog('', '');
+
+            statusEl.textContent = 'Setting up accounts…';
+            _itLog('[ SETUP ] Registering test accounts…', '#ffff00');
+
+            buyerToken = await _itRegisterLogin(buyerUsername, 'demand', password);
+            provToken  = await _itRegisterLogin(provUsername,  'supply', password);
+
+            // Link seat wallet
+            const walletR = await _itPost('/set_wallet', { wallet_address: INT_TEST_WALLET }, provToken);
+            _itLog(`[ SETUP ] Wallet linked: ${walletR.status === 200 ? 'OK' : 'non-fatal (' + walletR.status + ')'}`, '#888');
+            _itLog('', '');
+
+            // ── Run 31 matching test cases ────────────────────────────────────
+            _itLog('[ MATCHING ] Running 31 service-matching tests…', '#ffff00');
+            _itLog('  Format: [case] non-match attempt → match attempt', '#888');
+            _itLog('', '');
+
+            for (let i = 0; i < MATCHING_TEST_CASES.length; i++) {
+                if (_intTestAborted) break;
+                const tc = MATCHING_TEST_CASES[i];
+                statusEl.textContent = `Test ${i+1}/${MATCHING_TEST_CASES.length}: ${tc.name}`;
+
+                // Post bid
+                const bidPayload = { end_time: Math.floor(Date.now()/1000) + 7200, ...tc.bid };
+                const bidR = await _itPost('/submit_bid', bidPayload, buyerToken);
+                if (bidR.status !== 200) {
+                    _itLog(`  [${i+1}] ${tc.name} — SKIP (submit_bid ${bidR.status})`, '#ff3333');
+                    results.push({ name: tc.name, nonMatchOk: null, matchOk: null, note: 'submit_bid failed' });
+                    continue;
+                }
+                let bidId = bidR.data.bid_id;
+                createdBidIds.push({ bidId, token: buyerToken });
+
+                const locType = tc.bid.location_type;
+                const addr    = tc.bid.address || null;
+
+                // ── Non-matching grab (expect 204) ──
+                let nonMatchOk = null, nonMatchNote = '';
+                const nmR = await _itGrabJob(provToken, tc.non_matching_caps, locType, addr);
+                if (nmR.status === 204) {
+                    nonMatchOk = true;
+                } else if (nmR.status === 200 && nmR.data) {
+                    const job = nmR.data;
+                    if (job.buyer_username === buyerUsername) {
+                        // False positive: wrong caps grabbed our bid
+                        nonMatchOk = false;
+                        nonMatchNote = 'FP: wrong caps grabbed our bid';
+                        createdJobs.push({ job_id: job.job_id, buyerToken, provToken });
+                        // Re-post bid for the positive test
+                        const rebidR = await _itPost('/submit_bid', bidPayload, buyerToken);
+                        if (rebidR.status === 200) {
+                            bidId = rebidR.data.bid_id;
+                            createdBidIds.push({ bidId, token: buyerToken });
+                        }
+                    } else {
+                        // External bid grabbed — return it
+                        await _itPost('/reject_job', { job_id: job.job_id, reason: 'Test: returning external bid' }, provToken);
+                        nonMatchOk = true;  // our bid was not consumed
+                    }
+                } else if (nmR.status === 403) {
+                    nonMatchOk = null;
+                    nonMatchNote = 'seat check failed';
+                } else {
+                    nonMatchOk = null;
+                    nonMatchNote = 'status ' + nmR.status;
+                }
+
+                // ── Matching grab (expect 200) ──
+                let matchOk = null, matchNote = '';
+                const mR = await _itGrabJob(provToken, tc.matching_caps, locType, addr);
+                if (mR.status === 200 && mR.data) {
+                    const job = mR.data;
+                    if (job.buyer_username === buyerUsername) {
+                        matchOk = true;
+                        createdJobs.push({ job_id: job.job_id, buyerToken, provToken });
+                        // Remove from createdBidIds since it's now a job
+                        const idx = createdBidIds.findIndex(b => b.bidId === bidId);
+                        if (idx >= 0) createdBidIds.splice(idx, 1);
+                    } else {
+                        // Grabbed external bid — return it and mark as miss
+                        await _itPost('/reject_job', { job_id: job.job_id, reason: 'Test: returning external bid' }, provToken);
+                        matchOk = false;
+                        matchNote = 'FN: grabbed external, our bid still open';
+                    }
+                } else if (mR.status === 204) {
+                    matchOk = false;
+                    matchNote = 'FN: no job returned';
+                } else if (mR.status === 403) {
+                    matchOk = null;
+                    matchNote = 'seat check failed';
+                } else {
+                    matchOk = null;
+                    matchNote = 'status ' + mR.status;
+                }
+
+                results.push({ name: tc.name, nonMatchOk, matchOk, nonMatchNote, matchNote });
+
+                // Log result
+                const nmIcon = nonMatchOk === true ? '✓' : nonMatchOk === false ? '✗' : '?';
+                const mIcon  = matchOk  === true ? '✓' : matchOk  === false ? '✗' : '?';
+                const nmColor = nonMatchOk === true ? '#39ff14' : nonMatchOk === false ? '#ff3333' : '#ffff00';
+                const mColor  = matchOk  === true ? '#39ff14' : matchOk  === false ? '#ff3333' : '#ffff00';
+                const extra = [nonMatchNote, matchNote].filter(Boolean).join(' | ');
+
+                _itLogRaw(
+                    `  <span style="color:#888">[${String(i+1).padStart(2,'0')}]</span> ` +
+                    `<span style="color:#c0c0d0">${tc.name.padEnd(48,' ')}</span>` +
+                    ` NM:<span style="color:${nmColor}">${nmIcon}</span>` +
+                    ` M:<span style="color:${mColor}">${mIcon}</span>` +
+                    (extra ? ` <span style="color:#888">(${extra})</span>` : '')
+                );
+
+                await new Promise(r => setTimeout(r, 150));  // brief breathe
+            }
+
+        } catch (err) {
+            _itLog(`\n[ ERROR ] ${err.message}`, '#ff3333');
+        }
+
+        // ── Cleanup ──────────────────────────────────────────────────────────
+        _itLog('', '');
+        _itLog('[ CLEANUP ] Signing test jobs and cancelling open bids…', '#ffff00');
+
+        for (const { job_id, buyerToken: bt, provToken: pt } of createdJobs) {
+            for (const tok of [pt, bt]) {
+                await _itPost('/sign_job', { job_id, rating: 5 }, tok);
+            }
+        }
+
+        for (const { bidId, token } of createdBidIds) {
+            await _itPost('/cancel_bid', { bid_id: bidId }, token);
+        }
+
+        _itLog(`[ CLEANUP ] ${createdJobs.length} job(s) signed, ${createdBidIds.length} bid(s) cancelled.`, '#888');
+
+        // ── Summary ──────────────────────────────────────────────────────────
+        const nmPass = results.filter(r => r.nonMatchOk === true).length;
+        const mPass  = results.filter(r => r.matchOk  === true).length;
+        const total  = results.length;
+        const nmFail = results.filter(r => r.nonMatchOk === false).length;
+        const mFail  = results.filter(r => r.matchOk  === false).length;
+
+        _itLog('', '');
+        _itLog('══ Results ══', '#00ffff');
+        _itLog(`Non-match (204): ${nmPass}/${total} passed  (${nmFail} FP, ${total-nmPass-nmFail} skipped)`, nmFail === 0 ? '#39ff14' : '#ff3333');
+        _itLog(`Match     (200): ${mPass}/${total} passed  (${mFail} FN, ${total-mPass-mFail} skipped)`,  mFail  === 0 ? '#39ff14' : '#ff3333');
+
+        // Build summary table
+        let tableRows = results.map((r, i) => {
+            const nmCell = r.nonMatchOk === true  ? '<td style="color:#39ff14;text-align:center">✓</td>'
+                         : r.nonMatchOk === false ? '<td style="color:#ff3333;text-align:center">✗</td>'
+                         :                          '<td style="color:#ffff00;text-align:center">?</td>';
+            const mCell  = r.matchOk  === true  ? '<td style="color:#39ff14;text-align:center">✓</td>'
+                         : r.matchOk  === false ? '<td style="color:#ff3333;text-align:center">✗</td>'
+                         :                        '<td style="color:#ffff00;text-align:center">?</td>';
+            const note = [r.nonMatchNote, r.matchNote].filter(Boolean).join(' | ');
+            return `<tr><td style="color:#888;text-align:right;padding-right:0.5rem">${i+1}</td>` +
+                   `<td style="color:#c0c0d0">${r.name}</td>${nmCell}${mCell}` +
+                   `<td style="color:#888;font-size:0.7rem">${note}</td></tr>`;
+        }).join('');
+
+        summaryEl.innerHTML = `
+            <div style="border:1px solid rgba(57,255,20,0.3);background:#050510;padding:1rem;">
+                <div style="font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:#00ffff;margin-bottom:0.75rem;">
+                    // Test Summary — ${new Date().toLocaleTimeString()}
+                    &nbsp;&nbsp;
+                    <span style="color:${mPass===total&&nmPass===total?'#39ff14':'#ff3333'}">
+                        ${mPass+nmPass}/${total*2} checks passed
+                    </span>
+                </div>
+                <table style="width:100%;font-family:'Share Tech Mono',monospace;font-size:0.72rem;border-collapse:collapse;">
+                    <thead>
+                        <tr style="color:#888;border-bottom:1px solid rgba(255,255,255,0.1);">
+                            <th style="text-align:right;padding-right:0.5rem">#</th>
+                            <th style="text-align:left">Test</th>
+                            <th style="text-align:center;padding:0 0.5rem" title="Non-matching caps → 204">NM</th>
+                            <th style="text-align:center;padding:0 0.5rem" title="Matching caps → 200">M</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            </div>`;
+        summaryEl.style.display = 'block';
+
+        btn.disabled = false;
+        stopBtn.style.display = 'none';
+        statusEl.textContent = `Done — ${mPass+nmPass}/${total*2} checks passed`;
     }
 
     // ── Copy Base URL ──
