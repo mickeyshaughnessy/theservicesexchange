@@ -195,67 +195,78 @@ def simple_geocode(address: str) -> Tuple[float, float]:
     logger.info(f"Using default coordinates for address: {address}")
     return address_map["unknown"]
 
-def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 10, use_fallback: bool = False) -> Optional[str]:
-    """Call OpenRouter API for LLM inference with fallback on rate limiting."""
+def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 20, fallback_level: int = 0) -> Optional[str]:
+    """
+    Call OpenRouter API with 3-tier fallback on rate limiting:
+      0 → OPENROUTER_MODEL            (best free model)
+      1 → OPENROUTER_FALLBACK_FREE_MODEL (smaller free model)
+      2 → OPENROUTER_FALLBACK_MODEL   (paid model)
+    """
+    _models = [
+        config.OPENROUTER_MODEL,
+        getattr(config, 'OPENROUTER_FALLBACK_FREE_MODEL', config.OPENROUTER_FALLBACK_MODEL),
+        config.OPENROUTER_FALLBACK_MODEL,
+    ]
+
+    if fallback_level >= len(_models):
+        logger.error("All OpenRouter fallback tiers exhausted")
+        return None
+
+    if not config.OPENROUTER_API_KEY:
+        logger.warning("OpenRouter API key not configured")
+        return None
+
+    model = _models[fallback_level]
+
     try:
-        if not config.OPENROUTER_API_KEY:
-            logger.warning("OpenRouter API key not configured")
-            return None
-        
-        # Use fallback model if requested, otherwise use primary model
-        model = config.OPENROUTER_FALLBACK_MODEL if use_fallback else config.OPENROUTER_MODEL
-        
         headers = {
             "Authorization": f"Bearer {config.OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
             "HTTP-Referer": "https://theservicesexchange.com",
             "X-Title": "The Services Exchange"
         }
-        
+
         data = {
             "model": model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": temperature,
             "max_tokens": max_tokens
         }
-        
+
         response = requests.post(
             config.OPENROUTER_API_URL,
             headers=headers,
             json=data,
             timeout=15
         )
-        
+
         if response.status_code == 200:
             result = response.json()
             if 'choices' in result and len(result['choices']) > 0:
                 return result['choices'][0]['message']['content'].strip()
-        elif response.status_code == 429:
-            # Rate limited - try fallback if we haven't already
-            if not use_fallback:
-                logger.warning(f"OpenRouter rate limited on {model}, falling back to {config.OPENROUTER_FALLBACK_MODEL}")
-                return call_openrouter_llm(prompt, temperature, max_tokens, use_fallback=True)
-            else:
-                logger.error(f"OpenRouter rate limited on fallback model {model}")
-        else:
-            # Check if error response indicates rate limiting
+
+        # Rate-limited or quota — try next tier
+        is_rate_limited = response.status_code == 429
+        if not is_rate_limited:
             try:
-                error_data = response.json()
-                error_message = error_data.get('error', {}).get('message', '').lower()
-                if 'rate' in error_message or 'limit' in error_message or 'quota' in error_message:
-                    if not use_fallback:
-                        logger.warning(f"OpenRouter rate/quota issue on {model}: {error_message}, falling back to {config.OPENROUTER_FALLBACK_MODEL}")
-                        return call_openrouter_llm(prompt, temperature, max_tokens, use_fallback=True)
-            except:
+                err_msg = response.json().get('error', {}).get('message', '').lower()
+                is_rate_limited = any(w in err_msg for w in ('rate', 'limit', 'quota'))
+            except Exception:
                 pass
-            
-            logger.error(f"OpenRouter API error: {response.status_code} - {response.text}")
-            
+
+        if is_rate_limited:
+            next_model = _models[fallback_level + 1] if fallback_level + 1 < len(_models) else None
+            logger.warning(f"OpenRouter rate-limited on {model} (tier {fallback_level})"
+                           + (f", falling back to {next_model}" if next_model else ", all tiers exhausted"))
+            return call_openrouter_llm(prompt, temperature, max_tokens, fallback_level + 1)
+
+        logger.error(f"OpenRouter API error on {model}: {response.status_code} - {response.text[:200]}")
+
     except requests.exceptions.RequestException as e:
-        logger.error(f"OpenRouter API request error: {str(e)}")
+        logger.error(f"OpenRouter request error (tier {fallback_level}, {model}): {str(e)}")
     except Exception as e:
-        logger.error(f"Unexpected error calling OpenRouter: {str(e)}")
-    
+        logger.error(f"Unexpected error calling OpenRouter (tier {fallback_level}): {str(e)}")
+
     return None
 
 def match_service_with_capabilities(service_description: Union[str, Dict], provider_capabilities: str) -> bool:
@@ -267,16 +278,27 @@ def match_service_with_capabilities(service_description: Union[str, Dict], provi
         if isinstance(service_description, dict):
             service_description = json.dumps(service_description)
         
-        prompt = f"""Determine if a service provider can fulfill a service request.
+        prompt = f"""You are a service marketplace matching engine. Decide whether a provider can fulfill a service request.
 
-Service Requested: {service_description}
-Provider Capabilities: {provider_capabilities}
+SERVICE REQUEST:
+{service_description}
 
-Respond with only 'YES' if the provider can definitely fulfill this request, or 'NO' if they cannot.
+PROVIDER CAPABILITIES:
+{provider_capabilities}
+
+RULES:
+- Answer YES if the provider's skills, equipment, or credentials reasonably cover this service.
+- Be lenient: if there is a plausible chance the provider can do the job, answer YES.
+- Answer NO only when the service clearly requires a completely different domain of expertise or equipment.
+  Examples that must be NO: a landscaper doing post-surgery nursing; a nurse erecting steel frames;
+  a food delivery driver performing a cybersecurity audit; a party entertainer doing EPA emissions testing.
+- Partial skill overlap is fine — lean toward YES when in doubt.
+
+Respond with exactly one word: YES or NO.
 
 Answer:"""
 
-        answer = call_openrouter_llm(prompt, temperature=0, max_tokens=10)
+        answer = call_openrouter_llm(prompt, temperature=0, max_tokens=20)
         
         if answer:
             if "YES" in answer.upper():
