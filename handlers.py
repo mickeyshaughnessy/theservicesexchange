@@ -565,6 +565,7 @@ def get_my_bids(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                     'price': bid['price'],
                     'currency': bid.get('currency', 'USD'),
                     'payment_method': bid.get('payment_method', 'cash'),
+                    'xmoney_account': bid.get('xmoney_account'),
                     'end_time': bid['end_time'],
                     'location_type': bid['location_type'],
                     'address': bid.get('address'),
@@ -589,7 +590,8 @@ def get_my_jobs(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         
         completed_jobs = []
         active_jobs = []
-        
+        rejected_jobs = []
+
         for job in user_jobs:
             job_info = {
                 'job_id': job['job_id'],
@@ -625,16 +627,21 @@ def get_my_jobs(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             if job['status'] == 'completed':
                 job_info['completed_at'] = job.get('completed_at')
                 completed_jobs.append(job_info)
-            else:
+            elif job['status'] == 'rejected':
+                job_info['rejected_at'] = job.get('rejected_at')
+                rejected_jobs.append(job_info)
+            elif job['status'] == 'accepted':
                 active_jobs.append(job_info)
         
         # Sort by time (newest first)
         completed_jobs.sort(key=lambda x: x.get('completed_at', 0), reverse=True)
         active_jobs.sort(key=lambda x: x['accepted_at'], reverse=True)
-        
+        rejected_jobs.sort(key=lambda x: x.get('rejected_at', 0), reverse=True)
+
         return {
             "completed_jobs": completed_jobs[:10],  # Limit to last 10
-            "active_jobs": active_jobs
+            "active_jobs": active_jobs,
+            "rejected_jobs": rejected_jobs[:10]
         }, 200
         
     except Exception as e:
@@ -652,9 +659,12 @@ def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         xmoney_account = data.get('xmoney_account')
         end_time = data.get('end_time')
         location_type = data.get('location_type', 'physical')
-        
+
         if not service or price is None or end_time is None:
             return {"error": "Service, price, and end_time required"}, 400
+
+        if location_type not in ('physical', 'hybrid', 'remote'):
+            return {"error": "location_type must be 'physical', 'hybrid', or 'remote'"}, 400
         
         if price <= 0:
             return {"error": "Price must be positive"}, 400
@@ -1124,7 +1134,10 @@ def send_chat_message(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         
         if not recipient or not message_text:
             return {"error": "Recipient and message required"}, 400
-        
+
+        if recipient == sender:
+            return {"error": "Cannot send a message to yourself"}, 400
+
         if not account_exists(recipient):
             return {"error": "Recipient not found"}, 404
         
@@ -1242,8 +1255,8 @@ def get_exchange_data(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                         if category_filter.lower() not in service_str.lower():
                             continue
                     
-                    if location_filter and job.get('address'):
-                        if location_filter.lower() not in job['address'].lower():
+                    if location_filter:
+                        if not job.get('address') or location_filter.lower() not in job['address'].lower():
                             continue
                     
                     ratings = []
