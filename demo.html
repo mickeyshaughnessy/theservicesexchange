@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <title>Robot Services Exchange - Demo</title>
+    <style>
+        /* ── Demo page layout ── */
+        .demo-wrapper {
+            min-height: calc(100vh - 80px);
+            padding: 2rem 0 4rem;
+        }
+
+        /* Scenario selector tabs */
+        .scenario-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .scenario-tab {
+            background: var(--bg-card);
+            border: 2px solid rgba(0,255,255,0.2);
+            color: var(--text-dim);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 2px;
+        }
+
+        .scenario-tab:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .scenario-tab.active {
+            border-color: var(--primary);
+            color: var(--bg-deep);
+            background: var(--primary);
+            text-shadow: none;
+            box-shadow: 0 0 16px rgba(0,255,255,0.5);
+        }
+
+        .scenario-tab.tab-defense.active   { background: #ff6b35; border-color: #ff6b35; box-shadow: 0 0 16px rgba(255,107,53,0.5); }
+        .scenario-tab.tab-construct.active { background: #4caf50; border-color: #4caf50; box-shadow: 0 0 16px rgba(76,175,80,0.5); }
+        .scenario-tab.tab-luxury.active    { background: #c9a84c; border-color: #c9a84c; box-shadow: 0 0 16px rgba(201,168,76,0.5); }
+
+        /* Slide card */
+        .slide-card {
+            display: none;
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .slide-card.active { display: block; }
+
+        /* Image frame */
+        .slide-image-frame {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: var(--bg-deep);
+            border: 2px solid rgba(0,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Defense scenario: comic-book / Anduril palette */
+        .frame-defense {
+            border-color: rgba(255,107,53,0.4);
+            background: #0d0a0f;
+        }
+        .frame-defense .placeholder-art {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Construction scenario: friendly / clean */
+        .frame-construct {
+            border-color: rgba(76,175,80,0.4);
+            background: #f0f8f0;
+        }
+
+        /* Luxury scenario: warm dark */
+        .frame-luxury {
+            border-color: rgba(201,168,76,0.4);
+            background: #1a1208;
+        }
+
+        /* Slide text */
+        .slide-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .label-defense  { color: #ff6b35; }
+        .label-construct{ color: #4caf50; }
+        .label-luxury   { color: #c9a84c; }
+
+        .slide-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .title-defense  { color: #ff6b35; text-shadow: 0 0 10px rgba(255,107,53,0.4); }
+        .title-construct{ color: #2e7d32; text-shadow: none; }
+        .title-luxury   { color: #c9a84c; text-shadow: 0 0 10px rgba(201,168,76,0.3); }
+
+        .slide-body {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.9;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+        }
+
+        .slide-body.body-construct { color: #1a3a1a; }
+        .slide-body.body-luxury    { color: #d4c4a0; }
+
+        /* RSE callout box */
+        .rse-callout {
+            border-left: 3px solid var(--primary);
+            padding: 0.75rem 1rem;
+            background: rgba(0,255,255,0.05);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            margin-bottom: 1.5rem;
+        }
+
+        .rse-callout.callout-defense  { border-color: #ff6b35; background: rgba(255,107,53,0.05); color: #ff9f7a; }
+        .rse-callout.callout-construct{ border-color: #4caf50; background: rgba(76,175,80,0.08); color: #2e7d32; }
+        .rse-callout.callout-luxury   { border-color: #c9a84c; background: rgba(201,168,76,0.08); color: #c9a84c; }
+
+        /* Navigation controls */
+        .slide-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        .slide-nav-btn {
+            background: var(--bg-card);
+            border: 2px solid rgba(0,255,255,0.25);
+            color: var(--text-dim);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            letter-spacing: 0.06em;
+            padding: 0.5rem 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 2px;
+        }
+
+        .slide-nav-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .slide-nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .slide-nav-btn.btn-defense:hover:not(:disabled)  { border-color: #ff6b35; color: #ff6b35; }
+        .slide-nav-btn.btn-construct:hover:not(:disabled) { border-color: #4caf50; color: #4caf50; }
+        .slide-nav-btn.btn-luxury:hover:not(:disabled)    { border-color: #c9a84c; color: #c9a84c; }
+
+        .slide-counter {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            letter-spacing: 0.1em;
+        }
+
+        /* Dot indicators */
+        .slide-dots {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 1.25rem;
+        }
+
+        .slide-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .slide-dot.active { background: var(--primary); box-shadow: 0 0 6px var(--primary); }
+        .dot-defense .slide-dot.active  { background: #ff6b35; box-shadow: 0 0 6px #ff6b35; }
+        .dot-construct .slide-dot.active { background: #4caf50; box-shadow: 0 0 6px #4caf50; }
+        .dot-luxury .slide-dot.active    { background: #c9a84c; box-shadow: 0 0 6px #c9a84c; }
+
+        /* ── SVG placeholder art ── */
+        .placeholder-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ── Live API Terminal ── */
+        .demo-terminal {
+            margin-top: 1.75rem;
+            border: 1px solid rgba(0,255,255,0.18);
+            border-radius: 3px;
+            background: #050510;
+            overflow: hidden;
+            max-width: 860px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .demo-terminal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.45rem 0.9rem;
+            background: rgba(0,255,255,0.07);
+            border-bottom: 1px solid rgba(0,255,255,0.12);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+        }
+
+        .demo-terminal-title { color: var(--text-dim); }
+
+        .demo-terminal-status { font-size: 0.65rem; }
+        .status-ok   { color: #39ff14; }
+        .status-warn { color: #ffaa00; }
+        .status-spin { color: var(--primary); animation: blink 0.8s step-start infinite; }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .demo-terminal-body {
+            padding: 0.75rem 0.9rem;
+            height: 220px;
+            overflow-y: auto;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            line-height: 1.8;
+            color: #9090b0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,255,255,0.2) transparent;
+        }
+
+        .term-line { display: block; white-space: pre-wrap; word-break: break-all; }
+        .term-head    { color: var(--primary); }
+        .term-dim     { color: rgba(144,144,176,0.4); }
+        .term-comment { color: #6080a0; }
+        .term-req     { color: #c0c8e0; }
+        .term-ok      { color: #39ff14; }
+        .term-err     { color: #ff4444; }
+        .term-success { color: #39ff14; font-weight: bold; }
+        .term-warn    { color: #ffaa00; }
+        .term-cursor  { display: inline-block; width: 7px; height: 0.85em;
+                        background: var(--primary); animation: blink 0.7s step-start infinite;
+                        vertical-align: middle; }
+
+        /* per-scenario terminal accent colours */
+        #defense-terminal  { border-color: rgba(255,107,53,0.3); }
+        #defense-terminal  .demo-terminal-header { background: rgba(255,107,53,0.07); border-color: rgba(255,107,53,0.18); }
+        #defense-terminal  .term-head { color: #ff6b35; }
+        #defense-terminal  .term-cursor { background: #ff6b35; }
+
+        #construct-terminal { border-color: rgba(76,175,80,0.3); }
+        #construct-terminal .demo-terminal-header { background: rgba(76,175,80,0.07); border-color: rgba(76,175,80,0.18); }
+        #construct-terminal .term-head { color: #4caf50; }
+        #construct-terminal .term-cursor { background: #4caf50; }
+
+        #luxury-terminal   { border-color: rgba(201,168,76,0.3); }
+        #luxury-terminal   .demo-terminal-header { background: rgba(201,168,76,0.07); border-color: rgba(201,168,76,0.18); }
+        #luxury-terminal   .term-head { color: #c9a84c; }
+        #luxury-terminal   .term-cursor { background: #c9a84c; }
+
+        /* ── Scenario choice panel (defense) ── */
+        .scenario-choice {
+            margin-top: 1.4rem;
+        }
+
+        .choice-prompt {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            color: #ff6b35;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 0.9rem;
+        }
+
+        .choice-options {
+            display: flex;
+            gap: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .choice-options { flex-direction: column; }
+        }
+
+        .choice-btn {
+            flex: 1;
+            background: var(--bg-card);
+            border: 2px solid rgba(255,107,53,0.25);
+            padding: 1rem 1.1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .choice-btn:hover {
+            border-color: rgba(255,107,53,0.7);
+            background: rgba(255,107,53,0.06);
+        }
+
+        .choice-btn.selected {
+            border-color: #ff6b35;
+            background: rgba(255,107,53,0.1);
+            box-shadow: 0 0 14px rgba(255,107,53,0.22);
+        }
+
+        .choice-btn.selected::after {
+            content: '✓ SELECTED';
+            position: absolute;
+            top: 0.55rem;
+            right: 0.75rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.6rem;
+            color: #ff6b35;
+            letter-spacing: 0.1em;
+        }
+
+        .choice-tag {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.62rem;
+            color: #ff6b35;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.45rem;
+            opacity: 0.8;
+        }
+
+        .choice-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.58rem;
+            color: #ff9f7a;
+            margin-bottom: 0.65rem;
+            line-height: 1.6;
+        }
+
+        .choice-desc {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.76rem;
+            color: var(--text-dim);
+            line-height: 1.75;
+        }
+
+        .choice-hint {
+            margin-top: 0.75rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.65rem;
+            color: rgba(255,107,53,0.45);
+            letter-spacing: 0.08em;
+            text-align: center;
+            transition: color 0.2s;
+        }
+
+        .choice-hint.nudge {
+            color: #ff6b35;
+            animation: nudgePulse 0.4s ease-out;
+        }
+
+        @keyframes nudgePulse {
+            0%   { transform: translateX(0); }
+            25%  { transform: translateX(-6px); }
+            75%  { transform: translateX(6px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Page header */
+        .demo-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .demo-header h1 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 1.1rem;
+            color: var(--primary);
+            text-shadow: 0 0 12px rgba(0,255,255,0.5);
+            margin-bottom: 0.75rem;
+        }
+
+        .demo-header p {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--text-dim);
+        }
+
+        /* Slide image area */
+        .slide-img-placeholder {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0; left: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">RSE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="api_docs.html">API Docs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="demo.html" aria-current="page">Demo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="about.html">About</a>
+                    </li>
+                </ul>
+                <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
+                <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
+                <div id="accountDropdown" class="account-dropdown ms-3" style="display: none;">
+                    <button class="account-btn"><span id="accountUsername">Account</span> ▼</button>
+                    <div class="account-window">
+                        <div class="account-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" id="accountDisplayName">Loading...</h5>
+                                <button class="logout-btn" onclick="logout()">Logout</button>
+                            </div>
+                            <div class="reputation-display">
+                                <span class="star-rating" id="starDisplay">★★★★★</span>
+                                <span id="ratingText">4.5 (12 ratings)</span>
+                            </div>
+                        </div>
+                        <div class="account-section">
+                            <h6>Outstanding Requests</h6>
+                            <div id="outstandingBids"><p class="text-muted mb-0">No outstanding requests</p></div>
+                        </div>
+                        <div class="account-section">
+                            <h6>Active Services</h6>
+                            <div id="activeJobs"><p class="text-muted mb-0">No active services</p></div>
+                        </div>
+                        <div class="account-section">
+                            <h6>Recent Completed</h6>
+                            <div id="completedJobs"><p class="text-muted mb-0">No completed services</p></div>
+                        </div>
+                    </div>
+                </div>
+                <button id="loginButton" class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="demo-wrapper">
+        <div class="container">
+
+            <div class="demo-header">
+                <h1>RSE in Action</h1>
+                <p>Three scenarios — one exchange. Click through each to see how RSE coordinates autonomous robot labor in the real world.</p>
+            </div>
+
+            <!-- Scenario Selector -->
+            <div class="scenario-tabs">
+                <button class="scenario-tab tab-defense active" onclick="selectScenario('defense')">
+                    01 &mdash; Arctic Shield
+                </button>
+                <button class="scenario-tab tab-construct" onclick="selectScenario('construct')">
+                    02 &mdash; BuildBot Supply
+                </button>
+                <button class="scenario-tab tab-luxury" onclick="selectScenario('luxury')">
+                    03 &mdash; Chef at Home
+                </button>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════
+                 SCENARIO 1: DEFENSE — ARCTIC SHIELD
+                 Style: Anduril / comic-book
+            ══════════════════════════════════════════════════ -->
+            <div id="scenario-defense" class="slide-card active">
+
+                <!-- SLIDE 1 -->
+                <div class="demo-slide" data-scenario="defense" data-index="0">
+                    <div class="slide-image-frame frame-defense">
+                        <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/demo_images/1_1.webp" alt="Arctic Shield - Incursion Detected" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="slide-label label-defense">Scenario 01 &mdash; Arctic Shield &mdash; Slide 1 of 4</div>
+                    <div class="slide-title title-defense">Incursion Detected</div>
+                    <div class="slide-body">
+                        It's 2:17 AM over the Beaufort Sea. Twelve unidentified foreign drones cross the Alaskan border at low altitude — below conventional radar thresholds. A distributed sensor network flags the threat in under four seconds and fires a service request into the Robot Services Exchange.
+                    </div>
+                    <div class="rse-callout callout-defense">
+                        // RSE receives: <strong>POST /bid</strong> — "UAV intercept, 12 contacts, sector 7G, critical priority" — LLM matching engine activates
+                    </div>
+
+                    <!-- Command decision -->
+                    <div class="scenario-choice" id="defense-choice">
+                        <div class="choice-prompt">// Command Decision Required — Choose Response</div>
+                        <div class="choice-options">
+                            <button class="choice-btn" id="choice-btn-outbid" onclick="selectDefenseOption('outbid')">
+                                <div class="choice-tag">OPTION A</div>
+                                <div class="choice-title">Economic Deterrence</div>
+                                <div class="choice-desc">Outbid whoever sent them. Pay the foreign drone operators more than their mission is worth — they stand down and exit Alaskan airspace.</div>
+                            </button>
+                            <button class="choice-btn" id="choice-btn-counter" onclick="selectDefenseOption('counter')">
+                                <div class="choice-tag">OPTION B</div>
+                                <div class="choice-title">Counter-Drone Strike</div>
+                                <div class="choice-desc">Bid for EMP interceptor drones. Hunt down all 12 contacts and neutralize them before they reach the coast.</div>
+                            </button>
+                        </div>
+                        <div class="choice-hint" id="choice-hint">select an option, then press Next &rarr;</div>
+                    </div>
+                </div>
+
+                <!-- SLIDE 2 -->
+                <div class="demo-slide" data-scenario="defense" data-index="1" style="display:none">
+                    <div class="slide-image-frame frame-defense">
+                        <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/demo_images/1_2.webp" alt="Arctic Shield - Exchange Matches Providers" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="slide-label label-defense">Scenario 01 &mdash; Arctic Shield &mdash; Slide 2 of 4</div>
+                    <div class="slide-title title-defense" id="defense-s2-title">Exchange Matches Providers</div>
+                    <div class="slide-body" id="defense-s2-body">
+                        The RSE matching engine cross-references security clearance, drone capability specs, proximity, and availability in under two seconds. Two certified interceptor fleets respond to the bid — credentials verified against federal defense registries. APEX-7 Interceptor Fleet wins the contract.
+                    </div>
+                    <div class="rse-callout callout-defense" id="defense-s2-callout">
+                        // RSE matching: clearance level, intercept radius, response time, reputation score — 6 APEX-7 drones dispatched
+                    </div>
+                </div>
+
+                <!-- SLIDE 3 -->
+                <div class="demo-slide" data-scenario="defense" data-index="2" style="display:none">
+                    <div class="slide-image-frame frame-defense">
+                        <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/demo_images/1_3.webp" alt="Arctic Shield - Intercept in Progress" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="slide-label label-defense">Scenario 01 &mdash; Arctic Shield &mdash; Slide 3 of 4</div>
+                    <div class="slide-title title-defense">Intercept in Progress</div>
+                    <div class="slide-body">
+                        Six APEX-7 interceptor drones are airborne in under four minutes. Flying in a coordinated sweep pattern, they engage the foreign drone swarm with directed EMP pulses — no kinetic rounds, no collateral risk. The RSE job status updates in real time as each contact is neutralized.
+                    </div>
+                    <div class="rse-callout callout-defense">
+                        // RSE job stream: contacts_neutralized: 4/12 — provider uptime: 100% — onchain escrow held pending completion
+                    </div>
+                </div>
+
+                <!-- SLIDE 4 -->
+                <div class="demo-slide" data-scenario="defense" data-index="3" style="display:none">
+                    <div class="slide-image-frame frame-defense">
+                        <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/demo_images/1_4.webp" alt="Arctic Shield - Threat Neutralized" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="slide-label label-defense">Scenario 01 &mdash; Arctic Shield &mdash; Slide 4 of 4</div>
+                    <div class="slide-title title-defense">Threat Neutralized</div>
+                    <div class="slide-body">
+                        All twelve contacts down in under nine minutes. No friendly losses. No collateral damage. APEX-7's onchain escrow releases automatically as the RSE contract is fulfilled and signed — $50,400 USDC, settled on Base. The provider's reputation score ticks up. Another job logged.
+                    </div>
+                    <div class="rse-callout callout-defense">
+                        // RSE: job signed — escrow released — provider reputation updated — incident report auto-filed — total elapsed: 08:34
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="slide-nav">
+                    <button class="slide-nav-btn btn-defense" id="defense-prev" onclick="prevSlide('defense')" disabled>&#8592; Prev</button>
+                    <span class="slide-counter" id="defense-counter">1 / 4</span>
+                    <button class="slide-nav-btn btn-defense" id="defense-next" onclick="nextSlide('defense')">Next &#8594;</button>
+                </div>
+                <div class="slide-dots dot-defense" id="defense-dots">
+                    <div class="slide-dot active" onclick="goToSlide('defense', 0)"></div>
+                    <div class="slide-dot" onclick="goToSlide('defense', 1)"></div>
+                    <div class="slide-dot" onclick="goToSlide('defense', 2)"></div>
+                    <div class="slide-dot" onclick="goToSlide('defense', 3)"></div>
+                </div>
+
+                <!-- Live API Terminal -->
+                <div class="demo-terminal" id="defense-terminal" style="display:none">
+                    <div class="demo-terminal-header">
+                        <span class="demo-terminal-title">// RSE LIVE — ARCTIC SHIELD</span>
+                        <span class="demo-terminal-status status-spin" id="defense-term-status">● CONNECTING</span>
+                    </div>
+                    <div class="demo-terminal-body" id="defense-term-body"></div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════
+                 SCENARIO 2: CONSTRUCTION — BUILDBOT SUPPLY
+                 Style: Simple, friendly
+            ══════════════════════════════════════════════════ -->
+            <div id="scenario-construct" class="slide-card">
+
+                <!-- SLIDE 1 -->
+                <div class="demo-slide" data-scenario="construct" data-index="0">
+                    <div class="slide-image-frame frame-construct">
+                        <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/demo_images/2_1.webp" alt="BuildBot Supply - Site Running Low" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="slide-label label-construct">Scenario 02 &mdash; BuildBot Supply &mdash; Slide 1 of 4</div>
+                    <div class="slide-title title-construct">Site Running Low</div>
+                    <div class="slide-body">
+                        The BuildBot construction site runs around the clock — no human workers, no shift changes. At 5 AM, onboard sensors flag steel rebar at 12% and concrete at 8%. If materials run out, the site stops. The site's AI operations system posts a re-supply request to RSE before sunrise.
+                    </div>
+                    <div class="rse-callout callout-construct">
+                        // RSE receives: POST /bid — "Deliver: 2T steel rebar + 4m³ concrete, site coords, 6-hour window" — matching begins
+                    </div>
+                </div>
+
+                <!-- SLIDE 2 -->
+                <div class="demo-slide" data-scenario="construct" data-index="1" style="display:none">
+                    <div class="slide-image-frame frame-construct">
+                        <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/demo_images/2_2.webp" alt="BuildBot Supply - Two Providers Matched" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="slide-label label-construct">Scenario 02 &mdash; BuildBot Supply &mdash; Slide 2 of 4</div>
+                    <div class="slide-title title-construct">Two Providers Matched</div>
+                    <div class="slide-body">
+                        RSE finds two complementary providers. SkyFreight Drones can get the concrete mix there in 45 minutes by air. Ironclad Supply Co. follows with the heavier steel rebar by truck. The site AI accepts both bids — the combined delivery covers everything needed. No human approval required.
+                    </div>
+                    <div class="rse-callout callout-construct">
+                        // RSE: split delivery matched — drone ETA 45min, truck ETA 2.5hr — both contracts signed automatically
+                    </div>
+                </div>
+
+                <!-- SLIDE 3 -->
+                <div class="demo-slide" data-scenario="construct" data-index="2" style="display:none">
+                    <div class="slide-image-frame frame-construct">
+                        <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/demo_images/2_3.webp" alt="BuildBot Supply - First Delivery Arrives" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="slide-label label-construct">Scenario 02 &mdash; BuildBot Supply &mdash; Slide 3 of 4</div>
+                    <div class="slide-title title-construct">First Delivery Arrives</div>
+                    <div class="slide-body">
+                        At 5:47 AM, SkyFreight's drone descends into the site's designated landing zone and lowers the concrete payload. The site robot logs receipt, confirms quantity and mix spec, and updates the RSE job status. Ironclad's truck is still en route — on schedule for 8 AM with the steel.
+                    </div>
+                    <div class="rse-callout callout-construct">
+                        // RSE job update: delivery_1 confirmed — concrete: 4m³ received — awaiting delivery_2 — partial escrow released
+                    </div>
+                </div>
+
+                <!-- SLIDE 4 -->
+                <div class="demo-slide" data-scenario="construct" data-index="3" style="display:none">
+                    <div class="slide-image-frame frame-construct">
+                        <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/demo_images/2_4.webp" alt="BuildBot Supply - Back to Building" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="slide-label label-construct">Scenario 02 &mdash; BuildBot Supply &mdash; Slide 4 of 4</div>
+                    <div class="slide-title title-construct">Back to Building</div>
+                    <div class="slide-body">
+                        By 8:05 AM, both deliveries are confirmed. The site's material inventory is back to full. Construction resumes without a single minute of downtime. RSE automatically settles both contracts, releases escrow to the providers, and schedules the next re-supply order 48 hours out — no human ever touched it.
+                    </div>
+                    <div class="rse-callout callout-construct">
+                        // RSE: both jobs complete — full escrow released — next order auto-scheduled — zero downtime maintained
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="slide-nav">
+                    <button class="slide-nav-btn btn-construct" id="construct-prev" onclick="prevSlide('construct')" disabled>&#8592; Prev</button>
+                    <span class="slide-counter" id="construct-counter">1 / 4</span>
+                    <button class="slide-nav-btn btn-construct" id="construct-next" onclick="nextSlide('construct')">Next &#8594;</button>
+                </div>
+                <div class="slide-dots dot-construct" id="construct-dots">
+                    <div class="slide-dot active" onclick="goToSlide('construct', 0)"></div>
+                    <div class="slide-dot" onclick="goToSlide('construct', 1)"></div>
+                    <div class="slide-dot" onclick="goToSlide('construct', 2)"></div>
+                    <div class="slide-dot" onclick="goToSlide('construct', 3)"></div>
+                </div>
+
+                <!-- Live API Terminal -->
+                <div class="demo-terminal" id="construct-terminal" style="display:none">
+                    <div class="demo-terminal-header">
+                        <span class="demo-terminal-title">// RSE LIVE — BUILDBOT SUPPLY</span>
+                        <span class="demo-terminal-status status-spin" id="construct-term-status">● CONNECTING</span>
+                    </div>
+                    <div class="demo-terminal-body" id="construct-term-body"></div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════
+                 SCENARIO 3: LUXURY — CHEF AT HOME
+                 Style: Luxury photographic
+            ══════════════════════════════════════════════════ -->
+            <div id="scenario-luxury" class="slide-card">
+
+                <!-- SLIDE 1 -->
+                <div class="demo-slide" data-scenario="luxury" data-index="0">
+                    <div class="slide-image-frame frame-luxury">
+                        <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/demo_images/4_1.webp" alt="Chef at Home - An Evening Arranged" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="slide-label label-luxury">Scenario 03 &mdash; Chef at Home &mdash; Slide 1 of 4</div>
+                    <div class="slide-title title-luxury">An Evening Arranged</div>
+                    <div class="slide-body">
+                        Margaret and Harold, 78 and 81, want to host their dear friends Dorothy and Eliot for a proper anniversary dinner — but cooking for four is no longer easy. Their daughter books a robot chef through RSE that morning: five courses, 7 PM arrival, dietary notes included.
+                    </div>
+                    <div class="rse-callout callout-luxury">
+                        // RSE receives: POST /bid — "Private chef, 4 guests, dietary: low sodium / no shellfish, 5-course, 7PM" — matching begins
+                    </div>
+                </div>
+
+                <!-- SLIDE 2 -->
+                <div class="demo-slide" data-scenario="luxury" data-index="1" style="display:none">
+                    <div class="slide-image-frame frame-luxury">
+                        <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/demo_images/4_2.webp" alt="Chef at Home - Chef Arrives Kitchen Opens" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="slide-label label-luxury">Scenario 03 &mdash; Chef at Home &mdash; Slide 2 of 4</div>
+                    <div class="slide-title title-luxury">Chef Arrives, Kitchen Opens</div>
+                    <div class="slide-body">
+                        At 6:15 PM, ChefBot Maison — a five-star rated culinary robot with 340 completed private dinners — arrives, reviews the dietary notes, and takes stock of the pantry. By 6:30, the kitchen is fragrant with herb butter and the first course is underway. Margaret offers tea; the robot politely declines.
+                    </div>
+                    <div class="rse-callout callout-luxury">
+                        // RSE matched: ChefBot Maison — 340 dinners, ★★★★★ — speciality: French-Japanese fusion — dietary flags: acknowledged
+                    </div>
+                </div>
+
+                <!-- SLIDE 3 -->
+                <div class="demo-slide" data-scenario="luxury" data-index="2" style="display:none">
+                    <div class="slide-image-frame frame-luxury">
+                        <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/demo_images/4_3.webp" alt="Chef at Home - The Third Course" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="slide-label label-luxury">Scenario 03 &mdash; Chef at Home &mdash; Slide 3 of 4</div>
+                    <div class="slide-title title-luxury">The Third Course</div>
+                    <div class="slide-body">
+                        Beef tenderloin, done to a perfect 54°C, with celeriac purée and a port reduction — low sodium, as noted. The plating is precise and unhurried. Dorothy says it's better than the restaurant they used to go to on their anniversary, the one that closed. Harold agrees. The table is happy.
+                    </div>
+                    <div class="rse-callout callout-luxury">
+                        // RSE job: course 3 of 5 served — no dietary flags triggered — real-time confirmation logged to contract
+                    </div>
+                </div>
+
+                <!-- SLIDE 4 -->
+                <div class="demo-slide" data-scenario="luxury" data-index="3" style="display:none">
+                    <div class="slide-image-frame frame-luxury">
+                        <img src="https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/demo_images/4_4.webp" alt="Chef at Home - A Perfect Evening" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="slide-label label-luxury">Scenario 03 &mdash; Chef at Home &mdash; Slide 4 of 4</div>
+                    <div class="slide-title title-luxury">A Perfect Evening</div>
+                    <div class="slide-body">
+                        Five courses, two hours, four friends — no stress, no cleanup for Margaret. ChefBot Maison finishes the kitchen before leaving at 10 PM. Dorothy gives it five stars. The RSE contract closes, escrow is released, and Margaret's daughter books the April birthday dinner before the dishes are even dry.
+                    </div>
+                    <div class="rse-callout callout-luxury">
+                        // RSE: all 5 courses confirmed — job signed — escrow released — provider rated ★★★★★ — next booking queued
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="slide-nav">
+                    <button class="slide-nav-btn btn-luxury" id="luxury-prev" onclick="prevSlide('luxury')" disabled>&#8592; Prev</button>
+                    <span class="slide-counter" id="luxury-counter">1 / 4</span>
+                    <button class="slide-nav-btn btn-luxury" id="luxury-next" onclick="nextSlide('luxury')">Next &#8594;</button>
+                </div>
+                <div class="slide-dots dot-luxury" id="luxury-dots">
+                    <div class="slide-dot active" onclick="goToSlide('luxury', 0)"></div>
+                    <div class="slide-dot" onclick="goToSlide('luxury', 1)"></div>
+                    <div class="slide-dot" onclick="goToSlide('luxury', 2)"></div>
+                    <div class="slide-dot" onclick="goToSlide('luxury', 3)"></div>
+                </div>
+
+                <!-- Live API Terminal -->
+                <div class="demo-terminal" id="luxury-terminal" style="display:none">
+                    <div class="demo-terminal-header">
+                        <span class="demo-terminal-title">// RSE LIVE — CHEF AT HOME</span>
+                        <span class="demo-terminal-status status-spin" id="luxury-term-status">● CONNECTING</span>
+                    </div>
+                    <div class="demo-terminal-body" id="luxury-term-body"></div>
+                </div>
+            </div>
+
+        </div><!-- /container -->
+    </div><!-- /demo-wrapper -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_URL = 'https://rse-api.com:5003';
+
+        // ── Slide state ─────────────────────────────────────────────────────────
+        const state = {
+            defense:  { current: 0, total: 4 },
+            construct:{ current: 0, total: 4 },
+            luxury:   { current: 0, total: 4 }
+        };
+
+        let activeScenario = 'defense';
+
+        // ── Defense scenario choice ──────────────────────────────────────────────
+        let defenseChoice = null;  // 'outbid' | 'counter'
+
+        const defenseOptions = {
+            outbid: {
+                service:      '#DEMO# Outbid foreign drone operators — economic deterrence, 12 UAV incursion Alaska sector 7G, offer superior payment for mission abort and immediate departure from US airspace',
+                price:        12000,
+                capabilities: '#DEMO# Drone operator economic deterrence, UAV mission redirect, foreign operator negotiation and payment brokerage',
+                s2: {
+                    title:   'Exchange Finds Operators to Buy Out',
+                    body:    'RSE locates the foreign drone operators through its network of intermediaries. Rather than shooting them down, it offers a better deal — a larger payment than whoever sent them. The exchange verifies counterparty credentials in under two seconds. The operators check their terms. The numbers make sense.',
+                    callout: '// RSE matching: operator network, payment capacity, jurisdiction clearance — outbid offer transmitted: $12,000 / operator'
+                }
+            },
+            counter: {
+                service:      '#DEMO# UAV interception required — 12 unidentified drone contacts, Alaska sector 7G, critical priority, EMP-capable interceptor drones needed',
+                price:        4200,
+                capabilities: '#DEMO# UAV intercept operations, EMP-capable drone fleet, arctic and Alaska airspace operations',
+                s2: {
+                    title:   'Exchange Matches Providers',
+                    body:    'The RSE matching engine cross-references security clearance, drone capability specs, proximity, and availability in under two seconds. Two certified interceptor fleets respond to the bid — credentials verified against federal defense registries. APEX-7 Interceptor Fleet wins the contract.',
+                    callout: '// RSE matching: clearance level, intercept radius, response time, reputation score — 6 APEX-7 drones dispatched'
+                }
+            }
+        };
+
+        function selectDefenseOption(opt) {
+            defenseChoice = opt;
+
+            // Visual feedback on buttons
+            document.getElementById('choice-btn-outbid').classList.toggle('selected', opt === 'outbid');
+            document.getElementById('choice-btn-counter').classList.toggle('selected', opt === 'counter');
+
+            // Update hint text
+            const hint = document.getElementById('choice-hint');
+            hint.textContent = opt === 'outbid'
+                ? 'Option A selected — press Next → to deploy economic deterrence'
+                : 'Option B selected — press Next → to deploy interceptors';
+            hint.classList.remove('nudge');
+
+            // Pre-load slide 2 content for the chosen path
+            const s2 = defenseOptions[opt].s2;
+            document.getElementById('defense-s2-title').textContent   = s2.title;
+            document.getElementById('defense-s2-body').textContent     = s2.body;
+            document.getElementById('defense-s2-callout').textContent  = '// ' + s2.callout.replace(/^\/\/ /, '');
+        }
+
+        // ── Demo config — one per scenario ──────────────────────────────────────
+        const demoFired = { defense: false, construct: false, luxury: false };
+
+        const demoConfig = {
+            construct: {
+                label: 'BUILDBOT SUPPLY',
+                service: '#DEMO# Automated construction site resupply — 2 tonnes steel rebar and 4 cubic metres ready-mix concrete, delivery to active autonomous build site',
+                price: 850,
+                capabilities: '#DEMO# Heavy material delivery, construction supply logistics, drone freight and truck fleet'
+            },
+            luxury: {
+                label: 'CHEF AT HOME',
+                service: '#DEMO# Private robot chef for dinner party — 4 guests, 5-course tasting menu, low sodium and no shellfish dietary requirements, 7PM arrival',
+                price: 380,
+                capabilities: '#DEMO# Culinary robot, private chef services, French-Japanese fusion cuisine, dietary accommodation'
+            }
+        };
+
+        // ── Slide navigation ─────────────────────────────────────────────────────
+        function selectScenario(name) {
+            document.querySelectorAll('.slide-card').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.scenario-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('scenario-' + name).classList.add('active');
+            document.querySelector('.tab-' + name).classList.add('active');
+            activeScenario = name;
+        }
+
+        function goToSlide(scenario, index) {
+            const s = state[scenario];
+            getSlide(scenario, s.current).style.display = 'none';
+            s.current = index;
+            getSlide(scenario, s.current).style.display = 'block';
+            updateControls(scenario);
+        }
+
+        function nextSlide(scenario) {
+            const s = state[scenario];
+            if (s.current >= s.total - 1) return;
+
+            // Defense slide 0 requires a choice before advancing
+            if (scenario === 'defense' && s.current === 0 && !defenseChoice) {
+                const hint = document.getElementById('choice-hint');
+                hint.classList.remove('nudge');
+                void hint.offsetWidth;  // reflow to restart animation
+                hint.classList.add('nudge');
+                hint.textContent = 'choose Option A or Option B first ↑';
+                return;
+            }
+
+            if (!demoFired[scenario]) runDemoFlow(scenario);
+            goToSlide(scenario, s.current + 1);
+        }
+
+        function prevSlide(scenario) {
+            const s = state[scenario];
+            if (s.current > 0) goToSlide(scenario, s.current - 1);
+        }
+
+        function getSlide(scenario, index) {
+            return document.querySelectorAll(`[data-scenario="${scenario}"]`)[index];
+        }
+
+        function updateControls(scenario) {
+            const s = state[scenario];
+            document.getElementById(scenario + '-prev').disabled = (s.current === 0);
+            document.getElementById(scenario + '-next').disabled = (s.current === s.total - 1);
+            document.getElementById(scenario + '-counter').textContent = (s.current + 1) + ' / ' + s.total;
+            document.querySelectorAll('#' + scenario + '-dots .slide-dot')
+                .forEach((d, i) => d.classList.toggle('active', i === s.current));
+        }
+
+        // ── Live API demo flow ───────────────────────────────────────────────────
+        async function runDemoFlow(scenario) {
+            demoFired[scenario] = true;
+
+            // Defense config is driven by the player's choice
+            const cfg = scenario === 'defense'
+                ? { label: defenseChoice === 'outbid' ? 'ARCTIC SHIELD — ECONOMIC DETERRENCE' : 'ARCTIC SHIELD — COUNTER-DRONE', ...defenseOptions[defenseChoice] }
+                : demoConfig[scenario];
+            const termEl  = document.getElementById(scenario + '-terminal');
+            const bodyEl  = document.getElementById(scenario + '-term-body');
+            const statEl  = document.getElementById(scenario + '-term-status');
+
+            termEl.style.display = 'block';
+            termEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            const suffix = Math.random().toString(36).slice(2, 8);
+            const buyer  = `DEMO_buyer_${suffix}`;
+            const seller = `DEMO_supply_${suffix}`;
+            const pw     = 'DemoPass123!';
+
+            // Add a cursor element (removed when flow ends)
+            const cursor = document.createElement('span');
+            cursor.className = 'term-cursor';
+            bodyEl.appendChild(cursor);
+
+            function log(text, cls) {
+                const line = document.createElement('span');
+                line.className = 'term-line' + (cls ? ' ' + cls : '');
+                line.textContent = text;
+                bodyEl.insertBefore(line, cursor);
+                bodyEl.scrollTop = bodyEl.scrollHeight;
+            }
+
+            const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+            async function call(method, path, body, token) {
+                const hdrs = { 'Content-Type': 'application/json' };
+                if (token) hdrs['Authorization'] = 'Bearer ' + token;
+                const opts = { method, headers: hdrs };
+                if (body) opts.body = JSON.stringify(body);
+
+                const bodySnip = body
+                    ? JSON.stringify(body).replace(/"password":"[^"]*"/, '"password":"***"').slice(0, 90)
+                    : '';
+                log(`→ ${method} ${path}  ${bodySnip}`, 'term-req');
+
+                try {
+                    const res  = await fetch(API_URL + path, opts);
+                    const data = await res.json();
+                    const snip = JSON.stringify(data).slice(0, 100);
+                    log(`← ${res.status}  ${snip}`, res.ok ? 'term-ok' : 'term-err');
+                    return { ok: res.ok, status: res.status, data };
+                } catch (e) {
+                    log(`← ERROR  ${e.message}`, 'term-err');
+                    return { ok: false, data: {} };
+                }
+            }
+
+            // ── Header ──
+            log(`// RSE LIVE DEMO ── ${cfg.label}`, 'term-head');
+            log(`// ${'─'.repeat(52)}`, 'term-dim');
+            await sleep(250);
+
+            // ── Step 1: register buyer ──
+            log('', '');
+            log('// [1/6] register demand user', 'term-comment');
+            await call('POST', '/register', { username: buyer, password: pw, user_type: 'demand' });
+            await sleep(150);
+
+            // ── Step 2: login buyer ──
+            log('// [2/6] login → acquire token', 'term-comment');
+            const r2 = await call('POST', '/login', { username: buyer, password: pw });
+            const buyerToken = r2.data.access_token;
+            if (buyerToken) log(`//   ✓ token  ${buyerToken.slice(0,8)}…`, 'term-ok');
+            await sleep(150);
+
+            // ── Step 3: submit bid ──
+            log('// [3/6] POST /submit_bid  ← bid enters exchange', 'term-comment');
+            const r3 = await call('POST', '/submit_bid', {
+                service:        cfg.service,
+                price:          cfg.price,
+                currency:       'USD',
+                payment_method: 'cash',
+                location_type:  'remote',
+                end_time:       Math.floor(Date.now() / 1000) + 7200
+            }, buyerToken);
+            const bidId = r3.data.bid_id;
+            if (bidId) log(`//   ✓ bid_id  ${bidId}`, 'term-ok');
+            await sleep(350);
+
+            // ── Step 4: register provider ──
+            log('', '');
+            log('// [4/6] register supply user (provider)', 'term-comment');
+            await call('POST', '/register', { username: seller, password: pw, user_type: 'supply' });
+            await sleep(150);
+
+            // ── Step 5: login provider ──
+            log('// [5/6] login as provider → acquire token', 'term-comment');
+            const r5 = await call('POST', '/login', { username: seller, password: pw });
+            const sellerToken = r5.data.access_token;
+            if (sellerToken) log(`//   ✓ token  ${sellerToken.slice(0,8)}…`, 'term-ok');
+            await sleep(250);
+
+            // ── Step 6: grab_job ──
+            log('// [6/6] POST /grab_job  ← LLM matches provider to bid', 'term-comment');
+            const r6 = await call('POST', '/grab_job', {
+                capabilities:  cfg.capabilities,
+                location_type: 'remote',
+                max_distance:  100
+            }, sellerToken);
+            await sleep(200);
+
+            // ── Result ──
+            log('', '');
+            cursor.remove();
+
+            if (r6.ok && r6.data.job_id) {
+                log(`// ══ MATCHED ══  job_id: ${r6.data.job_id}`, 'term-success');
+                const svc = (r6.data.service || '').slice(0, 72);
+                if (svc) log(`//   service: ${svc}`, 'term-success');
+                log(`//   buyer: ${buyer}  →  provider: ${seller}`, 'term-ok');
+                statEl.textContent = '● LIVE';
+                statEl.className   = 'demo-terminal-status status-ok';
+            } else {
+                const msg = r6.data.message || r6.data.error || JSON.stringify(r6.data).slice(0, 60);
+                log(`//   result: ${msg}`, 'term-warn');
+                log(`//   (bid posted — no matching provider grabbed it this run)`, 'term-dim');
+                statEl.textContent = '● DONE';
+                statEl.className   = 'demo-terminal-status status-warn';
+            }
+
+            // best-effort cleanup: cancel unmatched bid
+            if (buyerToken && bidId && !(r6.ok && r6.data.job_id)) {
+                await call('POST', '/cancel_bid', { bid_id: bidId }, buyerToken);
+            }
+        }
+
+        // ── Keyboard nav ─────────────────────────────────────────────────────────
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') nextSlide(activeScenario);
+            if (e.key === 'ArrowLeft')  prevSlide(activeScenario);
+            if (e.key === '1') selectScenario('defense');
+            if (e.key === '2') selectScenario('construct');
+            if (e.key === '3') selectScenario('luxury');
+        });
+    </script>
+</body>
+</html>

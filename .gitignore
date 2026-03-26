@@ -1,3 +1,6 @@
+# Demo images (stored in DO Spaces, not git)
+demo_images/
+
 # Python
 __pycache__/
 *.py[cod]
