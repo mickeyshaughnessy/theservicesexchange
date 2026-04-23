@@ -157,6 +157,11 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "SeatNonTransferable",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {

@@ -208,27 +208,41 @@ describe("RSESeat", function () {
     });
   });
 
-  // ── Transfers ────────────────────────────────────────────────────────────────
+  // ── Transfers (soulbound — all transfers revert) ─────────────────────────────
 
   describe("Transfers", function () {
-    it("allows standard ERC-721 transferFrom", async function () {
+    beforeEach(async function () {
       await contract.mint(addr1.address);
-      await contract.connect(addr1).transferFrom(addr1.address, addr2.address, 1);
-      expect(await contract.ownerOf(1)).to.equal(addr2.address);
     });
 
-    it("isValidSeat follows token to new owner after transfer", async function () {
-      await contract.mint(addr1.address);
-      await contract.connect(addr1).transferFrom(addr1.address, addr2.address, 1);
-      expect(await contract.isValidSeat(addr1.address)).to.equal(false);
-      expect(await contract.isValidSeat(addr2.address)).to.equal(true);
+    it("reverts transferFrom with SeatNonTransferable", async function () {
+      await expect(
+        contract.connect(addr1).transferFrom(addr1.address, addr2.address, 1)
+      ).to.be.revertedWithCustomError(contract, "SeatNonTransferable");
     });
 
-    it("revoked seat can still be transferred", async function () {
-      await contract.mint(addr1.address);
+    it("reverts safeTransferFrom with SeatNonTransferable", async function () {
+      await expect(
+        contract.connect(addr1)["safeTransferFrom(address,address,uint256)"](
+          addr1.address, addr2.address, 1
+        )
+      ).to.be.revertedWithCustomError(contract, "SeatNonTransferable");
+    });
+
+    it("original holder retains ownership after failed transfer", async function () {
+      await expect(
+        contract.connect(addr1).transferFrom(addr1.address, addr2.address, 1)
+      ).to.be.revertedWithCustomError(contract, "SeatNonTransferable");
+      expect(await contract.ownerOf(1)).to.equal(addr1.address);
+      expect(await contract.isValidSeat(addr1.address)).to.equal(true);
+      expect(await contract.isValidSeat(addr2.address)).to.equal(false);
+    });
+
+    it("revoked seat transfer also reverts", async function () {
       await contract.revoke(1);
-      await contract.connect(addr1).transferFrom(addr1.address, addr2.address, 1);
-      expect(await contract.ownerOf(1)).to.equal(addr2.address);
+      await expect(
+        contract.connect(addr1).transferFrom(addr1.address, addr2.address, 1)
+      ).to.be.revertedWithCustomError(contract, "SeatNonTransferable");
     });
   });
 

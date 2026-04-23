@@ -11,6 +11,8 @@ contract RSESeat is ERC721, ERC721Enumerable, Ownable {
     uint256 private _nextTokenId = 1;
     string private _baseTokenURI;
 
+    error SeatNonTransferable();
+
     event SeatMinted(uint256 indexed tokenId, address indexed to);
     event SeatRevoked(uint256 indexed tokenId);
     event SeatUnrevoked(uint256 indexed tokenId);
@@ -83,6 +85,10 @@ contract RSESeat is ERC721, ERC721Enumerable, Ownable {
         override(ERC721, ERC721Enumerable)
         returns (address)
     {
+        address from = _ownerOf(tokenId);
+        if (from != address(0) && to != address(0)) {
+            revert SeatNonTransferable();
+        }
         return super._update(to, tokenId, auth);
     }
 
