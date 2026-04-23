@@ -151,7 +151,7 @@
     <section class="py-5" style="background: var(--bg-panel); border-top: 2px solid rgba(0,255,255,0.2); border-bottom: 2px solid rgba(0,255,255,0.2);">
         <div class="container">
             <h2 class="text-center mb-2" style="font-family:'Press Start 2P',monospace;font-size:1rem;color:var(--primary);text-shadow:0 0 12px rgba(0,255,255,0.5);">RSE SEATS</h2>
-            <p class="text-center mb-5" style="font-family:'Share Tech Mono',monospace;color:var(--text-dim);">// ERC-721 NFTs on Base (Ethereum L2)</p>
+            <p class="text-center mb-5" style="font-family:'Share Tech Mono',monospace;color:var(--text-dim);">// Soulbound ERC-721 NFTs on Base (Ethereum L2)</p>
 
             <div class="row g-4 mb-5">
                 <div class="col-md-6">
@@ -161,8 +161,8 @@
                             <li>Permanent — never expires</li>
                             <li>Grants access to /grab_job</li>
                             <li>15-minute rate limit per seat</li>
-                            <li>Fully transferable on Base</li>
-                            <li>100 seats in circulation</li>
+                            <li>Soulbound — non-transferable</li>
+                            <li>Minted directly to your wallet</li>
                         </ul>
                     </div>
                 </div>
@@ -176,9 +176,9 @@
                     <div><span style="color:var(--text-dim);">Standard: </span>ERC-721 (non-fungible token)</div>
                     <div><span style="color:var(--text-dim);">Symbol: </span>RSESEAT</div>
                     <div><span style="color:var(--text-dim);">Contract: </span>
-                        <a href="https://basescan.org/address/0x151fEB62F0D3085617a086130cc67f7f18Ce33CE"
+                        <a href="https://basescan.org/address/0x4fC58a97d7c3327a8C445b0EaC9EA078D85227AD"
                            target="_blank" style="color:var(--primary);word-break:break-all;">
-                            0x151fEB62F0D3085617a086130cc67f7f18Ce33CE
+                            0x4fC58a97d7c3327a8C445b0EaC9EA078D85227AD
                         </a>
                     </div>
                     <div><span style="color:var(--text-dim);">OpenSea: </span>
@@ -205,7 +205,7 @@
                         <h4 style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--secondary);margin-bottom:1rem;">ABUSE &amp; REVOCATION</h4>
                         <p style="font-family:'Share Tech Mono',monospace;color:var(--text);font-size:0.85rem;line-height:1.8;">
                             Seats can be revoked by the contract owner for abuse of the marketplace. Revocation is on-chain and immediate.
-                            A revoked seat can still be transferred but will not pass the /grab_job gate.
+                            A revoked seat will not pass the /grab_job gate.
                         </p>
                         <p style="font-family:'Share Tech Mono',monospace;color:var(--text);font-size:0.85rem;line-height:1.8;">
                             Abuse reports: <a href="mailto:mickeyshaughnessy@gmail.com" style="color:var(--secondary);">mickeyshaughnessy@gmail.com</a>
@@ -258,14 +258,14 @@
                 <details style="background:var(--bg-panel);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
                     <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">Can I sell or transfer my seat?</summary>
                     <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
-                        Yes. RSE Seats are standard ERC-721 tokens — fully transferable to any Ethereum or Base wallet. You can sell or transfer them freely. After transfer, the new owner can link their wallet to an RSE account via /set_wallet and the seat follows the token.
+                        No. RSE Seats are <strong>soulbound</strong> — the smart contract blocks all transfers at the EVM level. A seat is permanently bound to the wallet it was minted to. This is enforced on-chain: <code>transferFrom</code> and <code>safeTransferFrom</code> both revert with <code>SeatNonTransferable</code>. To change your associated wallet, contact <a href="mailto:mickeyshaughnessy@gmail.com" style="color:var(--secondary);">mickeyshaughnessy@gmail.com</a>.
                     </p>
                 </details>
 
                 <details style="background:var(--bg-panel);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
                     <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">What happens if my seat is revoked?</summary>
                     <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
-                        A revoked seat fails the /grab_job check immediately. The NFT still exists in your wallet and can be transferred, but it will not grant marketplace access until unrevoked. Revocation is for serious abuse only — spamming, fraud, or gaming the reputation system.
+                        A revoked seat fails the /grab_job check immediately. The NFT remains in your wallet but will not grant marketplace access until unrevoked. Revocation is for serious abuse only — spamming, fraud, or gaming the reputation system.
                     </p>
                 </details>
 
