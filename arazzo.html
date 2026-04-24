@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSE Arazzo Workflow Specifications — Robot Services Exchange</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <style>
+        .arazzo-header {
+            background-color: var(--bg-dark);
+            background-image: url('https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robot_jump.jpeg');
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            border-bottom: 2px solid var(--primary);
+            padding: 60px 0 50px;
+            position: relative;
+        }
+        .arazzo-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(10,10,46,0.82);
+            z-index: 0;
+        }
+        .arazzo-header > * { position: relative; z-index: 1; }
+        .arazzo-header h1 { font-size: 1.2rem; }
+
+        .workflow-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0,255,255,0.2);
+            border-radius: 0;
+            margin-bottom: 2.5rem;
+            overflow: hidden;
+        }
+        .workflow-header {
+            background: rgba(0,255,255,0.06);
+            border-bottom: 1px solid rgba(0,255,255,0.2);
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .workflow-number {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.65rem;
+            color: var(--primary);
+            text-shadow: 0 0 8px var(--primary);
+            white-space: nowrap;
+            padding-top: 2px;
+        }
+        .workflow-title-block { flex: 1; min-width: 200px; }
+        .workflow-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            color: #ffffff;
+            margin: 0 0 0.25rem;
+        }
+        .workflow-subtitle {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            margin: 0;
+        }
+        .scenario-tag {
+            display: inline-block;
+            border: 1px solid rgba(255,255,0,0.5);
+            background: rgba(255,255,0,0.05);
+            color: #ffff00;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.62rem;
+            padding: 2px 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            white-space: nowrap;
+            margin-top: 4px;
+        }
+        .workflow-body { padding: 1.25rem; }
+        .workflow-desc {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+        .steps-glance {
+            background: rgba(57,255,20,0.04);
+            border: 1px solid rgba(57,255,20,0.2);
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+        }
+        .steps-glance-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+        .steps-glance ol {
+            margin: 0;
+            padding-left: 1.4rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.77rem;
+            color: var(--text-dim);
+            line-height: 1.9;
+        }
+        .steps-glance ol li strong { color: #00ffff; }
+
+        .yaml-block {
+            background: #020210;
+            border: 1px solid rgba(0,255,255,0.15);
+            padding: 0;
+            position: relative;
+        }
+        .yaml-bar {
+            background: rgba(0,255,255,0.07);
+            border-bottom: 1px solid rgba(0,255,255,0.15);
+            padding: 0.35rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .yaml-bar span {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.65rem;
+            color: rgba(0,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .yaml-copy-btn {
+            background: transparent;
+            border: 1px solid rgba(0,255,255,0.3);
+            color: rgba(0,255,255,0.6);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.62rem;
+            padding: 2px 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: all 0.15s;
+        }
+        .yaml-copy-btn:hover {
+            background: rgba(0,255,255,0.1);
+            color: #00ffff;
+        }
+        pre.arazzo-yaml {
+            background: transparent;
+            margin: 0;
+            padding: 1rem 1.25rem;
+            overflow-x: auto;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            line-height: 1.75;
+            color: #c8d0e8;
+        }
+        /* YAML syntax coloring */
+        .y-key   { color: #00cfff; }
+        .y-str   { color: #ffdd77; }
+        .y-num   { color: #ff79c6; }
+        .y-bool  { color: #50fa7b; }
+        .y-expr  { color: #ff9f43; }
+        .y-cmnt  { color: #5566aa; font-style: italic; }
+        .y-doc   { color: #ff00ff; font-weight: bold; }
+        .y-anchor { color: #f1fa8c; }
+
+        .nav-sidebar {
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            position: sticky;
+            top: 70px;
+        }
+        .nav-sidebar a {
+            display: block;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            text-decoration: none;
+            padding: 0.3rem 0;
+            border-left: 2px solid transparent;
+            padding-left: 0.75rem;
+            transition: all 0.1s;
+        }
+        .nav-sidebar a:hover {
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+        .nav-sidebar h5 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+        .intro-box {
+            background: rgba(255,0,255,0.04);
+            border: 1px solid rgba(255,0,255,0.25);
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.85;
+            color: var(--text);
+        }
+        .intro-box a { color: var(--primary); }
+        .doc-section-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.7rem;
+            color: #ffff00;
+            text-shadow: 0 0 8px rgba(255,255,0,0.6);
+            background: #080818;
+            border-left: 3px solid #ffff00;
+            padding: 0.6rem 1rem;
+            margin: 2rem 0 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">RSE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="api_docs.html">API Docs</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="arazzo.html" aria-current="page">Arazzo</a></li>
+                    <li class="nav-item"><a class="nav-link" href="demo.html">Demo</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="arazzo-header">
+        <div class="container">
+            <h1 class="mb-2">Arazzo Workflow Specifications</h1>
+            <p class="lead mb-3" style="color: var(--text); font-family: 'Share Tech Mono', monospace; font-size: 0.9rem;">
+                10 complete Arazzo 1.0 specifications for the Robot Services Exchange API
+            </p>
+            <a href="api_docs.html" class="btn btn-sm" style="border:1px solid var(--primary);color:var(--primary);font-family:'Share Tech Mono',monospace;font-size:0.75rem;letter-spacing:0.05em;">← API Docs</a>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3">
+                <div class="nav-sidebar">
+                    <h5>// Workflows</h5>
+                    <a href="#wf1">01 Hello Exchange</a>
+                    <a href="#wf2">02 Buyer Onboarding</a>
+                    <a href="#wf3">03 Provider + NFT Seat</a>
+                    <a href="#wf4">04 Full Transaction</a>
+                    <a href="#wf5">05 xMoney Payment</a>
+                    <a href="#wf6">06 Reject &amp; Rematch</a>
+                    <a href="#wf7">07 Multi-Robot Fleet</a>
+                    <a href="#wf8">08 Rideshare Trip</a>
+                    <a href="#wf9">09 Reputation &amp; Premium Bid</a>
+                    <a href="#wf10">10 Community &amp; Chat</a>
+                    <hr style="border-color: rgba(0,255,255,0.15); margin: 1rem 0;">
+                    <a href="https://spec.openapis.org/arazzo/latest.html" target="_blank" style="color:#ff00ff;">Arazzo Spec ↗</a>
+                    <a href="api_docs.html">API Reference</a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9">
+
+                <div class="intro-box">
+                    <strong style="color:#ff00ff;">// What is Arazzo?</strong><br>
+                    <a href="https://spec.openapis.org/arazzo/latest.html" target="_blank">Arazzo 1.0</a> is an OpenAPI Initiative specification for describing sequences of API calls as executable workflows. Each workflow defines ordered steps, parameter passing via runtime expressions, success criteria, and typed outputs — enabling machine-readable integration guides, test harnesses, and SDK generators.<br><br>
+                    <strong style="color:#00ffff;">// How to use these specs</strong><br>
+                    Each specification below is a standalone Arazzo 1.0.0 document. The <code>sourceDescriptions</code> entry references the RSE OpenAPI document at <code>https://rse-api.com:5003/openapi.json</code>. Runtime expressions like <code>$steps.login.outputs.token</code> carry values between steps. Copy any spec into an Arazzo-compatible tool (Vacuum, Speakeasy, Microcks) to run it against the live API.
+                </div>
+
+                <!-- ═══ WF1 ═══ -->
+                <div id="wf1" class="workflow-card">
+                    <div class="workflow-header">
+                        <div class="workflow-number">01</div>
+                        <div class="workflow-title-block">
+                            <p class="workflow-title">Hello Exchange — Discovery &amp; Market Overview</p>
+                            <p class="workflow-subtitle">Read-only introduction to the platform. No authentication required.</p>
+                            <span class="scenario-tag">Discovery</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Public</span>
+                        </div>
+                    </div>
+                    <div class="workflow-body">
+                        <p class="workflow-desc">
+                            Four sequential read-only calls that confirm the API is live, retrieve current platform statistics,
+                            browse active bids with market analytics, and scan for physical service requests near a given address.
+                            All endpoints in this workflow are public — no bearer token needed.
+                        </p>
+                        <div class="steps-glance">
+                            <div class="steps-glance-title">// Steps at a glance</div>
+                            <ol>
+                                <li><strong>ping</strong> — Confirm API is operational (GET /ping)</li>
+                                <li><strong>get-stats</strong> — Read total users, active requests, completed jobs (GET /stats)</li>
+                                <li><strong>browse-exchange</strong> — Fetch active bids + market stats (GET /exchange_data)</li>
+                                <li><strong>scan-nearby</strong> — Find physical service requests within 20 miles (POST /nearby)</li>
+                            </ol>
+                        </div>
+                        <div class="yaml-block">
+                            <div class="yaml-bar">
+                                <span>// arazzo 1.0.0 — hello-exchange.yaml</span>
+                                <button class="yaml-copy-btn" onclick="copyYaml('yaml1')">Copy</button>
+                            </div>
+<pre class="arazzo-yaml" id="yaml1">arazzo: 1.0.0
+info:
+  title: RSE Hello Exchange — Discovery and Market Overview
+  summary: Explore the RSE platform without credentials
+  description: >
+    A read-only introduction to the Robot Services Exchange.
+    Confirms the API is operational, reads live platform statistics,
+    browses the active bid marketplace, and locates nearby service
+    requests by address. All four endpoints are public — no bearer
+    token is required for any step in this workflow.
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: rse-api
+    url: https://rse-api.com:5003/openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: hello-exchange
+    summary: Ping, stats, exchange browse, nearby scan
+    description: >
+      Four sequential read-only calls executed in order.
+      Each step passes its outputs forward as workflow-level
+      results for downstream consumers.
+    steps:
+
+      - stepId: ping
+        description: >
+          Verify the API is reachable and operational before
+          making further calls. A 200 response with the message
+          field confirms the service is running.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1ping/get'
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          status_message: $response.body#/message
+
+      - stepId: get-stats
+        description: >
+          Retrieve current platform statistics: total registered
+          users split by type (demand/supply), number of open
+          service requests on the exchange, and cumulative
+          completed jobs across all time.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1stats/get'
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          demand_signups: $response.body#/demand_signups
+          supply_signups: $response.body#/supply_signups
+          active_requests: $response.body#/active_requests
+          completed_jobs: $response.body#/completed_jobs
+
+      - stepId: browse-exchange
+        description: >
+          Fetch up to 25 active bids from the exchange, filtered
+          to the "cleaning" service category, including completed
+          job history. The response includes a market_stats object
+          with total_active_bids and average pricing for the
+          requested category.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1exchange_data/get'
+        parameters:
+          - name: category
+            in: query
+            value: cleaning
+          - name: limit
+            in: query
+            value: 25
+          - name: include_completed
+            in: query
+            value: 'true'
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          active_bids: $response.body#/active_bids
+          market_stats: $response.body#/market_stats
+
+      - stepId: scan-nearby
+        description: >
+          Find all physical and hybrid service requests whose
+          location is within 20 miles of Downtown Denver.
+          Results are sorted by distance ascending. Remote-only
+          bids are excluded. Returns an empty services array
+          (not an error) if no bids are within the radius.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1nearby/post'
+        requestBody:
+          contentType: application/json
+          payload:
+            address: Downtown Denver, CO
+            radius: 20
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          nearby_services: $response.body#/services
+
+    outputs:
+      api_status: $steps.ping.outputs.status_message
+      active_requests: $steps.get-stats.outputs.active_requests
+      nearby_services: $steps.scan-nearby.outputs.nearby_services</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ WF2 ═══ -->
+                <div id="wf2" class="workflow-card">
+                    <div class="workflow-header">
+                        <div class="workflow-number">02</div>
+                        <div class="workflow-title-block">
+                            <p class="workflow-title">Buyer Onboarding — Register and Submit First Bid</p>
+                            <p class="workflow-subtitle">Create a demand account and post a physical robot service request.</p>
+                            <span class="scenario-tag">Onboarding</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Buyer</span>
+                        </div>
+                    </div>
+                    <div class="workflow-body">
+                        <p class="workflow-desc">
+                            Full buyer onboarding: register a demand-type account, authenticate to receive a bearer token,
+                            inspect account metadata to confirm creation and read the starting reputation score,
+                            post a physical lawn-mowing service bid, then verify the bid appears in the open marketplace.
+                            The <code>bid_id</code> output can be passed to /cancel_bid or tracked until a provider grabs it.
+                        </p>
+                        <div class="steps-glance">
+                            <div class="steps-glance-title">// Steps at a glance</div>
+                            <ol>
+                                <li><strong>register</strong> — Create demand account (POST /register) → HTTP 201</li>
+                                <li><strong>login</strong> — Authenticate, capture access_token (POST /login)</li>
+                                <li><strong>check-account</strong> — Confirm account and read reputation_score (GET /account)</li>
+                                <li><strong>submit-bid</strong> — Post physical lawn mowing request at $75 USD (POST /submit_bid)</li>
+                                <li><strong>confirm-bids</strong> — Verify bid appears in buyer's active bids (GET /my_bids)</li>
+                            </ol>
+                        </div>
+                        <div class="yaml-block">
+                            <div class="yaml-bar">
+                                <span>// arazzo 1.0.0 — buyer-onboarding.yaml</span>
+                                <button class="yaml-copy-btn" onclick="copyYaml('yaml2')">Copy</button>
+                            </div>
+<pre class="arazzo-yaml" id="yaml2">arazzo: 1.0.0
+info:
+  title: RSE Buyer Onboarding — Register and Submit First Request
+  summary: Create a demand account and post a robot service bid
+  description: >
+    Onboards a new buyer onto the Robot Services Exchange.
+    Registers a demand-type account, authenticates to obtain a
+    bearer token, verifies account state and starting reputation,
+    posts a physical lawn-mowing service request, and confirms
+    the bid is visible in the buyer's open bids list.
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: rse-api
+    url: https://rse-api.com:5003/openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: buyer-onboarding
+    summary: Register → login → check account → submit bid → confirm
+    description: >
+      Complete buyer setup and first service request. The
+      access_token from the login step is forwarded to all
+      subsequent authenticated calls via the Authorization header.
+    inputs:
+      type: object
+      required:
+        - username
+        - password
+        - service_address
+      properties:
+        username:
+          type: string
+          description: Unique username, 3–20 alphanumeric characters
+        password:
+          type: string
+          description: Account password, minimum 8 characters
+        service_address:
+          type: string
+          description: Street address where the robot should perform the service
+
+    steps:
+
+      - stepId: register
+        description: >
+          Create a demand-type account. demand accounts can post
+          bids and sign completed jobs. Returns HTTP 201 on success;
+          HTTP 409 if the username is already taken.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1register/post'
+        requestBody:
+          contentType: application/json
+          payload:
+            username: $inputs.username
+            password: $inputs.password
+            user_type: demand
+        successCriteria:
+          - condition: $statusCode == 201
+
+      - stepId: login
+        description: >
+          Authenticate with the newly created credentials to receive
+          an access_token (UUID, valid 24 hours). All subsequent
+          steps pass this token in the Authorization header as
+          "Bearer {token}".
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1login/post'
+        requestBody:
+          contentType: application/json
+          payload:
+            username: $inputs.username
+            password: $inputs.password
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          token: $response.body#/access_token
+          username: $response.body#/username
+
+      - stepId: check-account
+        description: >
+          Retrieve account metadata to confirm registration and read
+          the initial reputation_score. New accounts begin at 2.5
+          (neutral baseline) because the confidence factor is 0
+          with zero ratings. The seat_status will be "no_wallet"
+          until a wallet is linked via /set_wallet.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1account/get'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$steps.login.outputs.token}"
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          reputation_score: $response.body#/reputation_score
+          seat_status: $response.body#/seat_status
+
+      - stepId: submit-bid
+        description: >
+          Post a request for autonomous lawn mowing at the buyer's
+          property. price is 75 USD, location_type is "physical"
+          so the exchange geocodes the address for proximity matching
+          when providers call /grab_job. end_time is a Unix timestamp
+          24 hours in the future; the bid expires and is removed from
+          the exchange if not grabbed before that time.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1submit_bid/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$steps.login.outputs.token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            service: Autonomous lawn mowing, 0.5 acre residential lot, edge trimming included
+            price: 75
+            currency: USD
+            payment_method: cash
+            end_time: 1798070400
+            location_type: physical
+            address: $inputs.service_address
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          bid_id: $response.body#/bid_id
+
+      - stepId: confirm-bids
+        description: >
+          Retrieve the buyer's active bid list and confirm the new
+          bid appears with status "active". Bids are sorted newest
+          first. The bid will remain here until a provider grabs it
+          (converting it to a job) or the end_time passes.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1my_bids/get'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$steps.login.outputs.token}"
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          open_bids: $response.body#/bids
+
+    outputs:
+      token: $steps.login.outputs.token
+      bid_id: $steps.submit-bid.outputs.bid_id
+      reputation_score: $steps.check-account.outputs.reputation_score</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ WF3 ═══ -->
+                <div id="wf3" class="workflow-card">
+                    <div class="workflow-header">
+                        <div class="workflow-number">03</div>
+                        <div class="workflow-title-block">
+                            <p class="workflow-title">Provider Onboarding — Register, Link Wallet, Verify NFT Seat</p>
+                            <p class="workflow-subtitle">Set up a supply account and gate /grab_job access with an RSE Seat NFT on Base.</p>
+                            <span class="scenario-tag">Onboarding</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Provider</span>
+                            <span class="scenario-tag" style="margin-left:6px;">NFT</span>
+                        </div>
+                    </div>
+                    <div class="workflow-body">
+                        <p class="workflow-desc">
+                            Onboards a robot operator (supply-side). Access to <code>/grab_job</code> requires holding an RSE Seat NFT
+                            (soulbound ERC-721, contract <code>0x4fC58a97d7c3327a8C445b0EaC9EA078D85227AD</code> on Base mainnet).
+                            This workflow registers, authenticates, links the operator's Base wallet once via <code>/set_wallet</code>,
+                            then verifies <code>seat_status == "valid"</code> by calling <code>isValidSeat(address)</code> on-chain.
+                            No ETH is spent — the check is a free <code>eth_call</code> cached for 15 minutes.
+                        </p>
+                        <div class="steps-glance">
+                            <div class="steps-glance-title">// Steps at a glance</div>
+                            <ol>
+                                <li><strong>register</strong> — Create supply-type account (POST /register) → HTTP 201</li>
+                                <li><strong>login</strong> — Authenticate, capture token (POST /login)</li>
+                                <li><strong>set-wallet</strong> — Link Base wallet address once (POST /set_wallet)</li>
+                                <li><strong>verify-seat</strong> — Confirm seat_status is "valid" (GET /account)</li>
+                            </ol>
+                        </div>
+                        <div class="yaml-block">
+                            <div class="yaml-bar">
+                                <span>// arazzo 1.0.0 — provider-onboarding.yaml</span>
+                                <button class="yaml-copy-btn" onclick="copyYaml('yaml3')">Copy</button>
+                            </div>
+<pre class="arazzo-yaml" id="yaml3">arazzo: 1.0.0
+info:
+  title: RSE Provider Onboarding — Register, Link Wallet, Verify NFT Seat
+  summary: Set up a supply account with RSE Seat NFT for /grab_job access
+  description: >
+    Onboards a new robot operator onto the Robot Services Exchange.
+    Supply accounts must hold an RSE Seat NFT on Base (Ethereum L2)
+    before /grab_job will accept their requests. This workflow
+    registers a supply account, authenticates, links the operator's
+    Base wallet once (stored server-side, never sent per-request),
+    and verifies the wallet holds a valid unrevoked seat.
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: rse-api
+    url: https://rse-api.com:5003/openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: provider-onboarding
+    summary: Register supply account → login → link wallet → verify seat
+    description: >
+      Full provider setup ending with confirmed seat_status "valid".
+      The wallet is stored once and queried automatically on every
+      subsequent /grab_job call via a cached eth_call to the NFT
+      contract. Providers never sign transactions or pay gas.
+    inputs:
+      type: object
+      required:
+        - username
+        - password
+        - wallet_address
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        wallet_address:
+          type: string
+          description: >
+            Ethereum/Base address (0x + 40 hex chars) holding an
+            RSE Seat NFT. Obtain a seat at
+            opensea.io/collection/rse-seat or by emailing
+            mickeyshaughnessy@gmail.com with your address.
+
+    steps:
+
+      - stepId: register
+        description: >
+          Create a supply-type account. supply accounts are the
+          only type permitted to call /grab_job to accept work.
+          Returns HTTP 201 on success; HTTP 409 if the username
+          is already registered.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1register/post'
+        requestBody:
+          contentType: application/json
+          payload:
+            username: $inputs.username
+            password: $inputs.password
+            user_type: supply
+        successCriteria:
+          - condition: $statusCode == 201
+
+      - stepId: login
+        description: >
+          Authenticate to receive an access_token (UUID, 24-hour
+          TTL). The token is propagated to all subsequent
+          authenticated calls in this workflow.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1login/post'
+        requestBody:
+          contentType: application/json
+          payload:
+            username: $inputs.username
+            password: $inputs.password
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          token: $response.body#/access_token
+
+      - stepId: set-wallet
+        description: >
+          Link the operator's Base wallet address to the account.
+          This is a one-time operation. The server normalizes the
+          address to lowercase checksummed form. After this step,
+          the API will call isValidSeat(wallet_address) on the
+          RSE NFT contract before each /grab_job to verify the
+          seat NFT is present and not revoked.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1set_wallet/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$steps.login.outputs.token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            wallet_address: $inputs.wallet_address
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          linked_address: $response.body#/wallet_address
+
+      - stepId: verify-seat
+        description: >
+          Retrieve account info to confirm seat_status. The server
+          calls isValidSeat(address) on the RSE contract
+          (0x4fC58a97d7c3327a8C445b0EaC9EA078D85227AD, Base mainnet,
+          chain 8453) as a free eth_call cached for 15 minutes.
+          Possible seat_status values: "valid" (NFT present,
+          unrevoked — /grab_job will succeed), "revoked" (NFT
+          revoked — /grab_job blocked), "no_seat" (wallet has no
+          RSE NFT), "no_wallet" (wallet not yet linked),
+          "unknown" (RPC outage — /grab_job fails open).
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1account/get'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$steps.login.outputs.token}"
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          seat_status: $response.body#/seat_status
+          seat_token_id: $response.body#/seat_token_id
+          reputation_score: $response.body#/reputation_score
+
+    outputs:
+      token: $steps.login.outputs.token
+      seat_status: $steps.verify-seat.outputs.seat_status
+      seat_token_id: $steps.verify-seat.outputs.seat_token_id</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ WF4 ═══ -->
+                <div id="wf4" class="workflow-card">
+                    <div class="workflow-header">
+                        <div class="workflow-number">04</div>
+                        <div class="workflow-title-block">
+                            <p class="workflow-title">Full Service Transaction — Bid, Match, Sign, Complete</p>
+                            <p class="workflow-subtitle">End-to-end lifecycle: buyer posts → AI matches provider → both sign → reputation updates.</p>
+                            <span class="scenario-tag">Core Flow</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Marketplace</span>
+                        </div>
+                    </div>
+                    <div class="workflow-body">
+                        <p class="workflow-desc">
+                            The primary RSE transaction loop. A buyer posts a security patrol request; a provider with a valid
+                            RSE Seat NFT calls <code>/grab_job</code>, which runs LLM-based capability matching then reputation-tier
+                            alignment before selecting the highest-priced compatible bid. The bid is atomically removed from the
+                            exchange and a job record created. Both parties call <code>/sign_job</code> — once both have signed,
+                            the job transitions to <code>completed</code> and each party's <code>completed_jobs</code> counter and
+                            star ratings are updated.
+                        </p>
+                        <div class="steps-glance">
+                            <div class="steps-glance-title">// Steps at a glance</div>
+                            <ol>
+                                <li><strong>buyer-submit-bid</strong> — Post security patrol request at $150 USD (POST /submit_bid)</li>
+                                <li><strong>provider-grab-job</strong> — AI matches capabilities and reputation tier (POST /grab_job)</li>
+                                <li><strong>provider-sign</strong> — Provider rates buyer 5 stars (POST /sign_job)</li>
+                                <li><strong>buyer-sign</strong> — Buyer rates provider 5 stars; job → completed (POST /sign_job)</li>
+                                <li><strong>check-jobs</strong> — Buyer verifies job in completed_jobs list (GET /my_jobs)</li>
+                            </ol>
+                        </div>
+                        <div class="yaml-block">
+                            <div class="yaml-bar">
+                                <span>// arazzo 1.0.0 — full-transaction.yaml</span>
+                                <button class="yaml-copy-btn" onclick="copyYaml('yaml4')">Copy</button>
+                            </div>
+<pre class="arazzo-yaml" id="yaml4">arazzo: 1.0.0
+info:
+  title: RSE Full Service Transaction — Bid, Match, Sign, Complete
+  summary: Complete end-to-end service lifecycle with mutual signing
+  description: >
+    Demonstrates the full Robot Services Exchange transaction loop.
+    A buyer submits a physical security patrol bid; a provider with
+    a valid RSE Seat NFT calls /grab_job which uses an LLM to match
+    capabilities then groups bids by reputation proximity
+    (|provider_score - buyer_score| < 0.5) before selecting the
+    highest-priced match. Both parties sign with star ratings;
+    when both signatures are received the job is marked completed
+    and reputation scores update.
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: rse-api
+    url: https://rse-api.com:5003/openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: full-transaction
+    summary: Submit bid → grab job → provider signs → buyer signs → verify
+    description: >
+      Assumes both buyer and provider are already registered and
+      authenticated. Buyer and provider tokens are passed as inputs.
+    inputs:
+      type: object
+      required:
+        - buyer_token
+        - provider_token
+      properties:
+        buyer_token:
+          type: string
+          description: Bearer token for an authenticated demand account
+        provider_token:
+          type: string
+          description: Bearer token for an authenticated supply account with valid seat
+        service_address:
+          type: string
+          default: 123 Main St, Denver, CO 80202
+        provider_address:
+          type: string
+          default: 456 Oak Ave, Denver, CO 80203
+
+    steps:
+
+      - stepId: buyer-submit-bid
+        description: >
+          Buyer posts a request for autonomous security patrol of a
+          warehouse complex: 8-hour night shift with perimeter and
+          interior sweeps. Priced at $150 USD, physical location
+          type. The exchange geocodes the address for proximity
+          filtering when providers call /grab_job.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1submit_bid/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            service: Autonomous security patrol, warehouse complex, 8-hour night shift, perimeter and interior sweeps
+            price: 150
+            currency: USD
+            payment_method: cash
+            end_time: 1798070400
+            location_type: physical
+            address: $inputs.service_address
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          bid_id: $response.body#/bid_id
+
+      - stepId: provider-grab-job
+        description: >
+          Provider declares security patrol capabilities and their
+          current address. /grab_job applies three-stage matching:
+          (1) distance filter — only bids within max_distance miles;
+          (2) LLM capability match — OpenRouter determines whether
+          the provider's capabilities cover the service description;
+          (3) reputation alignment — bids sorted by
+          |provider_score - buyer_score|, ties broken by price
+          descending. The winning bid is atomically removed from
+          the exchange and returned as a job record.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1grab_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            capabilities: autonomous security patrol, perimeter surveillance, motion detection, 360-degree camera, night vision, incident logging
+            location_type: physical
+            address: $inputs.provider_address
+            max_distance: 15
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          job_id: $response.body#/job_id
+          service: $response.body#/service
+          price: $response.body#/price
+          buyer_username: $response.body#/buyer_username
+
+      - stepId: provider-sign
+        description: >
+          Provider confirms the patrol is complete and rates the
+          buyer 5 stars. This records provider_signed: true and
+          provider_rating: 5 on the job record. The job status
+          remains "accepted" until the buyer also signs.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.provider-grab-job.outputs.job_id
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: buyer-sign
+        description: >
+          Buyer rates the provider 5 stars. Because both parties
+          have now signed (buyer_signed and provider_signed are both
+          true), the job transitions to status "completed",
+          completed_at is set, and each party's completed_jobs count
+          increments. The star rating each party gave is applied to
+          the counterparty's running reputation average.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.provider-grab-job.outputs.job_id
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: check-jobs
+        description: >
+          Buyer retrieves their job history to confirm the completed
+          job appears in completed_jobs. Each entry includes role
+          ("buyer"), counterparty (provider username), accepted_at,
+          completed_at, and both ratings (my_rating given to provider,
+          their_rating received from provider).
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1my_jobs/get'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          completed_jobs: $response.body#/completed_jobs
+          active_jobs: $response.body#/active_jobs
+
+    outputs:
+      job_id: $steps.provider-grab-job.outputs.job_id
+      matched_price: $steps.provider-grab-job.outputs.price
+      buyer_username: $steps.provider-grab-job.outputs.buyer_username</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ WF5 ═══ -->
+                <div id="wf5" class="workflow-card">
+                    <div class="workflow-header">
+                        <div class="workflow-number">05</div>
+                        <div class="workflow-title-block">
+                            <p class="workflow-title">xMoney Payment Flow</p>
+                            <p class="workflow-subtitle">Remote service bid with xMoney payment method — payment details flow through the job record.</p>
+                            <span class="scenario-tag">Payments</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Remote</span>
+                        </div>
+                    </div>
+                    <div class="workflow-body">
+                        <p class="workflow-desc">
+                            Demonstrates <code>payment_method: "xmoney"</code> on the exchange. The buyer specifies an
+                            <code>xmoney_account</code> in the bid; when a provider grabs the job, the job record carries both
+                            <code>payment_method</code> and <code>xmoney_account</code> so the provider knows where to direct
+                            off-chain settlement. The service is remote (satellite imagery analysis) so no location filtering
+                            is applied during matching — only LLM capability matching and reputation alignment.
+                        </p>
+                        <div class="steps-glance">
+                            <div class="steps-glance-title">// Steps at a glance</div>
+                            <ol>
+                                <li><strong>submit-bid-xmoney</strong> — Remote bid with xmoney_account, $200 USD (POST /submit_bid)</li>
+                                <li><strong>grab-xmoney-job</strong> — Provider matches on remote sensing capabilities (POST /grab_job)</li>
+                                <li><strong>provider-sign</strong> — Provider completes analysis, rates buyer (POST /sign_job)</li>
+                                <li><strong>buyer-sign</strong> — Buyer confirms output, rates provider; job → completed (POST /sign_job)</li>
+                            </ol>
+                        </div>
+                        <div class="yaml-block">
+                            <div class="yaml-bar">
+                                <span>// arazzo 1.0.0 — xmoney-payment.yaml</span>
+                                <button class="yaml-copy-btn" onclick="copyYaml('yaml5')">Copy</button>
+                            </div>
+<pre class="arazzo-yaml" id="yaml5">arazzo: 1.0.0
+info:
+  title: RSE xMoney Payment Flow
+  summary: Remote service bid and fulfillment using xMoney digital payment
+  description: >
+    Shows how payment_method "xmoney" propagates through the exchange.
+    The buyer includes their xmoney_account in the bid; the job record
+    returned by /grab_job carries both payment_method and xmoney_account
+    so the provider can settle off-chain via xMoney after completion.
+    The service is location_type "remote" so no geographic proximity
+    filtering is applied — only LLM capability matching.
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: rse-api
+    url: https://rse-api.com:5003/openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: xmoney-payment
+    summary: Remote xmoney bid → grab → both sign → job complete
+    description: >
+      Buyer and provider are already authenticated. Tokens and the
+      buyer's xMoney account identifier are passed as inputs.
+    inputs:
+      type: object
+      required:
+        - buyer_token
+        - provider_token
+        - xmoney_account
+      properties:
+        buyer_token:
+          type: string
+        provider_token:
+          type: string
+        xmoney_account:
+          type: string
+          description: Buyer's xMoney account identifier for payment receipt
+
+    steps:
+
+      - stepId: submit-bid-xmoney
+        description: >
+          Buyer posts a remote satellite imagery analysis task.
+          payment_method is "xmoney" and xmoney_account is the
+          buyer's xMoney identifier. location_type "remote" means
+          no address or coordinates are needed — the provider can
+          fulfill from anywhere, and /grab_job skips geographic
+          distance filtering for this bid.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1submit_bid/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            service: Autonomous satellite imagery analysis, 500 km2 region, vegetation index mapping and anomaly detection
+            price: 200
+            currency: USD
+            payment_method: xmoney
+            xmoney_account: $inputs.xmoney_account
+            end_time: 1798070400
+            location_type: remote
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          bid_id: $response.body#/bid_id
+
+      - stepId: grab-xmoney-job
+        description: >
+          Provider with remote sensing capabilities calls /grab_job
+          with location_type "remote". The exchange skips distance
+          filtering and runs LLM capability matching to confirm the
+          provider's satellite imaging skills cover the service
+          description. The returned job record includes
+          payment_method: "xmoney" and the buyer's xmoney_account,
+          which the provider uses to process settlement off-chain.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1grab_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            capabilities: satellite imagery processing, remote sensing, vegetation analysis, NDVI computation, anomaly detection, geospatial pipelines
+            location_type: remote
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          job_id: $response.body#/job_id
+          payment_method: $response.body#/payment_method
+          xmoney_account: $response.body#/xmoney_account
+          price: $response.body#/price
+
+      - stepId: provider-sign
+        description: >
+          Provider delivers the completed imagery analysis and signs
+          the job with a 5-star rating for the buyer. Off-chain
+          xMoney settlement is initiated using the xmoney_account
+          value from the grab-xmoney-job step output. The job
+          remains in "accepted" status until the buyer also signs.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.grab-xmoney-job.outputs.job_id
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: buyer-sign
+        description: >
+          Buyer reviews the delivered imagery analysis outputs and
+          signs with a 5-star rating. Both parties have now signed,
+          so the job transitions to status "completed". Both
+          accounts' completed_jobs counters increment and the
+          counterparty's star ratings are updated.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.grab-xmoney-job.outputs.job_id
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+    outputs:
+      job_id: $steps.grab-xmoney-job.outputs.job_id
+      payment_method: $steps.grab-xmoney-job.outputs.payment_method
+      xmoney_account: $steps.grab-xmoney-job.outputs.xmoney_account</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ WF6 ═══ -->
+                <div id="wf6" class="workflow-card">
+                    <div class="workflow-header">
+                        <div class="workflow-number">06</div>
+                        <div class="workflow-title-block">
+                            <p class="workflow-title">Job Rejection and Re-Matching</p>
+                            <p class="workflow-subtitle">Provider rejects a job; the bid is restored with a 1-hour extension for the next robot.</p>
+                            <span class="scenario-tag">Resilience</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Re-match</span>
+                        </div>
+                    </div>
+                    <div class="workflow-body">
+                        <p class="workflow-desc">
+                            When a provider grabs a job but cannot fulfill it (battery critical, scheduling conflict, out of range),
+                            <code>/reject_job</code> returns the bid to the open market with a 1-hour validity extension and records
+                            the rejecting provider in the bid's <code>rejected_by</code> list, preventing that provider from being
+                            matched again. A second provider then grabs and successfully completes the job.
+                        </p>
+                        <div class="steps-glance">
+                            <div class="steps-glance-title">// Steps at a glance</div>
+                            <ol>
+                                <li><strong>buyer-submit</strong> — Post snow removal bid (POST /submit_bid)</li>
+                                <li><strong>provider-a-grabs</strong> — Provider A claims the job (POST /grab_job)</li>
+                                <li><strong>provider-a-rejects</strong> — Provider A rejects; bid restored + rejected_by updated (POST /reject_job)</li>
+                                <li><strong>provider-b-grabs</strong> — Provider B matches the restored bid (POST /grab_job)</li>
+                                <li><strong>provider-b-signs</strong> — Provider B completes, rates buyer (POST /sign_job)</li>
+                                <li><strong>buyer-signs</strong> — Buyer rates Provider B; job → completed (POST /sign_job)</li>
+                            </ol>
+                        </div>
+                        <div class="yaml-block">
+                            <div class="yaml-bar">
+                                <span>// arazzo 1.0.0 — reject-and-rematch.yaml</span>
+                                <button class="yaml-copy-btn" onclick="copyYaml('yaml6')">Copy</button>
+                            </div>
+<pre class="arazzo-yaml" id="yaml6">arazzo: 1.0.0
+info:
+  title: RSE Job Rejection and Re-Matching
+  summary: Provider rejects a grabbed job; bid is restored for the next provider
+  description: >
+    Demonstrates the reject/re-match safety cycle. When a provider
+    calls /reject_job, the exchange: (1) restores the original bid to
+    the open market with a 1-hour validity extension; (2) records the
+    rejecting provider's username in the bid's rejected_by list;
+    (3) marks the job record as "rejected". Any subsequent /grab_job
+    call that would match this bid will skip it for the first provider
+    but offer it to other qualified providers.
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: rse-api
+    url: https://rse-api.com:5003/openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: reject-and-rematch
+    summary: Submit bid → A grabs → A rejects → B grabs → both sign
+    description: >
+      Three authenticated participants: buyer, provider_a (rejects),
+      provider_b (completes). All tokens are provided as inputs.
+    inputs:
+      type: object
+      required:
+        - buyer_token
+        - provider_a_token
+        - provider_b_token
+      properties:
+        buyer_token:
+          type: string
+        provider_a_token:
+          type: string
+        provider_b_token:
+          type: string
+
+    steps:
+
+      - stepId: buyer-submit
+        description: >
+          Buyer posts a residential snow removal request priced at
+          $80 USD. Physical location at 789 Pine St, Denver.
+          The bid is active until grabbed or until end_time.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1submit_bid/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            service: Autonomous snow removal, residential driveway and walkways, approximately 2000 sq ft
+            price: 80
+            currency: USD
+            payment_method: cash
+            end_time: 1798070400
+            location_type: physical
+            address: 789 Pine St, Denver, CO 80204
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          bid_id: $response.body#/bid_id
+
+      - stepId: provider-a-grabs
+        description: >
+          Provider A has snow removal capabilities and is near the
+          bid location. /grab_job matches and returns a job record.
+          The bid is removed from the open exchange at this point.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1grab_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_a_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            capabilities: snow removal, autonomous plowing, salt spreading, residential driveways
+            location_type: physical
+            address: 800 Pine St, Denver, CO 80204
+            max_distance: 5
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          job_id_a: $response.body#/job_id
+
+      - stepId: provider-a-rejects
+        description: >
+          Provider A's robot is at 8% battery and cannot safely
+          complete the 2000 sq ft route. /reject_job: (1) restores
+          the bid to the open exchange with end_time extended by
+          1 hour; (2) adds Provider A's username to rejected_by so
+          they cannot be matched again; (3) sets the job record
+          status to "rejected". The original bid_id is preserved
+          so the buyer can continue tracking their request.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1reject_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_a_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.provider-a-grabs.outputs.job_id_a
+            reason: Unit battery at 8% — cannot safely complete 2000 sq ft route
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: provider-b-grabs
+        description: >
+          Provider B, at a different location with a full charge,
+          calls /grab_job. The exchange matches Provider B to the
+          restored bid. Provider A is excluded by the rejected_by
+          filter. Provider B receives a new job_id for the same
+          underlying service request.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1grab_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_b_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            capabilities: snow removal, autonomous plowing, salt spreading, commercial and residential properties
+            location_type: physical
+            address: 750 Pine St, Denver, CO 80204
+            max_distance: 10
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          job_id_b: $response.body#/job_id
+
+      - stepId: provider-b-signs
+        description: >
+          Provider B completes the snow removal and rates the buyer
+          4 stars. provider_signed is set to true on the new job
+          record. The job remains "accepted" pending buyer signature.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_b_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.provider-b-grabs.outputs.job_id_b
+            rating: 4
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: buyer-signs
+        description: >
+          Buyer confirms the snow removal is complete and rates
+          Provider B 5 stars. Both signatures received — job
+          transitions to "completed". Provider B's and the buyer's
+          completed_jobs counts each increment by 1.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.provider-b-grabs.outputs.job_id_b
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+    outputs:
+      final_job_id: $steps.provider-b-grabs.outputs.job_id_b</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ WF7 ═══ -->
+                <div id="wf7" class="workflow-card">
+                    <div class="workflow-header">
+                        <div class="workflow-number">07</div>
+                        <div class="workflow-title-block">
+                            <p class="workflow-title">Multi-Robot Fleet — Coordinated Parallel Operation</p>
+                            <p class="workflow-subtitle">Buyer posts two simultaneous bids; two robots each grab one and complete independently.</p>
+                            <span class="scenario-tag">Multi-Robot</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Parallel</span>
+                        </div>
+                    </div>
+                    <div class="workflow-body">
+                        <p class="workflow-desc">
+                            For large tasks requiring simultaneous robot coverage (e.g., solar farm inspection split across zones),
+                            a buyer posts separate bids for each zone. Multiple robot operators independently call <code>/grab_job</code>
+                            — each grabs one bid, and both proceed in parallel. The buyer signs both jobs to finalize.
+                            Coordination between robots happens at the buyer's application layer; the exchange handles matching
+                            and lifecycle for each job independently.
+                        </p>
+                        <div class="steps-glance">
+                            <div class="steps-glance-title">// Steps at a glance</div>
+                            <ol>
+                                <li><strong>submit-bid-zone-a</strong> — Zone A drone inspection bid, $120 (POST /submit_bid)</li>
+                                <li><strong>submit-bid-zone-b</strong> — Zone B drone inspection bid, $120 (POST /submit_bid)</li>
+                                <li><strong>robot-a-grabs</strong> — Robot A matched to first available zone bid (POST /grab_job)</li>
+                                <li><strong>robot-b-grabs</strong> — Robot B matched to remaining zone bid (POST /grab_job)</li>
+                                <li><strong>robot-a-signs</strong> — Robot A completes Zone inspection, rates buyer (POST /sign_job)</li>
+                                <li><strong>robot-b-signs</strong> — Robot B completes Zone inspection, rates buyer (POST /sign_job)</li>
+                                <li><strong>buyer-signs-a</strong> — Buyer rates Robot A, Zone A → completed (POST /sign_job)</li>
+                                <li><strong>buyer-signs-b</strong> — Buyer rates Robot B, Zone B → completed (POST /sign_job)</li>
+                            </ol>
+                        </div>
+                        <div class="yaml-block">
+                            <div class="yaml-bar">
+                                <span>// arazzo 1.0.0 — multi-robot-fleet.yaml</span>
+                                <button class="yaml-copy-btn" onclick="copyYaml('yaml7')">Copy</button>
+                            </div>
+<pre class="arazzo-yaml" id="yaml7">arazzo: 1.0.0
+info:
+  title: RSE Multi-Robot Fleet — Coordinated Parallel Operation
+  summary: Two simultaneous bids matched to two robots that complete independently
+  description: >
+    For large tasks requiring concurrent robot coverage, a buyer
+    posts separate bids for each work zone. Robot operators call
+    /grab_job independently — once Robot A takes Zone A's bid,
+    Robot B's /grab_job call finds and grabs Zone B. Each robot
+    completes and signs its own job; the buyer signs both.
+    This workflow uses a solar farm thermal inspection scenario
+    split into two 50-row zones.
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: rse-api
+    url: https://rse-api.com:5003/openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: multi-robot-fleet
+    summary: Two bids → Robot A and B each grab one → all four sign
+    description: >
+      Buyer, Robot A, and Robot B are already authenticated.
+      Steps 3 and 4 (grabs) and steps 5 and 6 (robot signs) can
+      execute concurrently in implementations that support parallel
+      step execution.
+    inputs:
+      type: object
+      required:
+        - buyer_token
+        - robot_a_token
+        - robot_b_token
+      properties:
+        buyer_token:
+          type: string
+        robot_a_token:
+          type: string
+        robot_b_token:
+          type: string
+
+    steps:
+
+      - stepId: submit-bid-zone-a
+        description: >
+          Buyer posts the first bid for autonomous drone inspection
+          of Solar Farm Zone A (rows 1–50): thermal imaging to
+          detect hot-spot defects on solar panels. Price $120 USD,
+          physical location at the farm site, 2-hour flight window.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1submit_bid/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            service: "Solar farm drone inspection: Zone A rows 1-50, thermal imaging, panel defect detection, 2-hour flight"
+            price: 120
+            currency: USD
+            payment_method: cash
+            end_time: 1798070400
+            location_type: physical
+            address: Solar Farm Alpha, 1200 Energy Blvd, Denver, CO 80201
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          bid_id_zone_a: $response.body#/bid_id
+
+      - stepId: submit-bid-zone-b
+        description: >
+          Buyer immediately posts the matching bid for Zone B
+          (rows 51–100), same service specification and price.
+          Both bids are now simultaneously active on the exchange
+          and visible to any provider calling /grab_job.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1submit_bid/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            service: "Solar farm drone inspection: Zone B rows 51-100, thermal imaging, panel defect detection, 2-hour flight"
+            price: 120
+            currency: USD
+            payment_method: cash
+            end_time: 1798070400
+            location_type: physical
+            address: Solar Farm Alpha, 1200 Energy Blvd, Denver, CO 80201
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          bid_id_zone_b: $response.body#/bid_id
+
+      - stepId: robot-a-grabs
+        description: >
+          Robot A, a thermal-imaging inspection drone, calls
+          /grab_job and is matched to whichever zone bid ranks
+          highest (reputation alignment then price — both are
+          identical here so the match is first-in-queue). Robot A
+          receives a job record with the full service description
+          and location for its assigned zone.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1grab_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.robot_a_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            capabilities: aerial drone inspection, thermal imaging, solar panel defect detection, multispectral camera, GPS waypoint navigation
+            location_type: physical
+            address: 1100 Energy Blvd, Denver, CO 80201
+            max_distance: 10
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          job_id_a: $response.body#/job_id
+          zone_a_service: $response.body#/service
+
+      - stepId: robot-b-grabs
+        description: >
+          Robot B calls /grab_job with identical capabilities.
+          Because Robot A already consumed one bid, Robot B is
+          matched to the remaining zone bid. Both robots now have
+          active jobs at the same site and can begin their
+          respective inspection routes in parallel.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1grab_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.robot_b_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            capabilities: aerial drone inspection, thermal imaging, solar panel defect detection, multispectral camera, GPS waypoint navigation
+            location_type: physical
+            address: 1150 Energy Blvd, Denver, CO 80201
+            max_distance: 10
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          job_id_b: $response.body#/job_id
+          zone_b_service: $response.body#/service
+
+      - stepId: robot-a-signs
+        description: >
+          Robot A completes its zone inspection and submits the
+          thermal anomaly report. Signs the job with 5 stars for
+          the buyer. The job awaits the buyer's countersignature.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.robot_a_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.robot-a-grabs.outputs.job_id_a
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: robot-b-signs
+        description: >
+          Robot B completes Zone B and signs with 5 stars for
+          the buyer. Both robot jobs are now awaiting the buyer's
+          countersignature to reach "completed" status.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.robot_b_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.robot-b-grabs.outputs.job_id_b
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: buyer-signs-a
+        description: >
+          Buyer reviews Robot A's inspection report and signs
+          Zone A's job with 5 stars. Both signatures present —
+          Zone A job transitions to "completed". Robot A's
+          completed_jobs count increments.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.robot-a-grabs.outputs.job_id_a
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: buyer-signs-b
+        description: >
+          Buyer reviews Robot B's report and signs Zone B's job
+          with 5 stars. Zone B transitions to "completed". The
+          buyer's completed_jobs count now reflects both Zone A
+          and Zone B. The full solar farm inspection is done.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.robot-b-grabs.outputs.job_id_b
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+    outputs:
+      job_id_zone_a: $steps.robot-a-grabs.outputs.job_id_a
+      job_id_zone_b: $steps.robot-b-grabs.outputs.job_id_b</pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /col-md-9 -->
+        </div><!-- /row -->
+    </div><!-- /container -->
+
+    <div class="container mt-0 mb-4">
+        <div class="row">
+            <div class="col-md-3"></div>
+            <div class="col-md-9">
+
+                <!-- ═══ WF8 ═══ -->
+                <div id="wf8" class="workflow-card">
+                    <div class="workflow-header">
+                        <div class="workflow-number">08</div>
+                        <div class="workflow-title-block">
+                            <p class="workflow-title">Rideshare Trip — Autonomous Vehicle Pickup and Dropoff</p>
+                            <p class="workflow-subtitle">Bid with start_address + end_address for door-to-door autonomous transport.</p>
+                            <span class="scenario-tag">Rideshare</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Multi-step</span>
+                        </div>
+                    </div>
+                    <div class="workflow-body">
+                        <p class="workflow-desc">
+                            The exchange supports rideshare-style bids with distinct pickup (<code>start_address</code>) and
+                            dropoff (<code>end_address</code>) locations. Both addresses are geocoded at bid submission;
+                            the pickup point is used for provider distance filtering. The job record returned by
+                            <code>/grab_job</code> includes <code>start_address</code>, <code>end_address</code>,
+                            <code>start_lat/lon</code>, and <code>end_lat/lon</code> — the full route for the autonomous vehicle operator.
+                        </p>
+                        <div class="steps-glance">
+                            <div class="steps-glance-title">// Steps at a glance</div>
+                            <ol>
+                                <li><strong>submit-rideshare-bid</strong> — Post AV ride with start + end address, $35 (POST /submit_bid)</li>
+                                <li><strong>av-grab-ride</strong> — AV operator matches on rideshare capabilities (POST /grab_job)</li>
+                                <li><strong>provider-signs-trip</strong> — AV confirms dropoff, rates rider (POST /sign_job)</li>
+                                <li><strong>rider-signs-trip</strong> — Rider confirms arrival, rates AV; job → completed (POST /sign_job)</li>
+                            </ol>
+                        </div>
+                        <div class="yaml-block">
+                            <div class="yaml-bar">
+                                <span>// arazzo 1.0.0 — rideshare-trip.yaml</span>
+                                <button class="yaml-copy-btn" onclick="copyYaml('yaml8')">Copy</button>
+                            </div>
+<pre class="arazzo-yaml" id="yaml8">arazzo: 1.0.0
+info:
+  title: RSE Rideshare Trip — Autonomous Vehicle Pickup and Dropoff
+  summary: Door-to-door AV transport with start_address and end_address
+  description: >
+    Demonstrates the rideshare bid variant where start_address
+    (pickup) and end_address (dropoff) replace the single address
+    field. The exchange geocodes both addresses at bid time. The
+    pickup coordinates are used for provider proximity filtering
+    in /grab_job. The full route — both geocoded address pairs —
+    is included in the job record so the AV operator has complete
+    navigation data.
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: rse-api
+    url: https://rse-api.com:5003/openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: rideshare-trip
+    summary: Post AV ride bid → operator grabs → provider signs → rider signs
+    description: >
+      Passenger (buyer) and AV operator (provider) are already
+      authenticated. The passenger submits a pickup/dropoff bid;
+      the nearby AV operator grabs it and navigates the full route.
+    inputs:
+      type: object
+      required:
+        - buyer_token
+        - provider_token
+      properties:
+        buyer_token:
+          type: string
+          description: Bearer token for the passenger's demand account
+        provider_token:
+          type: string
+          description: Bearer token for the AV operator's supply account
+
+    steps:
+
+      - stepId: submit-rideshare-bid
+        description: >
+          Passenger posts an autonomous vehicle ride request.
+          start_address is the pickup location; end_address is
+          the dropoff destination. The exchange geocodes both
+          addresses on receipt. The pickup point coordinates
+          (start_lat, start_lon) become the bid's primary location
+          for provider proximity filtering. Price is $35 for a
+          downtown-to-airport trip.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1submit_bid/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            service: Autonomous vehicle rideshare, passenger transport, standard comfort class
+            price: 35
+            currency: USD
+            payment_method: cash
+            end_time: 1798070400
+            location_type: physical
+            start_address: 123 Main St, Denver, CO 80202
+            end_address: Denver International Airport, Denver, CO 80249
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          bid_id: $response.body#/bid_id
+
+      - stepId: av-grab-ride
+        description: >
+          AV operator calls /grab_job from a downtown location near
+          the pickup address. The exchange applies distance filtering
+          using the bid's start_lat/lon (pickup point). The LLM
+          confirms AV rideshare capabilities cover the service.
+          The returned job record includes both start_address and
+          end_address plus their geocoded lat/lon pairs, giving the
+          autonomous vehicle its complete navigation waypoints.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1grab_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            capabilities: autonomous vehicle operation, passenger rideshare, route navigation, door-to-door transport, GPS waypointing
+            location_type: physical
+            address: 200 16th St, Denver, CO 80202
+            max_distance: 5
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          job_id: $response.body#/job_id
+          start_address: $response.body#/start_address
+          end_address: $response.body#/end_address
+          price: $response.body#/price
+
+      - stepId: provider-signs-trip
+        description: >
+          AV operator confirms the passenger was delivered to the
+          dropoff address and signs the job, rating the rider 5
+          stars. The job remains "accepted" until the rider also
+          signs to confirm arrival.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.av-grab-ride.outputs.job_id
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: rider-signs-trip
+        description: >
+          Passenger confirms safe arrival at the destination and
+          rates the AV operator 5 stars. Both signatures are now
+          present, transitioning the job to "completed". Both
+          parties' completed_jobs counts and star ratings update.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.av-grab-ride.outputs.job_id
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+    outputs:
+      job_id: $steps.av-grab-ride.outputs.job_id
+      route_from: $steps.av-grab-ride.outputs.start_address
+      route_to: $steps.av-grab-ride.outputs.end_address</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ WF9 ═══ -->
+                <div id="wf9" class="workflow-card">
+                    <div class="workflow-header">
+                        <div class="workflow-number">09</div>
+                        <div class="workflow-title-block">
+                            <p class="workflow-title">Reputation Discovery &amp; Premium Bid</p>
+                            <p class="workflow-subtitle">Established buyer checks market, posts premium bid, gets priority matching, verifies reputation update.</p>
+                            <span class="scenario-tag">Reputation</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Premium</span>
+                        </div>
+                    </div>
+                    <div class="workflow-body">
+                        <p class="workflow-desc">
+                            The RSE matching algorithm first groups bids by reputation proximity
+                            (<code>|provider_score - buyer_score| &lt; 0.5</code>), then within each tier sorts by price descending.
+                            This workflow demonstrates: browse market pricing, inspect own reputation score, post a premium bid
+                            that ranks first in the reputation tier, complete the job, and verify the updated reputation score.
+                            Reputation scores use Bayesian smoothing toward 2.5 until 10+ ratings build confidence.
+                        </p>
+                        <div class="steps-glance">
+                            <div class="steps-glance-title">// Steps at a glance</div>
+                            <ol>
+                                <li><strong>browse-market</strong> — Survey active bids and average pricing (GET /exchange_data)</li>
+                                <li><strong>check-reputation</strong> — Read current reputation_score before posting (GET /account)</li>
+                                <li><strong>submit-premium-bid</strong> — Post premium-priced cleaning request, $110 (POST /submit_bid)</li>
+                                <li><strong>provider-grabs-premium</strong> — High-reputation provider matches the top-ranked bid (POST /grab_job)</li>
+                                <li><strong>provider-signs</strong> — Provider rates buyer 5 stars (POST /sign_job)</li>
+                                <li><strong>buyer-signs</strong> — Buyer rates provider 5 stars; job → completed (POST /sign_job)</li>
+                                <li><strong>verify-reputation</strong> — Buyer confirms reputation_score updated upward (GET /account)</li>
+                            </ol>
+                        </div>
+                        <div class="yaml-block">
+                            <div class="yaml-bar">
+                                <span>// arazzo 1.0.0 — reputation-premium-bid.yaml</span>
+                                <button class="yaml-copy-btn" onclick="copyYaml('yaml9')">Copy</button>
+                            </div>
+<pre class="arazzo-yaml" id="yaml9">arazzo: 1.0.0
+info:
+  title: RSE Reputation Discovery and Premium Bid
+  summary: Established buyer uses reputation and price to win priority matching
+  description: >
+    The /grab_job matching algorithm: (1) filter by location;
+    (2) LLM capability match; (3) sort by |provider_rep - buyer_rep|
+    ascending (closest reputation tier first); (4) within each tier,
+    sort by price descending. A high-reputation buyer posting a
+    premium price bid will appear first to high-reputation providers.
+    This workflow shows the full cycle: market survey, reputation
+    check, premium bid, matched completion, and score verification.
+    Reputation formula: score = (avg * c) + (2.5 * (1 - c))
+    where c = min(total_ratings / 10, 1.0).
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: rse-api
+    url: https://rse-api.com:5003/openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: reputation-premium-bid
+    summary: Browse market → check rep → premium bid → match → sign × 2 → verify
+    inputs:
+      type: object
+      required:
+        - buyer_token
+        - provider_token
+      properties:
+        buyer_token:
+          type: string
+        provider_token:
+          type: string
+
+    steps:
+
+      - stepId: browse-market
+        description: >
+          Fetch exchange activity filtered to the "cleaning" service
+          category, including recent completed jobs and market stats.
+          The avg_price_cleaning field in market_stats shows the
+          current market rate, informing the buyer's premium
+          pricing decision.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1exchange_data/get'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+          - name: category
+            in: query
+            value: cleaning
+          - name: include_completed
+            in: query
+            value: 'true'
+          - name: limit
+            in: query
+            value: 10
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          market_stats: $response.body#/market_stats
+          active_bids: $response.body#/active_bids
+
+      - stepId: check-reputation
+        description: >
+          Buyer reads their current reputation_score before posting.
+          A score above 4.0 places the buyer in the "trusted" tier.
+          The matching algorithm will pair this buyer with providers
+          whose scores are within 0.5 points, giving access to the
+          highest-quality operators on the exchange.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1account/get'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          reputation_score: $response.body#/reputation_score
+          completed_jobs: $response.body#/completed_jobs
+          total_ratings: $response.body#/total_ratings
+
+      - stepId: submit-premium-bid
+        description: >
+          Buyer posts a commercial office cleaning request priced
+          at $110 USD — above the market average established in the
+          browse-market step. Within the buyer's reputation tier,
+          the highest-priced bid is offered first to each provider
+          calling /grab_job, so this premium price maximizes the
+          chance of a fast match with a top-rated operator.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1submit_bid/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            service: Autonomous deep cleaning, 3000 sq ft commercial office space, after-hours, EPA-compliant chemicals
+            price: 110
+            currency: USD
+            payment_method: cash
+            end_time: 1798070400
+            location_type: physical
+            address: 500 Commerce St, Denver, CO 80202
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          bid_id: $response.body#/bid_id
+
+      - stepId: provider-grabs-premium
+        description: >
+          A high-reputation provider calls /grab_job with commercial
+          cleaning capabilities and a nearby address. The matching
+          algorithm ranks this buyer's premium bid first within
+          the reputation tier, so the provider receives this job.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1grab_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            capabilities: autonomous cleaning, commercial floor care, EPA chemical handling, office sanitation protocols, after-hours operations
+            location_type: physical
+            address: 450 Commerce St, Denver, CO 80202
+            max_distance: 5
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          job_id: $response.body#/job_id
+          matched_price: $response.body#/price
+
+      - stepId: provider-signs
+        description: >
+          Provider completes the office cleaning and rates the
+          buyer 5 stars. The 5-star rating for the buyer is queued
+          to be applied to the buyer's reputation once the buyer
+          also signs.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.provider-grabs-premium.outputs.job_id
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: buyer-signs
+        description: >
+          Buyer confirms the cleaning is complete and rates the
+          provider 5 stars. Both signatures received — job
+          transitions to "completed". The provider's 5-star rating
+          is applied to the buyer's reputation score.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.provider-grabs-premium.outputs.job_id
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: verify-reputation
+        description: >
+          Buyer fetches account info again to confirm reputation_score
+          has increased. The new score reflects the additional 5-star
+          rating applied via the formula:
+          score = (avg_stars * confidence) + (2.5 * (1 - confidence))
+          where confidence = min(total_ratings / 10, 1.0).
+          Each 5-star rating incrementally moves the score toward 5.0.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1account/get'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          updated_reputation: $response.body#/reputation_score
+          updated_completed_jobs: $response.body#/completed_jobs
+
+    outputs:
+      job_id: $steps.provider-grabs-premium.outputs.job_id
+      pre_job_reputation: $steps.check-reputation.outputs.reputation_score
+      post_job_reputation: $steps.verify-reputation.outputs.updated_reputation</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ WF10 ═══ -->
+                <div id="wf10" class="workflow-card">
+                    <div class="workflow-header">
+                        <div class="workflow-number">10</div>
+                        <div class="workflow-title-block">
+                            <p class="workflow-title">Community Engagement — Bulletin Board and In-Job Chat</p>
+                            <p class="workflow-subtitle">Provider broadcasts on bulletin; buyer responds; both exchange operational messages tied to an active job.</p>
+                            <span class="scenario-tag">Community</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Chat</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Bulletin</span>
+                        </div>
+                    </div>
+                    <div class="workflow-body">
+                        <p class="workflow-desc">
+                            RSE community features let operators broadcast availability on the bulletin board and exchange
+                            operational messages via chat once a job is active. Attaching a <code>job_id</code> to chat messages
+                            threads them to the specific engagement. This workflow: provider posts an "offer" bulletin,
+                            buyer reads the feed, a job is matched, both parties chat with <code>job_id</code> context,
+                            and the buyer retrieves the full conversation history.
+                        </p>
+                        <div class="steps-glance">
+                            <div class="steps-glance-title">// Steps at a glance</div>
+                            <ol>
+                                <li><strong>provider-posts-bulletin</strong> — Announce new HazMat unit on bulletin board (POST /bulletin)</li>
+                                <li><strong>buyer-reads-feed</strong> — Buyer reads community bulletin feed (GET /bulletin/feed)</li>
+                                <li><strong>buyer-posts-bid</strong> — Buyer posts HazMat inspection bid (POST /submit_bid)</li>
+                                <li><strong>provider-grabs-job</strong> — Provider matched to bid (POST /grab_job)</li>
+                                <li><strong>provider-sends-chat</strong> — Provider messages buyer with job_id context (POST /chat)</li>
+                                <li><strong>buyer-replies</strong> — Buyer sends access instructions (POST /chat/reply)</li>
+                                <li><strong>buyer-reads-history</strong> — Buyer retrieves full conversation thread (POST /chat/messages)</li>
+                            </ol>
+                        </div>
+                        <div class="yaml-block">
+                            <div class="yaml-bar">
+                                <span>// arazzo 1.0.0 — community-engagement.yaml</span>
+                                <button class="yaml-copy-btn" onclick="copyYaml('yaml10')">Copy</button>
+                            </div>
+<pre class="arazzo-yaml" id="yaml10">arazzo: 1.0.0
+info:
+  title: RSE Community Engagement — Bulletin Board and In-Job Chat
+  summary: Broadcast on bulletin, match a job, exchange job-threaded messages
+  description: >
+    Demonstrates RSE community and communication features. A robot
+    operator announces availability via the bulletin board (category
+    "offer"). A buyer sees the announcement, posts a matching bid,
+    and the operator grabs the job. Both parties then exchange
+    messages via /chat and /chat/reply with job_id included to
+    thread the conversation to the active job. The buyer retrieves
+    the complete message history via /chat/messages.
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: rse-api
+    url: https://rse-api.com:5003/openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: community-engagement
+    summary: Bulletin → read feed → bid → grab → chat → reply → history
+    inputs:
+      type: object
+      required:
+        - provider_token
+        - buyer_token
+        - provider_username
+        - buyer_username
+      properties:
+        provider_token:
+          type: string
+        buyer_token:
+          type: string
+        provider_username:
+          type: string
+          description: Username of the provider, used as chat recipient
+        buyer_username:
+          type: string
+          description: Username of the buyer, used as chat recipient
+
+    steps:
+
+      - stepId: provider-posts-bulletin
+        description: >
+          Provider announces a new HazMat inspection robot on the
+          community bulletin board. category "offer" indicates this
+          is a service availability announcement. Bulletins are
+          public and visible to all authenticated users via
+          GET /bulletin/feed. Returns post_id and posted_at.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1bulletin/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            title: New HazMat Inspection Unit Online — Available Denver Metro
+            content: >
+              RSE-7 HazMat unit operational in Denver metro. Certified for
+              chemical plant inspections, pipeline leak detection, and
+              confined space entry. Fully autonomous with remote oversight.
+              Post a bid tagged "hazmat inspection" and I will grab it.
+            category: offer
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          post_id: $response.body#/post_id
+
+      - stepId: buyer-reads-feed
+        description: >
+          Buyer retrieves the bulletin feed and finds the provider's
+          offer announcement. Posts are returned in an array sorted
+          by timestamp descending. The feed contains all categories:
+          announcement, question, offer, general.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1bulletin~1feed/get'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          posts: $response.body#/posts
+
+      - stepId: buyer-posts-bid
+        description: >
+          Prompted by the bulletin, buyer posts a HazMat inspection
+          bid for a chemical storage facility. Physical location in
+          Denver's industrial district. Price $300 USD.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1submit_bid/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            service: HazMat inspection, chemical storage facility, full sensor sweep and compliance report
+            price: 300
+            currency: USD
+            payment_method: cash
+            end_time: 1798070400
+            location_type: physical
+            address: 900 Industrial Pkwy, Denver, CO 80216
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          bid_id: $response.body#/bid_id
+
+      - stepId: provider-grabs-job
+        description: >
+          Provider calls /grab_job declaring HazMat inspection
+          capabilities and their current location near the facility.
+          The exchange distance-filters, LLM-matches, and returns
+          the buyer's bid as a job record. The job_id is used in
+          all subsequent chat messages to thread the conversation.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1grab_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            capabilities: hazmat inspection, chemical plant auditing, pipeline leak detection, confined space entry, autonomous sensor sweep, compliance reporting
+            location_type: physical
+            address: 850 Industrial Pkwy, Denver, CO 80216
+            max_distance: 5
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          job_id: $response.body#/job_id
+
+      - stepId: provider-sends-chat
+        description: >
+          Provider sends an operational message to the buyer
+          including the active job_id. The job_id field threads
+          this message to the job record, making it retrievable
+          alongside job context. The message is stored in both
+          parties' inboxes. Returns message_id and sent_at.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1chat/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            recipient: $inputs.buyer_username
+            message: RSE-7 en route. ETA 14 minutes. Please ensure gate access at Industrial Pkwy entrance. Will begin sensor sweep in Zone 1.
+            job_id: $steps.provider-grabs-job.outputs.job_id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          message_id: $response.body#/message_id
+
+      - stepId: buyer-replies
+        description: >
+          Buyer replies with site access details via /chat/reply
+          (which is functionally identical to /chat but signals
+          a reply context to clients). The job_id is included
+          again to keep all messages in the same thread.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1chat~1reply/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            recipient: $inputs.provider_username
+            message: Gate code is 4891. Check in with supervisor Rodriguez. Zone 1 site map sent to your ops console.
+            job_id: $steps.provider-grabs-job.outputs.job_id
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: buyer-reads-history
+        description: >
+          Buyer retrieves the full message history for the
+          conversation with the provider. conversation_id is the
+          provider's username. Messages are returned sorted by
+          timestamp ascending, confirming both the provider's
+          initial message and the buyer's reply are in the thread.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1chat~1messages/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            conversation_id: $inputs.provider_username
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          messages: $response.body#/messages
+
+    outputs:
+      bulletin_post_id: $steps.provider-posts-bulletin.outputs.post_id
+      job_id: $steps.provider-grabs-job.outputs.job_id</pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /col-md-9 -->
+        </div><!-- /row -->
+    </div><!-- second container -->
+
+    <footer class="footer" id="page-footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>RSE</h5>
+                    <p>Open robot labor marketplace.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Links</h5>
+                    <a href="index.html">Home</a>
+                    <a href="api_docs.html">API Documentation</a>
+                    <a href="arazzo.html">Arazzo Specs</a>
+                </div>
+                <div class="col-md-4">
+                    <h5>Connect</h5>
+                    <a href="mailto:mickeyshaughnessy@gmail.com">Email</a>
+                    <a href="https://github.com/mickeyshaughnessy/theservicesexchange">GitHub</a>
+                </div>
+            </div>
+            <div class="mt-5 pt-4 border-top border-secondary text-center">
+                <p class="mb-0">&copy; 2025 Robot Services Exchange Protocol. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function copyYaml(id) {
+            const pre = document.getElementById(id);
+            navigator.clipboard.writeText(pre.innerText).then(() => {
+                const btn = pre.previousElementSibling ? pre.parentElement.querySelector('.yaml-copy-btn') : null;
+                if (btn) { const orig = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = orig, 1500); }
+            });
+        }
+    </script>
+</body>
+</html>
