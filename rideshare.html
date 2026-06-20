@@ -167,16 +167,6 @@ input[type="range"].slider-input {
 .bar-wrap { height: 6px; background: rgba(255,255,255,0.08); margin-top: 4px; }
 .bar-fill { height: 100%; transition: width 0.5s; }
 
-/* Win-win meter */
-.win-meter { margin-top: 8px; }
-.win-label { display: flex; justify-content: space-between; margin-bottom: 3px; }
-.win-label span { font-size: 10px; }
-.win-track { height: 10px; background: rgba(255,255,255,0.08); position: relative; }
-.win-fill {
-  position: absolute; height: 100%; background: linear-gradient(90deg, var(--danger), var(--accent));
-  transition: width 0.8s;
-}
-.win-marker { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--primary); left: 50%; }
 
 .verdict-box {
   margin-top: 8px; padding: 8px; font-size: 11px; line-height: 1.6;
@@ -281,8 +271,8 @@ input[type="range"].slider-input {
         <div class="panel-title">// Demand</div>
 
         <div class="slider-row">
-          <div class="top"><span class="slider-label">Rides/min</span><span class="slider-value" id="disp-rate">10</span></div>
-          <input type="range" class="slider-input" id="ride-rate" min="1" max="40" value="10" oninput="updateParams()">
+          <div class="top"><span class="slider-label">Rides/min</span><span class="slider-value" id="disp-rate">5</span></div>
+          <input type="range" class="slider-input" id="ride-rate" min="1" max="40" value="5" oninput="updateParams()">
         </div>
         <div class="slider-row">
           <div class="top"><span class="slider-label">Base bid $</span><span class="slider-value" id="disp-price">$18</span></div>
@@ -344,12 +334,12 @@ input[type="range"].slider-input {
         <div class="panel-title">// Vehicle Economics</div>
 
         <div class="slider-row">
-          <div class="top"><span class="slider-label">Vehicle cost</span><span class="slider-value" id="disp-veh-cost">$50k</span></div>
-          <input type="range" class="slider-input" id="veh-cost" min="5000" max="200000" step="5000" value="50000" oninput="updateParams()">
-        </div>
-        <div class="slider-row">
           <div class="top"><span class="slider-label">Cost/mile (ops)</span><span class="slider-value" id="disp-ops-cost">$0.25</span></div>
           <input type="range" class="slider-input" id="ops-cost" min="0.05" max="1.00" step="0.05" value="0.25" oninput="updateParams()">
+        </div>
+        <div style="font-size:9px;color:var(--text-dim);line-height:1.6;margin-top:4px;">
+          Applied to every mile driven (deadhead + carrying) and subtracted from
+          fleet net. Also weighs into which ride each vehicle picks.
         </div>
       </div>
 
@@ -485,8 +475,9 @@ input[type="range"].slider-input {
               <div style="font-size:9px;color:var(--text-dim)">via overflow</div>
             </div>
             <div class="metric-card">
-              <div class="metric-card-title">Avg wait Δ</div>
-              <div class="big-number" id="m-wait-delta">—</div>
+              <div class="metric-card-title">Avg fare paid</div>
+              <div class="big-number" id="m-avg-fare">—</div>
+              <div style="font-size:9px;color:var(--text-dim)">per served ride</div>
             </div>
           </div>
           <div class="verdict-box" id="demand-verdict" style="border-color:var(--text-dim);color:var(--text-dim);">
@@ -495,20 +486,30 @@ input[type="range"].slider-input {
         </div>
 
         <div id="winwin-overall" style="margin-top:12px;">
-          <div class="section-hdr">Overall Exchange Health</div>
-          <div class="win-meter">
-            <div class="win-label">
-              <span style="color:var(--danger);">Loss</span>
-              <span id="exch-health-label" style="color:var(--primary);">—</span>
-              <span style="color:var(--accent);">Win</span>
+          <div class="section-hdr">Overall — Concrete Numbers</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+            <div class="metric-card">
+              <div class="metric-card-title">Supply net$</div>
+              <div class="big-number" id="ov-supply-net" style="font-size:15px;">—</div>
+              <div style="font-size:9px;color:var(--text-dim)">exch − seats</div>
             </div>
-            <div class="win-track">
-              <div class="win-fill" id="exch-health-bar" style="width:50%"></div>
-              <div class="win-marker"></div>
+            <div class="metric-card">
+              <div class="metric-card-title">Serve rate</div>
+              <div class="big-number cyan" id="ov-serve-rate" style="font-size:15px;">—</div>
+              <div style="font-size:9px;color:var(--text-dim)">all demand</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-card-title">Avg fare</div>
+              <div class="big-number" id="ov-avg-fare" style="font-size:15px;">—</div>
+              <div style="font-size:9px;color:var(--text-dim)">rider cost</div>
             </div>
           </div>
           <div style="font-size:10px;color:var(--text-dim);margin-top:8px;" id="breakeven-label">
             Break-even: —
+          </div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:6px;line-height:1.6;">
+            Supply net treats exchange rides as incremental (vehicle otherwise idle).
+            Fleet table shows all-in net incl. ops cost.
           </div>
         </div>
       </div>
@@ -611,8 +612,8 @@ let nextId = 1;
 
 function defaultParams() {
   return {
-    simSpeed: 5,         // sim-seconds per real tick (TICK_MS ms)
-    vehicleSpeed: 0.00012, // degrees-lat per sim-second (~30 mph equivalent)
+    simSpeed: 5,         // sim-seconds advanced per real tick (TICK_MS ms)
+    vehicleMph: 30,      // road speed in mph — used directly, no degree fudge
 
     // Fleet sizes
     waymoCnt: 15, uberCnt: 25, teslaCnt: 12, indepCnt: 8,
@@ -626,11 +627,10 @@ function defaultParams() {
     propCommPercent: 25,  // % proprietary platform keeps from driver
 
     // Vehicle economics
-    vehicleCost: 50000,
     opsCostPerMile: 0.25,
 
     // Demand
-    rideRatePerMin: 10,
+    rideRatePerMin: 5,   // balanced vs default 60-vehicle fleet (~73% serve rate)
     baseBid: 18,
     bidVariation: 0.20,  // ±20%
 
@@ -675,14 +675,16 @@ function makeSim(params) {
 function mkFleetStats() {
   return {
     ridesCompleted: 0, revenue: 0, milesDriven: 0,
-    exchRides: 0, exchRevenue: 0, exchFeesPaid: 0,
+    exchRides: 0, exchRevenue: 0,
     seatCostPaid: 0,   // total seat cost this fleet has paid
     totalIdleSec: 0, totalBusySec: 0,
   };
 }
 
 function mkDemandStats() {
-  return { requested: 0, served: 0, abandoned: 0, waitSum: 0, overflowed: 0 };
+  // farePaidSum = total fare riders actually paid (gross bid, incl. any surge).
+  // The supplier nets bid×(1−fee/comm); the difference is the platform's take.
+  return { requested: 0, served: 0, abandoned: 0, waitSum: 0, overflowed: 0, farePaidSum: 0 };
 }
 
 // ============================================================
@@ -705,6 +707,28 @@ function randomLocation(excludeIdx) {
 }
 
 function jitter(val, amt) { return val + (Math.random() - 0.5) * amt; }
+
+// Pick a destination index weighted by exp(−dist / TRIP_SCALE_MI). Nearer
+// locations dominate, giving realistic short urban trips. Returns a different
+// index than the pickup.
+const TRIP_SCALE_MI = 4;
+function pickGravityDest(pickupIdx, pickup) {
+  let wsum = 0;
+  const weights = new Array(LOCATIONS.length);
+  for (let j = 0; j < LOCATIONS.length; j++) {
+    if (j === pickupIdx) { weights[j] = 0; continue; }
+    const d = distanceMiles(pickup.lat, pickup.lon, LOCATIONS[j].lat, LOCATIONS[j].lon);
+    const w = Math.exp(-d / TRIP_SCALE_MI);
+    weights[j] = w;
+    wsum += w;
+  }
+  let roll = Math.random() * wsum;
+  for (let j = 0; j < LOCATIONS.length; j++) {
+    roll -= weights[j];
+    if (roll <= 0 && weights[j] > 0) return j;
+  }
+  return (pickupIdx + 1) % LOCATIONS.length;  // numerical fallback
+}
 
 function fmt$(n) { return '$' + n.toFixed(2); }
 function fmtK(n) { return n >= 1000 ? '$' + (n/1000).toFixed(1) + 'k' : fmt$(n); }
@@ -830,11 +854,13 @@ function generateRequests(dt) {
     else channel = 'exchange';
 
     const pickupIdx = Math.floor(Math.random() * LOCATIONS.length);
-    let destIdx;
-    do { destIdx = Math.floor(Math.random() * LOCATIONS.length); } while (destIdx === pickupIdx);
-
     const pickup = LOCATIONS[pickupIdx];
-    const dest   = LOCATIONS[destIdx];
+
+    // Destination by gravity: nearer locations are far more likely, so trip
+    // lengths resemble real urban rideshare (mostly short hops) instead of
+    // uniform cross-metro hauls that would tie vehicles up unrealistically.
+    const destIdx = pickGravityDest(pickupIdx, pickup);
+    const dest    = LOCATIONS[destIdx];
     const baseBid = p.baseBid * (1 + (Math.random() - 0.5) * 2 * p.bidVariation);
 
     const req = {
@@ -928,14 +954,18 @@ function matchVehicles() {
       if (!isEligible(vehicle, req)) continue;
       const dist = distanceMiles(vehicle.lat, vehicle.lon, req.pickupLat, req.pickupLon);
       if (dist > p.matchDistMiles) continue;
-      const effectiveRev = effectiveRevenue(vehicle, req);
-      eligible.push({ req, dist, effectiveRev });
+      // Profit-maximizing objective: net fare minus the deadhead cost of
+      // driving to the pickup. Makes ops cost/mile actually influence dispatch
+      // instead of only showing up on the scoreboard.
+      const netFare = effectiveRevenue(vehicle, req);
+      const score = netFare - dist * p.opsCostPerMile;
+      eligible.push({ req, dist, score });
     }
 
     if (eligible.length === 0) continue;
 
-    // Greedy: pick highest effective revenue (profit-maximizing vehicle behavior)
-    eligible.sort((a, b) => b.effectiveRev - a.effectiveRev);
+    // Greedy: each vehicle claims the request with the best deadhead-adjusted profit.
+    eligible.sort((a, b) => b.score - a.score);
     const best = eligible[0];
     assignRide(vehicle, best.req);
     claimed.add(best.req.id);
@@ -997,47 +1027,40 @@ function assignRide(vehicle, req) {
 // ============================================================
 
 function moveVehicles(dt) {
-  const p = sim.params;
-  const speed = p.vehicleSpeed * p.simSpeed;  // degrees per tick
+  // dt = sim-seconds elapsed this tick. Distance budget is computed in real
+  // miles from a real road speed, and arrival is tested in miles via
+  // distanceMiles() — the same metric used for cost — so trip time and trip
+  // miles stay consistent regardless of travel direction.
+  const milesBudget = (sim.params.vehicleMph / 3600) * dt;  // miles this tick
 
   for (const v of sim.vehicles) {
     if (v.status === 'idle') continue;
     if (v.targetLat === null) continue;
 
-    const dLat = v.targetLat - v.lat;
-    const dLon = v.targetLon - v.lon;
-    const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+    const distMi = distanceMiles(v.lat, v.lon, v.targetLat, v.targetLon);
 
-    const movesDist = speed * TICK_MS / 1000;  // how far we move this real-second
-    const step = movesDist / (TICK_MS / 1000);  // per tick
-
-    if (dist <= movesDist) {
-      // Arrived at target
+    if (distMi <= milesBudget || distMi < 1e-9) {
+      // Reached the target this tick.
       v.lat = v.targetLat;
       v.lon = v.targetLon;
+      v.milesDriven += distMi;
+      sim.stats[v.fleet].milesDriven += distMi;
 
       if (v.status === 'en_route_pickup') {
-        // Pick up passenger
-        v.status = 'carrying';
+        v.status = 'carrying';      // passenger boards; now head to destination
         v.targetLat = v.destLat;
         v.targetLon = v.destLon;
-        // Accumulate miles driven to pickup
-        const mpi = distanceMiles(v.lat, v.lon, v.targetLat, v.targetLon);
-        v.milesDriven += mpi;
-        sim.stats[v.fleet].milesDriven += mpi;
       } else if (v.status === 'carrying') {
         completeRide(v);
       }
     } else {
-      // Move toward target
-      const ratio = movesDist / dist;
-      const newLat = v.lat + dLat * ratio;
-      const newLon = v.lon + dLon * ratio;
-      const milesMoved = distanceMiles(v.lat, v.lon, newLat, newLon);
-      v.lat = newLat;
-      v.lon = newLon;
-      v.milesDriven += milesMoved;
-      sim.stats[v.fleet].milesDriven += milesMoved;
+      // Advance a fraction of the way. Over these short straight-line hops the
+      // miles covered ≈ frac × distMi, so logging milesBudget is accurate.
+      const frac = milesBudget / distMi;
+      v.lat += (v.targetLat - v.lat) * frac;
+      v.lon += (v.targetLon - v.lon) * frac;
+      v.milesDriven += milesBudget;
+      sim.stats[v.fleet].milesDriven += milesBudget;
     }
   }
 }
@@ -1058,7 +1081,8 @@ function completeRide(vehicle) {
   vehicle.currentReqId = null;
   vehicle.ridesCompleted++;
   vehicle.revenue += rev;
-  vehicle.costs += vehicle.milesDriven * sim.params.opsCostPerMile * 0; // tracked via stats
+  // Ops cost is derived from cumulative miles × opsCostPerMile at render time,
+  // so nothing to accrue per-ride here.
 
   // Fleet stats
   const fs = sim.stats[vehicle.fleet];
@@ -1070,17 +1094,18 @@ function completeRide(vehicle) {
     vehicle.exchRevenue += rev;
     fs.exchRides++;
     fs.exchRevenue += rev;
-    fs.exchFeesPaid += fee;
     sim.stats.exchange.brokered++;
     sim.stats.exchange.fees += fee;
     sim.stats.exchange.priceSum += req.bidPrice;
     if (req.overflowed) sim.stats.exchange.overflow++;
   }
 
-  // Demand stats
+  // Demand stats. The rider pays the full bid (gross), including any surge;
+  // the supplier's net (rev) is lower by the platform's take.
   const ds = sim.stats.demand[req.channel];
   ds.served++;
   ds.waitSum += (req.matchedAt - req.createdAt);
+  ds.farePaidSum += req.bidPrice;
 
   // Remove request
   sim.requests = sim.requests.filter(r => r.id !== req.id);
@@ -1384,21 +1409,25 @@ function renderMetrics() {
 function renderWinWin() {
   const s = sim.stats;
   const p = sim.params;
+  const cap = w => w.charAt(0).toUpperCase() + w.slice(1);
 
-  // Supply ROI per participating fleet
+  // ── Supply side: per-fleet exchange contribution ───────────────────────────
+  // For a participating fleet, the exchange's contribution is the revenue from
+  // exchange rides (fs.exchRevenue, ALREADY net of the exchange fee) minus the
+  // one-time seat costs paid. The fee is not subtracted again. Exchange rides
+  // are counted as incremental — i.e. we assume the vehicle would otherwise
+  // have been idle (stated on-screen so the reader can judge the assumption).
   let roiHTML = '';
-  let totalExtraNet = 0;
+  let supplyNetTotal = 0;
   let anyParticipating = false;
 
   for (const fl of ['waymo','uber','tesla','independent']) {
-    const vehicles = sim.vehicles.filter(v => v.fleet === fl);
-    if (vehicles.length === 0) continue;
+    if (sim.vehicles.filter(v => v.fleet === fl).length === 0) continue;
     const fs = s[fl];
-    const joinExch = isFleetExchangeEnabled(fl);
 
-    if (!joinExch && fl !== 'independent') {
+    if (!isFleetExchangeEnabled(fl)) {
       roiHTML += `<div class="roi-row">
-        <div class="roi-top"><span class="roi-name f-${fl}">${fl.charAt(0).toUpperCase()+fl.slice(1)}</span>
+        <div class="roi-top"><span class="roi-name f-${fl}">${cap(fl)}</span>
         <span class="roi-val" style="color:var(--text-dim)">Exchange OFF</span></div>
         <div class="roi-bar"><div class="roi-fill" style="width:0%;background:var(--text-dim)"></div></div>
       </div>`;
@@ -1406,34 +1435,27 @@ function renderWinWin() {
     }
     anyParticipating = true;
 
-    const seatTotal = fs.seatCostPaid;
-    const feesPaid  = fs.exchFeesPaid;
-    const extraRev  = fs.exchRevenue;
-    const opsCostSaved = 0; // assume same ops cost either way
-    const netBenefit = extraRev - seatTotal - feesPaid;
-    totalExtraNet += netBenefit;
+    const exchNetRev = fs.exchRevenue;     // already net of exchange fee
+    const seatPaid   = fs.seatCostPaid;    // one-time seats actually charged
+    const net        = exchNetRev - seatPaid;
+    supplyNetTotal  += net;
 
-    const breakEvenRides = seatTotal > 0 ?
-      seatTotal / (p.baseBid * (1 - p.exchFeePercent/100) - p.baseBid * 0) : 0;
-
-    const pct = Math.max(0, Math.min(100, netBenefit < 0 ?
-      (netBenefit / (seatTotal || 1) * 50 + 50) : // negative: 0-50%
-      (50 + Math.min(50, netBenefit / Math.max(1, seatTotal) * 50))
-    ));
-
-    const color = netBenefit >= 0 ? 'var(--accent)' : 'var(--danger)';
+    // Bar = seat-cost recovery %. With no seat cost, exchange revenue is pure gain.
+    const recoveryPct = seatPaid > 0
+      ? Math.max(0, Math.min(100, exchNetRev / seatPaid * 100))
+      : (exchNetRev > 0 ? 100 : 0);
+    const color = net >= 0 ? 'var(--accent)' : 'var(--danger)';
 
     roiHTML += `<div class="roi-row">
       <div class="roi-top">
-        <span class="roi-name f-${fl}">${fl.charAt(0).toUpperCase()+fl.slice(1)}</span>
-        <span class="roi-val" style="color:${color}">${fmtK(netBenefit)} net</span>
+        <span class="roi-name f-${fl}">${cap(fl)}</span>
+        <span class="roi-val" style="color:${color}">${fmtK(net)} net</span>
       </div>
       <div style="font-size:9px;color:var(--text-dim);margin-bottom:2px;">
-        +${fmtK(extraRev)} exch rev − $${seatTotal.toFixed(0)} seat − $${feesPaid.toFixed(0)} fees
-        · ${fs.exchRides} exch rides
+        ${fs.exchRides} exch rides · +${fmtK(exchNetRev)} net rev − $${seatPaid.toFixed(0)} seat
       </div>
       <div class="roi-bar">
-        <div class="roi-fill" style="width:${pct}%;background:${color}"></div>
+        <div class="roi-fill" style="width:${recoveryPct}%;background:${color}"></div>
       </div>
     </div>`;
   }
@@ -1441,68 +1463,68 @@ function renderWinWin() {
   document.getElementById('roi-rows').innerHTML = roiHTML ||
     '<div style="font-size:10px;color:var(--text-dim)">Enable exchange participation ↑</div>';
 
+  // Single, consistent break-even: rides per vehicle to recover one seat,
+  // at the base fare net of the exchange fee. dollars / (dollars per ride) = rides.
+  const revPerExchRide = p.baseBid * (1 - p.exchFeePercent / 100);
+  const breakEvenRides = p.seatCost > 0
+    ? Math.ceil(p.seatCost / Math.max(0.01, revPerExchRide)) : 0;
+
   // Supply verdict
   const supplyVerdict = document.getElementById('supply-verdict');
   if (!anyParticipating) {
     supplyVerdict.style.borderColor = 'var(--text-dim)';
     supplyVerdict.style.color = 'var(--text-dim)';
     supplyVerdict.textContent = 'Toggle fleet exchange participation to analyze.';
-  } else if (totalExtraNet > 0) {
+  } else if (supplyNetTotal >= 0) {
     supplyVerdict.style.borderColor = 'var(--accent)';
     supplyVerdict.style.color = 'var(--accent)';
-    supplyVerdict.textContent = `Exchange WIN: participating fleets up $${totalExtraNet.toFixed(0)} net. Seat cost recovered, fees offset by extra rides.`;
+    supplyVerdict.textContent = `Exchange WIN for supply: participating fleets +$${supplyNetTotal.toFixed(0)} net after seat costs, across ${s.exchange.brokered} brokered rides.`;
   } else {
-    const ridesToBreakEven = p.seatCost / Math.max(0.01, p.baseBid * p.exchFeePercent / 100);
     supplyVerdict.style.borderColor = 'var(--danger)';
     supplyVerdict.style.color = 'var(--danger)';
-    supplyVerdict.textContent = `Building: need ~${Math.ceil(ridesToBreakEven)} exchange rides to break even. Currently ${s.exchange.brokered}.`;
+    supplyVerdict.textContent = `Not yet: −$${Math.abs(supplyNetTotal).toFixed(0)} net. A seat recovers after ~${breakEvenRides} exchange rides/vehicle at $${p.baseBid} fares.`;
   }
 
-  // Demand verdict
+  // ── Demand side ─────────────────────────────────────────────────────────────
   const overflowServed = s.exchange.overflow;
-  const totalAbandoned = ['waymo','uber','tesla','exchange'].reduce((a,c) => a + s.demand[c].abandoned, 0);
+  const totalAbandoned  = ['waymo','uber','tesla','exchange'].reduce((a,c) => a + s.demand[c].abandoned, 0);
+  const totalServed     = ['waymo','uber','tesla','exchange'].reduce((a,c) => a + s.demand[c].served, 0);
+  const totalRequested  = ['waymo','uber','tesla','exchange'].reduce((a,c) => a + s.demand[c].requested, 0);
+  const totalFarePaid   = ['waymo','uber','tesla','exchange'].reduce((a,c) => a + s.demand[c].farePaidSum, 0);
+  const avgFare         = totalServed > 0 ? totalFarePaid / totalServed : 0;
+  const serveRate       = totalRequested > 0 ? totalServed / totalRequested : 0;
+
   document.getElementById('m-saved-demand').textContent = overflowServed;
+  document.getElementById('m-avg-fare').textContent = avgFare > 0 ? fmt$(avgFare) : '—';
 
   const demandVerdict = document.getElementById('demand-verdict');
   if (!p.overflowToExch) {
     demandVerdict.style.borderColor = 'var(--text-dim)';
     demandVerdict.style.color = 'var(--text-dim)';
-    demandVerdict.textContent = 'Enable "overflow to exchange" to see demand benefit.';
+    demandVerdict.textContent = 'Enable "overflow to exchange" so unserved proprietary riders can be picked up by exchange supply.';
   } else if (overflowServed > 0) {
     demandVerdict.style.borderColor = 'var(--exchange)';
     demandVerdict.style.color = 'var(--exchange)';
-    demandVerdict.textContent = `Demand WIN: ${overflowServed} rides served via overflow that would have been abandoned. ${totalAbandoned} still abandoned (no exchange supply nearby).`;
+    demandVerdict.textContent = `Exchange WIN for demand: ${overflowServed} riders picked up by exchange supply after their own fleet left them waiting past ${(p.overflowWait/60).toFixed(0)} min (${totalAbandoned} still abandoned).`;
   } else {
     demandVerdict.style.borderColor = 'var(--yellow)';
     demandVerdict.style.color = 'var(--yellow)';
-    demandVerdict.textContent = `Overflow enabled — waiting for unserved proprietary riders (${totalAbandoned} abandoned so far).`;
+    demandVerdict.textContent = `Overflow enabled — no proprietary riders have needed exchange rescue yet (${totalAbandoned} abandoned so far).`;
   }
 
-  // Win-win meter (combined)
-  const totalServed    = ['waymo','uber','tesla','exchange'].reduce((a,c) => a + s.demand[c].served, 0);
-  const totalRequested = ['waymo','uber','tesla','exchange'].reduce((a,c) => a + s.demand[c].requested, 0);
-  const serveRate = totalRequested > 0 ? totalServed / totalRequested : 0;
-  const exchContrib = totalRequested > 0 ? s.exchange.brokered / totalRequested : 0;
+  // ── Overall: two concrete numbers, no blended index ─────────────────────────
+  const supplyNetEl = document.getElementById('ov-supply-net');
+  supplyNetEl.textContent = anyParticipating ? fmtK(supplyNetTotal) : '—';
+  supplyNetEl.style.color = !anyParticipating ? 'var(--text-dim)'
+    : (supplyNetTotal >= 0 ? 'var(--accent)' : 'var(--danger)');
 
-  // Score: 0 (all bad) to 1 (win-win)
-  // Weighted: serve rate 60%, supply ROI positive 40%
-  const supplyScore = anyParticipating ? Math.min(1, Math.max(0, totalExtraNet / Math.max(1, p.seatCost * 2) + 0.5)) : 0.5;
-  const demandScore = serveRate;
-  const overallScore = anyParticipating ? (supplyScore * 0.4 + demandScore * 0.6) : demandScore * 0.5 + 0.5;
-  const pct2 = Math.min(100, Math.max(0, overallScore * 100));
+  document.getElementById('ov-serve-rate').textContent =
+    totalRequested > 0 ? Math.round(serveRate * 100) + '%' : '—';
+  document.getElementById('ov-avg-fare').textContent = avgFare > 0 ? fmt$(avgFare) : '—';
 
-  document.getElementById('exch-health-bar').style.width = pct2 + '%';
-  const label = pct2 > 65 ? 'Win-Win ✓' : pct2 > 45 ? 'Building...' : 'Not yet profitable';
-  document.getElementById('exch-health-label').textContent = label;
-  document.getElementById('exch-health-label').style.color =
-    pct2 > 65 ? 'var(--accent)' : pct2 > 45 ? 'var(--yellow)' : 'var(--danger)';
-
-  // Break-even
-  const be = p.seatCost / Math.max(0.01, p.baseBid * (1 - p.exchFeePercent/100) * (p.propCommPercent/100));
-  const beLabel = anyParticipating && s.exchange.brokered > 0 ?
-    `Break-even: ~${Math.ceil(be)} rides (${s.exchange.brokered} so far = ${Math.round(s.exchange.brokered/be*100)}%)` :
-    `Break-even point: ~${Math.ceil(be)} exchange rides per vehicle`;
-  document.getElementById('breakeven-label').textContent = beLabel;
+  document.getElementById('breakeven-label').textContent = p.seatCost > 0
+    ? `Seat recovers after ~${breakEvenRides} exchange rides/vehicle (at $${p.baseBid} fare, ${p.exchFeePercent}% fee).`
+    : 'No seat cost — every exchange ride is pure upside for supply.';
 }
 
 function renderEventLog() {
@@ -1575,7 +1597,6 @@ function readParamsFromUI(p) {
   p.seatCost      = parseInt(document.getElementById('seat-cost').value)   || 0;
   p.exchFeePercent= parseFloat(document.getElementById('exch-fee').value)  || 0;
   p.propCommPercent=parseInt(document.getElementById('prop-comm').value)   || 0;
-  p.vehicleCost   = parseInt(document.getElementById('veh-cost').value)    || 50000;
   p.opsCostPerMile= parseFloat(document.getElementById('ops-cost').value)  || 0.25;
   p.rideRatePerMin= parseInt(document.getElementById('ride-rate').value)   || 10;
   p.baseBid       = parseFloat(document.getElementById('bid-price').value) || 18;
@@ -1638,7 +1659,6 @@ function updateParamDisplays() {
   id('disp-seat-cost').textContent = '$' + p.seatCost;
   id('disp-exch-fee').textContent = p.exchFeePercent + '%';
   id('disp-prop-comm').textContent = p.propCommPercent + '%';
-  id('disp-veh-cost').textContent = p.vehicleCost >= 1000 ? '$' + (p.vehicleCost/1000).toFixed(0) + 'k' : '$' + p.vehicleCost;
   id('disp-ops-cost').textContent = '$' + p.opsCostPerMile.toFixed(2);
   id('disp-surge-wait').textContent = (p.surgeWait / 60).toFixed(1) + ' min';
   id('disp-surge-mult').textContent = p.surgeMult.toFixed(2) + '×';
@@ -1680,7 +1700,7 @@ function loadScenario(name) {
     },
     balanced: {
       waymoCnt: 15, uberCnt: 25, teslaCnt: 12, indepCnt: 8,
-      rideRatePerMin: 10, baseBid: 18,
+      rideRatePerMin: 5, baseBid: 18,
       waymoShare: 20, uberShare: 45, teslaShare: 15, exchShare: 20,
       waymoExch: false, uberExch: false, teslaExch: false,
       seatCost: 500, exchFeePercent: 5, propCommPercent: 25,
