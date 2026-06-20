@@ -9,7 +9,6 @@ import uuid
 import json
 import time
 import logging
-import hashlib
 import math
 import threading
 import requests
@@ -35,106 +34,9 @@ logger = logging.getLogger(__name__)
 # Data Loading (Mock Database)
 # -----------------------------------------------------------------------------
 
-def load_seat_data(filename: str) -> Dict[str, Any]:
-    """Load seat data from a file safely."""
-    seats = {}
-    try:
-        with open(filename, 'r') as f:
-            for line in f:
-                if line.strip():
-                    seat_data = json.loads(line.strip())
-                    seats[seat_data['id']] = seat_data
-        return seats
-    except FileNotFoundError:
-        logger.warning(f"Seat data file not found: {filename}")
-        return {}
-    except json.JSONDecodeError:
-        logger.error(f"Invalid JSON in seat data file: {filename}")
-        return {}
-    except Exception as e:
-        logger.error(f"Error loading seat data from {filename}: {str(e)}")
-        return {}
-
-# Load seats at module level
-golden_seats = load_seat_data('seats.dat')
-silver_seats = load_seat_data('silver_seats.dat')
-
-_SEATS_REFRESH_INTERVAL = 86400  # 24 hours
-
-
-def _seats_refresh_loop():
-    """Background thread to reload seat data every 24 hours."""
-    while True:
-        time.sleep(_SEATS_REFRESH_INTERVAL)
-        global golden_seats, silver_seats
-        logger.info("Refreshing seat data...")
-        golden_seats = load_seat_data('seats.dat')
-        silver_seats = load_seat_data('silver_seats.dat')
-        logger.info(f"Seat data refreshed: {len(golden_seats)} golden, {len(silver_seats)} silver")
-
-
-threading.Thread(target=_seats_refresh_loop, daemon=True).start()
-
 # -----------------------------------------------------------------------------
 # Helper Functions
 # -----------------------------------------------------------------------------
-
-def md5(text: str) -> str:
-    """Generate MD5 hash of text."""
-    return hashlib.md5(text.encode()).hexdigest()
-
-def verify_seat_credentials(seat_data: Dict[str, Any]) -> Tuple[bool, str]:
-    """
-    Verify seat credentials for both Golden and Silver seats.
-    
-    Args:
-        seat_data: Dictionary containing 'id', 'owner', and 'secret'.
-        
-    Returns:
-        Tuple[bool, str]: (isValid, message)
-    """
-    if not config.SEAT_VERIFICATION_ENABLED:
-        return True, "Seat verification temporarily disabled"
-    
-    if not seat_data or 'id' not in seat_data:
-        return False, "Missing seat ID"
-    
-    seat_id = seat_data['id']
-    seat_owner = seat_data.get('owner')
-    seat_secret = seat_data.get('secret')
-    
-    if not all([seat_id, seat_owner, seat_secret]):
-        return False, "Missing seat credentials"
-    
-    # Check Golden seats first (permanent)
-    if seat_id in golden_seats:
-        stored_seat = golden_seats[seat_id]
-        if (seat_owner == stored_seat['owner'] and 
-            seat_secret == md5(stored_seat['phrase'])):
-            return True, "Golden seat verified"
-        else:
-            return False, "Invalid golden seat credentials"
-    
-    # Check Silver seats (time-limited)
-    if seat_id in silver_seats:
-        stored_seat = silver_seats[seat_id]
-        
-        # Verify owner and secret
-        if (seat_owner != stored_seat['owner'] or 
-            seat_secret != md5(stored_seat['phrase'])):
-            return False, "Invalid silver seat credentials"
-        
-        # Check if seat has expired
-        assigned_time = stored_seat.get('assigned', 0)
-        current_time = int(time.time())
-        one_year_seconds = 365 * 24 * 3600
-        
-        if current_time > assigned_time + one_year_seconds:
-            return False, "Silver seat has expired"
-        
-        return True, "Silver seat verified"
-    
-    return False, "Seat ID not found"
 
 def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
@@ -539,6 +441,9 @@ def set_wallet(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             return {"error": "User not found"}, 404
 
         user_data['wallet_address'] = address
+        seat_result = seat_verification.verify_seat(address)
+        if not seat_result["error"]:
+            user_data['seat_active'] = seat_result["valid"]
         save_account(username, user_data)
 
         logger.info(f"Wallet linked for {username}: {address}")
@@ -789,40 +694,28 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     try:
         username = data.get('username')
 
-        if config.SEAT_VERIFICATION_ENABLED:
-            # NFT seat gate (new system)
-            acct = get_account(username)
-            if not acct:
-                return {"error": "User not found"}, 404
-
-            wallet = acct.get('wallet_address')
-            if not wallet:
-                return {"error": "No wallet address linked. Use /set_wallet to link your Ethereum wallet."}, 403
-
-            nft = seat_verification.verify_seat(wallet)
-            if nft["error"]:
-                # RPC outage — fail open so the marketplace keeps running
-                logger.warning(f"NFT seat RPC error for {username} ({wallet}): {nft['error']}")
-            elif nft["revoked"]:
-                return {"error": f"Your RSE Seat (#{nft['token_id']}) has been revoked."}, 403
-            elif not nft["valid"]:
-                return {"error": f"No valid RSE Seat NFT found for wallet {wallet}"}, 403
-        else:
-            # Legacy file-based seat gate (seats.dat / silver_seats.dat)
-            seat_data = data.get('seat')
-            is_valid, message = verify_seat_credentials(seat_data)
-            if not is_valid:
-                return {"error": f"Seat verification failed: {message}"}, 403
-
-        capabilities = data.get('capabilities', '').strip()
-        location_type = data.get('location_type', 'physical')
-        
-        if not capabilities:
-            return {"error": "Capabilities required"}, 400
-        
         user_data = get_account(username)
         if not user_data:
             return {"error": "User not found"}, 404
+
+        if config.SEAT_VERIFICATION_ENABLED:
+            if not user_data.get('seat_active'):
+                wallet = user_data.get('wallet_address')
+                if not wallet:
+                    return {"error": "No wallet address linked. Use /set_wallet to link your Ethereum wallet."}, 403
+                return {"error": f"No valid RSE Seat found for wallet {wallet}. Use /set_wallet to re-sync after acquiring a seat."}, 403
+
+        _GRAB_COOLDOWN = 900
+        last_grab = user_data.get('last_grab_at', 0)
+        remaining = _GRAB_COOLDOWN - (time.time() - last_grab)
+        if remaining > 0:
+            return {"error": f"Rate limit: wait {int(remaining)}s before next /grab_job"}, 429
+
+        capabilities = data.get('capabilities', '').strip()
+        location_type = data.get('location_type', 'physical')
+
+        if not capabilities:
+            return {"error": "Capabilities required"}, 400
 
         if user_data.get('user_type') != 'supply':
             return {"error": "Only supply-type accounts can grab jobs"}, 403
@@ -939,9 +832,12 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         
         save_job(job_id, job_record)
         delete_bid(best_bid['bid_id'])
-        
+
+        user_data['last_grab_at'] = int(time.time())
+        save_account(username, user_data)
+
         logger.info(f"Job matched: {job_id}")
-        
+
         return job_record, 200
         
     except Exception as e:

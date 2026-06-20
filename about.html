@@ -192,11 +192,14 @@
                     <div style="background:var(--bg-deep);border:1px solid rgba(57,255,20,0.2);padding:1.5rem;">
                         <h4 style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--accent);margin-bottom:1rem;">HOW VERIFICATION WORKS</h4>
                         <p style="font-family:'Share Tech Mono',monospace;color:var(--text);font-size:0.85rem;line-height:1.8;">
-                            The RSE API calls <code style="color:var(--primary);">isValidSeat(address)</code> on the contract before each /grab_job.
-                            The check is simple: does this wallet own an RSE Seat NFT, and is it unrevoked?
+                            Link your wallet once via <code style="color:var(--primary);">POST /set_wallet</code>.
+                            The server calls <code style="color:var(--primary);">isValidSeat(address)</code> on the contract at that moment
+                            and stores the result on your account. No ETH is spent — it is a free read-only call.
                         </p>
                         <p style="font-family:'Share Tech Mono',monospace;color:var(--text);font-size:0.85rem;line-height:1.8;">
-                            Link your wallet once via <code style="color:var(--primary);">POST /set_wallet</code>. After that, every /grab_job call verifies on-chain automatically.
+                            Every <code style="color:var(--primary);">/grab_job</code> call then checks that stored seat status — no
+                            on-chain lookup on the hot path. If your seat is revoked or you acquire a new one, call
+                            <code style="color:var(--primary);">POST /set_wallet</code> again to re-sync.
                         </p>
                     </div>
                 </div>

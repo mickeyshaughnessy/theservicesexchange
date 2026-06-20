@@ -399,6 +399,7 @@
                     <a href="#my-jobs">My Jobs</a>
                     <a href="#submit-bid">Submit Bid</a>
                     <a href="#grab-job">Grab Job</a>
+                    <a href="#supply-script">↳ Python Reference</a>
                     <a href="#reject-job">Reject Job</a>
                     <a href="#sign-job">Sign Job</a>
                     <a href="#cancel-bid">Cancel Bid</a>
@@ -460,8 +461,13 @@
                     </table>
                     <div style="background:rgba(57,255,20,0.05);border:1px solid rgba(57,255,20,0.2);padding:0.85rem 1rem;margin-top:1rem;font-family:'Share Tech Mono',monospace;font-size:0.8rem;line-height:1.9;">
                         <span style="color:var(--accent);">// How it works</span><br>
-                        The API calls <code>isValidSeat(address)</code> on the contract — a Solidity <code>view</code> function. This is a free read-only <code>eth_call</code>. <strong>No ETH is ever spent per request, no gas, no transaction.</strong> Results are cached for 15 minutes (matching the /grab_job rate limit), so the RPC is only hit once per rate-limit window per wallet.<br><br>
-                        Suppliers set their wallet address once via <code>POST /set_wallet</code> and never touch it again. They don't need a private key, don't sign anything, and don't pay gas. The wallet is just an address used to look up NFT ownership.
+                        When you call <code>POST /set_wallet</code>, the server makes one free read-only <code>eth_call</code> to
+                        <code>isValidSeat(address)</code> on the contract and stores the result (<code>seat_active: true/false</code>)
+                        on your account. <strong>No ETH is ever spent, no gas, no transaction.</strong><br><br>
+                        Every subsequent <code>/grab_job</code> call checks that stored flag — no blockchain call on the hot path.
+                        If your seat status changes (revocation or new seat), call <code>POST /set_wallet</code> again with the same
+                        address to re-sync. The NFT ownership record on Base remains the authoritative source of truth;
+                        <code>GET /account</code> queries it live for display purposes.
                     </div>
                     <p style="margin-top:1rem;font-family:'Share Tech Mono',monospace;font-size:0.82rem;color:var(--text-dim);">
                         To get a seat: email <a href="mailto:mickeyshaughnessy@gmail.com" style="color:var(--secondary);">mickeyshaughnessy@gmail.com</a> with your wallet address. After receiving a seat, link it once with <code>POST /set_wallet</code>.
@@ -822,9 +828,14 @@
                         <span class="flow-badge">Step 4</span>
                     </h3>
                     <div style="background:rgba(0,255,255,0.06);border:1px solid rgba(0,255,255,0.25);padding:0.75rem 1rem;margin-bottom:1rem;font-family:'Share Tech Mono',monospace;font-size:0.82rem;line-height:1.8;">
-                        <strong style="color:var(--primary);">NFT Seat Required</strong> — when seat verification is enabled, your account must have a linked wallet (via <code>/set_wallet</code>) holding a valid, unrevoked RSE Seat NFT on Base. The API calls <code>isValidSeat(address)</code> on-chain before each match. If the Base RPC is unreachable, the check fails open (request proceeds).
+                        <strong style="color:var(--primary);">RSE Seat Required</strong> — your account must have a valid seat status.
+                        Seat status is set when you link your wallet via <code>POST /set_wallet</code>; no blockchain call is made
+                        on each /grab_job. If your seat is later revoked, call <code>/set_wallet</code> again to re-sync.
+                        <br><br>
+                        <strong style="color:var(--primary);">Rate limit: 1 call per 15 minutes per account.</strong>
+                        The cooldown is enforced server-side per user, not per IP. A 429 response includes the seconds remaining.
                     </div>
-                    <p>Match a robot operator with the best available job. Uses AI capability matching and reputation alignment. Rate-limited to 1/15min per seat.</p>
+                    <p>Match a robot operator with the best available job. Uses AI capability matching and reputation alignment.</p>
                     <table class="param-table">
                         <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                         <tbody>
@@ -868,6 +879,108 @@
                             <div class="response-area" id="grab-job-response"></div>
                         </div>
                     </div>
+                </div>
+
+                <!-- SUPPLY REFERENCE SCRIPT -->
+                <div id="supply-script" class="endpoint">
+                    <h3><span style="font-family:'Share Tech Mono',monospace;font-size:0.75rem;color:var(--accent);">Python</span> <span class="path">Supply-side Reference Implementation</span></h3>
+                    <p>Minimal runnable script for a robot or autonomous agent that polls for jobs, executes them, and signs off when done. Copy, fill in your credentials, and run.</p>
+                    <div class="code-block" style="white-space:pre;overflow-x:auto;">#!/usr/bin/env python3
+"""
+RSE supply-side reference — poll for jobs and execute them.
+Runs on a robot or autonomous agent. Requires: pip install requests
+Prerequisites: registered supply account + wallet linked via /set_wallet.
+"""
+import time
+import requests
+
+API   = "https://rse-api.com:5003"
+USER  = "my_robot_001"          # your RSE username
+PASS  = "MySecurePass1!"        # your RSE password
+
+CAPABILITIES = (
+    "Autonomous lawn mowing, obstacle avoidance, GPS-guided path planning, "
+    "2-acre capacity, operates in rain"
+)
+ADDRESS      = "456 Oak Ave, Denver, CO 80203"  # robot's current location
+MAX_DISTANCE = 10    # miles — only jobs within this radius
+POLL_EVERY   = 900   # seconds — matches /grab_job rate limit (15 min)
+
+
+def login(session):
+    r = session.post(f"{API}/login",
+                     json={"username": USER, "password": PASS}, timeout=10)
+    r.raise_for_status()
+    return r.json()["access_token"]
+
+
+def grab_job(session, token):
+    r = session.post(
+        f"{API}/grab_job",
+        json={
+            "capabilities": CAPABILITIES,
+            "location_type": "physical",
+            "address":       ADDRESS,
+            "max_distance":  MAX_DISTANCE,
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=30,
+    )
+    return r.status_code, r.json() if r.content else {}
+
+
+def sign_job(session, token, job_id, rating=5):
+    r = session.post(
+        f"{API}/sign_job",
+        json={"job_id": job_id, "rating": rating},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=10,
+    )
+    return r.status_code
+
+
+def do_work(job):
+    """Execute the assigned job. Replace with real robot control logic."""
+    print(f"  service  : {job['service']}")
+    print(f"  location : {job.get('address', 'remote')}")
+    print(f"  pay      : {job['price']} {job.get('currency', 'USD')}")
+    time.sleep(5)  # placeholder — dispatch robot, wait for completion
+
+
+def main():
+    session = requests.Session()
+    token = login(session)
+    print(f"Online: {USER}")
+
+    while True:
+        status, data = grab_job(session, token)
+
+        if status == 200:
+            job_id = data["job_id"]
+            print(f"\nMatched: {job_id}")
+            do_work(data)
+            code = sign_job(session, token, job_id, rating=5)
+            print(f"Signed ({code})")
+
+        elif status == 204:
+            print("No match — waiting")
+
+        elif status == 429:
+            print(f"Rate limited: {data.get('error', '')}")
+
+        elif status == 401:
+            print("Token expired — re-logging in")
+            token = login(session)
+            continue
+
+        else:
+            print(f"Unexpected {status}: {data}")
+
+        time.sleep(POLL_EVERY)
+
+
+if __name__ == "__main__":
+    main()</div>
                 </div>
 
                 <!-- REJECT JOB -->
@@ -1152,8 +1265,9 @@
                             <tr><td><code>204</code></td><td>No Content (no matching jobs available)</td></tr>
                             <tr><td><code>400</code></td><td>Bad Request</td></tr>
                             <tr><td><code>401</code></td><td>Unauthorized (invalid or missing token)</td></tr>
-                            <tr><td><code>403</code></td><td>Forbidden (seat verification failure)</td></tr>
+                            <tr><td><code>403</code></td><td>Forbidden (no seat, revoked seat, or wrong account type)</td></tr>
                             <tr><td><code>404</code></td><td>Not Found</td></tr>
+                            <tr><td><code>429</code></td><td>Too Many Requests — /grab_job rate limit (15 min cooldown per account); response includes seconds remaining</td></tr>
                             <tr><td><code>500</code></td><td>Internal Server Error</td></tr>
                         </tbody>
                     </table>
@@ -1161,7 +1275,7 @@
 
                 <div class="endpoint">
                     <h2 style="font-size:0.9rem;">Rate Limiting</h2>
-                    <p>Most endpoints: 60 requests/minute per IP. <code>/grab_job</code> with seats: 1 request/15 min per seat.</p>
+                    <p>Most endpoints: 60 requests/minute per IP. <code>/grab_job</code>: 1 call per 15 minutes per account — enforced server-side by tracking <code>last_grab_at</code> on the user record, not by IP address. A 429 response body contains <code>{"error": "Rate limit: wait Ns before next /grab_job"}</code> with the exact seconds remaining.</p>
                 </div>
 
             </div><!-- /col-md-9 -->
