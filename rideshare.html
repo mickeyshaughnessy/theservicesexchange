@@ -224,10 +224,11 @@ input[type="range"].slider-input {
         <span id="speed-disp">5×</span>
       </div>
       <div class="presets-wrap">
-        <button class="preset-btn" onclick="loadScenario('surge')">Surge</button>
-        <button class="preset-btn" onclick="loadScenario('balanced')">Balanced</button>
-        <button class="preset-btn" onclick="loadScenario('fragmented')">Fragmented</button>
-        <button class="preset-btn" onclick="loadScenario('exchange_wins')">Exch.Wins</button>
+        <button class="preset-btn" onclick="loadScenario('solo', this)">1·Solo</button>
+        <button class="preset-btn" onclick="loadScenario('silos', this)">2·Silos</button>
+        <button class="preset-btn" onclick="loadScenario('open', this)">3·Open</button>
+        <button class="preset-btn" onclick="loadScenario('peak', this)">4·Shortage</button>
+        <button class="preset-btn" onclick="loadScenario('pooled', this)">5·Pooled</button>
       </div>
     </div>
   </div>
@@ -390,6 +391,15 @@ input[type="range"].slider-input {
 
     <!-- RIGHT METRICS PANEL -->
     <div class="panel" id="metrics-panel">
+
+      <div class="panel-section" id="scenario-callout" style="background:rgba(0,255,255,0.04);border-left:3px solid var(--primary);">
+        <div class="panel-title" style="color:var(--primary);" id="scenario-title">// Guided Tour</div>
+        <div style="font-size:11px;color:var(--text);line-height:1.6;margin-bottom:6px;" id="scenario-desc">
+          Click presets <b>1→5</b> in the header to walk through market regimes. Each shows what to watch for.
+          Start with <b>1·Solo</b>, then compare <b>2·Silos</b> vs <b>3·Open</b>.
+        </div>
+        <div style="font-size:10px;color:var(--accent);line-height:1.6;" id="scenario-watch"></div>
+      </div>
 
       <div class="panel-section">
         <div class="panel-title">// Overview</div>
@@ -1684,61 +1694,78 @@ function updatePropNetExamples() {
 // SCENARIO PRESETS
 // ============================================================
 
-function loadScenario(name) {
+// Scenario presets form a guided tour. The numbers in each `watch` line were
+// verified against headless simulation runs (long-horizon averages); they are
+// the regimes the parameters actually produce, not aspirational claims.
+// Pairs to compare: 2·Silos → 3·Open (same fleet, exchange toggled) and
+// 4·Shortage → 5·Pooled (same surge, exchange mobilizes latent supply).
+const SCENARIOS = {
+  solo: {
+    label: 'Monopoly — single provider',
+    waymoCnt: 35, uberCnt: 0, teslaCnt: 0, indepCnt: 0,
+    rideRatePerMin: 6, baseBid: 18,
+    waymoShare: 55, uberShare: 0, teslaShare: 0, exchShare: 45,
+    waymoExch: false, uberExch: false, teslaExch: false,
+    seatCost: 200, exchFeePercent: 5, propCommPercent: 25,
+    overflowToExch: false,
+    desc: 'One operator runs 35 cars and serves only its own app. ~45% of riders are on the open market.',
+    watch: 'Watch: only ~40% of all riders get served — the entire open-market half abandons because no single app reaches it. Flip Waymo\'s exchange toggle ON to capture it.'
+  },
+  silos: {
+    label: 'Silos — fragmented competition',
+    waymoCnt: 6, uberCnt: 28, teslaCnt: 18, indepCnt: 4,
+    rideRatePerMin: 7, baseBid: 18,
+    waymoShare: 35, uberShare: 25, teslaShare: 15, exchShare: 25,
+    waymoExch: false, uberExch: false, teslaExch: false,
+    seatCost: 200, exchFeePercent: 5, propCommPercent: 25,
+    overflowToExch: false,
+    desc: 'Four fleets, each serving only its own app. Uber over-invested (28 cars); Waymo is short (6) vs its demand.',
+    watch: 'Watch: idle Tesla/Uber cars (~55–75% util) sit while Waymo & open riders abandon (~1,200). Fragmentation waste. Now load 3·Open — same cars, same demand.'
+  },
+  open: {
+    label: 'Open Exchange — silos unified',
+    waymoCnt: 6, uberCnt: 28, teslaCnt: 18, indepCnt: 4,
+    rideRatePerMin: 7, baseBid: 18,
+    waymoShare: 35, uberShare: 25, teslaShare: 15, exchShare: 25,
+    waymoExch: true, uberExch: true, teslaExch: true,
+    seatCost: 200, exchFeePercent: 5, propCommPercent: 25,
+    overflowToExch: true, overflowWait: 90,
+    desc: 'Identical fleet and demand to 2·Silos — but every fleet joins the open exchange and unserved riders overflow to it.',
+    watch: 'Watch vs Silos: serve rate ~45%→~63%, abandonment ~−36%, idle cars absorbed to ~98% util — and all-in fleet profit RISES (~+50%). Same assets, more value for everyone.'
+  },
+  peak: {
+    label: 'Shortage — demand surge',
+    waymoCnt: 8, uberCnt: 12, teslaCnt: 6, indepCnt: 4,
+    rideRatePerMin: 16, baseBid: 18,
+    waymoShare: 30, uberShare: 30, teslaShare: 20, exchShare: 20,
+    waymoExch: false, uberExch: false, teslaExch: false,
+    seatCost: 200, exchFeePercent: 5, propCommPercent: 25,
+    overflowToExch: false,
+    desc: 'A demand spike (16 rides/min) hits a thin 30-car market split across four siloed apps.',
+    watch: 'Watch: only ~19% served, surge pricing climbs, ~3,500 abandon. Every silo is already maxed — no single app can meet the peak alone. Now load 5·Pooled.'
+  },
+  pooled: {
+    label: 'Pooled Supply — exchange in a peak',
+    waymoCnt: 8, uberCnt: 12, teslaCnt: 6, indepCnt: 16,
+    rideRatePerMin: 16, baseBid: 18,
+    waymoShare: 30, uberShare: 30, teslaShare: 20, exchShare: 20,
+    waymoExch: true, uberExch: true, teslaExch: true,
+    seatCost: 200, exchFeePercent: 5, propCommPercent: 25,
+    overflowToExch: true, overflowWait: 60,
+    desc: 'Same surge and same proprietary fleets — but the open exchange brings 16 independent/gig drivers online that no single app could dispatch.',
+    watch: 'Watch vs Shortage: serve rate ~19%→30%, abandonment −25%, and independent drivers earn ~4× more. The exchange mobilizes supply that otherwise sits idle.'
+  },
+};
+
+function loadScenario(name, btn) {
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  if (btn) btn.classList.add('active');
 
-  const scenarios = {
-    surge: {
-      waymoCnt: 8, uberCnt: 10, teslaCnt: 5, indepCnt: 4,
-      rideRatePerMin: 30, baseBid: 18,
-      waymoShare: 25, uberShare: 50, teslaShare: 15, exchShare: 10,
-      waymoExch: false, uberExch: false, teslaExch: false,
-      seatCost: 500, exchFeePercent: 5, propCommPercent: 25,
-      overflowToExch: false,
-      desc: 'Demand surge: few vehicles, high demand — exchange can save the day'
-    },
-    balanced: {
-      waymoCnt: 15, uberCnt: 25, teslaCnt: 12, indepCnt: 8,
-      rideRatePerMin: 5, baseBid: 18,
-      waymoShare: 20, uberShare: 45, teslaShare: 15, exchShare: 20,
-      waymoExch: false, uberExch: false, teslaExch: false,
-      seatCost: 500, exchFeePercent: 5, propCommPercent: 25,
-      overflowToExch: false,
-      desc: 'Balanced: default state — exchange adds marginal benefit'
-    },
-    fragmented: {
-      waymoCnt: 20, uberCnt: 20, teslaCnt: 15, indepCnt: 10,
-      rideRatePerMin: 8, baseBid: 18,
-      waymoShare: 15, uberShare: 20, teslaShare: 15, exchShare: 50,
-      waymoExch: false, uberExch: false, teslaExch: false,
-      seatCost: 500, exchFeePercent: 5, propCommPercent: 25,
-      overflowToExch: true, overflowWait: 120,
-      desc: 'Fragmented: demand prefers exchange, many idle proprietary vehicles'
-    },
-    exchange_wins: {
-      waymoCnt: 15, uberCnt: 20, teslaCnt: 10, indepCnt: 5,
-      rideRatePerMin: 15, baseBid: 22,
-      waymoShare: 20, uberShare: 30, teslaShare: 10, exchShare: 40,
-      waymoExch: true, uberExch: true, teslaExch: true,
-      seatCost: 200, exchFeePercent: 3, propCommPercent: 28,
-      overflowToExch: true, overflowWait: 90,
-      desc: 'Exchange wins: low seat cost, low fee, all fleets participate'
-    },
-  };
-
-  const sc = scenarios[name];
+  const sc = SCENARIOS[name];
   if (!sc) return;
 
-  // Apply to UI
-  const setVal = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.value = val;
-  };
-  const setChk = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.checked = val;
-  };
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
 
   setVal('waymo-count',    sc.waymoCnt);
   setVal('uber-count',     sc.uberCnt);
@@ -1759,8 +1786,13 @@ function loadScenario(name) {
   setChk('overflow-to-exch', sc.overflowToExch || false);
   if (sc.overflowWait) setVal('overflow-wait', sc.overflowWait);
 
+  // Update the persistent scenario callout in the metrics panel.
+  document.getElementById('scenario-title').textContent = '// ' + sc.label;
+  document.getElementById('scenario-desc').textContent = sc.desc;
+  document.getElementById('scenario-watch').textContent = sc.watch;
+
   updateShareDisplay();
-  addEvent(`📋 Scenario: "${name}" — ${sc.desc}`);
+  addEvent(`📋 ${sc.label} — ${sc.desc}`);
   resetSim();
 }
 
