@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSE Rideshare Simulation — Denver, CO</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #07071d;
+  --bg-panel: #0d0d35;
+  --bg-card: #111140;
+  --primary: #00ffff;
+  --secondary: #ff00ff;
+  --accent: #39ff14;
+  --yellow: #facc15;
+  --text: #b0c8ff;
+  --text-dim: #445588;
+  --text-bright: #ffffff;
+  --danger: #ff4757;
+  --waymo: #22d3ee;
+  --uber: #facc15;
+  --tesla: #f87171;
+  --independent: #c084fc;
+  --exchange: #4ade80;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); }
+body { font-family: 'Share Tech Mono', monospace; color: var(--text); font-size: 12px; }
+#app { display: grid; grid-template-rows: 52px 1fr; height: 100vh; }
+
+/* ── HEADER ── */
+#header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; background: #050518;
+  border-bottom: 1px solid rgba(0,255,255,0.25);
+  box-shadow: 0 2px 20px rgba(0,255,255,0.1);
+}
+.hd-left { display: flex; align-items: center; gap: 12px; }
+.hd-logo { font-family: 'Press Start 2P'; font-size: 11px; color: var(--primary); text-shadow: 0 0 10px var(--primary); }
+.hd-title { font-size: 11px; color: var(--text-dim); letter-spacing: .05em; }
+.hd-right { display: flex; align-items: center; gap: 10px; }
+.sim-clock { font-size: 13px; color: var(--accent); text-shadow: 0 0 6px var(--accent); min-width: 80px; }
+.hd-btn {
+  background: transparent; border: 1px solid rgba(0,255,255,0.4); color: var(--primary);
+  font-family: 'Share Tech Mono'; font-size: 11px; padding: 4px 12px; cursor: pointer;
+  text-transform: uppercase; letter-spacing: .06em; transition: all 0.15s;
+}
+.hd-btn:hover { background: rgba(0,255,255,0.1); box-shadow: 0 0 8px rgba(0,255,255,0.3); }
+.hd-btn.active { background: rgba(57,255,20,0.15); border-color: var(--accent); color: var(--accent); }
+.hd-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.speed-wrap { display: flex; align-items: center; gap: 6px; }
+.speed-wrap label { font-size: 10px; color: var(--text-dim); }
+#speed-slider { width: 70px; accent-color: var(--primary); cursor: pointer; }
+#speed-disp { font-size: 11px; color: var(--yellow); min-width: 28px; }
+.presets-wrap { display: flex; gap: 4px; }
+.preset-btn {
+  background: transparent; border: 1px solid rgba(255,0,255,0.3); color: var(--secondary);
+  font-family: 'Share Tech Mono'; font-size: 10px; padding: 3px 8px; cursor: pointer;
+  transition: all 0.15s;
+}
+.preset-btn:hover { background: rgba(255,0,255,0.1); }
+
+/* ── MAIN LAYOUT ── */
+#main { display: grid; grid-template-columns: 290px 1fr 350px; overflow: hidden; }
+
+/* ── PANELS ── */
+.panel {
+  background: var(--bg-panel); overflow-y: auto; padding: 0;
+  border-right: 1px solid rgba(0,255,255,0.15);
+}
+.panel:last-child { border-right: none; border-left: 1px solid rgba(0,255,255,0.15); }
+.panel-section { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.panel-title { font-family: 'Press Start 2P'; font-size: 7px; color: var(--yellow); text-shadow: 0 0 6px rgba(255,255,0,0.5); letter-spacing: .06em; margin-bottom: 10px; text-transform: uppercase; }
+.param-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+.param-label { color: var(--text-dim); font-size: 11px; }
+.param-val { color: var(--text-bright); font-size: 12px; min-width: 50px; text-align: right; }
+.param-input {
+  width: 100%; background: #0a0a30; border: 1px solid rgba(0,255,255,0.2);
+  color: var(--text-bright); font-family: 'Share Tech Mono'; font-size: 12px; padding: 3px 6px;
+  outline: none; margin-top: 3px;
+}
+.param-input:focus { border-color: var(--primary); box-shadow: 0 0 6px rgba(0,255,255,0.2); }
+input[type="range"].slider-input {
+  width: 100%; accent-color: var(--primary); cursor: pointer; margin-top: 4px;
+}
+.slider-row { margin-bottom: 8px; }
+.slider-row .top { display: flex; justify-content: space-between; }
+.slider-label { color: var(--text-dim); font-size: 11px; }
+.slider-value { color: var(--text-bright); font-size: 12px; }
+
+/* Fleet toggles */
+.fleet-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  background: var(--bg-card); padding: 6px 8px;
+}
+.fleet-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.fleet-name { flex: 1; font-size: 11px; }
+.fleet-count-input {
+  width: 42px; background: #0a0a30; border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text-bright); font-family: 'Share Tech Mono'; font-size: 11px;
+  padding: 2px 4px; text-align: center; outline: none;
+}
+.toggle-switch { position: relative; width: 36px; height: 18px; flex-shrink: 0; cursor: pointer; }
+.toggle-switch input { display: none; }
+.toggle-slider {
+  position: absolute; inset: 0; background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2); transition: 0.2s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute; left: 2px; top: 2px;
+  width: 12px; height: 12px; background: var(--text-dim); transition: 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: rgba(57,255,20,0.2); border-color: var(--accent); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); background: var(--accent); }
+
+/* Checkbox */
+.check-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; cursor: pointer; }
+.check-row input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
+.check-row span { font-size: 11px; color: var(--text-dim); }
+
+/* ── MAP ── */
+#map-container { position: relative; }
+#map { width: 100%; height: 100%; }
+
+#map-legend {
+  position: absolute; bottom: 24px; left: 12px;
+  background: rgba(7,7,29,0.88); border: 1px solid rgba(0,255,255,0.2);
+  padding: 10px 14px; backdrop-filter: blur(4px); min-width: 170px;
+}
+.legend-title { font-size: 9px; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .08em; }
+.legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-sq { width: 10px; height: 10px; flex-shrink: 0; border-radius: 2px; }
+.legend-label { font-size: 10px; color: var(--text); }
+
+#event-feed {
+  position: absolute; bottom: 24px; right: 12px;
+  background: rgba(7,7,29,0.88); border: 1px solid rgba(255,0,255,0.2);
+  width: 260px; max-height: 140px; overflow: hidden; backdrop-filter: blur(4px); padding: 8px 10px;
+}
+.ef-title { font-size: 9px; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; }
+.ef-item { font-size: 10px; color: var(--text-dim); line-height: 1.5; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 2px 0; }
+.ef-item.new { color: var(--text-bright); }
+
+/* ── METRICS PANEL ── */
+.metric-card { background: var(--bg-card); padding: 8px 10px; margin-bottom: 8px; }
+.metric-card-title { font-size: 9px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; letter-spacing: .06em; }
+.big-number { font-size: 20px; color: var(--text-bright); line-height: 1; }
+.big-number.green { color: var(--accent); text-shadow: 0 0 6px rgba(57,255,20,0.4); }
+.big-number.red { color: var(--danger); }
+.big-number.cyan { color: var(--primary); }
+
+.fleet-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.fleet-table th { color: var(--text-dim); font-weight: normal; padding: 3px 4px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.fleet-table th:first-child { text-align: left; }
+.fleet-table td { padding: 4px 4px; border-bottom: 1px solid rgba(255,255,255,0.04); text-align: right; }
+.fleet-table td:first-child { text-align: left; }
+.fleet-table .fleet-badge { display: inline-block; padding: 1px 5px; font-size: 9px; }
+.f-waymo { color: var(--waymo); }
+.f-uber { color: var(--uber); }
+.f-tesla { color: var(--tesla); }
+.f-independent { color: var(--independent); }
+.f-exchange { color: var(--exchange); }
+
+.bar-wrap { height: 6px; background: rgba(255,255,255,0.08); margin-top: 4px; }
+.bar-fill { height: 100%; transition: width 0.5s; }
+
+/* Win-win meter */
+.win-meter { margin-top: 8px; }
+.win-label { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.win-label span { font-size: 10px; }
+.win-track { height: 10px; background: rgba(255,255,255,0.08); position: relative; }
+.win-fill {
+  position: absolute; height: 100%; background: linear-gradient(90deg, var(--danger), var(--accent));
+  transition: width 0.8s;
+}
+.win-marker { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--primary); left: 50%; }
+
+.verdict-box {
+  margin-top: 8px; padding: 8px; font-size: 11px; line-height: 1.6;
+  background: rgba(0,0,0,0.3); border-left: 3px solid var(--primary);
+}
+
+/* ROI bars */
+.roi-row { margin-bottom: 8px; }
+.roi-top { display: flex; justify-content: space-between; margin-bottom: 2px; }
+.roi-name { font-size: 10px; }
+.roi-val { font-size: 10px; }
+.roi-bar { height: 8px; background: rgba(255,255,255,0.07); }
+.roi-fill { height: 100%; transition: width 0.5s; }
+
+/* Scenario selector */
+.scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.scenario-btn {
+  background: var(--bg-card); border: 1px solid rgba(0,255,255,0.15); color: var(--text);
+  font-family: 'Share Tech Mono'; font-size: 9px; padding: 6px 4px; cursor: pointer;
+  text-align: center; transition: all 0.15s; line-height: 1.5;
+}
+.scenario-btn:hover { border-color: var(--primary); color: var(--primary); }
+.scenario-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(57,255,20,0.08); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,255,255,0.2); border-radius: 2px; }
+
+/* Section headers */
+.section-hdr {
+  font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .08em;
+  padding: 3px 0 5px; margin-top: 10px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 6px;
+}
+.section-hdr:first-child { margin-top: 0; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HEADER -->
+  <div id="header">
+    <div class="hd-left">
+      <span class="hd-logo">RSE</span>
+      <span class="hd-title">// Rideshare Simulation — Denver, CO</span>
+    </div>
+    <div class="hd-right">
+      <span class="sim-clock" id="sim-clock">T+0:00</span>
+      <button class="hd-btn active" id="btn-start" onclick="startSim()">▶ Start</button>
+      <button class="hd-btn" id="btn-pause" disabled onclick="pauseSim()">⏸ Pause</button>
+      <button class="hd-btn" id="btn-reset" onclick="resetSim()">↺ Reset</button>
+      <div class="speed-wrap">
+        <label>Speed</label>
+        <input type="range" id="speed-slider" min="1" max="30" value="5" oninput="setSpeed(this.value)">
+        <span id="speed-disp">5×</span>
+      </div>
+      <div class="presets-wrap">
+        <button class="preset-btn" onclick="loadScenario('surge')">Surge</button>
+        <button class="preset-btn" onclick="loadScenario('balanced')">Balanced</button>
+        <button class="preset-btn" onclick="loadScenario('fragmented')">Fragmented</button>
+        <button class="preset-btn" onclick="loadScenario('exchange_wins')">Exch.Wins</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <!-- LEFT CONTROLS PANEL -->
+    <div class="panel" id="controls-panel">
+
+      <div class="panel-section">
+        <div class="panel-title">// Fleet Supply</div>
+        <div style="font-size:9px;color:var(--text-dim);margin-bottom:8px;">Count | Join Exchange?</div>
+
+        <div class="fleet-row">
+          <div class="fleet-dot" style="background:var(--waymo)"></div>
+          <div class="fleet-name f-waymo">Waymo</div>
+          <input class="fleet-count-input" type="number" id="waymo-count" value="15" min="0" max="50" onchange="updateFleet()">
+          <label class="toggle-switch"><input type="checkbox" id="waymo-exchange" onchange="updateExchange()"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="fleet-row">
+          <div class="fleet-dot" style="background:var(--uber)"></div>
+          <div class="fleet-name f-uber">Uber</div>
+          <input class="fleet-count-input" type="number" id="uber-count" value="25" min="0" max="50" onchange="updateFleet()">
+          <label class="toggle-switch"><input type="checkbox" id="uber-exchange" onchange="updateExchange()"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="fleet-row">
+          <div class="fleet-dot" style="background:var(--tesla)"></div>
+          <div class="fleet-name f-tesla">Tesla</div>
+          <input class="fleet-count-input" type="number" id="tesla-count" value="12" min="0" max="50" onchange="updateFleet()">
+          <label class="toggle-switch"><input type="checkbox" id="tesla-exchange" onchange="updateExchange()"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="fleet-row">
+          <div class="fleet-dot" style="background:var(--independent)"></div>
+          <div class="fleet-name f-independent">Independent</div>
+          <input class="fleet-count-input" type="number" id="indep-count" value="8" min="0" max="50" onchange="updateFleet()">
+          <div style="font-size:9px;color:var(--exchange);padding:0 2px;">always</div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">// Demand</div>
+
+        <div class="slider-row">
+          <div class="top"><span class="slider-label">Rides/min</span><span class="slider-value" id="disp-rate">10</span></div>
+          <input type="range" class="slider-input" id="ride-rate" min="1" max="40" value="10" oninput="updateParams()">
+        </div>
+        <div class="slider-row">
+          <div class="top"><span class="slider-label">Base bid $</span><span class="slider-value" id="disp-price">$18</span></div>
+          <input type="range" class="slider-input" id="bid-price" min="8" max="60" value="18" oninput="updateParams()">
+        </div>
+
+        <div class="section-hdr">Channel Mix (% of demand)</div>
+        <div class="slider-row">
+          <div class="top"><span class="slider-label f-waymo">Waymo app</span><span class="slider-value" id="disp-waymo-share">20%</span></div>
+          <input type="range" class="slider-input" id="waymo-share" min="0" max="60" value="20" oninput="updateShareDisplay()">
+        </div>
+        <div class="slider-row">
+          <div class="top"><span class="slider-label f-uber">Uber app</span><span class="slider-value" id="disp-uber-share">45%</span></div>
+          <input type="range" class="slider-input" id="uber-share" min="0" max="80" value="45" oninput="updateShareDisplay()">
+        </div>
+        <div class="slider-row">
+          <div class="top"><span class="slider-label f-tesla">Tesla app</span><span class="slider-value" id="disp-tesla-share">15%</span></div>
+          <input type="range" class="slider-input" id="tesla-share" min="0" max="60" value="15" oninput="updateShareDisplay()">
+        </div>
+        <div class="slider-row">
+          <div class="top"><span class="slider-label f-exchange">Open exchange</span><span class="slider-value" id="disp-exch-share">20%</span></div>
+          <input type="range" class="slider-input" id="exch-share" min="0" max="60" value="20" oninput="updateShareDisplay()">
+        </div>
+        <div id="share-warning" style="display:none;font-size:9px;color:var(--danger);margin-top:4px;">⚠ Shares &gt; 100% — normalizing</div>
+
+        <label class="check-row">
+          <input type="checkbox" id="overflow-to-exch" onchange="updateParams()">
+          <span>Unserved riders can overflow to exchange</span>
+        </label>
+        <div class="slider-row" id="overflow-time-row" style="display:none;">
+          <div class="top"><span class="slider-label">Overflow after</span><span class="slider-value" id="disp-overflow">3 min</span></div>
+          <input type="range" class="slider-input" id="overflow-wait" min="30" max="600" value="180" oninput="updateParams()">
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">// Exchange Economics</div>
+
+        <div class="slider-row">
+          <div class="top"><span class="slider-label">Seat cost (one-time)</span><span class="slider-value" id="disp-seat-cost">$500</span></div>
+          <input type="range" class="slider-input" id="seat-cost" min="0" max="5000" step="100" value="500" oninput="updateParams()">
+        </div>
+        <div class="slider-row">
+          <div class="top"><span class="slider-label">Exchange fee %</span><span class="slider-value" id="disp-exch-fee">5%</span></div>
+          <input type="range" class="slider-input" id="exch-fee" min="0" max="30" step="0.5" value="5" oninput="updateParams()">
+        </div>
+        <div class="slider-row">
+          <div class="top"><span class="slider-label">Prop. commission %</span><span class="slider-value" id="disp-prop-comm">25%</span></div>
+          <input type="range" class="slider-input" id="prop-comm" min="0" max="50" value="25" oninput="updateParams()">
+        </div>
+        <div style="font-size:9px;color:var(--text-dim);line-height:1.6;margin-top:4px;padding:6px 8px;background:rgba(0,0,0,0.2);border-left:2px solid var(--primary);">
+          Supplier net per ride:<br>
+          · Prop: bid × (1 − comm%) <span style="color:var(--text-bright)" id="prop-net-ex"></span><br>
+          · Exchange: bid × (1 − fee%) <span style="color:var(--exchange)" id="exch-net-ex"></span>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">// Vehicle Economics</div>
+
+        <div class="slider-row">
+          <div class="top"><span class="slider-label">Vehicle cost</span><span class="slider-value" id="disp-veh-cost">$50k</span></div>
+          <input type="range" class="slider-input" id="veh-cost" min="5000" max="200000" step="5000" value="50000" oninput="updateParams()">
+        </div>
+        <div class="slider-row">
+          <div class="top"><span class="slider-label">Cost/mile (ops)</span><span class="slider-value" id="disp-ops-cost">$0.25</span></div>
+          <input type="range" class="slider-input" id="ops-cost" min="0.05" max="1.00" step="0.05" value="0.25" oninput="updateParams()">
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">// Rider Behavior</div>
+
+        <div class="slider-row">
+          <div class="top"><span class="slider-label">Surge after</span><span class="slider-value" id="disp-surge-wait">3 min</span></div>
+          <input type="range" class="slider-input" id="surge-wait" min="30" max="600" value="180" oninput="updateParams()">
+        </div>
+        <div class="slider-row">
+          <div class="top"><span class="slider-label">Surge bid ×</span><span class="slider-value" id="disp-surge-mult">1.25×</span></div>
+          <input type="range" class="slider-input" id="surge-mult" min="1.0" max="3.0" step="0.05" value="1.25" oninput="updateParams()">
+        </div>
+        <div class="slider-row">
+          <div class="top"><span class="slider-label">Abandon after</span><span class="slider-value" id="disp-abandon">7 min</span></div>
+          <input type="range" class="slider-input" id="abandon-wait" min="60" max="1200" value="420" oninput="updateParams()">
+        </div>
+        <div class="slider-row">
+          <div class="top"><span class="slider-label">Match radius</span><span class="slider-value" id="disp-match-dist">5 mi</span></div>
+          <input type="range" class="slider-input" id="match-dist" min="1" max="20" value="5" oninput="updateParams()">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MAP -->
+    <div id="map-container">
+      <div id="map"></div>
+      <div id="map-legend">
+        <div class="legend-title">// Legend</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--waymo)"></div><span class="legend-label">Waymo</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--uber)"></div><span class="legend-label">Uber</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tesla)"></div><span class="legend-label">Tesla</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--independent)"></div><span class="legend-label">Independent</span></div>
+        <div style="height:1px;background:rgba(255,255,255,0.1);margin:6px 0;"></div>
+        <div class="legend-item"><div class="legend-sq" style="background:rgba(250,204,21,0.5);border:1px solid var(--uber)"></div><span class="legend-label">Proprietary request</span></div>
+        <div class="legend-item"><div class="legend-sq" style="background:rgba(74,222,128,0.5);border:1px solid var(--exchange)"></div><span class="legend-label">Exchange request</span></div>
+        <div style="height:1px;background:rgba(255,255,255,0.1);margin:6px 0;"></div>
+        <div class="legend-item"><div style="width:24px;height:2px;background:rgba(255,255,255,0.6);border-top:1px dashed rgba(255,255,255,0.6);"></div><span class="legend-label">En route pickup</span></div>
+        <div class="legend-item"><div style="width:24px;height:2px;background:rgba(57,255,20,0.8);"></div><span class="legend-label">Carrying passenger</span></div>
+      </div>
+      <div id="event-feed">
+        <div class="ef-title">// Live Events</div>
+        <div id="ef-list"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT METRICS PANEL -->
+    <div class="panel" id="metrics-panel">
+
+      <div class="panel-section">
+        <div class="panel-title">// Overview</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+          <div class="metric-card">
+            <div class="metric-card-title">Rides</div>
+            <div class="big-number green" id="m-total-rides">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-title">Pending</div>
+            <div class="big-number cyan" id="m-pending">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-title">Abandoned</div>
+            <div class="big-number red" id="m-abandoned">0</div>
+          </div>
+        </div>
+        <div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div class="metric-card">
+            <div class="metric-card-title">Serve Rate</div>
+            <div class="big-number" id="m-serve-rate">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-title">Exch. Volume</div>
+            <div class="big-number" id="m-exch-vol">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">// Fleet Performance</div>
+        <table class="fleet-table">
+          <thead>
+            <tr>
+              <th>Fleet</th>
+              <th>Util%</th>
+              <th>Rides</th>
+              <th>Revenue</th>
+              <th>Net$</th>
+            </tr>
+          </thead>
+          <tbody id="fleet-table-body">
+            <tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:12px;">Start simulation</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">// Demand by Channel</div>
+        <table class="fleet-table">
+          <thead>
+            <tr><th>Channel</th><th>Req</th><th>Served</th><th>Aband</th><th>Avg wait</th></tr>
+          </thead>
+          <tbody id="demand-table-body">
+            <tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:12px;">Start simulation</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">// Exchange Win-Win Analysis</div>
+
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px;">
+          Exchange benefit vs. cost per fleet. Seat cost is one-time; fees are per-ride.
+        </div>
+
+        <div id="winwin-supply">
+          <div class="section-hdr">Supply Side</div>
+          <div id="roi-rows">
+            <div style="font-size:10px;color:var(--text-dim)">Enable exchange participation ↑</div>
+          </div>
+          <div class="verdict-box" id="supply-verdict" style="border-color:var(--text-dim);color:var(--text-dim);">
+            Toggle fleet exchange participation to analyze.
+          </div>
+        </div>
+
+        <div id="winwin-demand" style="margin-top:12px;">
+          <div class="section-hdr">Demand Side</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+            <div class="metric-card">
+              <div class="metric-card-title">Saved rides</div>
+              <div class="big-number green" id="m-saved-demand">0</div>
+              <div style="font-size:9px;color:var(--text-dim)">via overflow</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-card-title">Avg wait Δ</div>
+              <div class="big-number" id="m-wait-delta">—</div>
+            </div>
+          </div>
+          <div class="verdict-box" id="demand-verdict" style="border-color:var(--text-dim);color:var(--text-dim);">
+            Enable "overflow to exchange" to see demand benefit.
+          </div>
+        </div>
+
+        <div id="winwin-overall" style="margin-top:12px;">
+          <div class="section-hdr">Overall Exchange Health</div>
+          <div class="win-meter">
+            <div class="win-label">
+              <span style="color:var(--danger);">Loss</span>
+              <span id="exch-health-label" style="color:var(--primary);">—</span>
+              <span style="color:var(--accent);">Win</span>
+            </div>
+            <div class="win-track">
+              <div class="win-fill" id="exch-health-bar" style="width:50%"></div>
+              <div class="win-marker"></div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--text-dim);margin-top:8px;" id="breakeven-label">
+            Break-even: —
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">// Exchange Stats</div>
+        <div class="metric-card">
+          <table class="fleet-table" style="width:100%">
+            <tr><td style="color:var(--text-dim)">Brokered rides</td><td id="xs-brokered">0</td></tr>
+            <tr><td style="color:var(--text-dim)">Total fees</td><td id="xs-fees">$0</td></tr>
+            <tr><td style="color:var(--text-dim)">Avg ride price</td><td id="xs-avg-price">—</td></tr>
+            <tr><td style="color:var(--text-dim)">Overflow served</td><td id="xs-overflow">0</td></tr>
+            <tr><td style="color:var(--text-dim)">Match rate</td><td id="xs-match-rate">—</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">// Event Log</div>
+        <div id="metrics-event-log" style="font-size:10px;line-height:1.7;max-height:200px;overflow-y:auto;color:var(--text-dim);">
+          Waiting for events...
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<script>
+'use strict';
+
+// ============================================================
+// CONSTANTS
+// ============================================================
+
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibWlja2V5c2hhdWdobmVzc3kiLCJhIjoiY2x6NGxyNG93MnptaDJxb2dhOGloenZqeiJ9.ANY7UIu7VTPFwqTD8cEAKQ';
+const DENVER_CENTER = [-104.9903, 39.7392];
+const MAP_ZOOM = 10.5;
+const TICK_MS = 200;
+
+// Denver metro pickup/dropoff locations
+const LOCATIONS = [
+  { name: 'Union Station',     lat: 39.7528, lon: -104.9997 },
+  { name: 'Downtown',          lat: 39.7392, lon: -104.9903 },
+  { name: '16th Street Mall',  lat: 39.7451, lon: -104.9897 },
+  { name: 'LoDo',              lat: 39.7505, lon: -104.9975 },
+  { name: 'Capitol Hill',      lat: 39.7323, lon: -104.9775 },
+  { name: 'Cherry Creek',      lat: 39.7157, lon: -104.9533 },
+  { name: 'Cherry Creek N.',   lat: 39.7196, lon: -104.9549 },
+  { name: 'RiNo',              lat: 39.7680, lon: -104.9701 },
+  { name: 'Five Points',       lat: 39.7567, lon: -104.9823 },
+  { name: 'Curtis Park',       lat: 39.7611, lon: -104.9765 },
+  { name: 'Highlands',         lat: 39.7622, lon: -105.0140 },
+  { name: "Sloan's Lake",      lat: 39.7423, lon: -105.0343 },
+  { name: 'Wash Park',         lat: 39.7022, lon: -104.9692 },
+  { name: 'Congress Park',     lat: 39.7241, lon: -104.9607 },
+  { name: 'Baker',             lat: 39.7146, lon: -104.9891 },
+  { name: 'S. Broadway',       lat: 39.7114, lon: -104.9880 },
+  { name: 'Denver Tech Ctr',   lat: 39.6472, lon: -104.9003 },
+  { name: 'Aurora',            lat: 39.7294, lon: -104.8319 },
+  { name: 'Central Park',      lat: 39.7678, lon: -104.8878 },
+  { name: 'Park Hill',         lat: 39.7563, lon: -104.9287 },
+  { name: 'East Colfax',       lat: 39.7404, lon: -104.9370 },
+  { name: 'DIA',               lat: 39.8561, lon: -104.6737 },
+  { name: 'Westminster',       lat: 39.8366, lon: -105.0372 },
+  { name: 'Englewood',         lat: 39.6481, lon: -104.9878 },
+  { name: 'Lakewood',          lat: 39.7175, lon: -105.0828 },
+  { name: 'Arvada',            lat: 39.8028, lon: -105.0875 },
+  { name: 'Thornton',          lat: 39.8681, lon: -104.9719 },
+  { name: 'Littleton',         lat: 39.6133, lon: -105.0166 },
+  { name: 'Globeville',        lat: 39.7792, lon: -104.9834 },
+  { name: 'Montbello',         lat: 39.7900, lon: -104.8578 },
+];
+
+// Fleet starting areas (weighted toward certain neighborhoods)
+const FLEET_START_ZONES = {
+  waymo:       [0, 1, 2, 3, 4, 8, 9, 12, 18],  // core + tech areas
+  uber:        [0, 1, 3, 4, 5, 7, 8, 10, 12, 14, 17, 19, 21],  // broad spread
+  tesla:       [5, 6, 12, 14, 16, 17, 18],       // upscale + suburban
+  independent: [1, 3, 7, 10, 12, 14, 19, 28],    // various
+};
+
+const FLEET_COLORS = {
+  waymo: '#22d3ee',
+  uber: '#facc15',
+  tesla: '#f87171',
+  independent: '#c084fc',
+};
+
+// ============================================================
+// SIMULATION STATE
+// ============================================================
+
+let sim = null;
+let events = [];
+let map = null;
+let tickTimer = null;
+let nextId = 1;
+
+function defaultParams() {
+  return {
+    simSpeed: 5,         // sim-seconds per real tick (TICK_MS ms)
+    vehicleSpeed: 0.00012, // degrees-lat per sim-second (~30 mph equivalent)
+
+    // Fleet sizes
+    waymoCnt: 15, uberCnt: 25, teslaCnt: 12, indepCnt: 8,
+
+    // Exchange toggles
+    waymoExch: false, uberExch: false, teslaExch: false, indepExch: true,
+
+    // Exchange economics
+    seatCost: 500,        // one-time per vehicle joining exchange
+    exchFeePercent: 5,    // % exchange keeps per transaction
+    propCommPercent: 25,  // % proprietary platform keeps from driver
+
+    // Vehicle economics
+    vehicleCost: 50000,
+    opsCostPerMile: 0.25,
+
+    // Demand
+    rideRatePerMin: 10,
+    baseBid: 18,
+    bidVariation: 0.20,  // ±20%
+
+    // Demand channel shares (will be normalized if >100%)
+    waymoShare: 20, uberShare: 45, teslaShare: 15, exchShare: 20,
+
+    // Rider behavior
+    surgeWait: 180,       // seconds before surge
+    surgeMult: 1.25,      // bid multiplier on surge
+    maxSurges: 3,
+    abandonWait: 420,     // seconds before abandoning
+    overflowToExch: false,
+    overflowWait: 180,    // seconds before proprietary rider overflows to exchange
+    matchDistMiles: 5,    // max match radius
+  };
+}
+
+function makeSim(params) {
+  return {
+    running: false,
+    time: 0,
+    tick: 0,
+    params: params,
+    vehicles: [],
+    requests: [],
+    stats: {
+      waymo:       mkFleetStats(),
+      uber:        mkFleetStats(),
+      tesla:       mkFleetStats(),
+      independent: mkFleetStats(),
+      exchange: { brokered: 0, fees: 0, priceSum: 0, overflow: 0 },
+      demand: {
+        waymo:       mkDemandStats(),
+        uber:        mkDemandStats(),
+        tesla:       mkDemandStats(),
+        exchange:    mkDemandStats(),
+      },
+    },
+  };
+}
+
+function mkFleetStats() {
+  return {
+    ridesCompleted: 0, revenue: 0, milesDriven: 0,
+    exchRides: 0, exchRevenue: 0, exchFeesPaid: 0,
+    seatCostPaid: 0,   // total seat cost this fleet has paid
+    totalIdleSec: 0, totalBusySec: 0,
+  };
+}
+
+function mkDemandStats() {
+  return { requested: 0, served: 0, abandoned: 0, waitSum: 0, overflowed: 0 };
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+
+function distanceMiles(lat1, lon1, lat2, lon2) {
+  const dLat = (lat2 - lat1) * 69.0;
+  const dLon = (lon2 - lon1) * 53.3;
+  return Math.sqrt(dLat * dLat + dLon * dLon);
+}
+
+function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function randomRange(a, b) { return a + Math.random() * (b - a); }
+
+function randomLocation(excludeIdx) {
+  let idx;
+  do { idx = Math.floor(Math.random() * LOCATIONS.length); } while (idx === excludeIdx);
+  return { ...LOCATIONS[idx], idx };
+}
+
+function jitter(val, amt) { return val + (Math.random() - 0.5) * amt; }
+
+function fmt$(n) { return '$' + n.toFixed(2); }
+function fmtK(n) { return n >= 1000 ? '$' + (n/1000).toFixed(1) + 'k' : fmt$(n); }
+function fmtTime(s) {
+  s = Math.floor(s);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  return `${m}:${String(sec).padStart(2,'0')}`;
+}
+function fmtMin(s) {
+  if (!s || s <= 0) return '—';
+  return (s / 60).toFixed(1) + ' min';
+}
+
+// ============================================================
+// SIMULATION INITIALIZATION
+// ============================================================
+
+function initSim() {
+  const p = defaultParams();
+  readParamsFromUI(p);
+  sim = makeSim(p);
+  events = [];
+  nextId = 1;
+  spawnAllVehicles();
+  updateMapSources();
+  renderMetrics();
+}
+
+function spawnAllVehicles() {
+  const p = sim.params;
+  spawnFleet('waymo',       p.waymoCnt);
+  spawnFleet('uber',        p.uberCnt);
+  spawnFleet('tesla',       p.teslaCnt);
+  spawnFleet('independent', p.indepCnt);
+}
+
+function spawnFleet(fleet, count) {
+  const zones = FLEET_START_ZONES[fleet];
+  for (let i = 0; i < count; i++) {
+    const locIdx = randomFrom(zones);
+    const loc = LOCATIONS[locIdx];
+    const vehicle = {
+      id: `${fleet}_${nextId++}`,
+      fleet,
+      status: 'idle',  // idle | en_route_pickup | carrying
+      lat: jitter(loc.lat, 0.02),
+      lon: jitter(loc.lon, 0.02),
+      targetLat: null, targetLon: null,
+      destLat: null, destLon: null,       // final destination
+      currentReqId: null,
+      exchangeEnabled: isFleetExchangeEnabled(fleet),
+      seatCostCharged: false,
+      ridesCompleted: 0,
+      revenue: 0, costs: 0,
+      exchRides: 0, exchRevenue: 0,
+      milesDriven: 0,
+      idleSec: 0, busySec: 0,
+    };
+    sim.vehicles.push(vehicle);
+  }
+}
+
+function isFleetExchangeEnabled(fleet) {
+  const p = sim.params;
+  switch (fleet) {
+    case 'waymo':       return p.waymoExch;
+    case 'uber':        return p.uberExch;
+    case 'tesla':       return p.teslaExch;
+    case 'independent': return true;  // always on exchange
+    default:            return false;
+  }
+}
+
+// ============================================================
+// MAIN TICK
+// ============================================================
+
+function tick() {
+  if (!sim.running) return;
+  const dt = sim.params.simSpeed;
+  sim.time += dt;
+  sim.tick++;
+
+  generateRequests(dt);
+  updateRequestAges(dt);
+  matchVehicles();
+  moveVehicles(dt);
+  trackUtilization(dt);
+
+  if (sim.tick % 2 === 0) updateMapSources();
+  renderMetrics();
+}
+
+// ============================================================
+// REQUEST GENERATION
+// ============================================================
+
+function generateRequests(dt) {
+  const p = sim.params;
+  const ratePerSec = p.rideRatePerMin / 60;
+  const expected = ratePerSec * dt;
+  const count = Math.floor(expected) + (Math.random() < (expected % 1) ? 1 : 0);
+
+  // Normalize channel shares
+  const rawTotal = p.waymoShare + p.uberShare + p.teslaShare + p.exchShare;
+  const shares = {
+    waymo: p.waymoShare / rawTotal,
+    uber:  p.uberShare  / rawTotal,
+    tesla: p.teslaShare / rawTotal,
+    exchange: p.exchShare / rawTotal,
+  };
+
+  // Cap active requests
+  if (sim.requests.length >= 120) return;
+
+  for (let i = 0; i < count; i++) {
+    const roll = Math.random();
+    let channel;
+    if (roll < shares.waymo) channel = 'waymo';
+    else if (roll < shares.waymo + shares.uber) channel = 'uber';
+    else if (roll < shares.waymo + shares.uber + shares.tesla) channel = 'tesla';
+    else channel = 'exchange';
+
+    const pickupIdx = Math.floor(Math.random() * LOCATIONS.length);
+    let destIdx;
+    do { destIdx = Math.floor(Math.random() * LOCATIONS.length); } while (destIdx === pickupIdx);
+
+    const pickup = LOCATIONS[pickupIdx];
+    const dest   = LOCATIONS[destIdx];
+    const baseBid = p.baseBid * (1 + (Math.random() - 0.5) * 2 * p.bidVariation);
+
+    const req = {
+      id: `req_${nextId++}`,
+      channel,
+      pickupLat: jitter(pickup.lat, 0.005),
+      pickupLon: jitter(pickup.lon, 0.005),
+      pickupName: pickup.name,
+      destLat: jitter(dest.lat, 0.005),
+      destLon: jitter(dest.lon, 0.005),
+      destName: dest.name,
+      bidPrice: Math.max(5, baseBid),
+      originalBid: Math.max(5, baseBid),
+      status: 'waiting',   // waiting | matched | abandoned
+      createdAt: sim.time,
+      waitTime: 0,
+      surgeCount: 0,
+      vehicleId: null,
+      overflowed: false,
+    };
+
+    sim.requests.push(req);
+    sim.stats.demand[channel].requested++;
+  }
+}
+
+// ============================================================
+// REQUEST AGING (surge + abandon + overflow)
+// ============================================================
+
+function updateRequestAges(dt) {
+  const p = sim.params;
+  const toRemove = [];
+
+  for (const req of sim.requests) {
+    if (req.status !== 'waiting') continue;
+    req.waitTime += dt;
+
+    // Surge pricing
+    if (req.waitTime >= p.surgeWait * (req.surgeCount + 1) && req.surgeCount < p.maxSurges) {
+      req.surgeCount++;
+      const oldBid = req.bidPrice;
+      req.bidPrice = Math.min(req.bidPrice * p.surgeMult, req.originalBid * 4);
+      addEvent(`⬆ ${req.channel.toUpperCase()} rider at ${req.pickupName} bid $${oldBid.toFixed(0)}→$${req.bidPrice.toFixed(0)} (surge #${req.surgeCount})`);
+    }
+
+    // Overflow to exchange
+    if (p.overflowToExch && !req.overflowed && req.channel !== 'exchange' &&
+        req.waitTime >= p.overflowWait) {
+      req.overflowed = true;
+      sim.stats.demand[req.channel].overflowed++;
+      addEvent(`↗ ${req.channel.toUpperCase()} rider at ${req.pickupName} overflowed to Open Exchange`);
+    }
+
+    // Abandon
+    if (req.waitTime >= p.abandonWait) {
+      req.status = 'abandoned';
+      sim.stats.demand[req.channel].abandoned++;
+      toRemove.push(req.id);
+      addEvent(`✗ Rider abandoned at ${req.pickupName} (waited ${(req.waitTime/60).toFixed(1)} min)`);
+    }
+  }
+
+  if (toRemove.length > 0) {
+    sim.requests = sim.requests.filter(r => !toRemove.includes(r.id));
+  }
+}
+
+// ============================================================
+// MATCHING ENGINE
+// ============================================================
+
+function matchVehicles() {
+  const p = sim.params;
+  const idleVehicles = sim.vehicles.filter(v => v.status === 'idle');
+  const waitingReqs  = sim.requests.filter(r => r.status === 'waiting');
+
+  if (idleVehicles.length === 0 || waitingReqs.length === 0) return;
+
+  // Track which requests have been claimed this tick
+  const claimed = new Set();
+
+  // Shuffle vehicles for fairness
+  const shuffled = [...idleVehicles].sort(() => Math.random() - 0.5);
+
+  for (const vehicle of shuffled) {
+    // Find all eligible requests for this vehicle
+    const eligible = [];
+    for (const req of waitingReqs) {
+      if (claimed.has(req.id)) continue;
+      if (!isEligible(vehicle, req)) continue;
+      const dist = distanceMiles(vehicle.lat, vehicle.lon, req.pickupLat, req.pickupLon);
+      if (dist > p.matchDistMiles) continue;
+      const effectiveRev = effectiveRevenue(vehicle, req);
+      eligible.push({ req, dist, effectiveRev });
+    }
+
+    if (eligible.length === 0) continue;
+
+    // Greedy: pick highest effective revenue (profit-maximizing vehicle behavior)
+    eligible.sort((a, b) => b.effectiveRev - a.effectiveRev);
+    const best = eligible[0];
+    assignRide(vehicle, best.req);
+    claimed.add(best.req.id);
+  }
+}
+
+function isEligible(vehicle, req) {
+  // Same proprietary fleet
+  if (vehicle.fleet === req.channel) return true;
+  // Exchange-posted request → any exchange-enabled vehicle
+  if (req.channel === 'exchange' && vehicle.exchangeEnabled) return true;
+  // Overflowed proprietary request → any exchange-enabled vehicle
+  if (req.overflowed && vehicle.exchangeEnabled) return true;
+  return false;
+}
+
+function isExchangeRide(vehicle, req) {
+  return req.channel === 'exchange' || (req.overflowed && vehicle.fleet !== req.channel);
+}
+
+function effectiveRevenue(vehicle, req) {
+  const gross = req.bidPrice;
+  if (isExchangeRide(vehicle, req)) {
+    // Exchange: driver pays exchange fee
+    return gross * (1 - sim.params.exchFeePercent / 100);
+  } else {
+    // Proprietary: driver pays platform commission
+    return gross * (1 - sim.params.propCommPercent / 100);
+  }
+}
+
+function assignRide(vehicle, req) {
+  // Charge seat cost if this is the vehicle's first exchange ride and they have exchange enabled
+  if (vehicle.exchangeEnabled && !vehicle.seatCostCharged && sim.params.seatCost > 0) {
+    vehicle.seatCostCharged = true;
+    vehicle.costs += sim.params.seatCost;
+    sim.stats[vehicle.fleet].seatCostPaid += sim.params.seatCost;
+    addEvent(`🪑 ${vehicle.fleet.toUpperCase()} vehicle joined exchange (seat: $${sim.params.seatCost})`);
+  }
+
+  vehicle.status = 'en_route_pickup';
+  vehicle.targetLat = req.pickupLat;
+  vehicle.targetLon = req.pickupLon;
+  vehicle.destLat = req.destLat;
+  vehicle.destLon = req.destLon;
+  vehicle.currentReqId = req.id;
+
+  req.status = 'matched';
+  req.vehicleId = vehicle.id;
+  req.matchedAt = sim.time;
+
+  const exchTag = isExchangeRide(vehicle, req) ? '[EXCHANGE] ' : '';
+  const overflowTag = req.overflowed ? '[OVERFLOW] ' : '';
+  addEvent(`✓ ${exchTag}${overflowTag}${vehicle.fleet.toUpperCase()} matched ${req.channel} rider: ${req.pickupName}→${req.destName} $${req.bidPrice.toFixed(0)}`);
+}
+
+// ============================================================
+// VEHICLE MOVEMENT
+// ============================================================
+
+function moveVehicles(dt) {
+  const p = sim.params;
+  const speed = p.vehicleSpeed * p.simSpeed;  // degrees per tick
+
+  for (const v of sim.vehicles) {
+    if (v.status === 'idle') continue;
+    if (v.targetLat === null) continue;
+
+    const dLat = v.targetLat - v.lat;
+    const dLon = v.targetLon - v.lon;
+    const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+
+    const movesDist = speed * TICK_MS / 1000;  // how far we move this real-second
+    const step = movesDist / (TICK_MS / 1000);  // per tick
+
+    if (dist <= movesDist) {
+      // Arrived at target
+      v.lat = v.targetLat;
+      v.lon = v.targetLon;
+
+      if (v.status === 'en_route_pickup') {
+        // Pick up passenger
+        v.status = 'carrying';
+        v.targetLat = v.destLat;
+        v.targetLon = v.destLon;
+        // Accumulate miles driven to pickup
+        const mpi = distanceMiles(v.lat, v.lon, v.targetLat, v.targetLon);
+        v.milesDriven += mpi;
+        sim.stats[v.fleet].milesDriven += mpi;
+      } else if (v.status === 'carrying') {
+        completeRide(v);
+      }
+    } else {
+      // Move toward target
+      const ratio = movesDist / dist;
+      const newLat = v.lat + dLat * ratio;
+      const newLon = v.lon + dLon * ratio;
+      const milesMoved = distanceMiles(v.lat, v.lon, newLat, newLon);
+      v.lat = newLat;
+      v.lon = newLon;
+      v.milesDriven += milesMoved;
+      sim.stats[v.fleet].milesDriven += milesMoved;
+    }
+  }
+}
+
+function completeRide(vehicle) {
+  const req = sim.requests.find(r => r.id === vehicle.currentReqId);
+  if (!req) return;
+
+  const rev = effectiveRevenue(vehicle, req);
+  const exchRide = isExchangeRide(vehicle, req);
+  const fee = exchRide ? req.bidPrice * sim.params.exchFeePercent / 100 : 0;
+
+  vehicle.status = 'idle';
+  vehicle.targetLat = null;
+  vehicle.targetLon = null;
+  vehicle.destLat   = null;
+  vehicle.destLon   = null;
+  vehicle.currentReqId = null;
+  vehicle.ridesCompleted++;
+  vehicle.revenue += rev;
+  vehicle.costs += vehicle.milesDriven * sim.params.opsCostPerMile * 0; // tracked via stats
+
+  // Fleet stats
+  const fs = sim.stats[vehicle.fleet];
+  fs.ridesCompleted++;
+  fs.revenue += rev;
+
+  if (exchRide) {
+    vehicle.exchRides++;
+    vehicle.exchRevenue += rev;
+    fs.exchRides++;
+    fs.exchRevenue += rev;
+    fs.exchFeesPaid += fee;
+    sim.stats.exchange.brokered++;
+    sim.stats.exchange.fees += fee;
+    sim.stats.exchange.priceSum += req.bidPrice;
+    if (req.overflowed) sim.stats.exchange.overflow++;
+  }
+
+  // Demand stats
+  const ds = sim.stats.demand[req.channel];
+  ds.served++;
+  ds.waitSum += (req.matchedAt - req.createdAt);
+
+  // Remove request
+  sim.requests = sim.requests.filter(r => r.id !== req.id);
+
+  addEvent(`✓ Ride complete: ${vehicle.fleet.toUpperCase()} → ${req.destName} ${fmt$(rev)} net`);
+}
+
+function trackUtilization(dt) {
+  for (const v of sim.vehicles) {
+    if (v.status === 'idle') v.idleSec += dt;
+    else v.busySec += dt;
+    sim.stats[v.fleet][v.status === 'idle' ? 'totalIdleSec' : 'totalBusySec'] += dt;
+  }
+}
+
+// ============================================================
+// MAP
+// ============================================================
+
+function initMap() {
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v11',
+    center: DENVER_CENTER,
+    zoom: MAP_ZOOM,
+    attributionControl: false,
+  });
+  map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+  map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');
+
+  map.on('load', () => {
+    // Vehicle source + layers
+    map.addSource('vehicles', { type: 'geojson', data: emptyGeoJSON() });
+    map.addLayer({
+      id: 'vehicles-shadow',
+      type: 'circle',
+      source: 'vehicles',
+      paint: {
+        'circle-radius': ['match', ['get', 'status'], 'carrying', 16, 'en_route_pickup', 13, 10],
+        'circle-color': ['match', ['get', 'fleet'],
+          'waymo', '#22d3ee', 'uber', '#facc15', 'tesla', '#f87171', 'independent', '#c084fc', '#aaaaaa'],
+        'circle-opacity': 0.15,
+        'circle-blur': 1,
+      }
+    });
+    map.addLayer({
+      id: 'vehicles-circle',
+      type: 'circle',
+      source: 'vehicles',
+      paint: {
+        'circle-radius': ['match', ['get', 'status'], 'carrying', 9, 'en_route_pickup', 7, 6],
+        'circle-color': ['match', ['get', 'fleet'],
+          'waymo', '#22d3ee', 'uber', '#facc15', 'tesla', '#f87171', 'independent', '#c084fc', '#aaaaaa'],
+        'circle-opacity': ['match', ['get', 'status'], 'idle', 0.65, 1.0],
+        'circle-stroke-width': ['match', ['get', 'exchangeEnabled'], 1, 2, 0],
+        'circle-stroke-color': '#39ff14',
+        'circle-stroke-opacity': 0.8,
+      }
+    });
+
+    // Route lines source + layer
+    map.addSource('routes', { type: 'geojson', data: emptyGeoJSON() });
+    map.addLayer({
+      id: 'routes-to-pickup',
+      type: 'line',
+      source: 'routes',
+      filter: ['==', ['get', 'type'], 'to_pickup'],
+      paint: {
+        'line-color': 'rgba(255,255,255,0.4)',
+        'line-width': 1.5,
+        'line-dasharray': [3, 3],
+      }
+    });
+    map.addLayer({
+      id: 'routes-carrying',
+      type: 'line',
+      source: 'routes',
+      filter: ['==', ['get', 'type'], 'carrying'],
+      paint: {
+        'line-color': ['match', ['get', 'fleet'],
+          'waymo', '#22d3ee', 'uber', '#facc15', 'tesla', '#f87171', 'independent', '#c084fc', '#aaaaaa'],
+        'line-width': 2.5,
+        'line-opacity': 0.7,
+      }
+    });
+
+    // Request dots source + layer
+    map.addSource('requests', { type: 'geojson', data: emptyGeoJSON() });
+    map.addLayer({
+      id: 'requests-glow',
+      type: 'circle',
+      source: 'requests',
+      paint: {
+        'circle-radius': 12,
+        'circle-color': ['case', ['get', 'overflowed'],
+          '#4ade80',
+          ['match', ['get', 'channel'], 'exchange', '#4ade80', 'waymo', '#22d3ee',
+           'uber', '#facc15', 'tesla', '#f87171', '#ffffff']
+        ],
+        'circle-opacity': 0.12,
+        'circle-blur': 1,
+      }
+    });
+    map.addLayer({
+      id: 'requests-circle',
+      type: 'circle',
+      source: 'requests',
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['get', 'surgeCount'], 0, 4, 3, 7],
+        'circle-color': ['case', ['get', 'overflowed'],
+          '#4ade80',
+          ['match', ['get', 'channel'], 'exchange', '#4ade80', 'waymo', '#22d3ee',
+           'uber', '#facc15', 'tesla', '#f87171', '#ffffff']
+        ],
+        'circle-opacity': 0.9,
+        'circle-stroke-width': 1.5,
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-opacity': 0.3,
+      }
+    });
+
+    // Destination dots
+    map.addSource('destinations', { type: 'geojson', data: emptyGeoJSON() });
+    map.addLayer({
+      id: 'destinations-circle',
+      type: 'circle',
+      source: 'destinations',
+      paint: {
+        'circle-radius': 4,
+        'circle-color': '#39ff14',
+        'circle-opacity': 0.6,
+        'circle-stroke-width': 1,
+        'circle-stroke-color': '#39ff14',
+        'circle-stroke-opacity': 0.4,
+      }
+    });
+
+    updateMapSources();
+  });
+}
+
+function emptyGeoJSON() {
+  return { type: 'FeatureCollection', features: [] };
+}
+
+function updateMapSources() {
+  if (!map || !map.isStyleLoaded()) return;
+
+  const vSrc = map.getSource('vehicles');
+  const rSrc = map.getSource('routes');
+  const reqSrc = map.getSource('requests');
+  const dSrc = map.getSource('destinations');
+  if (!vSrc || !rSrc || !reqSrc || !dSrc) return;
+
+  // Vehicles
+  const vehicleFeatures = (sim ? sim.vehicles : []).map(v => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [v.lon, v.lat] },
+    properties: {
+      id: v.id, fleet: v.fleet, status: v.status,
+      exchangeEnabled: v.exchangeEnabled ? 1 : 0,
+    }
+  }));
+  vSrc.setData({ type: 'FeatureCollection', features: vehicleFeatures });
+
+  // Routes
+  const routeFeatures = [];
+  if (sim) {
+    for (const v of sim.vehicles) {
+      if (v.targetLat === null) continue;
+      routeFeatures.push({
+        type: 'Feature',
+        geometry: { type: 'LineString', coordinates: [[v.lon, v.lat], [v.targetLon, v.targetLat]] },
+        properties: { fleet: v.fleet, type: v.status === 'en_route_pickup' ? 'to_pickup' : 'carrying' }
+      });
+    }
+  }
+  rSrc.setData({ type: 'FeatureCollection', features: routeFeatures });
+
+  // Requests (waiting only)
+  const reqFeatures = (sim ? sim.requests : [])
+    .filter(r => r.status === 'waiting')
+    .map(r => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [r.pickupLon, r.pickupLat] },
+      properties: { id: r.id, channel: r.channel, bidPrice: r.bidPrice, surgeCount: r.surgeCount, overflowed: r.overflowed ? 1 : 0 }
+    }));
+  reqSrc.setData({ type: 'FeatureCollection', features: reqFeatures });
+
+  // Destinations for carrying vehicles
+  const destFeatures = [];
+  if (sim) {
+    for (const v of sim.vehicles) {
+      if (v.status === 'carrying' && v.destLat !== null) {
+        destFeatures.push({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [v.destLon, v.destLat] },
+          properties: { fleet: v.fleet }
+        });
+      }
+    }
+  }
+  dSrc.setData({ type: 'FeatureCollection', features: destFeatures });
+}
+
+// ============================================================
+// METRICS RENDERING
+// ============================================================
+
+function renderMetrics() {
+  if (!sim) return;
+  const s = sim.stats;
+  const p = sim.params;
+
+  // Clock
+  document.getElementById('sim-clock').textContent = 'T+' + fmtTime(sim.time);
+
+  // Overview
+  let totalRides = 0, pending = 0, abandoned = 0;
+  for (const fleet of ['waymo','uber','tesla','independent']) {
+    totalRides += s[fleet].ridesCompleted;
+    abandoned  += s.demand[fleet] ? s.demand[fleet].abandoned : 0;
+  }
+  pending = sim.requests.filter(r => r.status === 'waiting').length;
+
+  const totalRequested = ['waymo','uber','tesla','exchange'].reduce((a, c) => a + s.demand[c].requested, 0);
+  const totalServed    = ['waymo','uber','tesla','exchange'].reduce((a, c) => a + s.demand[c].served, 0);
+
+  document.getElementById('m-total-rides').textContent = totalRides;
+  document.getElementById('m-pending').textContent = pending;
+  document.getElementById('m-abandoned').textContent = abandoned;
+  document.getElementById('m-serve-rate').textContent =
+    totalRequested > 0 ? Math.round(totalServed / totalRequested * 100) + '%' : '—';
+  document.getElementById('m-exch-vol').textContent = s.exchange.brokered;
+
+  // Fleet table
+  const fleets = [
+    { key: 'waymo',       label: 'Waymo',  cls: 'f-waymo' },
+    { key: 'uber',        label: 'Uber',   cls: 'f-uber' },
+    { key: 'tesla',       label: 'Tesla',  cls: 'f-tesla' },
+    { key: 'independent', label: 'Indep',  cls: 'f-independent' },
+  ];
+
+  let fleetHTML = '';
+  for (const fl of fleets) {
+    const fs = s[fl.key];
+    const vehicles = sim.vehicles.filter(v => v.fleet === fl.key);
+    const totalSec = fs.totalIdleSec + fs.totalBusySec;
+    const utilPct = totalSec > 0 ? Math.round(fs.totalBusySec / totalSec * 100) : 0;
+    const opsCost = fs.milesDriven * p.opsCostPerMile;
+    const net = fs.revenue - opsCost - fs.seatCostPaid;
+    fleetHTML += `<tr>
+      <td class="${fl.cls}">${fl.label}</td>
+      <td>${utilPct}%</td>
+      <td>${fs.ridesCompleted}</td>
+      <td>${fmtK(fs.revenue)}</td>
+      <td style="color:${net >= 0 ? 'var(--accent)' : 'var(--danger)'}">${fmtK(net)}</td>
+    </tr>`;
+  }
+  document.getElementById('fleet-table-body').innerHTML = fleetHTML || '<tr><td colspan="5" style="color:var(--text-dim);text-align:center">—</td></tr>';
+
+  // Demand table
+  const channels = [
+    { key: 'waymo',    label: 'Waymo',  cls: 'f-waymo' },
+    { key: 'uber',     label: 'Uber',   cls: 'f-uber' },
+    { key: 'tesla',    label: 'Tesla',  cls: 'f-tesla' },
+    { key: 'exchange', label: 'Exch',   cls: 'f-exchange' },
+  ];
+  let demandHTML = '';
+  for (const ch of channels) {
+    const ds = s.demand[ch.key];
+    const avgWait = ds.served > 0 ? ds.waitSum / ds.served : 0;
+    demandHTML += `<tr>
+      <td class="${ch.cls}">${ch.label}</td>
+      <td>${ds.requested}</td>
+      <td>${ds.served}</td>
+      <td>${ds.abandoned}</td>
+      <td>${fmtMin(avgWait)}</td>
+    </tr>`;
+  }
+  document.getElementById('demand-table-body').innerHTML = demandHTML;
+
+  // Exchange stats
+  document.getElementById('xs-brokered').textContent = s.exchange.brokered;
+  document.getElementById('xs-fees').textContent = fmt$(s.exchange.fees);
+  document.getElementById('xs-avg-price').textContent =
+    s.exchange.brokered > 0 ? fmt$(s.exchange.priceSum / s.exchange.brokered) : '—';
+  document.getElementById('xs-overflow').textContent = s.exchange.overflow;
+  const exchPosted = s.demand.exchange.requested + s.exchange.overflow;
+  document.getElementById('xs-match-rate').textContent =
+    exchPosted > 0 ? Math.round(s.exchange.brokered / exchPosted * 100) + '%' : '—';
+
+  // Win-win analysis
+  renderWinWin();
+
+  // Event log
+  renderEventLog();
+}
+
+function renderWinWin() {
+  const s = sim.stats;
+  const p = sim.params;
+
+  // Supply ROI per participating fleet
+  let roiHTML = '';
+  let totalExtraNet = 0;
+  let anyParticipating = false;
+
+  for (const fl of ['waymo','uber','tesla','independent']) {
+    const vehicles = sim.vehicles.filter(v => v.fleet === fl);
+    if (vehicles.length === 0) continue;
+    const fs = s[fl];
+    const joinExch = isFleetExchangeEnabled(fl);
+
+    if (!joinExch && fl !== 'independent') {
+      roiHTML += `<div class="roi-row">
+        <div class="roi-top"><span class="roi-name f-${fl}">${fl.charAt(0).toUpperCase()+fl.slice(1)}</span>
+        <span class="roi-val" style="color:var(--text-dim)">Exchange OFF</span></div>
+        <div class="roi-bar"><div class="roi-fill" style="width:0%;background:var(--text-dim)"></div></div>
+      </div>`;
+      continue;
+    }
+    anyParticipating = true;
+
+    const seatTotal = fs.seatCostPaid;
+    const feesPaid  = fs.exchFeesPaid;
+    const extraRev  = fs.exchRevenue;
+    const opsCostSaved = 0; // assume same ops cost either way
+    const netBenefit = extraRev - seatTotal - feesPaid;
+    totalExtraNet += netBenefit;
+
+    const breakEvenRides = seatTotal > 0 ?
+      seatTotal / (p.baseBid * (1 - p.exchFeePercent/100) - p.baseBid * 0) : 0;
+
+    const pct = Math.max(0, Math.min(100, netBenefit < 0 ?
+      (netBenefit / (seatTotal || 1) * 50 + 50) : // negative: 0-50%
+      (50 + Math.min(50, netBenefit / Math.max(1, seatTotal) * 50))
+    ));
+
+    const color = netBenefit >= 0 ? 'var(--accent)' : 'var(--danger)';
+
+    roiHTML += `<div class="roi-row">
+      <div class="roi-top">
+        <span class="roi-name f-${fl}">${fl.charAt(0).toUpperCase()+fl.slice(1)}</span>
+        <span class="roi-val" style="color:${color}">${fmtK(netBenefit)} net</span>
+      </div>
+      <div style="font-size:9px;color:var(--text-dim);margin-bottom:2px;">
+        +${fmtK(extraRev)} exch rev − $${seatTotal.toFixed(0)} seat − $${feesPaid.toFixed(0)} fees
+        · ${fs.exchRides} exch rides
+      </div>
+      <div class="roi-bar">
+        <div class="roi-fill" style="width:${pct}%;background:${color}"></div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('roi-rows').innerHTML = roiHTML ||
+    '<div style="font-size:10px;color:var(--text-dim)">Enable exchange participation ↑</div>';
+
+  // Supply verdict
+  const supplyVerdict = document.getElementById('supply-verdict');
+  if (!anyParticipating) {
+    supplyVerdict.style.borderColor = 'var(--text-dim)';
+    supplyVerdict.style.color = 'var(--text-dim)';
+    supplyVerdict.textContent = 'Toggle fleet exchange participation to analyze.';
+  } else if (totalExtraNet > 0) {
+    supplyVerdict.style.borderColor = 'var(--accent)';
+    supplyVerdict.style.color = 'var(--accent)';
+    supplyVerdict.textContent = `Exchange WIN: participating fleets up $${totalExtraNet.toFixed(0)} net. Seat cost recovered, fees offset by extra rides.`;
+  } else {
+    const ridesToBreakEven = p.seatCost / Math.max(0.01, p.baseBid * p.exchFeePercent / 100);
+    supplyVerdict.style.borderColor = 'var(--danger)';
+    supplyVerdict.style.color = 'var(--danger)';
+    supplyVerdict.textContent = `Building: need ~${Math.ceil(ridesToBreakEven)} exchange rides to break even. Currently ${s.exchange.brokered}.`;
+  }
+
+  // Demand verdict
+  const overflowServed = s.exchange.overflow;
+  const totalAbandoned = ['waymo','uber','tesla','exchange'].reduce((a,c) => a + s.demand[c].abandoned, 0);
+  document.getElementById('m-saved-demand').textContent = overflowServed;
+
+  const demandVerdict = document.getElementById('demand-verdict');
+  if (!p.overflowToExch) {
+    demandVerdict.style.borderColor = 'var(--text-dim)';
+    demandVerdict.style.color = 'var(--text-dim)';
+    demandVerdict.textContent = 'Enable "overflow to exchange" to see demand benefit.';
+  } else if (overflowServed > 0) {
+    demandVerdict.style.borderColor = 'var(--exchange)';
+    demandVerdict.style.color = 'var(--exchange)';
+    demandVerdict.textContent = `Demand WIN: ${overflowServed} rides served via overflow that would have been abandoned. ${totalAbandoned} still abandoned (no exchange supply nearby).`;
+  } else {
+    demandVerdict.style.borderColor = 'var(--yellow)';
+    demandVerdict.style.color = 'var(--yellow)';
+    demandVerdict.textContent = `Overflow enabled — waiting for unserved proprietary riders (${totalAbandoned} abandoned so far).`;
+  }
+
+  // Win-win meter (combined)
+  const totalServed    = ['waymo','uber','tesla','exchange'].reduce((a,c) => a + s.demand[c].served, 0);
+  const totalRequested = ['waymo','uber','tesla','exchange'].reduce((a,c) => a + s.demand[c].requested, 0);
+  const serveRate = totalRequested > 0 ? totalServed / totalRequested : 0;
+  const exchContrib = totalRequested > 0 ? s.exchange.brokered / totalRequested : 0;
+
+  // Score: 0 (all bad) to 1 (win-win)
+  // Weighted: serve rate 60%, supply ROI positive 40%
+  const supplyScore = anyParticipating ? Math.min(1, Math.max(0, totalExtraNet / Math.max(1, p.seatCost * 2) + 0.5)) : 0.5;
+  const demandScore = serveRate;
+  const overallScore = anyParticipating ? (supplyScore * 0.4 + demandScore * 0.6) : demandScore * 0.5 + 0.5;
+  const pct2 = Math.min(100, Math.max(0, overallScore * 100));
+
+  document.getElementById('exch-health-bar').style.width = pct2 + '%';
+  const label = pct2 > 65 ? 'Win-Win ✓' : pct2 > 45 ? 'Building...' : 'Not yet profitable';
+  document.getElementById('exch-health-label').textContent = label;
+  document.getElementById('exch-health-label').style.color =
+    pct2 > 65 ? 'var(--accent)' : pct2 > 45 ? 'var(--yellow)' : 'var(--danger)';
+
+  // Break-even
+  const be = p.seatCost / Math.max(0.01, p.baseBid * (1 - p.exchFeePercent/100) * (p.propCommPercent/100));
+  const beLabel = anyParticipating && s.exchange.brokered > 0 ?
+    `Break-even: ~${Math.ceil(be)} rides (${s.exchange.brokered} so far = ${Math.round(s.exchange.brokered/be*100)}%)` :
+    `Break-even point: ~${Math.ceil(be)} exchange rides per vehicle`;
+  document.getElementById('breakeven-label').textContent = beLabel;
+}
+
+function renderEventLog() {
+  const logEl = document.getElementById('metrics-event-log');
+  const feedEl = document.getElementById('ef-list');
+  if (events.length === 0) {
+    logEl.textContent = 'Waiting for events...';
+    feedEl.innerHTML = '';
+    return;
+  }
+  const recent = events.slice(-30).reverse();
+  logEl.innerHTML = recent.map(e =>
+    `<div style="border-bottom:1px solid rgba(255,255,255,0.04);padding:2px 0;">${e}</div>`
+  ).join('');
+
+  const feedRecent = events.slice(-5).reverse();
+  feedEl.innerHTML = feedRecent.map((e, i) =>
+    `<div class="ef-item ${i === 0 ? 'new' : ''}">${e}</div>`
+  ).join('');
+}
+
+function addEvent(msg) {
+  events.push(msg);
+  if (events.length > 200) events.shift();
+}
+
+// ============================================================
+// CONTROLS
+// ============================================================
+
+function startSim() {
+  if (!sim) initSim();
+  sim.running = true;
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-pause').disabled = false;
+  if (!tickTimer) tickTimer = setInterval(tick, TICK_MS);
+}
+
+function pauseSim() {
+  if (!sim) return;
+  sim.running = false;
+  document.getElementById('btn-start').disabled = false;
+  document.getElementById('btn-pause').disabled = true;
+}
+
+function resetSim() {
+  if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+  document.getElementById('btn-start').disabled = false;
+  document.getElementById('btn-start').classList.add('active');
+  document.getElementById('btn-pause').disabled = true;
+  initSim();
+  updatePropNetExamples();
+}
+
+function setSpeed(v) {
+  const n = parseInt(v);
+  document.getElementById('speed-disp').textContent = n + '×';
+  if (sim) sim.params.simSpeed = n;
+}
+
+function readParamsFromUI(p) {
+  p.simSpeed      = parseInt(document.getElementById('speed-slider').value);
+  p.waymoCnt      = parseInt(document.getElementById('waymo-count').value) || 0;
+  p.uberCnt       = parseInt(document.getElementById('uber-count').value)  || 0;
+  p.teslaCnt      = parseInt(document.getElementById('tesla-count').value) || 0;
+  p.indepCnt      = parseInt(document.getElementById('indep-count').value) || 0;
+  p.waymoExch     = document.getElementById('waymo-exchange').checked;
+  p.uberExch      = document.getElementById('uber-exchange').checked;
+  p.teslaExch     = document.getElementById('tesla-exchange').checked;
+  p.seatCost      = parseInt(document.getElementById('seat-cost').value)   || 0;
+  p.exchFeePercent= parseFloat(document.getElementById('exch-fee').value)  || 0;
+  p.propCommPercent=parseInt(document.getElementById('prop-comm').value)   || 0;
+  p.vehicleCost   = parseInt(document.getElementById('veh-cost').value)    || 50000;
+  p.opsCostPerMile= parseFloat(document.getElementById('ops-cost').value)  || 0.25;
+  p.rideRatePerMin= parseInt(document.getElementById('ride-rate').value)   || 10;
+  p.baseBid       = parseFloat(document.getElementById('bid-price').value) || 18;
+  p.surgeWait     = parseInt(document.getElementById('surge-wait').value)  || 180;
+  p.surgeMult     = parseFloat(document.getElementById('surge-mult').value)|| 1.25;
+  p.abandonWait   = parseInt(document.getElementById('abandon-wait').value)|| 420;
+  p.matchDistMiles= parseInt(document.getElementById('match-dist').value)  || 5;
+  p.overflowToExch= document.getElementById('overflow-to-exch').checked;
+  p.overflowWait  = parseInt(document.getElementById('overflow-wait').value)||180;
+
+  // Share percentages (raw, will be normalized at generation time)
+  p.waymoShare = parseInt(document.getElementById('waymo-share').value) || 0;
+  p.uberShare  = parseInt(document.getElementById('uber-share').value)  || 0;
+  p.teslaShare = parseInt(document.getElementById('tesla-share').value) || 0;
+  p.exchShare  = parseInt(document.getElementById('exch-share').value)  || 0;
+}
+
+function updateParams() {
+  if (!sim) return;
+  readParamsFromUI(sim.params);
+  updateParamDisplays();
+  updatePropNetExamples();
+}
+
+function updateFleet() {
+  // Don't reinit mid-simulation, just update counts for next reset
+}
+
+function updateExchange() {
+  if (!sim) return;
+  readParamsFromUI(sim.params);
+  // Update each vehicle's exchange flag
+  for (const v of sim.vehicles) {
+    v.exchangeEnabled = isFleetExchangeEnabled(v.fleet);
+  }
+  updatePropNetExamples();
+}
+
+function updateShareDisplay() {
+  const ws = parseInt(document.getElementById('waymo-share').value) || 0;
+  const us = parseInt(document.getElementById('uber-share').value)  || 0;
+  const ts = parseInt(document.getElementById('tesla-share').value) || 0;
+  const es = parseInt(document.getElementById('exch-share').value)  || 0;
+  const total = ws + us + ts + es;
+  document.getElementById('disp-waymo-share').textContent = ws + '%';
+  document.getElementById('disp-uber-share').textContent  = us + '%';
+  document.getElementById('disp-tesla-share').textContent = ts + '%';
+  document.getElementById('disp-exch-share').textContent  = es + '%';
+  document.getElementById('share-warning').style.display  = total > 100 ? 'block' : 'none';
+  updateParams();
+}
+
+function updateParamDisplays() {
+  const p = sim ? sim.params : null;
+  if (!p) return;
+
+  const id = document.getElementById.bind(document);
+  id('disp-rate').textContent = p.rideRatePerMin;
+  id('disp-price').textContent = '$' + p.baseBid;
+  id('disp-seat-cost').textContent = '$' + p.seatCost;
+  id('disp-exch-fee').textContent = p.exchFeePercent + '%';
+  id('disp-prop-comm').textContent = p.propCommPercent + '%';
+  id('disp-veh-cost').textContent = p.vehicleCost >= 1000 ? '$' + (p.vehicleCost/1000).toFixed(0) + 'k' : '$' + p.vehicleCost;
+  id('disp-ops-cost').textContent = '$' + p.opsCostPerMile.toFixed(2);
+  id('disp-surge-wait').textContent = (p.surgeWait / 60).toFixed(1) + ' min';
+  id('disp-surge-mult').textContent = p.surgeMult.toFixed(2) + '×';
+  id('disp-abandon').textContent = (p.abandonWait / 60).toFixed(1) + ' min';
+  id('disp-match-dist').textContent = p.matchDistMiles + ' mi';
+  id('disp-overflow').textContent = (p.overflowWait / 60).toFixed(1) + ' min';
+
+  const overflowRow = id('overflow-time-row');
+  if (overflowRow) overflowRow.style.display = p.overflowToExch ? 'block' : 'none';
+}
+
+function updatePropNetExamples() {
+  const p = sim ? sim.params : null;
+  if (!p) return;
+  const bid = p.baseBid;
+  const propNet = bid * (1 - p.propCommPercent / 100);
+  const exchNet = bid * (1 - p.exchFeePercent / 100);
+  document.getElementById('prop-net-ex').textContent = `($${bid.toFixed(0)} → $${propNet.toFixed(2)})`;
+  document.getElementById('exch-net-ex').textContent = `($${bid.toFixed(0)} → $${exchNet.toFixed(2)})`;
+}
+
+// ============================================================
+// SCENARIO PRESETS
+// ============================================================
+
+function loadScenario(name) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const scenarios = {
+    surge: {
+      waymoCnt: 8, uberCnt: 10, teslaCnt: 5, indepCnt: 4,
+      rideRatePerMin: 30, baseBid: 18,
+      waymoShare: 25, uberShare: 50, teslaShare: 15, exchShare: 10,
+      waymoExch: false, uberExch: false, teslaExch: false,
+      seatCost: 500, exchFeePercent: 5, propCommPercent: 25,
+      overflowToExch: false,
+      desc: 'Demand surge: few vehicles, high demand — exchange can save the day'
+    },
+    balanced: {
+      waymoCnt: 15, uberCnt: 25, teslaCnt: 12, indepCnt: 8,
+      rideRatePerMin: 10, baseBid: 18,
+      waymoShare: 20, uberShare: 45, teslaShare: 15, exchShare: 20,
+      waymoExch: false, uberExch: false, teslaExch: false,
+      seatCost: 500, exchFeePercent: 5, propCommPercent: 25,
+      overflowToExch: false,
+      desc: 'Balanced: default state — exchange adds marginal benefit'
+    },
+    fragmented: {
+      waymoCnt: 20, uberCnt: 20, teslaCnt: 15, indepCnt: 10,
+      rideRatePerMin: 8, baseBid: 18,
+      waymoShare: 15, uberShare: 20, teslaShare: 15, exchShare: 50,
+      waymoExch: false, uberExch: false, teslaExch: false,
+      seatCost: 500, exchFeePercent: 5, propCommPercent: 25,
+      overflowToExch: true, overflowWait: 120,
+      desc: 'Fragmented: demand prefers exchange, many idle proprietary vehicles'
+    },
+    exchange_wins: {
+      waymoCnt: 15, uberCnt: 20, teslaCnt: 10, indepCnt: 5,
+      rideRatePerMin: 15, baseBid: 22,
+      waymoShare: 20, uberShare: 30, teslaShare: 10, exchShare: 40,
+      waymoExch: true, uberExch: true, teslaExch: true,
+      seatCost: 200, exchFeePercent: 3, propCommPercent: 28,
+      overflowToExch: true, overflowWait: 90,
+      desc: 'Exchange wins: low seat cost, low fee, all fleets participate'
+    },
+  };
+
+  const sc = scenarios[name];
+  if (!sc) return;
+
+  // Apply to UI
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  };
+  const setChk = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = val;
+  };
+
+  setVal('waymo-count',    sc.waymoCnt);
+  setVal('uber-count',     sc.uberCnt);
+  setVal('tesla-count',    sc.teslaCnt);
+  setVal('indep-count',    sc.indepCnt);
+  setChk('waymo-exchange', sc.waymoExch);
+  setChk('uber-exchange',  sc.uberExch);
+  setChk('tesla-exchange', sc.teslaExch);
+  setVal('ride-rate',      sc.rideRatePerMin);
+  setVal('bid-price',      sc.baseBid);
+  setVal('waymo-share',    sc.waymoShare);
+  setVal('uber-share',     sc.uberShare);
+  setVal('tesla-share',    sc.teslaShare);
+  setVal('exch-share',     sc.exchShare);
+  setVal('seat-cost',      sc.seatCost);
+  setVal('exch-fee',       sc.exchFeePercent);
+  setVal('prop-comm',      sc.propCommPercent);
+  setChk('overflow-to-exch', sc.overflowToExch || false);
+  if (sc.overflowWait) setVal('overflow-wait', sc.overflowWait);
+
+  updateShareDisplay();
+  addEvent(`📋 Scenario: "${name}" — ${sc.desc}`);
+  resetSim();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+window.addEventListener('load', function () {
+  // Init displays
+  updateParamDisplays();
+  updateShareDisplay();
+  updatePropNetExamples();
+
+  // Init overflow toggle visibility
+  document.getElementById('overflow-to-exch').addEventListener('change', function () {
+    document.getElementById('overflow-time-row').style.display = this.checked ? 'block' : 'none';
+    updateParams();
+  });
+
+  // Init sim state (no running yet)
+  initSim();
+  initMap();
+});
+</script>
+</body>
+</html>
