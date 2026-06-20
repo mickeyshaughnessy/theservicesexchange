@@ -35,9 +35,17 @@ Full lifecycle demonstrated here:
 """
 
 import os
+import re
 import sys
 import time
 import requests
+
+
+class RateLimited(Exception):
+    """Raised by grab_next_ride when the exchange returns 429."""
+    def __init__(self, wait_secs: int):
+        self.wait_secs = wait_secs
+        super().__init__(f"rate-limited — retry in {wait_secs}s")
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
@@ -77,9 +85,12 @@ CURRENT_LOCATION = {
     "max_distance": 20,   # miles — only consider passengers within this radius
 }
 
-# How often to check the exchange for new rides (seconds).
-# Don't poll faster than 15 s; the exchange rate-limits /grab_job per seat.
-POLL_INTERVAL = 20
+# Seconds between /grab_job polls.
+# The exchange enforces a hard rate limit of 1 call per 15 minutes per account
+# (900 s).  Any faster and you will receive 429s on every call after the first.
+# After completing a ride the vehicle has likely already consumed its slot, so
+# dispatch_loop tracks last_grab_time and sleeps only the remaining window.
+POLL_INTERVAL = 900
 
 
 # ── Step 0: Account setup (run once per driver / fleet account) ───────────────
@@ -156,7 +167,8 @@ def grab_next_ride(token: str) -> dict | None:
       4. Price sort       — within a reputation tier, highest fare first
 
     Returns the job dict (200 OK) or None if there are no matching bids (204).
-    Raises on unexpected errors.
+    Raises RateLimited (429), PermissionError (403), or requests.HTTPError on
+    other failures.
 
     Important: when this call returns a job, the bid is atomically removed
     from the exchange.  No other driver will see it.  You must either complete
@@ -184,6 +196,13 @@ def grab_next_ride(token: str) -> dict | None:
         # Seat verification failed (wallet not linked or NFT missing).
         # See set_wallet() above.
         raise PermissionError(f"Seat verification failed: {r.json().get('error')}")
+    if r.status_code == 429:
+        # Rate limit hit.  The server tells us exactly how long to wait:
+        # {"error": "Rate limit: wait Ns before next /grab_job"}
+        err = r.json().get("error", "")
+        m = re.search(r'wait (\d+)s', err)
+        wait = int(m.group(1)) if m else POLL_INTERVAL
+        raise RateLimited(wait)
 
     r.raise_for_status()
 
@@ -280,16 +299,26 @@ def dispatch_loop(token: str, max_rides: int = 1) -> None:
     max_rides: stop after this many completed rides (set to None for ∞).
     """
     rides_completed = 0
-    print(f"[RSE] Polling for rides every {POLL_INTERVAL}s …  (Ctrl-C to stop)")
+    last_grab_time = 0.0   # monotonic time of the last /grab_job call
+    print(f"[RSE] Starting dispatch loop (rate limit: 1 grab per {POLL_INTERVAL}s) …")
+    print(f"[RSE] Ctrl-C to stop.")
 
     while True:
         try:
+            # ── Rate-limit gate ───────────────────────────────────────────────
+            # /grab_job is limited to one call per 15 minutes per account.
+            # Sleep only as long as needed to respect that window.
+            elapsed = time.monotonic() - last_grab_time
+            remaining = POLL_INTERVAL - elapsed
+            if remaining > 0:
+                print(f"[RSE] Waiting {remaining:.0f}s for rate-limit window …")
+                time.sleep(remaining)
+
+            last_grab_time = time.monotonic()
             job = grab_next_ride(token)
 
             if job is None:
-                # No matching rides right now — wait and try again.
-                print(f"[RSE] No rides available.  Checking again in {POLL_INTERVAL}s …")
-                time.sleep(POLL_INTERVAL)
+                print("[RSE] No matching rides right now.")
                 continue
 
             # ── A ride has been assigned ──────────────────────────────────────
@@ -303,22 +332,37 @@ def dispatch_loop(token: str, max_rides: int = 1) -> None:
                   f"via {job['payment_method']}")
             print()
 
-            # ── Accept or reject ──────────────────────────────────────────────
+            # ── Accept or reject based on policy ──────────────────────────────
             if not should_accept(job):
                 reject_ride(token, job["job_id"], reason="Policy rejection")
-                time.sleep(5)   # brief pause before looking for the next ride
                 continue
 
             print(f"[dispatch] Accepted.  Navigate to: "
                   f"{job.get('start_address', job.get('address'))}")
 
-            # In production: push pickup address to in-vehicle nav, notify driver, etc.
-            # Here we simulate the ride taking a few seconds.
-            print("[dispatch] Simulating ride …")
-            time.sleep(3)
+            # ── Execute the ride ──────────────────────────────────────────────
+            # In production: push pickup/dropoff to your in-vehicle nav system
+            # and block here until the driver taps "End ride".
+            # If anything goes wrong, reject_ride() returns the job to the
+            # exchange so another driver can pick it up.
+            try:
+                print("[dispatch] Simulating ride …")
+                time.sleep(3)
+                complete_ride(token, job["job_id"], passenger_rating=5)
+            except Exception as work_err:
+                print(f"[dispatch] Ride execution failed: {work_err}")
+                print("[dispatch] Returning job to exchange …")
+                reject_ride(token, job["job_id"], reason=f"Execution error: {work_err}")
+                continue
 
-            # ── Complete the ride ─────────────────────────────────────────────
-            complete_ride(token, job["job_id"], passenger_rating=5)
+            # ── Update vehicle location to the drop-off point ─────────────────
+            # The next /grab_job call will use this address for distance
+            # filtering, so passengers near the current position get priority.
+            end_addr = job.get("end_address") or job.get("address")
+            if end_addr and end_addr != "N/A":
+                CURRENT_LOCATION["address"] = end_addr
+                print(f"[dispatch] Position updated → {end_addr}")
+
             rides_completed += 1
             print(f"[RSE] Rides completed this session: {rides_completed}")
 
@@ -326,9 +370,11 @@ def dispatch_loop(token: str, max_rides: int = 1) -> None:
                 print("[RSE] Reached max_rides limit.  Stopping.")
                 break
 
-            # Brief pause before hunting for the next ride.
-            time.sleep(POLL_INTERVAL)
-
+        except RateLimited as e:
+            # Server told us exactly how long to wait — honour it precisely.
+            print(f"[RSE] Rate limited — server says wait {e.wait_secs}s.")
+            last_grab_time = time.monotonic()   # treat as if a grab just happened
+            time.sleep(e.wait_secs + 2)         # +2 s buffer against clock skew
         except PermissionError as e:
             print(f"[RSE] Access denied — check seat NFT setup: {e}")
             sys.exit(1)
@@ -353,7 +399,7 @@ def main():
 
     # ── Link your RSE Seat NFT wallet (do this once per account) ─────────────
     # Replace with the wallet address that holds your seat NFT.
-    # Contact partners@theservicesexchange.com to receive a seat allocation.
+    # Contact mickeyshaughnessy@gmail.com to receive a seat allocation.
     # Comment this out after the first run if you prefer.
     SEAT_WALLET = os.environ.get("RSE_WALLET_ADDRESS", "")
     if SEAT_WALLET:

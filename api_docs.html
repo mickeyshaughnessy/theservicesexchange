@@ -891,6 +891,7 @@ RSE supply-side reference — poll for jobs and execute them.
 Runs on a robot or autonomous agent. Requires: pip install requests
 Prerequisites: registered supply account + wallet linked via /set_wallet.
 """
+import re
 import time
 import requests
 
@@ -958,15 +959,26 @@ def main():
         if status == 200:
             job_id = data["job_id"]
             print(f"\nMatched: {job_id}")
-            do_work(data)
-            code = sign_job(session, token, job_id, rating=5)
-            print(f"Signed ({code})")
+            try:
+                do_work(data)
+                code = sign_job(session, token, job_id, rating=5)
+                print(f"Signed ({code})")
+            except Exception as e:
+                print(f"Work failed: {e} — rejecting job")
+                session.post(f"{API}/reject_job",
+                             headers={"Authorization": f"Bearer {token}"},
+                             json={"job_id": job_id, "reason": str(e)}, timeout=10)
 
         elif status == 204:
             print("No match — waiting")
 
         elif status == 429:
-            print(f"Rate limited: {data.get('error', '')}")
+            err = data.get('error', '')
+            m = re.search(r'wait (\d+)s', err)
+            wait = int(m.group(1)) if m else POLL_EVERY
+            print(f"Rate limited — waiting {wait}s")
+            time.sleep(wait + 2)
+            continue
 
         elif status == 401:
             print("Token expired — re-logging in")
