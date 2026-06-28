@@ -33,6 +33,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="about.html">About</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showFeedback(); return false;">Feedback</a>
+                    </li>
                 </ul>
                 
                 <!-- Chat and Bulletin buttons (shown when logged in) -->
@@ -486,6 +489,40 @@
                                 <button type="button" class="btn btn-secondary" onclick="hideNewPostForm()">Cancel</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Feedback</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4 p-3 border rounded">
+                        <h6 class="mb-3">Share feedback, report a bug, or suggest a feature</h6>
+                        <p class="text-muted small mb-3">No sign-in required.</p>
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="feedbackName" placeholder="Your name (optional)" maxlength="40">
+                        </div>
+                        <div class="mb-3">
+                            <textarea class="form-control" rows="3" id="feedbackMessage" placeholder="What's on your mind?" maxlength="2000" required></textarea>
+                        </div>
+                        <div id="feedbackError" class="text-danger small mb-2" style="display:none;"></div>
+                        <button class="btn btn-primary" onclick="postFeedback()">Submit</button>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">Recent Feedback</h6>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="loadFeedback()">Refresh</button>
+                    </div>
+                    <div id="feedbackList">
+                        <div class="text-muted text-center py-3">Loading…</div>
                     </div>
                 </div>
             </div>

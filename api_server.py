@@ -38,7 +38,9 @@ from handlers import (
     get_chat_history,
     send_reply,
     get_bulletin_feed,
-    get_platform_stats
+    get_platform_stats,
+    handle_get_feedback,
+    handle_post_feedback
 )
 from utils import get_token_username
 
@@ -417,6 +419,24 @@ def bulletin(current_user):
 def bulletin_feed(current_user):
     data = {'username': current_user}
     response, status = get_bulletin_feed(data)
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# Feedback Endpoints (no auth required)
+# -----------------------------------------------------------------------------
+
+@app.route('/feedback', methods=['GET'])
+def get_feedback_posts():
+    """Public endpoint to retrieve all feedback posts."""
+    response, status = handle_get_feedback()
+    return flask.jsonify(response), status
+
+@app.route('/feedback', methods=['POST'])
+@limiter.limit(_STRICT_LIMIT)
+def post_feedback_post():
+    """Public endpoint to submit feedback. No login required."""
+    data = flask.request.get_json() or {}
+    response, status = handle_post_feedback(data)
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------

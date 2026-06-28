@@ -96,6 +96,7 @@ BIDS_PREFIX = f"{S3_PREFIX}/bids"
 JOBS_PREFIX = f"{S3_PREFIX}/jobs"
 MESSAGES_PREFIX = f"{S3_PREFIX}/messages"
 BULLETINS_PREFIX = f"{S3_PREFIX}/bulletins"
+FEEDBACK_KEY = f"{S3_PREFIX}/feedback/posts.json"
 
 # -----------------------------------------------------------------------------
 # S3 Helper Functions
@@ -358,5 +359,21 @@ def get_all_bulletins() -> List[Dict[str, Any]]:
                     bulletins.append(bulletin)
     except Exception as e:
         logger.error(f"Error loading bulletins: {e}")
-    
+
     return sorted(bulletins, key=lambda x: x.get('posted_at', 0), reverse=True)
+
+# -----------------------------------------------------------------------------
+# Feedback Management
+# -----------------------------------------------------------------------------
+
+def get_feedback() -> List[Dict[str, Any]]:
+    """Retrieve all feedback posts from S3."""
+    data = _s3_get(FEEDBACK_KEY)
+    if isinstance(data, dict):
+        return data.get('posts', [])
+    return []
+
+def save_feedback(posts: List[Dict[str, Any]]) -> None:
+    """Persist feedback posts list to S3."""
+    if not _s3_put(FEEDBACK_KEY, {'posts': posts}):
+        logger.error("Failed to save feedback posts")
