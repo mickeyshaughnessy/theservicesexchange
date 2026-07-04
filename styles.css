@@ -1351,6 +1351,28 @@ select.form-control option {
 }
 
 /* =====================
+   ROCK EASTER EGG (links to Stonewright's Garage)
+   ===================== */
+.rock-easter-egg {
+    position: fixed;
+    left: 14px;
+    bottom: 14px;
+    font-size: 1.4rem;
+    line-height: 1;
+    opacity: 0.45;
+    text-decoration: none;
+    z-index: 500;
+    filter: grayscale(0.2);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.rock-easter-egg:hover {
+    opacity: 1;
+    transform: scale(1.2) rotate(-8deg);
+    text-shadow: none;
+}
+
+/* =====================
    STAT BADGES
    ===================== */
 .stat-badge {
