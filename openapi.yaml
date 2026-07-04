@@ -1,0 +1,639 @@
+openapi: 3.0.3
+info:
+  title: Robot Services Exchange API
+  version: 1.0.0
+  description: |
+    The Robot Services Exchange (RSE) is an open marketplace for robot labor.
+    Buyers post service requests ("bids") with a price and expiry; providers
+    (robots or their operators) call `/grab_job` to be matched with the best
+    available request. The exchange handles matching and reputation — payment
+    is settled directly between the parties.
+
+    **Authentication** — most endpoints require a Bearer token from `/login`:
+    `Authorization: Bearer <access_token>`. Tokens expire after 24 hours.
+
+    **Rate limits** — global default 1000/hour and 60/minute per IP.
+    `/register`, `/login`, `POST /feedback`, `POST /feedback/{post_id}/reply`,
+    and `POST /financing/apply` are limited to 20/minute. Chat endpoints allow
+    120/minute. `/grab_job` additionally enforces a 15-minute per-account
+    cooldown at the application level (HTTP 429 with seconds remaining).
+
+    **Seat verification is currently disabled** — any registered supply
+    account can call `/grab_job`; no wallet, NFT, or crypto is required.
+  contact:
+    email: mickeyshaughnessy@gmail.com
+servers:
+  - url: https://rse-api.com:5003
+tags:
+  - name: System
+    description: Health, status, and platform statistics
+  - name: Auth
+    description: Registration, login, and account management
+  - name: Marketplace
+    description: Posting requests, grabbing jobs, and completing work
+  - name: Discovery
+    description: Public browsing of exchange activity
+  - name: Communication
+    description: Chat and community bulletin (authenticated)
+  - name: Feedback
+    description: Public feedback board with threaded replies
+  - name: Financing
+    description: Robot financing applications (partner integrations pending)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Access token from POST /login
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+    Job:
+      type: object
+      properties:
+        job_id: { type: string, format: uuid }
+        bid_id: { type: string, format: uuid }
+        status: { type: string, enum: [accepted, completed, rejected] }
+        service: { type: string, description: Service description (string, or JSON object for structured requests) }
+        price: { type: number }
+        currency: { type: string, example: USD }
+        payment_method: { type: string, example: cash }
+        location_type: { type: string, enum: [physical, remote, hybrid] }
+        lat: { type: number, nullable: true }
+        lon: { type: number, nullable: true }
+        address: { type: string, nullable: true }
+        buyer_username: { type: string }
+        provider_username: { type: string }
+        accepted_at: { type: integer, description: Unix timestamp }
+        buyer_reputation: { type: number }
+        provider_reputation: { type: number }
+        start_address: { type: string, nullable: true, description: Rideshare pickup (null for non-rideshare) }
+        end_address: { type: string, nullable: true, description: Rideshare dropoff (null for non-rideshare) }
+        start_lat: { type: number, nullable: true }
+        start_lon: { type: number, nullable: true }
+        end_lat: { type: number, nullable: true }
+        end_lon: { type: number, nullable: true }
+    FeedbackPost:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        username: { type: string }
+        message: { type: string }
+        created: { type: string, format: date-time }
+        replies:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              username: { type: string }
+              message: { type: string }
+              created: { type: string, format: date-time }
+    FinancingPartner:
+      type: object
+      properties:
+        id: { type: string, example: robocapital }
+        name: { type: string, example: RoboCapital }
+        description: { type: string }
+        rates_from: { type: string, example: 7.9% APR }
+        min_amount: { type: number }
+        max_amount: { type: number }
+        integration_status: { type: string, example: pending }
+
+paths:
+  /ping:
+    get:
+      tags: [System]
+      summary: Health check
+      responses:
+        '200':
+          description: API is operational
+          content:
+            application/json:
+              example: { message: Service Exchange API is operational }
+  /health:
+    get:
+      tags: [System]
+      summary: Detailed health check
+      responses:
+        '200':
+          description: Health details
+          content:
+            application/json:
+              example: { status: healthy, timestamp: 1751630000, service: Service Exchange API, version: 1.0.0 }
+  /metrics:
+    get:
+      tags: [System]
+      summary: Performance metrics
+      description: Request counts and per-endpoint timing statistics since process start.
+      responses:
+        '200': { description: Metrics snapshot }
+  /stats:
+    get:
+      tags: [System]
+      summary: Platform statistics
+      responses:
+        '200':
+          description: Signup and activity counts
+          content:
+            application/json:
+              example: { demand_signups: 120, supply_signups: 85, total_users: 205, active_requests: 14, completed_jobs: 96 }
+
+  /register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      description: Rate limited to 20/minute.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password, user_type]
+              properties:
+                username: { type: string, minLength: 3, maxLength: 20 }
+                password: { type: string, minLength: 8 }
+                user_type: { type: string, enum: [demand, supply], description: demand = buyer, supply = provider }
+      responses:
+        '201':
+          description: Registration successful
+          content: { application/json: { example: { message: Registration successful } } }
+        '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '409': { description: Username already exists, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /login:
+    post:
+      tags: [Auth]
+      summary: Log in and obtain an access token
+      description: Tokens expire after 24 hours. Rate limited to 20/minute.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              example: { access_token: 3f2b9c9e-uuid, username: robo_op_1 }
+        '401': { description: Invalid credentials, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /account:
+    get:
+      tags: [Auth]
+      summary: Get account info
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Account details
+          content:
+            application/json:
+              example:
+                username: robo_op_1
+                created_on: 1751000000
+                stars: 4.6
+                total_ratings: 22
+                completed_jobs: 20
+                reputation_score: 4.51
+                wallet_address: null
+                seat_status: no_wallet
+                seat_token_id: null
+        '401': { description: Missing or invalid token }
+        '404': { description: User not found }
+  /set_wallet:
+    post:
+      tags: [Auth]
+      summary: Link an Ethereum wallet address
+      description: |
+        Optional — seat verification is currently disabled, so linking a wallet
+        has no effect on marketplace access today.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [wallet_address]
+              properties:
+                wallet_address: { type: string, example: '0x0000000000000000000000000000000000000001' }
+      responses:
+        '200': { description: Wallet linked }
+        '400': { description: Invalid Ethereum address }
+        '401': { description: Missing or invalid token }
+
+  /my_bids:
+    get:
+      tags: [Marketplace]
+      summary: List my active service requests
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Outstanding (unexpired, unmatched) bids, newest first
+          content:
+            application/json:
+              example:
+                bids:
+                  - bid_id: uuid
+                    service: Lawn Mowing Bot, 0.5 acre lot
+                    price: 45
+                    currency: USD
+                    payment_method: cash
+                    end_time: 1751720000
+                    location_type: physical
+                    address: 123 Main St, Denver, CO 80202
+                    created_at: 1751630000
+                    status: active
+        '401': { description: Missing or invalid token }
+  /my_jobs:
+    get:
+      tags: [Marketplace]
+      summary: List my jobs (active, completed, rejected)
+      description: Completed and rejected lists are capped at the 10 most recent.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Jobs grouped by status, with per-job role and ratings
+        '401': { description: Missing or invalid token }
+  /submit_bid:
+    post:
+      tags: [Marketplace]
+      summary: Post a service request (buyer)
+      description: |
+        Demand-type accounts only. Physical/hybrid requests require `lat`+`lon`
+        or `address`. Rideshare requests may instead provide `start_address`
+        and `end_address` (pickup becomes the request location).
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [service, price, end_time]
+              properties:
+                service: { type: string, description: What you want done (string or JSON object) }
+                price: { type: number, exclusiveMinimum: 0 }
+                currency: { type: string, default: USD }
+                payment_method: { type: string, default: cash }
+                end_time: { type: integer, description: Unix timestamp when the request expires (must be in the future) }
+                location_type: { type: string, enum: [physical, remote, hybrid], default: physical }
+                lat: { type: number }
+                lon: { type: number }
+                address: { type: string }
+                start_address: { type: string, description: Rideshare pickup }
+                end_address: { type: string, description: Rideshare dropoff }
+      responses:
+        '200':
+          description: Request created
+          content: { application/json: { example: { bid_id: uuid } } }
+        '400': { description: Validation error }
+        '401': { description: Missing or invalid token }
+        '403': { description: Only demand-type accounts can submit bids }
+  /cancel_bid:
+    post:
+      tags: [Marketplace]
+      summary: Cancel a pending request
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bid_id]
+              properties:
+                bid_id: { type: string }
+      responses:
+        '200': { description: Cancelled }
+        '403': { description: Not your bid }
+        '404': { description: Bid not found }
+        '409': { description: Already accepted by a provider (job_id returned) }
+  /grab_job:
+    post:
+      tags: [Marketplace]
+      summary: Get matched with the best available job (provider)
+      description: |
+        Supply-type accounts only. Matching pipeline: (1) location filter,
+        (2) AI capability match, (3) reputation alignment, (4) price.
+        15-minute per-account cooldown between calls (429 with seconds
+        remaining). Physical/hybrid providers must send `lat`+`lon` or `address`.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [capabilities]
+              properties:
+                capabilities: { type: string, description: What your robot can do, in plain language }
+                location_type: { type: string, enum: [physical, remote, hybrid], default: physical }
+                lat: { type: number }
+                lon: { type: number }
+                address: { type: string }
+                max_distance: { type: number, description: Max miles from your location (default 10) }
+      responses:
+        '200':
+          description: Job assigned
+          content: { application/json: { schema: { $ref: '#/components/schemas/Job' } } }
+        '204': { description: No matching jobs available }
+        '400': { description: Validation error }
+        '401': { description: Missing or invalid token }
+        '403': { description: Not a supply account }
+        '429': { description: Cooldown active — wait before next grab }
+  /reject_job:
+    post:
+      tags: [Marketplace]
+      summary: Reject an assigned job (provider)
+      description: Returns the request to the pool (extended 1 hour); you will not be re-matched to it.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [job_id]
+              properties:
+                job_id: { type: string }
+                reason: { type: string }
+      responses:
+        '200': { description: Rejected }
+        '400': { description: Job not in accepted state }
+        '403': { description: Only the provider can reject }
+        '404': { description: Job not found }
+  /sign_job:
+    post:
+      tags: [Marketplace]
+      summary: Complete and rate a job
+      description: |
+        Both buyer and provider sign with a 1-5 star rating; the job is marked
+        completed once both have signed. `rating` is the documented field name;
+        `star_rating` is accepted as a legacy alias.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [job_id, rating]
+              properties:
+                job_id: { type: string }
+                rating: { type: integer, minimum: 1, maximum: 5 }
+      responses:
+        '200': { description: Signed }
+        '400': { description: Invalid rating, already signed, or job not signable }
+        '403': { description: Not a party to this job }
+        '404': { description: Job not found }
+
+  /nearby:
+    post:
+      tags: [Discovery]
+      summary: Find nearby open requests (public)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lat: { type: number }
+                lon: { type: number }
+                address: { type: string, description: Alternative to lat/lon }
+                radius: { type: number, default: 10, description: Miles }
+      responses:
+        '200':
+          description: Open physical/hybrid requests within radius, nearest first
+        '400': { description: Location required or ungeocodable address }
+  /exchange_data:
+    get:
+      tags: [Discovery]
+      summary: Exchange activity data (public)
+      parameters:
+        - { name: category, in: query, schema: { type: string }, description: Substring filter on service }
+        - { name: location, in: query, schema: { type: string }, description: Substring filter on address }
+        - { name: limit, in: query, schema: { type: integer, default: 50, maximum: 200 } }
+        - { name: include_completed, in: query, schema: { type: boolean, default: false } }
+      responses:
+        '200': { description: Active bids, optional completed jobs, and market stats }
+
+  /chat:
+    post:
+      tags: [Communication]
+      summary: Send a direct message
+      description: Rate limited to 120/minute.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recipient, message]
+              properties:
+                recipient: { type: string }
+                message: { type: string }
+                job_id: { type: string, description: Optional job to link }
+      responses:
+        '200': { description: Sent }
+        '400': { description: Missing fields or self-message }
+        '404': { description: Recipient not found }
+  /chat/conversations:
+    get:
+      tags: [Communication]
+      summary: List my conversations
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Conversations with last message, newest first }
+  /chat/messages:
+    post:
+      tags: [Communication]
+      summary: Get message history with one user
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [conversation_id]
+              properties:
+                conversation_id: { type: string, description: The other user's username }
+      responses:
+        '200': { description: Messages in chronological order }
+        '400': { description: Conversation ID required }
+  /chat/reply:
+    post:
+      tags: [Communication]
+      summary: Reply in a conversation
+      description: Alias of POST /chat.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recipient, message]
+              properties:
+                recipient: { type: string }
+                message: { type: string }
+      responses:
+        '200': { description: Sent }
+  /bulletin:
+    post:
+      tags: [Communication]
+      summary: Post to the community bulletin
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, content]
+              properties:
+                title: { type: string }
+                content: { type: string }
+                category: { type: string, enum: [announcement, question, offer, general], default: general }
+      responses:
+        '200': { description: Posted }
+        '400': { description: Title and content required }
+  /bulletin/feed:
+    get:
+      tags: [Communication]
+      summary: Get the bulletin feed
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: All bulletin posts }
+
+  /feedback:
+    get:
+      tags: [Feedback]
+      summary: List feedback posts (public)
+      responses:
+        '200':
+          description: All feedback posts, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: array
+                    items: { $ref: '#/components/schemas/FeedbackPost' }
+    post:
+      tags: [Feedback]
+      summary: Submit feedback (public)
+      description: No login required. Rate limited to 20/minute.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string, maxLength: 2000 }
+                username: { type: string, maxLength: 40, description: Optional display name (defaults to Guest) }
+      responses:
+        '201':
+          description: Post created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post: { $ref: '#/components/schemas/FeedbackPost' }
+        '400': { description: Message required }
+  /feedback/{post_id}/reply:
+    post:
+      tags: [Feedback]
+      summary: Reply to a feedback post (public)
+      description: No login required. Rate limited to 20/minute.
+      parameters:
+        - { name: post_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string, maxLength: 2000 }
+                username: { type: string, maxLength: 40 }
+      responses:
+        '201': { description: Reply created }
+        '400': { description: Message required }
+        '404': { description: Post not found }
+
+  /financing/partners:
+    get:
+      tags: [Financing]
+      summary: List financing partners (public)
+      description: Partner integrations are currently pending — applications are queued.
+      responses:
+        '200':
+          description: Available financing partners
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  partners:
+                    type: array
+                    items: { $ref: '#/components/schemas/FinancingPartner' }
+  /financing/apply:
+    post:
+      tags: [Financing]
+      summary: Submit a robot financing application (public)
+      description: |
+        Routes one application to up to 3 partners. No login required and no
+        credit check — partner integrations are pending, so applications are
+        validated, stored, and queued with per-partner status `pending`.
+        Rate limited to 20/minute.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, robot_model, loan_amount]
+              properties:
+                name: { type: string, maxLength: 80 }
+                email: { type: string, format: email }
+                phone: { type: string, maxLength: 40 }
+                robot_model: { type: string, example: Unitree G1 }
+                loan_amount: { type: number, exclusiveMinimum: 0, maximum: 5000000, description: USD }
+                term_months: { type: integer, default: 36 }
+                credit_range: { type: string, enum: [excellent, good, fair, poor, unknown], default: unknown }
+                partners:
+                  type: array
+                  maxItems: 3
+                  items: { type: string }
+                  description: Partner ids from GET /financing/partners (defaults to all)
+      responses:
+        '201':
+          description: Application queued
+          content:
+            application/json:
+              example:
+                application_id: uuid
+                status: submitted
+                partner_responses:
+                  - partner_id: robocapital
+                    partner_name: RoboCapital
+                    status: pending
+                    note: Application queued — partner integration pending. You will be contacted by email.
+        '400': { description: Validation error }
