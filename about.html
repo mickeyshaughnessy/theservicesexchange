@@ -84,17 +84,35 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="robots.html">Buy a Robot</a></li>
-                    <li class="nav-item"><a class="nav-link" href="examples.html">Examples</a></li>
-                    <li class="nav-item"><a class="nav-link" href="api_docs.html">API Docs</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="about.html" aria-current="page">About</a></li>
-                    <li class="nav-item"><a class="nav-link" href="feedback.html">Feedback</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="robots.html">Buy a Robot</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="examples.html">Examples</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="api_docs.html">API Docs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="about.html" aria-current="page">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="feedback.html">Feedback</a>
+                    </li>
                 </ul>
+                
+                <!-- Chat and Bulletin buttons (shown when logged in) -->
                 <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
                 <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
+                
+                <!-- Account dropdown (shown when logged in) -->
                 <div id="accountDropdown" class="account-dropdown ms-3" style="display: none;">
-                    <button class="account-btn"><span id="accountUsername">Account</span> ▼</button>
+                    <button class="account-btn">
+                        <span id="accountUsername">Account</span> ▼
+                    </button>
                     <div class="account-window">
                         <div class="account-header">
                             <div class="d-flex justify-content-between align-items-center">
@@ -106,20 +124,43 @@
                                 <span id="ratingText">4.5 (12 ratings)</span>
                             </div>
                         </div>
+                        
                         <div class="account-section">
                             <h6>Outstanding Requests</h6>
-                            <div id="outstandingBids"><p class="text-muted mb-0">No outstanding requests</p></div>
+                            <div class="loading-spinner" id="bidsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading requests...</span>
+                            </div>
+                            <div id="outstandingBids">
+                                <p class="text-muted mb-0">No outstanding requests</p>
+                            </div>
                         </div>
+                        
                         <div class="account-section">
                             <h6>Active Services</h6>
-                            <div id="activeJobs"><p class="text-muted mb-0">No active services</p></div>
+                            <div class="loading-spinner" id="activeJobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading active services...</span>
+                            </div>
+                            <div id="activeJobs">
+                                <p class="text-muted mb-0">No active services</p>
+                            </div>
                         </div>
+                        
                         <div class="account-section">
                             <h6>Recent Completed Services</h6>
-                            <div id="completedJobs"><p class="text-muted mb-0">No completed services</p></div>
+                            <div class="loading-spinner" id="jobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading services...</span>
+                            </div>
+                            <div id="completedJobs">
+                                <p class="text-muted mb-0">No completed services</p>
+                            </div>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Login button (shown when not logged in) -->
                 <button id="loginButton" class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
             </div>
         </div>
@@ -155,7 +196,7 @@
                                 <div class="founder-title">Creator</div>
                             </div>
                         </div>
-                        <p>I'm Mickey Shaughnessy, creator of the Robot Services Exchange. I live in the USA and I've built things all my life.</p>
+                        <p>I'm Mickey Shaughnessy, creator of the Robot Services Exchange. I've built things all my life.</p>
                         <p class="mb-0">RSE was born from the insight that autonomous robots need a real marketplace — open bidding, transparent pricing, and a reputation layer that holds robot operators accountable.</p>
                     </div>
                 </div>
@@ -209,13 +250,6 @@
                     <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">How do ratings and reputation work?</summary>
                     <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
                         When the work is done, both sides sign the job with a 1–5 star rating via <code>POST /sign_job</code>. The job is marked complete once both parties have signed. Ratings accumulate into a reputation score that influences future matching — providers and buyers with similar reputations are matched preferentially.
-                    </p>
-                </details>
-
-                <details style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
-                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">Do I need a wallet, crypto, or an NFT seat?</summary>
-                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
-                        No. Seat verification is currently disabled — any registered supply account can call <code>/grab_job</code>. You can optionally link an Ethereum wallet to your account via <code>POST /set_wallet</code>, but it is not required to use the exchange today.
                     </p>
                 </details>
 

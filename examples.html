@@ -52,14 +52,84 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="robots.html">Buy a Robot</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="examples.html" aria-current="page">Examples</a></li>
-                    <li class="nav-item"><a class="nav-link" href="api_docs.html">API Docs</a></li>
-                    <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
-                    <li class="nav-item"><a class="nav-link" href="feedback.html">Feedback</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="robots.html">Buy a Robot</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="examples.html" aria-current="page">Examples</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="api_docs.html">API Docs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="about.html">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="feedback.html">Feedback</a>
+                    </li>
                 </ul>
-                <button id="loginButton" class="btn btn-light ms-3" onclick="location.href='index.html'">Get Started</button>
+                
+                <!-- Chat and Bulletin buttons (shown when logged in) -->
+                <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
+                <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
+                
+                <!-- Account dropdown (shown when logged in) -->
+                <div id="accountDropdown" class="account-dropdown ms-3" style="display: none;">
+                    <button class="account-btn">
+                        <span id="accountUsername">Account</span> ▼
+                    </button>
+                    <div class="account-window">
+                        <div class="account-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" id="accountDisplayName">Loading...</h5>
+                                <button class="logout-btn" onclick="logout()">Logout</button>
+                            </div>
+                            <div class="reputation-display">
+                                <span class="star-rating" id="starDisplay">★★★★★</span>
+                                <span id="ratingText">4.5 (12 ratings)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="account-section">
+                            <h6>Outstanding Requests</h6>
+                            <div class="loading-spinner" id="bidsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading requests...</span>
+                            </div>
+                            <div id="outstandingBids">
+                                <p class="text-muted mb-0">No outstanding requests</p>
+                            </div>
+                        </div>
+                        
+                        <div class="account-section">
+                            <h6>Active Services</h6>
+                            <div class="loading-spinner" id="activeJobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading active services...</span>
+                            </div>
+                            <div id="activeJobs">
+                                <p class="text-muted mb-0">No active services</p>
+                            </div>
+                        </div>
+                        
+                        <div class="account-section">
+                            <h6>Recent Completed Services</h6>
+                            <div class="loading-spinner" id="jobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading services...</span>
+                            </div>
+                            <div id="completedJobs">
+                                <p class="text-muted mb-0">No completed services</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Login button (shown when not logged in) -->
+                <button id="loginButton" class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
             </div>
         </div>
     </nav>
@@ -100,5 +170,75 @@
 
     showTab(new URLSearchParams(location.search).get('tab') || 'demo');
     </script>
+<!-- Auth Modal -->
+    <div class="modal fade" id="authModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Get Started</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="authError" class="error-message" style="display: none;"></div>
+                    
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#register">Register</a>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="login">
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" placeholder="Username" id="loginUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="password" class="form-control" placeholder="Password" id="loginPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">Login</button>
+                            </form>
+                        </div>
+                        
+                        <div class="tab-pane" id="register">
+                            <form id="registerForm">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" placeholder="Username" id="regUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">I want to:</label>
+                                    <div class="user-type-selector">
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="demand" id="typeDemand" required>
+                                            <span class="user-type-card">
+                                                <strong>Buy Services</strong>
+                                                <small>Post requests and hire providers</small>
+                                            </span>
+                                        </label>
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="supply" id="typeSupply">
+                                            <span class="user-type-card">
+                                                <strong>Provide Services</strong>
+                                                <small>Find work and earn money</small>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">Register</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=5"></script>
 </body>
 </html>

@@ -258,7 +258,7 @@
                     <h5>// Workflows</h5>
                     <a href="#wf1">01 Hello Exchange</a>
                     <a href="#wf2">02 Buyer Onboarding</a>
-                    <a href="#wf3">03 Provider Onboarding + Seat</a>
+                    <a href="#wf3">03 Provider Onboarding</a>
                     <a href="#wf4">04 Full Transaction</a>
                     <a href="#wf5">05 xMoney Payment</a>
                     <a href="#wf6">06 Reject &amp; Rematch</a>
@@ -529,8 +529,7 @@ workflows:
           Retrieve account metadata to confirm registration and read
           the initial reputation_score. New accounts begin at 2.5
           (neutral baseline) because the confidence factor is 0
-          with zero ratings. The seat_status will be "no_wallet"
-          until a wallet is linked via /set_wallet.
+          with zero ratings.
         operationPath: '{$sourceDescriptions.rse-api}#/paths/~1account/get'
         parameters:
           - name: Authorization
@@ -540,7 +539,6 @@ workflows:
           - condition: $statusCode == 200
         outputs:
           reputation_score: $response.body#/reputation_score
-          seat_status: $response.body#/seat_status
 
       - stepId: submit-bid
         description: >
@@ -599,29 +597,25 @@ workflows:
                     <div class="workflow-header">
                         <div class="workflow-number">03</div>
                         <div class="workflow-title-block">
-                            <p class="workflow-title">Provider Onboarding — Register, Link Wallet, Verify NFT Seat</p>
-                            <p class="workflow-subtitle">Set up a supply account and gate /grab_job access with an RSE Seat NFT on Base.</p>
+                            <p class="workflow-title">Provider Onboarding — Register, Login, Grab Jobs</p>
+                            <p class="workflow-subtitle">Set up a supply account and start accepting work with /grab_job.</p>
                             <span class="scenario-tag">Onboarding</span>
                             <span class="scenario-tag" style="margin-left:6px;">Provider</span>
-                            <span class="scenario-tag" style="margin-left:6px;">NFT</span>
                         </div>
                     </div>
                     <div class="workflow-body">
                         <p class="workflow-desc">
-                            Onboards a robot operator (supply-side). Access to <code>/grab_job</code> requires holding an RSE Seat NFT
-                            (soulbound ERC-721, contract <code>0x4fC58a97d7c3327a8C445b0EaC9EA078D85227AD</code> on Base mainnet).
-                            This workflow registers, authenticates, then links the operator's Base wallet via <code>/set_wallet</code>.
-                            At that point the server makes one free read-only <code>eth_call</code> to <code>isValidSeat(address)</code>
-                            and stores the result on the account. Subsequent <code>/grab_job</code> calls check that stored flag —
-                            no blockchain call on the hot path. No ETH is ever spent.
+                            Onboards a robot operator (supply-side). This workflow registers a supply account,
+                            authenticates to obtain a bearer token, and confirms the account is ready to call
+                            <code>/grab_job</code>. New accounts start at a neutral 2.5 reputation and can grab
+                            jobs immediately — one grab per 15 minutes per account.
                         </p>
                         <div class="steps-glance">
                             <div class="steps-glance-title">// Steps at a glance</div>
                             <ol>
                                 <li><strong>register</strong> — Create supply-type account (POST /register) → HTTP 201</li>
                                 <li><strong>login</strong> — Authenticate, capture token (POST /login)</li>
-                                <li><strong>set-wallet</strong> — Link Base wallet address once (POST /set_wallet)</li>
-                                <li><strong>verify-seat</strong> — Confirm seat_status is "valid" (GET /account)</li>
+                                <li><strong>check-account</strong> — Confirm account is active (GET /account)</li>
                             </ol>
                         </div>
                         <div class="yaml-block">
@@ -631,58 +625,41 @@ workflows:
                             </div>
 <pre class="arazzo-yaml" id="yaml3">arazzo: 1.0.0
 info:
-  title: RSE Provider Onboarding — Register, Link Wallet, Verify Seat
-  summary: Set up a supply account with RSE Seat access for /grab_job
+  title: RSE Provider Onboarding — Register, Login, Grab Jobs
+  summary: Set up a supply account ready to accept work via /grab_job
   description: >
     Onboards a new robot operator onto the Robot Services Exchange.
-    Seat verification is currently disabled; any supply account may grab jobs
-    before /grab_job will accept their requests. This workflow
-    registers a supply account, authenticates, and links the operator's
-    Base wallet via /set_wallet. At link time the server calls
-    isValidSeat once (free eth_call) and stores seat_active on the
-    account. /grab_job checks that stored flag — no per-request RPC.
+    Registers a supply account, authenticates, and confirms the
+    account is active. Any registered supply account can call
+    /grab_job (one grab per 15 minutes per account).
   version: 1.0.0
 
 sourceDescriptions:
   - name: rse-api
-    url: https://rse-api.com:5003/openapi.json
+    url: https://rse-api.com:5003/openapi.yaml
     type: openapi
 
 workflows:
   - workflowId: provider-onboarding
-    summary: Register supply account → login → link wallet → verify seat
+    summary: Register supply account → login → confirm ready
     description: >
-      Full provider setup ending with confirmed seat_status "valid".
-      The wallet is stored once; /set_wallet triggers the only eth_call.
-      Every /grab_job then checks the stored seat_active flag server-side.
-      Providers never sign transactions, never pay gas.
+      Full provider setup ending with a bearer token and a confirmed
+      active account. The operator can then call /grab_job with a
+      plain-language capabilities description to be matched with work.
     inputs:
       type: object
-      required:
-        - username
-        - password
-        - wallet_address
       properties:
         username:
           type: string
         password:
           type: string
-        wallet_address:
-          type: string
-          description: >
-            Ethereum/Base address (0x + 40 hex chars) holding an
-            RSE Seat NFT. Obtain a seat at
-            opensea.io/collection/rse-seat or by emailing
-            mickeyshaughnessy@gmail.com with your address.
 
     steps:
 
       - stepId: register
         description: >
-          Create a supply-type account. supply accounts are the
-          only type permitted to call /grab_job to accept work.
-          Returns HTTP 201 on success; HTTP 409 if the username
-          is already registered.
+          Create a supply-type account. Supply accounts are the
+          provider side of the exchange.
         operationPath: '{$sourceDescriptions.rse-api}#/paths/~1register/post'
         requestBody:
           contentType: application/json
@@ -709,42 +686,12 @@ workflows:
         outputs:
           token: $response.body#/access_token
 
-      - stepId: set-wallet
+      - stepId: check-account
         description: >
-          Link the operator's Base wallet address to the account.
-          The server normalizes the address to EIP-55 checksummed
-          form, then immediately calls isValidSeat(wallet_address)
-          on the RSE NFT contract as a free eth_call. The result
-          (seat_active: true/false) is stored on the account.
-          All subsequent /grab_job calls check that stored flag —
-          no blockchain lookup per request. Re-call /set_wallet
-          with the same address to re-sync after revocation or
-          seat acquisition.
-        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1set_wallet/post'
-        parameters:
-          - name: Authorization
-            in: header
-            value: "Bearer {$steps.login.outputs.token}"
-        requestBody:
-          contentType: application/json
-          payload:
-            wallet_address: $inputs.wallet_address
-        successCriteria:
-          - condition: $statusCode == 200
-        outputs:
-          linked_address: $response.body#/wallet_address
-
-      - stepId: verify-seat
-        description: >
-          Retrieve account info to confirm seat_status. The server
-          queries isValidSeat(address) on the RSE contract
-          (0x4fC58a97d7c3327a8C445b0EaC9EA078D85227AD, Base mainnet,
-          chain 8453) as a live eth_call for display purposes.
-          Possible seat_status values: "valid" (NFT present and
-          unrevoked — /grab_job gate will pass), "revoked" (NFT
-          revoked — gate blocked; call /set_wallet to re-sync),
-          "no_seat" (wallet holds no RSE NFT), "no_wallet"
-          (wallet not yet linked), "unknown" (RPC outage).
+          Retrieve account info to confirm registration succeeded and
+          read the starting reputation_score. New accounts begin at
+          2.5 (neutral baseline). The account is now ready to call
+          /grab_job with a capabilities description.
         operationPath: '{$sourceDescriptions.rse-api}#/paths/~1account/get'
         parameters:
           - name: Authorization
@@ -753,14 +700,11 @@ workflows:
         successCriteria:
           - condition: $statusCode == 200
         outputs:
-          seat_status: $response.body#/seat_status
-          seat_token_id: $response.body#/seat_token_id
           reputation_score: $response.body#/reputation_score
 
     outputs:
       token: $steps.login.outputs.token
-      seat_status: $steps.verify-seat.outputs.seat_status
-      seat_token_id: $steps.verify-seat.outputs.seat_token_id</pre>
+      reputation_score: $steps.check-account.outputs.reputation_score</pre>
                         </div>
                     </div>
                 </div>
@@ -778,8 +722,8 @@ workflows:
                     </div>
                     <div class="workflow-body">
                         <p class="workflow-desc">
-                            The primary RSE transaction loop. A buyer posts a security patrol request; a provider whose seat
-                            status is valid calls <code>/grab_job</code>, which runs LLM-based capability matching then reputation-tier
+                            The primary RSE transaction loop. A buyer posts a security patrol request; a provider
+                            calls <code>/grab_job</code>, which runs LLM-based capability matching then reputation-tier
                             alignment before selecting the highest-priced compatible bid. The bid is atomically removed from the
                             exchange and a job record created. Both parties call <code>/sign_job</code> — once both have signed,
                             the job transitions to <code>completed</code> and each party's <code>completed_jobs</code> counter and
@@ -807,7 +751,7 @@ info:
   description: >
     Demonstrates the full Robot Services Exchange transaction loop.
     A buyer submits a physical security patrol bid; a provider with
-    a valid RSE Seat NFT calls /grab_job which uses an LLM to match
+    calls /grab_job, which uses an LLM to match
     capabilities then groups bids by reputation proximity
     (|provider_score - buyer_score| < 0.5) before selecting the
     highest-priced match. Both parties sign with star ratings;
@@ -837,7 +781,7 @@ workflows:
           description: Bearer token for an authenticated demand account
         provider_token:
           type: string
-          description: Bearer token for an authenticated supply account with valid seat
+          description: Bearer token for an authenticated supply account
         service_address:
           type: string
           default: 123 Main St, Denver, CO 80202
