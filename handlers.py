@@ -1334,10 +1334,37 @@ def handle_post_feedback(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             "username": username[:40],
             "message": message[:2000],
             "created": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+            "replies": [],
         }
         posts.insert(0, post)
         save_feedback(posts[:500])
         return {"post": post}, 201
     except Exception as e:
         logger.error(f"Post feedback error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+def handle_reply_feedback(post_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Append a threaded reply to a feedback post. Open to anyone (like posting)."""
+    message = (data.get('message') or '').strip()
+    if not message:
+        return {"error": "Message required"}, 400
+    username = (data.get('username') or 'Guest').strip() or 'Guest'
+    try:
+        posts = get_feedback()
+        target = next((p for p in posts if p.get('id') == post_id), None)
+        if target is None:
+            return {"error": "Post not found"}, 404
+        reply = {
+            "id": str(uuid.uuid4()),
+            "username": username[:40],
+            "message": message[:2000],
+            "created": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+        }
+        replies = target.setdefault('replies', [])
+        replies.append(reply)
+        target['replies'] = replies[-200:]
+        save_feedback(posts)
+        return {"reply": reply}, 201
+    except Exception as e:
+        logger.error(f"Reply feedback error: {str(e)}")
         return {"error": "Internal server error"}, 500

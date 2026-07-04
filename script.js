@@ -1377,83 +1377,11 @@ async function pingServer() {
     if (text) text.textContent = 'Ping Server';
 }
 
-// -------------------------------------------------------------------------
-// Feedback
-// -------------------------------------------------------------------------
-
-function showFeedback() {
-    const modal = new bootstrap.Modal(document.getElementById('feedbackModal'));
-    modal.show();
-    loadFeedback();
-}
-
-async function loadFeedback() {
-    const list = document.getElementById('feedbackList');
-    if (!list) return;
-    list.innerHTML = '<div class="text-muted text-center py-3">Loading…</div>';
-    try {
-        const res = await fetch(`${API_URL}/feedback`);
-        const data = await res.json();
-        const posts = data.posts || [];
-        if (posts.length === 0) {
-            list.innerHTML = '<div class="text-muted text-center py-3">No feedback yet. Be the first!</div>';
-            return;
-        }
-        list.innerHTML = posts.map(p => `
-            <div class="border rounded p-3 mb-2">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <strong>${escapeHtml(p.username)}</strong>
-                    <small class="text-muted">${new Date(p.created).toLocaleString()}</small>
-                </div>
-                <p class="mb-0">${escapeHtml(p.message)}</p>
-            </div>
-        `).join('');
-    } catch (e) {
-        list.innerHTML = '<div class="text-danger text-center py-3">Could not load feedback.</div>';
-    }
-}
-
-async function postFeedback() {
-    const msgEl = document.getElementById('feedbackMessage');
-    const nameEl = document.getElementById('feedbackName');
-    const errEl = document.getElementById('feedbackError');
-    const message = (msgEl.value || '').trim();
-    if (!message) {
-        errEl.textContent = 'Please enter a message.';
-        errEl.style.display = 'block';
-        return;
-    }
-    errEl.style.display = 'none';
-    const username = (nameEl.value.trim() || (AppState.currentUsername || '')) || 'Guest';
-    try {
-        const res = await fetch(`${API_URL}/feedback`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, username })
-        });
-        const data = await res.json();
-        if (data.error) {
-            errEl.textContent = data.error;
-            errEl.style.display = 'block';
-            return;
-        }
-        msgEl.value = '';
-        nameEl.value = '';
-        await loadFeedback();
-    } catch (e) {
-        errEl.textContent = 'Could not submit feedback. Please try again.';
-        errEl.style.display = 'block';
-    }
-}
-
 // Make functions available globally
 window.showAuth = showAuth;
 window.showBuyerForm = showBuyerForm;
 window.showChat = showChat;
 window.showBulletin = showBulletin;
-window.showFeedback = showFeedback;
-window.loadFeedback = loadFeedback;
-window.postFeedback = postFeedback;
 window.selectService = selectService;
 window.logout = logout;
 window.cancelBid = cancelBid;

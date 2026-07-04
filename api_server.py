@@ -40,7 +40,8 @@ from handlers import (
     get_bulletin_feed,
     get_platform_stats,
     handle_get_feedback,
-    handle_post_feedback
+    handle_post_feedback,
+    handle_reply_feedback
 )
 from utils import get_token_username
 
@@ -437,6 +438,14 @@ def post_feedback_post():
     """Public endpoint to submit feedback. No login required."""
     data = flask.request.get_json() or {}
     response, status = handle_post_feedback(data)
+    return flask.jsonify(response), status
+
+@app.route('/feedback/<post_id>/reply', methods=['POST'])
+@limiter.limit(_STRICT_LIMIT)
+def reply_feedback_post(post_id):
+    """Public endpoint to reply to a feedback post. No login required."""
+    data = flask.request.get_json() or {}
+    response, status = handle_reply_feedback(post_id, data)
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
