@@ -41,7 +41,9 @@ from handlers import (
     get_platform_stats,
     handle_get_feedback,
     handle_post_feedback,
-    handle_reply_feedback
+    handle_reply_feedback,
+    handle_get_financing_partners,
+    handle_submit_financing
 )
 from utils import get_token_username
 
@@ -237,6 +239,10 @@ def root():
 @app.route('/api_docs.html')
 def serve_docs():
     return flask.send_from_directory('.', 'api_docs.html')
+
+@app.route('/openapi.yaml')
+def serve_openapi_spec():
+    return flask.send_from_directory('.', 'openapi.yaml', mimetype='text/yaml')
 
 @app.route('/styles.css')
 def serve_css():
@@ -446,6 +452,24 @@ def reply_feedback_post(post_id):
     """Public endpoint to reply to a feedback post. No login required."""
     data = flask.request.get_json() or {}
     response, status = handle_reply_feedback(post_id, data)
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# Financing Endpoints (no auth required; partner integrations stubbed)
+# -----------------------------------------------------------------------------
+
+@app.route('/financing/partners', methods=['GET'])
+def financing_partners():
+    """Public endpoint listing robot financing partners."""
+    response, status = handle_get_financing_partners()
+    return flask.jsonify(response), status
+
+@app.route('/financing/apply', methods=['POST'])
+@limiter.limit(_STRICT_LIMIT)
+def financing_apply():
+    """Public endpoint to submit a robot financing application."""
+    data = flask.request.get_json() or {}
+    response, status = handle_submit_financing(data)
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------

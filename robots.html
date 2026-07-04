@@ -115,6 +115,66 @@
             transition: background 0.15s;
         }
         .robot-buy-btn:hover { background: var(--primary-hover); color: var(--bg-deep); }
+        .robot-btn-row { display: flex; gap: 8px; }
+        .robot-btn-row .robot-buy-btn { flex: 1; }
+        .robot-finance-btn {
+            display: block;
+            flex: 1;
+            text-align: center;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.65rem;
+            color: var(--accent);
+            background: transparent;
+            border: 1px solid rgba(57,255,20,0.5);
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .robot-finance-btn:hover { background: rgba(57,255,20,0.1); box-shadow: 0 0 12px rgba(57,255,20,0.25); }
+        .financing-strip {
+            background: var(--bg-panel);
+            border: 1px solid rgba(57,255,20,0.35);
+            padding: 1.5rem 2rem;
+            margin-bottom: 3rem;
+        }
+        .financing-strip h3 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.8rem;
+            color: var(--accent);
+            text-shadow: 0 0 10px rgba(57,255,20,0.5);
+            margin-bottom: 0.75rem;
+        }
+        .financing-strip p, .financing-strip li {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .partner-pill {
+            display: inline-block;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--text);
+            border: 1px solid rgba(0,255,255,0.3);
+            padding: 4px 12px;
+            margin: 4px 6px 0 0;
+        }
+        .partner-pill .rate { color: var(--accent); }
+        #financingModal .modal-content { background: var(--bg-panel); border: 1px solid rgba(57,255,20,0.4); }
+        #financingModal label.form-label { font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: var(--text-dim); }
+        .partner-check {
+            border: 1px solid rgba(0,255,255,0.25);
+            padding: 0.6rem 0.9rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--text);
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            cursor: pointer;
+        }
+        .partner-check input { margin-top: 3px; }
         .seat-note {
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.72rem;
@@ -163,6 +223,14 @@
 
     <section class="py-5" style="background: var(--bg-deep);">
         <div class="container">
+            <div class="financing-strip">
+                <h3>// FINANCING AVAILABLE</h3>
+                <p>Don't pay cash — put the robot's future earnings to work. Submit one application and we route
+                   it to up to three financing partners. You'll be contacted by email with offers.</p>
+                <div id="partnerPills"><span class="partner-pill">Loading partners…</span></div>
+                <button class="btn btn-primary mt-3" onclick="openFinancing('')">Apply for Financing</button>
+            </div>
+
             <div id="robotCatalog"></div>
 
             <div class="mt-5 p-3" style="border:1px solid rgba(85,102,170,0.4);">
@@ -207,7 +275,7 @@
         {
             maker: "Tesla",
             name: "Optimus",
-            image: "images/robots/tesla-optimus.jpg",
+            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/tesla-optimus.jpg",
             tags: ["Humanoid", "General Purpose"],
             desc: "Tesla's general-purpose humanoid. First-generation production lines are being installed for volume production. Suited to household help, retail floor work, and light logistics.",
             earnings: "$350 – $700 / week",
@@ -218,7 +286,7 @@
         {
             maker: "Tesla",
             name: "Robotaxi (Cybercab)",
-            image: "images/robots/tesla-cybercab.jpg",
+            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/tesla-cybercab.jpg",
             tags: ["Autonomous Vehicle", "Rideshare"],
             desc: "Two-seat autonomous vehicle, in production since early 2026 with retail sales confirmed under $30,000. Earn by listing remnant seat-hours on RSE rideshare requests.",
             earnings: "$800 – $1,500 / week",
@@ -229,7 +297,7 @@
         {
             maker: "Unitree",
             name: "Go2 (Robot Dog)",
-            image: "images/robots/unitree-go2.png",
+            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-go2.png",
             tags: ["Quadruped", "Patrol", "Inspection"],
             desc: "Compact quadruped with rider-grade agility. Good for property patrol loops, site walk-throughs, promo appearances, and light inspection routes.",
             earnings: "$100 – $250 / week",
@@ -240,7 +308,7 @@
         {
             maker: "Unitree",
             name: "B2 (Industrial Dog)",
-            image: "images/robots/unitree-b2.jpg",
+            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-b2.jpg",
             tags: ["Quadruped", "Industrial"],
             desc: "Heavy-duty industrial quadruped: IP-rated, long endurance, big payload. Built for perimeter security, plant inspection, and hazardous-area walk-downs.",
             earnings: "$500 – $900 / week",
@@ -251,7 +319,7 @@
         {
             maker: "Unitree",
             name: "G1 (Humanoid)",
-            image: "images/robots/unitree-g1.jpg",
+            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-g1.jpg",
             tags: ["Humanoid"],
             desc: "Affordable full-size humanoid with dexterous options. Popular for research, brand activations, demos, and light repetitive tasks.",
             earnings: "$250 – $500 / week",
@@ -262,7 +330,7 @@
         {
             maker: "Unitree",
             name: "R1 (Humanoid)",
-            image: "images/robots/unitree-r1.jpg",
+            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-r1.jpg",
             tags: ["Humanoid", "Entry Level"],
             desc: "Unitree's entry-level humanoid — the cheapest ticket into humanoid labor. Best for demos, events, and simple carry-and-place work.",
             earnings: "$150 – $350 / week",
@@ -273,7 +341,7 @@
         {
             maker: "Figure",
             name: "Figure 03",
-            image: "images/robots/figure-03.jpg",
+            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/figure-03.jpg",
             tags: ["Humanoid", "Home"],
             desc: "Home-focused humanoid running Figure's Helix vision-language-action AI. Production is ramping; limited home deployments target late 2026.",
             earnings: "$300 – $600 / week",
@@ -284,7 +352,7 @@
         {
             maker: "Boston Dynamics",
             name: "Spot",
-            image: "images/robots/bd-spot.jpg",
+            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/bd-spot.jpg",
             tags: ["Quadruped", "Inspection"],
             desc: "The proven industrial quadruped. Autonomous inspection rounds, thermal and gauge reading, and site documentation — enterprises pay well for Spot hours.",
             earnings: "$700 – $1,200 / week",
@@ -295,7 +363,7 @@
         {
             maker: "Boston Dynamics",
             name: "Stretch",
-            image: "images/robots/bd-stretch.jpg",
+            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/bd-stretch.jpg",
             tags: ["Logistics", "Warehouse"],
             desc: "Case-handling robot that unloads trucks and moves boxes all shift. Warehouse operators buy every spare hour — the highest-utilization machine on this page.",
             earnings: "$1,500 – $2,500 / week",
@@ -306,7 +374,7 @@
         {
             maker: "Boston Dynamics",
             name: "Atlas",
-            image: "images/robots/bd-atlas.jpg",
+            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/bd-atlas.jpg",
             tags: ["Humanoid", "Industrial"],
             desc: "All-electric production Atlas entered serial production in 2026. Current allocations are committed to launch partners; new orders open in 2027.",
             earnings: "$1,500 – $3,000 / week",
@@ -317,7 +385,7 @@
         {
             maker: "Carbon Robotics",
             name: "LaserWeeder G2",
-            image: "images/robots/carbon-laserweeder.webp",
+            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/carbon-laserweeder.webp",
             tags: ["Agriculture", "Laser Weeding"],
             desc: "Laser weeding at up to 60-foot swaths. In season, custom weeding services command premium acreage rates — sell idle capacity to neighboring farms via RSE.",
             earnings: "$8,000 – $15,000 / week (in season)",
@@ -328,7 +396,7 @@
         {
             maker: "1X",
             name: "NEO",
-            image: "images/robots/1x-neo.jpg",
+            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/1x-neo.jpg",
             tags: ["Humanoid", "Home"],
             desc: "66-lb soft-bodied home humanoid that opens doors, fetches, tidies, and does laundry. Pre-orders open now; US deliveries began in 2026.",
             earnings: "$200 – $450 / week",
@@ -365,7 +433,10 @@
                                 <span class="robot-price">${r.price}</span>
                                 <span class="robot-status ${STATUS_CLASS[r.status]}">${r.statusLabel}</span>
                             </div>
-                            <a class="robot-buy-btn" href="${r.buyUrl}" target="_blank" rel="noopener">BUY →</a>
+                            <div class="robot-btn-row">
+                                <a class="robot-buy-btn" href="${r.buyUrl}" target="_blank" rel="noopener">BUY →</a>
+                                <button class="robot-finance-btn" onclick="openFinancing('${r.maker} ${r.name}')">FINANCE</button>
+                            </div>
                             <div class="seat-note">Includes RSE exchange seat</div>
                         </div>
                     </div>
@@ -374,6 +445,162 @@
         `).join('');
     }
     renderCatalog();
+    </script>
+
+    <!-- Financing Modal -->
+    <div class="modal fade" id="financingModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="border-bottom:1px solid rgba(57,255,20,0.3);">
+                    <h5 class="modal-title" style="font-family:'Press Start 2P',monospace;font-size:0.75rem;color:var(--accent);">ROBOT FINANCING APPLICATION</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="financingForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full name *</label>
+                                <input type="text" class="form-control" id="finName" maxlength="80" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="finEmail" maxlength="120" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone (optional)</label>
+                                <input type="tel" class="form-control" id="finPhone" maxlength="40">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Robot *</label>
+                                <select class="form-control" id="finRobot" required></select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Loan amount (USD) *</label>
+                                <input type="number" class="form-control" id="finAmount" min="500" max="5000000" step="100" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Term</label>
+                                <select class="form-control" id="finTerm">
+                                    <option value="12">12 months</option>
+                                    <option value="24">24 months</option>
+                                    <option value="36" selected>36 months</option>
+                                    <option value="48">48 months</option>
+                                    <option value="60">60 months</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Credit range</label>
+                                <select class="form-control" id="finCredit">
+                                    <option value="unknown">Prefer not to say</option>
+                                    <option value="excellent">Excellent (720+)</option>
+                                    <option value="good">Good (660–719)</option>
+                                    <option value="fair">Fair (580–659)</option>
+                                    <option value="poor">Building credit (&lt;580)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Send my application to (up to 3):</label>
+                            <div id="partnerChecks"><span class="text-muted">Loading partners…</span></div>
+                        </div>
+                        <div id="finError" class="text-danger small mt-2" style="display:none;"></div>
+                        <button type="submit" class="btn btn-primary mt-3 w-100" id="finSubmitBtn">Submit Application</button>
+                        <p class="mt-2 mb-0" style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--text-dim);">
+                            Submitting is not a commitment and does not affect your credit score. Partner
+                            integrations are being finalized — applications are queued and you'll be contacted by email.
+                        </p>
+                    </form>
+                    <div id="finSuccess" style="display:none;">
+                        <div class="p-3 mb-3" style="border:1px solid rgba(57,255,20,0.4);background:var(--bg-card);">
+                            <div style="font-family:'Press Start 2P',monospace;font-size:0.7rem;color:var(--accent);margin-bottom:0.75rem;">APPLICATION SUBMITTED ✔</div>
+                            <div style="font-family:'Share Tech Mono',monospace;font-size:0.85rem;color:var(--text);line-height:1.8;">
+                                Reference: <code id="finRef" style="color:var(--primary);"></code>
+                                <div id="finPartnerResults" class="mt-2"></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const FIN_API = 'https://rse-api.com:5003';
+    let FIN_PARTNERS = [];
+
+    async function loadPartners() {
+        try {
+            const res = await fetch(`${FIN_API}/financing/partners`);
+            FIN_PARTNERS = (await res.json()).partners || [];
+        } catch (e) { FIN_PARTNERS = []; }
+        document.getElementById('partnerPills').innerHTML = FIN_PARTNERS.length
+            ? FIN_PARTNERS.map(p => `<span class="partner-pill">${p.name} · <span class="rate">from ${p.rates_from}</span></span>`).join('')
+            : '<span class="partner-pill">Partners unavailable — try again later</span>';
+        document.getElementById('partnerChecks').innerHTML = FIN_PARTNERS.length
+            ? FIN_PARTNERS.map(p => `
+                <label class="partner-check">
+                    <input type="checkbox" name="finPartner" value="${p.id}" checked>
+                    <span><strong>${p.name}</strong> — ${p.description} From ${p.rates_from}.</span>
+                </label>`).join('')
+            : '<span class="text-danger">Could not load partners.</span>';
+    }
+
+    function openFinancing(robotName) {
+        const sel = document.getElementById('finRobot');
+        sel.innerHTML = ROBOTS.map(r => {
+            const full = `${r.maker} ${r.name}`;
+            return `<option value="${full}" ${full === robotName ? 'selected' : ''}>${full}</option>`;
+        }).join('');
+        document.getElementById('financingForm').style.display = '';
+        document.getElementById('finSuccess').style.display = 'none';
+        document.getElementById('finError').style.display = 'none';
+        new bootstrap.Modal(document.getElementById('financingModal')).show();
+    }
+
+    document.getElementById('financingForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const errEl = document.getElementById('finError');
+        errEl.style.display = 'none';
+        const partners = [...document.querySelectorAll('input[name="finPartner"]:checked')].map(c => c.value);
+        if (!partners.length) {
+            errEl.textContent = 'Select at least one financing partner.';
+            errEl.style.display = 'block';
+            return;
+        }
+        const btn = document.getElementById('finSubmitBtn');
+        btn.disabled = true;
+        try {
+            const res = await fetch(`${FIN_API}/financing/apply`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: document.getElementById('finName').value.trim(),
+                    email: document.getElementById('finEmail').value.trim(),
+                    phone: document.getElementById('finPhone').value.trim(),
+                    robot_model: document.getElementById('finRobot').value,
+                    loan_amount: parseFloat(document.getElementById('finAmount').value),
+                    term_months: parseInt(document.getElementById('finTerm').value, 10),
+                    credit_range: document.getElementById('finCredit').value,
+                    partners
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Submission failed');
+            document.getElementById('finRef').textContent = data.application_id;
+            document.getElementById('finPartnerResults').innerHTML = (data.partner_responses || [])
+                .map(p => `<div>→ ${p.partner_name}: <span style="color:var(--yellow);">${p.status}</span> — ${p.note}</div>`).join('');
+            document.getElementById('financingForm').style.display = 'none';
+            document.getElementById('finSuccess').style.display = '';
+        } catch (err) {
+            errEl.textContent = err.message;
+            errEl.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    loadPartners();
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

@@ -24,7 +24,8 @@ from utils import (
     save_job, get_job, get_all_jobs, get_user_jobs,
     save_message, get_user_messages,
     save_bulletin, get_all_bulletins,
-    get_feedback, save_feedback
+    get_feedback, save_feedback,
+    get_financing_applications, save_financing_applications
 )
 
 # Configure logging
@@ -1341,6 +1342,117 @@ def handle_post_feedback(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         return {"post": post}, 201
     except Exception as e:
         logger.error(f"Post feedback error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+# -----------------------------------------------------------------------------
+# Robot Financing
+# -----------------------------------------------------------------------------
+# Partner integrations are stubbed: applications are validated, stored, and
+# queued per partner with status "pending" until real partner APIs are wired up.
+
+FINANCING_PARTNERS = [
+    {
+        "id": "robocapital",
+        "name": "RoboCapital",
+        "description": "Equipment loans for commercial robotics. 24-60 month terms.",
+        "rates_from": "7.9% APR",
+        "min_amount": 5000,
+        "max_amount": 2000000,
+        "integration_status": "pending",
+    },
+    {
+        "id": "meridian-fleet",
+        "name": "Meridian Fleet Finance",
+        "description": "Lease-to-own programs for earning robots. 12-48 month terms.",
+        "rates_from": "9.5% APR",
+        "min_amount": 1500,
+        "max_amount": 250000,
+        "integration_status": "pending",
+    },
+    {
+        "id": "first-automation-cu",
+        "name": "First Automation Credit Union",
+        "description": "Personal robotics loans for home and side-income robots.",
+        "rates_from": "6.5% APR",
+        "min_amount": 1000,
+        "max_amount": 50000,
+        "integration_status": "pending",
+    },
+]
+
+_VALID_CREDIT_RANGES = ("excellent", "good", "fair", "poor", "unknown")
+
+def handle_get_financing_partners() -> Tuple[Dict[str, Any], int]:
+    """Return the list of financing partners."""
+    return {"partners": FINANCING_PARTNERS}, 200
+
+def handle_submit_financing(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """
+    Accept a robot financing application and queue it for up to 3 partners.
+    No auth required. Partner delivery is stubbed pending real integrations.
+    """
+    name = (data.get('name') or '').strip()
+    email = (data.get('email') or '').strip()
+    robot_model = (data.get('robot_model') or '').strip()
+    loan_amount = data.get('loan_amount')
+
+    if not name or not email or not robot_model or loan_amount is None:
+        return {"error": "name, email, robot_model, and loan_amount required"}, 400
+    if '@' not in email or '.' not in email.split('@')[-1]:
+        return {"error": "Invalid email address"}, 400
+    try:
+        loan_amount = float(loan_amount)
+    except (TypeError, ValueError):
+        return {"error": "loan_amount must be a number"}, 400
+    if loan_amount <= 0 or loan_amount > 5000000:
+        return {"error": "loan_amount must be between 0 and 5,000,000 USD"}, 400
+
+    credit_range = (data.get('credit_range') or 'unknown').strip().lower()
+    if credit_range not in _VALID_CREDIT_RANGES:
+        credit_range = 'unknown'
+
+    valid_ids = {p['id'] for p in FINANCING_PARTNERS}
+    requested = data.get('partners') or list(valid_ids)
+    if not isinstance(requested, list):
+        return {"error": "partners must be a list of partner ids"}, 400
+    partner_ids = [p for p in requested if p in valid_ids][:3]
+    if not partner_ids:
+        return {"error": f"No valid partners selected. Valid ids: {sorted(valid_ids)}"}, 400
+
+    try:
+        application = {
+            'application_id': str(uuid.uuid4()),
+            'created': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+            'name': name[:80],
+            'email': email[:120],
+            'phone': (data.get('phone') or '').strip()[:40],
+            'robot_model': robot_model[:120],
+            'loan_amount': round(loan_amount, 2),
+            'term_months': int(data.get('term_months') or 36),
+            'credit_range': credit_range,
+            'status': 'submitted',
+            'partner_responses': [
+                {
+                    'partner_id': pid,
+                    'partner_name': next(p['name'] for p in FINANCING_PARTNERS if p['id'] == pid),
+                    'status': 'pending',
+                    'note': 'Application queued — partner integration pending. You will be contacted by email.',
+                }
+                for pid in partner_ids
+            ],
+        }
+        applications = get_financing_applications()
+        applications.insert(0, application)
+        save_financing_applications(applications[:2000])
+        logger.info(f"Financing application {application['application_id']} for {robot_model} (${loan_amount:,.0f}, {len(partner_ids)} partners)")
+
+        return {
+            "application_id": application['application_id'],
+            "status": "submitted",
+            "partner_responses": application['partner_responses'],
+        }, 201
+    except Exception as e:
+        logger.error(f"Financing application error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
 def handle_reply_feedback(post_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:

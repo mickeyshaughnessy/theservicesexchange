@@ -97,6 +97,7 @@ JOBS_PREFIX = f"{S3_PREFIX}/jobs"
 MESSAGES_PREFIX = f"{S3_PREFIX}/messages"
 BULLETINS_PREFIX = f"{S3_PREFIX}/bulletins"
 FEEDBACK_KEY = f"{S3_PREFIX}/feedback/posts.json"
+FINANCING_KEY = f"{S3_PREFIX}/financing/applications.json"
 
 # -----------------------------------------------------------------------------
 # S3 Helper Functions
@@ -377,3 +378,15 @@ def save_feedback(posts: List[Dict[str, Any]]) -> None:
     """Persist feedback posts list to S3."""
     if not _s3_put(FEEDBACK_KEY, {'posts': posts}):
         logger.error("Failed to save feedback posts")
+
+def get_financing_applications() -> List[Dict[str, Any]]:
+    """Retrieve all financing applications from S3."""
+    data = _s3_get(FINANCING_KEY)
+    if isinstance(data, dict):
+        return data.get('applications', [])
+    return []
+
+def save_financing_applications(applications: List[Dict[str, Any]]) -> None:
+    """Persist financing applications list to S3."""
+    if not _s3_put(FINANCING_KEY, {'applications': applications}):
+        logger.error("Failed to save financing applications")
