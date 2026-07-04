@@ -22,19 +22,19 @@
                         <a class="nav-link active" href="index.html" aria-current="page">Home</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="robots.html">Buy a Robot</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="examples.html">Examples</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="api_docs.html">API Docs</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="demo.html">Demo</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="dashboard.html">Dashboard</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="about.html">About</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showFeedback(); return false;">Feedback</a>
+                        <a class="nav-link" href="feedback.html">Feedback</a>
                     </li>
                 </ul>
                 
@@ -107,10 +107,10 @@
                 <div class="col-lg-6">
                     <p class="hero-eyebrow">// Automated workforce marketplace</p>
                     <h1 class="hero-title">Robot labor,<br>on demand.</h1>
-                    <p class="hero-subtitle">Deploy robot workers for any task. Post a request and get matched with the right autonomous unit — vetted, rated, and ready to execute.</p>
+                    <p class="hero-subtitle">Say what you want and how much you'll pay for it. Post any request to the open exchange and get matched with a robot ready to execute — and put your own robot's idle hours to work earning.</p>
                     <div class="d-flex gap-3 flex-wrap">
                         <button class="btn btn-hero-primary btn-lg" onclick="showBuyerForm()">Deploy a Robot</button>
-                        <a href="dashboard.html" class="btn btn-hero-secondary btn-lg">Browse Fleet</a>
+                        <a href="examples.html?tab=dashboard" class="btn btn-hero-secondary btn-lg">Browse Fleet</a>
                     </div>
                 </div>
                 <div class="col-lg-6 mt-5 mt-lg-0">
@@ -208,7 +208,7 @@
                     <div class="feature-card-new">
                         <div class="feature-number">02</div>
                         <h3>Trusted Robots</h3>
-                        <p>Every robot is community-rated. Our on-chain reputation system guarantees consistent, verifiable performance data.</p>
+                        <p>Every robot is community-rated. Both sides rate each completed job, building a reputation record that keeps operators accountable.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -346,9 +346,6 @@
                                     <option value="USD">USD ($)</option>
                                     <option value="EUR">EUR (€)</option>
                                     <option value="GBP">GBP (£)</option>
-                                    <option value="BTC">Bitcoin</option>
-                                    <option value="ETH">Ethereum</option>
-                                    <option value="THERSX">$THERSX</option>
                                 </select>
                                 <input type="number" step="0.01" min="0" class="form-control" placeholder="Price amount" id="bidPrice" required>
                             </div>
@@ -495,41 +492,7 @@
         </div>
     </div>
 
-    <!-- Feedback Modal -->
-    <div class="modal fade" id="feedbackModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Feedback</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-4 p-3 border rounded">
-                        <h6 class="mb-3">Share feedback, report a bug, or suggest a feature</h6>
-                        <p class="text-muted small mb-3">No sign-in required.</p>
-                        <div class="mb-3">
-                            <input type="text" class="form-control" id="feedbackName" placeholder="Your name (optional)" maxlength="40">
-                        </div>
-                        <div class="mb-3">
-                            <textarea class="form-control" rows="3" id="feedbackMessage" placeholder="What's on your mind?" maxlength="2000" required></textarea>
-                        </div>
-                        <div id="feedbackError" class="text-danger small mb-2" style="display:none;"></div>
-                        <button class="btn btn-primary" onclick="postFeedback()">Submit</button>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="mb-0">Recent Feedback</h6>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="loadFeedback()">Refresh</button>
-                    </div>
-                    <div id="feedbackList">
-                        <div class="text-muted text-center py-3">Loading…</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=5"></script>
 </body>
 </html>

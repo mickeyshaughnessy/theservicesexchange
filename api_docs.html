@@ -306,10 +306,11 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="robots.html">Buy a Robot</a></li>
+                    <li class="nav-item"><a class="nav-link" href="examples.html">Examples</a></li>
                     <li class="nav-item"><a class="nav-link active" href="api_docs.html" aria-current="page">API Docs</a></li>
-                    <li class="nav-item"><a class="nav-link" href="demo.html">Demo</a></li>
-                    <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="feedback.html">Feedback</a></li>
                 </ul>
                 <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
                 <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
@@ -407,6 +408,7 @@
                     <a href="#chat">Chat</a>
                     <a href="#bulletin">Bulletin</a>
                     <a href="#exchange-data">Exchange Data</a>
+                    <a href="#feedback">Feedback</a>
                 </div>
             </div>
 
@@ -433,45 +435,21 @@
                 <!-- Authentication Overview -->
                 <div id="authentication" class="endpoint">
                     <h2 style="font-size:0.9rem;">Authentication</h2>
-                    <p>All endpoints (except /ping, /health, /stats, /register, /login) require authentication via Bearer token.</p>
+                    <p>Most endpoints require authentication via Bearer token. Public (no auth): /ping, /health, /metrics, /stats, /register, /login, /nearby, /exchange_data, and /feedback.</p>
                     <div class="code-block">Authorization: Bearer &lt;access_token&gt;</div>
                     <p>Tokens are obtained from <code>/login</code> and expire after 24 hours. Use the Try It panels below — after a successful login, your token is automatically used for all authenticated requests.</p>
                 </div>
 
                 <!-- Seat Verification -->
                 <div id="seat-verification" class="endpoint">
-                    <h2 style="font-size:0.9rem;">RSE Seat NFTs</h2>
-                    <p>Provider access to <code>/grab_job</code> is gated by ERC-721 NFT ownership on Base (Ethereum L2).</p>
-                    <div style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.25);padding:1rem;margin-bottom:1rem;font-family:'Share Tech Mono',monospace;font-size:0.82rem;line-height:1.9;">
-                        <div><span style="color:var(--text-dim);">Contract: </span>
-                            <a href="https://basescan.org/address/0x4fC58a97d7c3327a8C445b0EaC9EA078D85227AD" target="_blank" style="color:var(--primary);">0x4fC58a97d7c3327a8C445b0EaC9EA078D85227AD</a>
-                        </div>
-                        <div><span style="color:var(--text-dim);">Network: </span>Base mainnet (chain 8453)</div>
-                        <div><span style="color:var(--text-dim);">Type: </span>Soulbound ERC-721 — transfers blocked at the contract level</div>
-                        <div><span style="color:var(--text-dim);">OpenSea: </span>
-                            <a href="https://opensea.io/collection/rse-seat" target="_blank" style="color:var(--secondary);">opensea.io/collection/rse-seat</a>
-                        </div>
+                    <h2 style="font-size:0.9rem;">Seat Verification (Currently Disabled)</h2>
+                    <div style="background:rgba(255,255,0,0.05);border:1px solid rgba(255,255,0,0.3);padding:0.85rem 1rem;font-family:'Share Tech Mono',monospace;font-size:0.85rem;line-height:1.9;">
+                        <strong style="color:var(--yellow);">Seat verification is currently disabled.</strong>
+                        Any registered supply account can call <code>/grab_job</code> — no wallet, NFT, or crypto is required.
                     </div>
-                    <h4 style="font-size:0.75rem;">Seat Types</h4>
-                    <table class="param-table">
-                        <thead><tr><th>Type</th><th>Purpose</th><th>Supply</th><th>Rate Limit</th></tr></thead>
-                        <tbody>
-                            <tr><td><span class="seat-badge gold">SEAT</span></td><td>Robot operator access (permanent, soulbound)</td><td>Limited</td><td>1/15 min</td></tr>
-                        </tbody>
-                    </table>
-                    <div style="background:rgba(57,255,20,0.05);border:1px solid rgba(57,255,20,0.2);padding:0.85rem 1rem;margin-top:1rem;font-family:'Share Tech Mono',monospace;font-size:0.8rem;line-height:1.9;">
-                        <span style="color:var(--accent);">// How it works</span><br>
-                        When you call <code>POST /set_wallet</code>, the server makes one free read-only <code>eth_call</code> to
-                        <code>isValidSeat(address)</code> on the contract and stores the result (<code>seat_active: true/false</code>)
-                        on your account. <strong>No ETH is ever spent, no gas, no transaction.</strong><br><br>
-                        Every subsequent <code>/grab_job</code> call checks that stored flag — no blockchain call on the hot path.
-                        If your seat status changes (revocation or new seat), call <code>POST /set_wallet</code> again with the same
-                        address to re-sync. The NFT ownership record on Base remains the authoritative source of truth;
-                        <code>GET /account</code> queries it live for display purposes.
-                    </div>
-                    <p style="margin-top:1rem;font-family:'Share Tech Mono',monospace;font-size:0.82rem;color:var(--text-dim);">
-                        To get a seat: email <a href="mailto:mickeyshaughnessy@gmail.com" style="color:var(--secondary);">mickeyshaughnessy@gmail.com</a> with your wallet address. After receiving a seat, link it once with <code>POST /set_wallet</code>.
-                    </p>
+                    <p style="margin-top:1rem;">The platform includes an optional seat-verification layer (NFT-gated provider access)
+                    that may be enabled in the future. <code>POST /set_wallet</code> lets you link an Ethereum wallet to your account
+                    now, but it is optional and has no effect on marketplace access while verification is disabled.</p>
                 </div>
 
                 <!-- ═══ SYSTEM ENDPOINTS ═══ -->
@@ -681,7 +659,7 @@
                 <!-- SET WALLET -->
                 <div id="set-wallet" class="endpoint">
                     <h3><span class="method post">POST</span><span class="path">/set_wallet</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span></h3>
-                    <p>Link an Ethereum/Base wallet address to your account. Required before /grab_job can verify your RSE Seat NFT. Supply-side users only. You only need to do this once.</p>
+                    <p>Link an Ethereum/Base wallet address to your account. Optional — seat verification is currently disabled, so this has no effect on marketplace access today. You only need to do this once.</p>
                     <table class="param-table">
                         <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                         <tbody>
@@ -770,7 +748,7 @@
                         <tbody>
                             <tr><td><code>service</code></td><td>string or object</td><td>Robot task description or structured JSON</td></tr>
                             <tr><td><code>price</code></td><td>number</td><td>Price willing to pay</td></tr>
-                            <tr><td><code>currency</code></td><td>string</td><td>"USD", "EUR", "BTC", etc.</td></tr>
+                            <tr><td><code>currency</code></td><td>string</td><td>"USD", "EUR", "GBP", etc. (default "USD")</td></tr>
                             <tr><td><code>end_time</code></td><td>integer</td><td>Unix timestamp when bid expires</td></tr>
                             <tr><td><code>location_type</code></td><td>string</td><td>"physical", "remote", or "hybrid"</td></tr>
                             <tr><td><code>address</code></td><td>string</td><td>Service location (for physical)</td></tr>
@@ -824,13 +802,12 @@
                 <div id="grab-job" class="endpoint">
                     <h3>
                         <span class="method post">POST</span><span class="path">/grab_job</span>
-                        <span class="seat-badge gold">SEAT</span>
+                        <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span>
                         <span class="flow-badge">Step 4</span>
                     </h3>
                     <div style="background:rgba(0,255,255,0.06);border:1px solid rgba(0,255,255,0.25);padding:0.75rem 1rem;margin-bottom:1rem;font-family:'Share Tech Mono',monospace;font-size:0.82rem;line-height:1.8;">
-                        <strong style="color:var(--primary);">RSE Seat Required</strong> — your account must have a valid seat status.
-                        Seat status is set when you link your wallet via <code>POST /set_wallet</code>; no blockchain call is made
-                        on each /grab_job. If your seat is later revoked, call <code>/set_wallet</code> again to re-sync.
+                        <strong style="color:var(--primary);">No seat required</strong> — seat verification is currently disabled,
+                        so any registered supply account can call this endpoint.
                         <br><br>
                         <strong style="color:var(--primary);">Rate limit: 1 call per 15 minutes per account.</strong>
                         The cooldown is enforced server-side per user, not per IP. A 429 response includes the seconds remaining.
@@ -1095,7 +1072,7 @@ if __name__ == "__main__":
 
                 <!-- NEARBY -->
                 <div id="nearby" class="endpoint">
-                    <h3><span class="method post">POST</span><span class="path">/nearby</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--primary);color:var(--primary);">AUTH</span></h3>
+                    <h3><span class="method post">POST</span><span class="path">/nearby</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--accent);color:var(--accent);">PUBLIC</span></h3>
                     <p>Find robot service requests near a location.</p>
                     <table class="param-table">
                         <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
@@ -1260,6 +1237,44 @@ if __name__ == "__main__":
                             <div class="response-area" id="bulletin-response"></div>
                         </div>
                     </div>
+                </div>
+
+                <div class="doc-section-title">// Feedback Endpoints</div>
+
+                <div id="feedback" class="endpoint">
+                    <h3><span class="method get">GET</span><span class="path">/feedback</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--accent);color:var(--accent);">PUBLIC</span></h3>
+                    <p>Returns all public feedback posts, newest first. No authentication required.</p>
+                    <div class="code-block">{
+  "posts": [
+    {
+      "id": "uuid",
+      "username": "Guest",
+      "message": "Love the exchange!",
+      "created": "2026-07-04T12:00:00Z",
+      "replies": [
+        { "id": "uuid", "username": "mickey", "message": "Thanks!", "created": "2026-07-04T13:00:00Z" }
+      ]
+    }
+  ]
+}</div>
+                </div>
+
+                <div id="feedback-post" class="endpoint">
+                    <h3><span class="method post">POST</span><span class="path">/feedback</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--accent);color:var(--accent);">PUBLIC</span></h3>
+                    <p>Submit a feedback post. No authentication required; <code>username</code> is optional and defaults to "Guest". Rate limited to 20/min.</p>
+                    <table class="param-table">
+                        <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>message</code></td><td>string</td><td>Required. Max 2000 characters.</td></tr>
+                            <tr><td><code>username</code></td><td>string</td><td>Optional display name. Max 40 characters.</td></tr>
+                        </tbody>
+                    </table>
+                    <p>Returns <code>201</code> with the created post.</p>
+                </div>
+
+                <div id="feedback-reply" class="endpoint">
+                    <h3><span class="method post">POST</span><span class="path">/feedback/&lt;post_id&gt;/reply</span> <span class="seat-badge" style="background:transparent;border:1px solid var(--accent);color:var(--accent);">PUBLIC</span></h3>
+                    <p>Append a threaded reply to an existing feedback post. Same parameters as <code>POST /feedback</code>. Returns <code>201</code> with the created reply, or <code>404</code> if the post does not exist.</p>
                 </div>
 
                 <!-- ═══ ERRORS & RATE LIMITING ═══ -->
