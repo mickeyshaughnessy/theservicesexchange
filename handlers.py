@@ -10,6 +10,7 @@ import json
 import time
 import logging
 import math
+import secrets
 import threading
 import requests
 from typing import Dict, List, Optional, Tuple, Union, Any
@@ -25,7 +26,11 @@ from utils import (
     save_message, get_user_messages,
     save_bulletin, get_all_bulletins,
     get_feedback, save_feedback,
-    get_financing_applications, save_financing_applications
+    get_financing_applications, save_financing_applications,
+    get_follows, save_follows,
+    get_username_by_slug, save_slug_mapping,
+    save_avatar,
+    get_shop_orders, save_shop_orders,
 )
 
 # Configure logging
@@ -453,6 +458,551 @@ def set_wallet(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 
     except Exception as e:
         logger.error(f"Set wallet error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+# -----------------------------------------------------------------------------
+# Profile Management
+# -----------------------------------------------------------------------------
+
+_ALLOWED_AVATAR_TYPES = {
+    'image/png': 'png',
+    'image/jpeg': 'jpg',
+    'image/webp': 'webp',
+}
+_MAX_AVATAR_BYTES = 2 * 1024 * 1024  # 2MB
+
+
+def _profile_defaults(user_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Fill in default shapes for optional profile fields on an account dict (backward-compat for pre-existing accounts)."""
+    user_data.setdefault('display_name', None)
+    user_data.setdefault('about', None)
+    user_data.setdefault('location', None)
+    user_data.setdefault('contact_info', None)
+    user_data.setdefault('avatar_url', None)
+    user_data.setdefault('robots_owned', [])
+    user_data.setdefault('subscriptions', [])
+    user_data.setdefault('credits', 0)
+    user_data.setdefault('cosmetics_owned', {'frames': [], 'backgrounds': [], 'fonts': [], 'text_colors': []})
+    user_data.setdefault('cosmetics_equipped', {'frame': None, 'background': None, 'font': None, 'text_color': None})
+    return user_data
+
+
+def get_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Get the authenticated user's full profile (private + public fields)."""
+    try:
+        username = data.get('username')
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        _profile_defaults(user_data)
+        follows = get_follows(username)
+
+        return {
+            'username': username,
+            'display_name': user_data['display_name'],
+            'about': user_data['about'],
+            'location': user_data['location'],
+            'contact_info': user_data['contact_info'],
+            'avatar_url': user_data['avatar_url'],
+            'reputation_score': round(calculate_reputation_score(user_data), 2),
+            'stars': user_data.get('stars', 0),
+            'total_ratings': user_data.get('total_ratings', 0),
+            'wallet_address': user_data.get('wallet_address'),
+            'credits': user_data['credits'],
+            'robots_owned': user_data['robots_owned'],
+            'subscriptions': user_data['subscriptions'],
+            'cosmetics_owned': user_data['cosmetics_owned'],
+            'cosmetics_equipped': user_data['cosmetics_equipped'],
+            'follower_count': len(follows['followers']),
+            'following_count': len(follows['following']),
+            'profile_slug': user_data.get('profile_slug'),
+        }, 200
+    except Exception as e:
+        logger.error(f"Get profile error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def update_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Update the authenticated user's editable profile fields. Username is immutable, all fields optional."""
+    try:
+        username = data.get('username')
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        _profile_defaults(user_data)
+
+        if 'display_name' in data:
+            user_data['display_name'] = (data.get('display_name') or '').strip()[:40] or None
+        if 'about' in data:
+            user_data['about'] = (data.get('about') or '').strip()[:1000] or None
+        if 'location' in data:
+            user_data['location'] = (data.get('location') or '').strip()[:120] or None
+        if 'contact_info' in data:
+            user_data['contact_info'] = (data.get('contact_info') or '').strip()[:300] or None
+
+        save_account(username, user_data)
+        return {"message": "Profile updated"}, 200
+    except Exception as e:
+        logger.error(f"Update profile error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_or_create_profile_slug(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Return the authenticated user's public profile share slug, generating one if absent."""
+    try:
+        username = data.get('username')
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        slug = user_data.get('profile_slug')
+        if not slug:
+            slug = secrets.token_urlsafe(9)
+            user_data['profile_slug'] = slug
+            save_account(username, user_data)
+            save_slug_mapping(slug, username)
+
+        return {"profile_slug": slug}, 200
+    except Exception as e:
+        logger.error(f"Get share link error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_public_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Get the public subset of a profile by its share slug. No auth required."""
+    try:
+        slug = data.get('slug')
+        username = get_username_by_slug(slug) if slug else None
+        if not username:
+            return {"error": "Profile not found"}, 404
+
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "Profile not found"}, 404
+
+        _profile_defaults(user_data)
+        follows = get_follows(username)
+
+        return {
+            'username': username,
+            'display_name': user_data['display_name'],
+            'avatar_url': user_data['avatar_url'],
+            'location': user_data['location'],
+            'about': user_data['about'],
+            'reputation_score': round(calculate_reputation_score(user_data), 2),
+            'stars': user_data.get('stars', 0),
+            'total_ratings': user_data.get('total_ratings', 0),
+            'robots_owned': user_data['robots_owned'],
+            'cosmetics_equipped': user_data['cosmetics_equipped'],
+            'follower_count': len(follows['followers']),
+            'following_count': len(follows['following']),
+        }, 200
+    except Exception as e:
+        logger.error(f"Get public profile error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def _sniff_image_type(file_bytes: bytes) -> Optional[str]:
+    """Identify an image's real content-type from its magic bytes (don't trust the client header)."""
+    if file_bytes[:8] == b'\x89PNG\r\n\x1a\n':
+        return 'image/png'
+    if file_bytes[:3] == b'\xff\xd8\xff':
+        return 'image/jpeg'
+    if file_bytes[:4] == b'RIFF' and file_bytes[8:12] == b'WEBP':
+        return 'image/webp'
+    return None
+
+
+def upload_avatar(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Upload and link an avatar image for the authenticated user."""
+    try:
+        username = data.get('username')
+        file_bytes = data.get('file_bytes')
+
+        if not file_bytes:
+            return {"error": "No file uploaded"}, 400
+        if len(file_bytes) > _MAX_AVATAR_BYTES:
+            return {"error": "File must be 2MB or smaller"}, 400
+
+        content_type = _sniff_image_type(file_bytes)
+        if content_type not in _ALLOWED_AVATAR_TYPES:
+            return {"error": "File must be PNG, JPEG, or WEBP"}, 400
+
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        ext = _ALLOWED_AVATAR_TYPES[content_type]
+        avatar_url = save_avatar(username, ext, file_bytes, content_type)
+        if not avatar_url:
+            return {"error": "Failed to upload avatar"}, 500
+
+        user_data['avatar_url'] = avatar_url
+        save_account(username, user_data)
+
+        return {"avatar_url": avatar_url}, 200
+    except Exception as e:
+        logger.error(f"Upload avatar error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+# -----------------------------------------------------------------------------
+# Follow / Followers
+# -----------------------------------------------------------------------------
+
+def follow_user(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Follow another user. Follower/followee lists are stored separately from the account blob."""
+    try:
+        follower = data.get('username')
+        followee = (data.get('target_username') or '').strip()
+
+        if not followee:
+            return {"error": "target_username required"}, 400
+        if followee == follower:
+            return {"error": "Cannot follow yourself"}, 400
+        if not account_exists(followee):
+            return {"error": "User not found"}, 404
+
+        follower_follows = get_follows(follower)
+        followee_follows = get_follows(followee)
+
+        if followee not in follower_follows['following']:
+            follower_follows['following'].append(followee)
+        if follower not in followee_follows['followers']:
+            followee_follows['followers'].append(follower)
+
+        save_follows(follower, follower_follows)
+        save_follows(followee, followee_follows)
+
+        return {"message": f"Now following {followee}"}, 200
+    except Exception as e:
+        logger.error(f"Follow user error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def unfollow_user(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Unfollow another user."""
+    try:
+        follower = data.get('username')
+        followee = (data.get('target_username') or '').strip()
+
+        if not followee:
+            return {"error": "target_username required"}, 400
+
+        follower_follows = get_follows(follower)
+        followee_follows = get_follows(followee)
+
+        follower_follows['following'] = [u for u in follower_follows['following'] if u != followee]
+        followee_follows['followers'] = [u for u in followee_follows['followers'] if u != follower]
+
+        save_follows(follower, follower_follows)
+        save_follows(followee, followee_follows)
+
+        return {"message": f"Unfollowed {followee}"}, 200
+    except Exception as e:
+        logger.error(f"Unfollow user error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_follow_lists(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Get the authenticated user's own followers/following lists (private)."""
+    try:
+        username = data.get('username')
+        follows = get_follows(username)
+        return {"following": follows['following'], "followers": follows['followers']}, 200
+    except Exception as e:
+        logger.error(f"Get follow lists error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+# -----------------------------------------------------------------------------
+# Request History (demand-side bids + supply-side jobs, surfaced for the profile page)
+# -----------------------------------------------------------------------------
+
+def get_request_history(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Get the authenticated user's demand-side (bids) and supply-side (jobs) history."""
+    try:
+        username = data.get('username')
+        return {"bids": get_user_bids(username), "jobs": get_user_jobs(username)}, 200
+    except Exception as e:
+        logger.error(f"Get request history error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+# -----------------------------------------------------------------------------
+# Robots Owned (self-reported)
+# -----------------------------------------------------------------------------
+
+def add_robot_owned(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Add a self-reported robot to the authenticated user's profile."""
+    try:
+        username = data.get('username')
+        model = (data.get('model') or '').strip()
+        capabilities = data.get('capabilities') or []
+
+        if not model:
+            return {"error": "model required"}, 400
+        if not isinstance(capabilities, list):
+            return {"error": "capabilities must be a list"}, 400
+
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        robots_owned = user_data.setdefault('robots_owned', [])
+        robot = {
+            'id': str(uuid.uuid4()),
+            'model': model[:80],
+            'capabilities': [str(c)[:40] for c in capabilities][:20],
+        }
+        robots_owned.append(robot)
+        save_account(username, user_data)
+
+        return {"robot": robot}, 201
+    except Exception as e:
+        logger.error(f"Add robot owned error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def remove_robot_owned(username: str, robot_id: str) -> Tuple[Dict[str, Any], int]:
+    """Remove a self-reported robot from the authenticated user's profile."""
+    try:
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        robots_owned = user_data.setdefault('robots_owned', [])
+        remaining = [r for r in robots_owned if r.get('id') != robot_id]
+        if len(remaining) == len(robots_owned):
+            return {"error": "Robot not found"}, 404
+
+        user_data['robots_owned'] = remaining
+        save_account(username, user_data)
+
+        return {"message": "Robot removed"}, 200
+    except Exception as e:
+        logger.error(f"Remove robot owned error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+# -----------------------------------------------------------------------------
+# Subscriptions (recurring demand — stubbed, no real billing processed)
+# -----------------------------------------------------------------------------
+
+_VALID_CADENCES = ("weekly", "monthly", "quarterly")
+
+def create_subscription(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Create a recurring-demand subscription record. No real billing is processed yet."""
+    try:
+        username = data.get('username')
+        name = (data.get('name') or '').strip()
+        cadence = (data.get('cadence') or '').strip().lower()
+
+        if not name:
+            return {"error": "name required"}, 400
+        if cadence not in _VALID_CADENCES:
+            return {"error": f"cadence must be one of {_VALID_CADENCES}"}, 400
+
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        subscriptions = user_data.setdefault('subscriptions', [])
+        subscription = {
+            'id': str(uuid.uuid4()),
+            'name': name[:80],
+            'cadence': cadence,
+            'status': 'active',
+            'created_on': int(time.time()),
+        }
+        subscriptions.append(subscription)
+        save_account(username, user_data)
+
+        return {"subscription": subscription}, 201
+    except Exception as e:
+        logger.error(f"Create subscription error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def cancel_subscription(username: str, subscription_id: str) -> Tuple[Dict[str, Any], int]:
+    """Cancel a recurring-demand subscription record."""
+    try:
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        subscriptions = user_data.setdefault('subscriptions', [])
+        target = next((s for s in subscriptions if s.get('id') == subscription_id), None)
+        if not target:
+            return {"error": "Subscription not found"}, 404
+
+        target['status'] = 'cancelled'
+        save_account(username, user_data)
+
+        return {"subscription": target}, 200
+    except Exception as e:
+        logger.error(f"Cancel subscription error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+# -----------------------------------------------------------------------------
+# Cosmetics Shop (frames, backgrounds, fonts, text colors)
+# -----------------------------------------------------------------------------
+
+COSMETICS_CATALOG = [
+    {"id": "frame-neon-cyan", "category": "frame", "name": "Neon Cyan Frame", "price_credits": 100},
+    {"id": "frame-neon-magenta", "category": "frame", "name": "Neon Magenta Frame", "price_credits": 100},
+    {"id": "frame-gold", "category": "frame", "name": "Gold Frame", "price_credits": 250},
+    {"id": "bg-circuit", "category": "background", "name": "Circuit Board", "price_credits": 150},
+    {"id": "bg-synthwave-grid", "category": "background", "name": "Synthwave Grid", "price_credits": 150},
+    {"id": "bg-starfield", "category": "background", "name": "Starfield", "price_credits": 200},
+    {"id": "font-press-start", "category": "font", "name": "Press Start 2P", "price_credits": 75},
+    {"id": "font-share-tech", "category": "font", "name": "Share Tech Mono", "price_credits": 75},
+    {"id": "color-cyan", "category": "text_color", "name": "Cyan", "price_credits": 50},
+    {"id": "color-magenta", "category": "text_color", "name": "Magenta", "price_credits": 50},
+    {"id": "color-green", "category": "text_color", "name": "Acid Green", "price_credits": 50},
+]
+
+_COSMETICS_CATEGORY_TO_OWNED_KEY = {
+    "frame": "frames",
+    "background": "backgrounds",
+    "font": "fonts",
+    "text_color": "text_colors",
+}
+
+PAYMENT_PROVIDERS = [
+    {
+        "id": "phantom_wallet",
+        "name": "Phantom Wallet",
+        "description": "Pay with SOL/USDC via Phantom Wallet. Integration pending.",
+        "integration_status": "pending",
+    },
+    {
+        "id": "xmoney",
+        "name": "XMoney",
+        "description": "Pay with card or bank transfer via XMoney. Integration pending.",
+        "integration_status": "pending",
+    },
+]
+
+def handle_get_cosmetics_catalog() -> Tuple[Dict[str, Any], int]:
+    """Return the cosmetics catalog and available payment providers."""
+    return {"items": COSMETICS_CATALOG, "payment_providers": PAYMENT_PROVIDERS}, 200
+
+
+def handle_purchase_cosmetic(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """
+    Purchase a cosmetic item. payment_method 'credits' deducts from the user's internal
+    balance and fulfills immediately. External providers (Phantom Wallet, XMoney) are
+    stubbed pending real integration, following the financing-partner pattern: the
+    order is recorded as pending, no charge is attempted, nothing is added to inventory.
+    """
+    try:
+        username = data.get('username')
+        item_id = (data.get('item_id') or '').strip()
+        payment_method = (data.get('payment_method') or 'credits').strip().lower()
+
+        item = next((i for i in COSMETICS_CATALOG if i['id'] == item_id), None)
+        if not item:
+            return {"error": "Item not found"}, 404
+
+        valid_methods = {'credits'} | {p['id'] for p in PAYMENT_PROVIDERS}
+        if payment_method not in valid_methods:
+            return {"error": f"payment_method must be one of {sorted(valid_methods)}"}, 400
+
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        _profile_defaults(user_data)
+        owned_key = _COSMETICS_CATEGORY_TO_OWNED_KEY[item['category']]
+
+        order = {
+            'order_id': str(uuid.uuid4()),
+            'username': username,
+            'item_id': item['id'],
+            'category': item['category'],
+            'price_credits': item['price_credits'],
+            'payment_method': payment_method,
+            'created_on': int(time.time()),
+        }
+
+        if payment_method == 'credits':
+            if item_id in user_data['cosmetics_owned'][owned_key]:
+                return {"error": "Item already owned"}, 400
+            if user_data['credits'] < item['price_credits']:
+                return {"error": "Insufficient credits"}, 402
+
+            user_data['credits'] -= item['price_credits']
+            user_data['cosmetics_owned'][owned_key].append(item_id)
+            save_account(username, user_data)
+            order['status'] = 'fulfilled'
+        else:
+            provider = next(p for p in PAYMENT_PROVIDERS if p['id'] == payment_method)
+            order['status'] = 'pending'
+            order['note'] = f"Order queued — {provider['name']} integration pending. You will be contacted by email."
+
+        orders = get_shop_orders()
+        orders.insert(0, order)
+        save_shop_orders(orders[:2000])
+
+        return order, 201
+    except Exception as e:
+        logger.error(f"Purchase cosmetic error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def equip_cosmetic(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Equip an owned cosmetic item on the authenticated user's profile."""
+    try:
+        username = data.get('username')
+        item_id = (data.get('item_id') or '').strip()
+
+        item = next((i for i in COSMETICS_CATALOG if i['id'] == item_id), None)
+        if not item:
+            return {"error": "Item not found"}, 404
+
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        _profile_defaults(user_data)
+        owned_key = _COSMETICS_CATEGORY_TO_OWNED_KEY[item['category']]
+        if item_id not in user_data['cosmetics_owned'][owned_key]:
+            return {"error": "Item not owned"}, 403
+
+        user_data['cosmetics_equipped'][item['category']] = item_id
+        save_account(username, user_data)
+
+        return {"cosmetics_equipped": user_data['cosmetics_equipped']}, 200
+    except Exception as e:
+        logger.error(f"Equip cosmetic error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def admin_adjust_credits(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Admin-only: adjust a user's internal credits balance. Stopgap until a real top-up/payment flow exists."""
+    try:
+        username = (data.get('username') or '').strip()
+        delta = data.get('delta')
+
+        if not username:
+            return {"error": "username required"}, 400
+        if delta is None:
+            return {"error": "delta required"}, 400
+        try:
+            delta = int(delta)
+        except (TypeError, ValueError):
+            return {"error": "delta must be an integer"}, 400
+
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        _profile_defaults(user_data)
+        user_data['credits'] = max(0, user_data['credits'] + delta)
+        save_account(username, user_data)
+
+        return {"username": username, "credits": user_data['credits']}, 200
+    except Exception as e:
+        logger.error(f"Admin adjust credits error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
 def get_my_bids(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:

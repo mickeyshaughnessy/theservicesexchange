@@ -98,6 +98,10 @@ MESSAGES_PREFIX = f"{S3_PREFIX}/messages"
 BULLETINS_PREFIX = f"{S3_PREFIX}/bulletins"
 FEEDBACK_KEY = f"{S3_PREFIX}/feedback/posts.json"
 FINANCING_KEY = f"{S3_PREFIX}/financing/applications.json"
+FOLLOWS_PREFIX = f"{S3_PREFIX}/follows"
+SLUGS_PREFIX = f"{S3_PREFIX}/slugs"
+AVATARS_PREFIX = f"{S3_PREFIX}/avatars"
+SHOP_ORDERS_KEY = f"{S3_PREFIX}/shop/orders.json"
 
 # -----------------------------------------------------------------------------
 # S3 Helper Functions
@@ -116,6 +120,21 @@ def _s3_put(key: str, data: Dict[str, Any]) -> bool:
         return True
     except ClientError as e:
         logger.error(f"S3 PUT error for {key}: {e}")
+        return False
+
+def _s3_put_binary(key: str, body: bytes, content_type: str) -> bool:
+    """Save raw binary data to S3 (e.g. uploaded images), publicly readable."""
+    try:
+        s3_client.put_object(
+            Bucket=S3_BUCKET,
+            Key=key,
+            Body=body,
+            ContentType=content_type,
+            ACL='public-read'
+        )
+        return True
+    except ClientError as e:
+        logger.error(f"S3 binary PUT error for {key}: {e}")
         return False
 
 def _s3_get(key: str) -> Optional[Dict[str, Any]]:
@@ -390,3 +409,66 @@ def save_financing_applications(applications: List[Dict[str, Any]]) -> None:
     """Persist financing applications list to S3."""
     if not _s3_put(FINANCING_KEY, {'applications': applications}):
         logger.error("Failed to save financing applications")
+
+# -----------------------------------------------------------------------------
+# Follows Management
+# -----------------------------------------------------------------------------
+
+def get_follows(username: str) -> Dict[str, List[str]]:
+    """Retrieve a user's followers/following lists from S3."""
+    key = f"{FOLLOWS_PREFIX}/{username}.json"
+    data = _s3_get(key)
+    if isinstance(data, dict):
+        return {'following': data.get('following', []), 'followers': data.get('followers', [])}
+    return {'following': [], 'followers': []}
+
+def save_follows(username: str, data: Dict[str, List[str]]) -> None:
+    """Persist a user's followers/following lists to S3."""
+    key = f"{FOLLOWS_PREFIX}/{username}.json"
+    if not _s3_put(key, data):
+        logger.error(f"Failed to save follows for {username}")
+
+# -----------------------------------------------------------------------------
+# Profile Slug Management
+# -----------------------------------------------------------------------------
+
+def get_username_by_slug(slug: str) -> Optional[str]:
+    """Resolve a public profile slug to a username."""
+    key = f"{SLUGS_PREFIX}/{slug}.json"
+    data = _s3_get(key)
+    if isinstance(data, dict):
+        return data.get('username')
+    return None
+
+def save_slug_mapping(slug: str, username: str) -> None:
+    """Persist a slug -> username mapping to S3."""
+    key = f"{SLUGS_PREFIX}/{slug}.json"
+    if not _s3_put(key, {'username': username}):
+        logger.error(f"Failed to save slug mapping for {slug}")
+
+# -----------------------------------------------------------------------------
+# Avatar Storage
+# -----------------------------------------------------------------------------
+
+def save_avatar(username: str, ext: str, body: bytes, content_type: str) -> Optional[str]:
+    """Upload an avatar image to S3 and return its public URL."""
+    key = f"{AVATARS_PREFIX}/{username}.{ext}"
+    if not _s3_put_binary(key, body, content_type):
+        return None
+    return f"{config.DO_SPACES_URL}/{key}"
+
+# -----------------------------------------------------------------------------
+# Cosmetics Shop Orders
+# -----------------------------------------------------------------------------
+
+def get_shop_orders() -> List[Dict[str, Any]]:
+    """Retrieve all cosmetics shop orders from S3."""
+    data = _s3_get(SHOP_ORDERS_KEY)
+    if isinstance(data, dict):
+        return data.get('orders', [])
+    return []
+
+def save_shop_orders(orders: List[Dict[str, Any]]) -> None:
+    """Persist cosmetics shop orders list to S3."""
+    if not _s3_put(SHOP_ORDERS_KEY, {'orders': orders}):
+        logger.error("Failed to save shop orders")

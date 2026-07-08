@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css?v=5" rel="stylesheet">
+    <title>Profile - Robot Services Exchange</title>
+    <style>
+        .profile-header-card {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            align-items: flex-start;
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.25);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-top: 30px;
+        }
+        .profile-avatar-wrap {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 3px solid var(--text-dim);
+            background: var(--bg-card);
+        }
+        .profile-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-avatar-wrap.frame-neon-cyan { border-color: var(--primary); box-shadow: 0 0 14px rgba(0,255,255,0.6); }
+        .profile-avatar-wrap.frame-neon-magenta { border-color: var(--secondary); box-shadow: 0 0 14px rgba(255,0,255,0.6); }
+        .profile-avatar-wrap.frame-gold { border-color: var(--gold); box-shadow: 0 0 14px rgba(255,215,0,0.6); }
+
+        .profile-header-info { flex: 1; min-width: 200px; }
+        .profile-header-info h2 { margin-bottom: 2px; }
+        .profile-username-line { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 8px; }
+        .profile-header-actions { display: flex; flex-direction: column; gap: 8px; min-width: 160px; }
+
+        .profile-card {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.15);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .profile-card h6 { color: var(--text-dim); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 12px; }
+
+        .bg-circuit { background-image: repeating-linear-gradient(0deg, rgba(0,255,255,0.06) 0 2px, transparent 2px 24px), repeating-linear-gradient(90deg, rgba(0,255,255,0.06) 0 2px, transparent 2px 24px); }
+        .bg-synthwave-grid { background-image: linear-gradient(rgba(255,0,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,0,255,0.12) 1px, transparent 1px); background-size: 24px 24px; }
+        .bg-starfield { background-image: radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px); background-size: 18px 18px; }
+
+        .font-press-start { font-family: 'Press Start 2P', monospace; }
+        .font-share-tech { font-family: 'Share Tech Mono', monospace; }
+        .color-cyan { color: var(--primary) !important; }
+        .color-magenta { color: var(--secondary) !important; }
+        .color-green { color: var(--accent) !important; }
+
+        .robot-chip, .cap-chip {
+            display: inline-block;
+            background: var(--bg-card);
+            border: 1px solid var(--text-dim);
+            border-radius: var(--radius-md);
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            margin: 2px 4px 2px 0;
+        }
+        .shop-item {
+            border: 1px solid rgba(0,255,255,0.2);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            text-align: center;
+        }
+        .shop-item.owned { border-color: var(--accent); }
+        .tab-pane-history { max-height: 320px; overflow-y: auto; }
+        #profileError { margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">RSE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="robots.html">Buy a Robot</a></li>
+                    <li class="nav-item"><a class="nav-link" href="examples.html">Examples</a></li>
+                    <li class="nav-item"><a class="nav-link" href="api_docs.html">API Docs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="feedback.html">Feedback</a></li>
+                </ul>
+
+                <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
+                <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
+
+                <div id="accountDropdown" class="account-dropdown ms-3" style="display: none;">
+                    <button class="account-btn">
+                        <span id="accountUsername">Account</span> ▼
+                    </button>
+                    <div class="account-window">
+                        <div class="account-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="profile.html" id="accountDisplayName" style="color: inherit; text-decoration: none;">Loading...</a>
+                                <button class="logout-btn" onclick="logout()">Logout</button>
+                            </div>
+                            <div class="reputation-display">
+                                <span class="star-rating" id="starDisplay">★★★★★</span>
+                                <span id="ratingText">4.5 (12 ratings)</span>
+                            </div>
+                        </div>
+                        <div class="account-section">
+                            <a href="profile.html" class="btn btn-sm btn-outline-light w-100">View Full Profile</a>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="loginButton" class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding-bottom: 60px;">
+        <div id="profileLoading" style="padding-top: 60px; text-align: center;">Loading profile...</div>
+        <div id="profileError" class="alert alert-danger" style="display: none;"></div>
+
+        <div id="profileContent" style="display: none;">
+            <!-- Header -->
+            <div class="profile-header-card">
+                <div class="profile-avatar-wrap" id="profileAvatarWrap">
+                    <img id="profileAvatarImg" src="" alt="Avatar">
+                </div>
+                <div class="profile-header-info">
+                    <h2 id="profileDisplayName"></h2>
+                    <div class="profile-username-line" id="profileUsernameLine"></div>
+                    <div id="profileLocationLine" class="profile-username-line"></div>
+                    <div class="reputation-display">
+                        <span class="star-rating" id="profileStars"></span>
+                        <span id="profileRatingText"></span>
+                    </div>
+                    <div style="margin-top: 8px;">
+                        <span id="profileFollowerCount">0</span> followers &nbsp;·&nbsp;
+                        <span id="profileFollowingCount">0</span> following
+                    </div>
+                    <p id="profileAbout" style="margin-top: 12px;"></p>
+                </div>
+                <div class="profile-header-actions" id="profileHeaderActions"></div>
+            </div>
+
+            <!-- Robots owned (shown in both modes) -->
+            <div class="profile-card">
+                <h6>Robots Owned</h6>
+                <div id="robotsOwnedList"></div>
+                <div id="robotsOwnedAddForm" style="display: none; margin-top: 12px;">
+                    <div class="row g-2">
+                        <div class="col-md-4"><input class="form-control form-control-sm" id="robotModelInput" placeholder="Model (e.g. Unitree Go2)"></div>
+                        <div class="col-md-6"><input class="form-control form-control-sm" id="robotCapsInput" placeholder="Capabilities, comma separated"></div>
+                        <div class="col-md-2"><button class="btn btn-sm btn-outline-light w-100" onclick="addRobotOwned()">Add</button></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Owner-only sections -->
+            <div id="ownerSections" style="display: none;">
+                <div class="profile-card">
+                    <h6>Edit Profile</h6>
+                    <div class="row g-2">
+                        <div class="col-md-6"><input class="form-control form-control-sm" id="editDisplayName" placeholder="Display name"></div>
+                        <div class="col-md-6"><input class="form-control form-control-sm" id="editLocation" placeholder="Location"></div>
+                        <div class="col-md-12"><textarea class="form-control form-control-sm" id="editAbout" rows="3" placeholder="About you"></textarea></div>
+                        <div class="col-md-6"><input class="form-control form-control-sm" id="editContactInfo" placeholder="Contact info (private)"></div>
+                        <div class="col-md-6"><input type="file" class="form-control form-control-sm" id="editAvatarFile" accept="image/png,image/jpeg,image/webp"></div>
+                        <div class="col-12"><button class="btn btn-sm btn-primary mt-2" onclick="saveProfileEdits()">Save Changes</button></div>
+                    </div>
+                    <div id="editSaveStatus" class="mt-2" style="font-size: 0.85rem;"></div>
+                </div>
+
+                <div class="profile-card">
+                    <h6>Wallet &amp; Credits</h6>
+                    <p>ETH wallet: <span id="walletAddressText">Not linked</span></p>
+                    <p>Credits balance: <strong id="creditsBalanceText">0</strong></p>
+                </div>
+
+                <div class="profile-card">
+                    <h6>Cosmetics Shop</h6>
+                    <p class="text-muted" style="font-size: 0.85rem;">Spend credits on frames, backgrounds, fonts, and text colors. Phantom Wallet / XMoney checkout coming soon — for now those methods just queue a pending order.</p>
+                    <div id="shopCatalog" class="row g-2"></div>
+                </div>
+
+                <div class="profile-card">
+                    <h6>Subscriptions (Recurring Demand)</h6>
+                    <div id="subscriptionsList"></div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-5"><input class="form-control form-control-sm" id="subNameInput" placeholder="Service name"></div>
+                        <div class="col-md-4">
+                            <select class="form-control form-control-sm" id="subCadenceInput">
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3"><button class="btn btn-sm btn-outline-light w-100" onclick="createSubscription()">Subscribe</button></div>
+                    </div>
+                </div>
+
+                <div class="profile-card">
+                    <h6>Request History</h6>
+                    <ul class="nav nav-tabs mb-2">
+                        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#historyBids">Demand (Bids)</a></li>
+                        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#historyJobs">Supply (Jobs)</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active tab-pane-history" id="historyBids"><div id="historyBidsList"></div></div>
+                        <div class="tab-pane tab-pane-history" id="historyJobs"><div id="historyJobsList"></div></div>
+                    </div>
+                </div>
+
+                <div class="profile-card">
+                    <h6>Share Your Profile</h6>
+                    <div class="input-group">
+                        <input type="text" class="form-control form-control-sm" id="shareLinkInput" readonly>
+                        <button class="btn btn-sm btn-outline-light" onclick="copyShareLink()">Copy Link</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal (shared markup/IDs with index.html so script.js works unmodified) -->
+    <div class="modal fade" id="authModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Get Started</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="authError" class="error-message" style="display: none;"></div>
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#login">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#register">Register</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="login">
+                            <form id="loginForm">
+                                <div class="mb-3"><input type="text" class="form-control" placeholder="Username" id="loginUsername" required></div>
+                                <div class="mb-3"><input type="password" class="form-control" placeholder="Password" id="loginPassword" required></div>
+                                <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">Login</button>
+                            </form>
+                        </div>
+                        <div class="tab-pane" id="register">
+                            <form id="registerForm">
+                                <div class="mb-3"><input type="text" class="form-control" placeholder="Username" id="regUsername" required></div>
+                                <div class="mb-3"><input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required></div>
+                                <div class="mb-3">
+                                    <label class="form-label">I want to:</label>
+                                    <div class="user-type-selector">
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="demand" id="typeDemand" required>
+                                            <span class="user-type-card"><strong>Buy Services</strong><small>Post requests and hire providers</small></span>
+                                        </label>
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="supply" id="typeSupply">
+                                            <span class="user-type-card"><strong>Provide Services</strong><small>Find work and earn money</small></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">Register</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js?v=5"></script>
+    <script>
+        const PROFILE_API = API_URL;
+        let viewedProfile = null;
+        let isOwnProfile = false;
+        let ownSlug = null;
+
+        function authHeaders() {
+            return { 'Authorization': `Bearer ${AppState.authToken}`, 'Content-Type': 'application/json' };
+        }
+
+        function starsHtml(stars) {
+            const rounded = Math.round(stars || 0);
+            return '★'.repeat(Math.min(rounded, 5)) + '☆'.repeat(Math.max(5 - rounded, 0));
+        }
+
+        async function initProfilePage() {
+            const params = new URLSearchParams(location.search);
+            const pid = params.get('pid');
+
+            if (!pid) {
+                if (!AppState.authToken) {
+                    document.getElementById('profileLoading').style.display = 'none';
+                    document.getElementById('profileError').style.display = 'block';
+                    document.getElementById('profileError').textContent = 'Log in to view your profile, or open a shared profile link.';
+                    return;
+                }
+                // Own profile: resolve share slug then redirect to the canonical ?pid= URL
+                try {
+                    const res = await fetch(`${PROFILE_API}/profile/share_link`, { headers: authHeaders() });
+                    if (res.ok) {
+                        const data = await res.json();
+                        location.replace(`profile.html?pid=${encodeURIComponent(data.profile_slug)}`);
+                        return;
+                    }
+                } catch (e) { /* fall through to error */ }
+                document.getElementById('profileLoading').style.display = 'none';
+                document.getElementById('profileError').style.display = 'block';
+                document.getElementById('profileError').textContent = 'Could not load your profile.';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${PROFILE_API}/profile/public/${encodeURIComponent(pid)}`);
+                if (!res.ok) {
+                    throw new Error('not found');
+                }
+                viewedProfile = await res.json();
+            } catch (e) {
+                document.getElementById('profileLoading').style.display = 'none';
+                document.getElementById('profileError').style.display = 'block';
+                document.getElementById('profileError').textContent = 'Profile not found.';
+                return;
+            }
+
+            isOwnProfile = !!(AppState.currentUsername && AppState.currentUsername === viewedProfile.username);
+
+            document.getElementById('profileLoading').style.display = 'none';
+            document.getElementById('profileContent').style.display = 'block';
+            renderPublicProfile(viewedProfile);
+
+            if (isOwnProfile) {
+                await loadOwnerSections();
+            } else {
+                renderViewerActions();
+            }
+        }
+
+        function renderPublicProfile(p) {
+            document.getElementById('profileDisplayName').textContent = p.display_name || p.username;
+            document.getElementById('profileUsernameLine').textContent = `@${p.username}`;
+            document.getElementById('profileLocationLine').textContent = p.location || '';
+            document.getElementById('profileStars').textContent = starsHtml(p.stars);
+            document.getElementById('profileRatingText').textContent = `${(p.reputation_score || 0).toFixed(1)} (${p.total_ratings || 0} ratings)`;
+            document.getElementById('profileFollowerCount').textContent = p.follower_count || 0;
+            document.getElementById('profileFollowingCount').textContent = p.following_count || 0;
+            document.getElementById('profileAbout').textContent = p.about || '';
+
+            const avatarImg = document.getElementById('profileAvatarImg');
+            avatarImg.src = p.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(p.username);
+
+            const wrap = document.getElementById('profileAvatarWrap');
+            wrap.className = 'profile-avatar-wrap';
+            const equipped = p.cosmetics_equipped || {};
+            if (equipped.frame) wrap.classList.add(equipped.frame);
+
+            renderRobotsOwned(p.robots_owned || [], isOwnProfile);
+        }
+
+        function renderRobotsOwned(robots, editable) {
+            const list = document.getElementById('robotsOwnedList');
+            if (!robots.length) {
+                list.innerHTML = '<p class="text-muted mb-0">No robots listed.</p>';
+            } else {
+                list.innerHTML = robots.map(r => `
+                    <div class="mb-2">
+                        <strong>${escapeHtml(r.model)}</strong>
+                        ${editable ? `<button class="btn btn-sm btn-link text-danger p-0 ms-2" onclick="removeRobotOwned('${r.id}')">remove</button>` : ''}
+                        <div>${(r.capabilities || []).map(c => `<span class="cap-chip">${escapeHtml(c)}</span>`).join('')}</div>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('robotsOwnedAddForm').style.display = editable ? 'block' : 'none';
+        }
+
+        function renderViewerActions() {
+            const actions = document.getElementById('profileHeaderActions');
+            if (!AppState.authToken) {
+                actions.innerHTML = `<button class="btn btn-sm btn-light" onclick="showAuth()">Log in to follow</button>`;
+                return;
+            }
+            actions.innerHTML = `
+                <button class="btn btn-sm btn-outline-light" id="followBtn">Follow</button>
+                <button class="btn btn-sm btn-outline-light" onclick="messageUser('${viewedProfile.username}')">Message</button>
+            `;
+            checkFollowState();
+        }
+
+        async function checkFollowState() {
+            try {
+                const res = await fetch(`${PROFILE_API}/follows`, { headers: authHeaders() });
+                if (!res.ok) return;
+                const data = await res.json();
+                const following = (data.following || []).includes(viewedProfile.username);
+                const btn = document.getElementById('followBtn');
+                if (!btn) return;
+                btn.textContent = following ? 'Unfollow' : 'Follow';
+                btn.onclick = () => toggleFollow(!following);
+            } catch (e) { /* ignore */ }
+        }
+
+        async function toggleFollow(follow) {
+            const endpoint = follow ? 'follow' : 'unfollow';
+            try {
+                await fetch(`${PROFILE_API}/${endpoint}`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ target_username: viewedProfile.username })
+                });
+                checkFollowState();
+            } catch (e) { /* ignore */ }
+        }
+
+        function messageUser(username) {
+            location.href = `index.html?dm=${encodeURIComponent(username)}`;
+        }
+
+        async function loadOwnerSections() {
+            document.getElementById('ownerSections').style.display = 'block';
+            document.getElementById('profileHeaderActions').innerHTML = `
+                <button class="btn btn-sm btn-outline-light" onclick="document.getElementById('editDisplayName').scrollIntoView({behavior:'smooth'})">Edit Profile</button>
+            `;
+
+            try {
+                const res = await fetch(`${PROFILE_API}/profile`, { headers: authHeaders() });
+                if (!res.ok) return;
+                const p = await res.json();
+
+                document.getElementById('editDisplayName').value = p.display_name || '';
+                document.getElementById('editLocation').value = p.location || '';
+                document.getElementById('editAbout').value = p.about || '';
+                document.getElementById('editContactInfo').value = p.contact_info || '';
+                document.getElementById('walletAddressText').textContent = p.wallet_address || 'Not linked';
+                document.getElementById('creditsBalanceText').textContent = p.credits;
+
+                renderSubscriptions(p.subscriptions || []);
+                renderRobotsOwned(p.robots_owned || [], true);
+
+                await Promise.all([loadShareLink(), loadShopCatalog(p.cosmetics_owned), loadRequestHistory()]);
+            } catch (e) { /* ignore */ }
+        }
+
+        async function saveProfileEdits() {
+            const status = document.getElementById('editSaveStatus');
+            status.textContent = 'Saving...';
+            try {
+                const res = await fetch(`${PROFILE_API}/profile`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({
+                        display_name: document.getElementById('editDisplayName').value,
+                        location: document.getElementById('editLocation').value,
+                        about: document.getElementById('editAbout').value,
+                        contact_info: document.getElementById('editContactInfo').value
+                    })
+                });
+                if (!res.ok) throw new Error('save failed');
+
+                const fileInput = document.getElementById('editAvatarFile');
+                if (fileInput.files && fileInput.files[0]) {
+                    const formData = new FormData();
+                    formData.append('avatar', fileInput.files[0]);
+                    const avatarRes = await fetch(`${PROFILE_API}/profile/avatar`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${AppState.authToken}` },
+                        body: formData
+                    });
+                    if (avatarRes.ok) {
+                        const avatarData = await avatarRes.json();
+                        document.getElementById('profileAvatarImg').src = avatarData.avatar_url;
+                    }
+                }
+
+                status.textContent = 'Saved.';
+                setTimeout(() => { status.textContent = ''; }, 2000);
+            } catch (e) {
+                status.textContent = 'Failed to save changes.';
+            }
+        }
+
+        async function addRobotOwned() {
+            const model = document.getElementById('robotModelInput').value.trim();
+            const caps = document.getElementById('robotCapsInput').value.split(',').map(c => c.trim()).filter(Boolean);
+            if (!model) return;
+            try {
+                const res = await fetch(`${PROFILE_API}/robots_owned`, {
+                    method: 'POST', headers: authHeaders(),
+                    body: JSON.stringify({ model, capabilities: caps })
+                });
+                if (res.ok) {
+                    document.getElementById('robotModelInput').value = '';
+                    document.getElementById('robotCapsInput').value = '';
+                    await loadOwnerSections();
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        async function removeRobotOwned(robotId) {
+            try {
+                await fetch(`${PROFILE_API}/robots_owned/${encodeURIComponent(robotId)}`, {
+                    method: 'DELETE', headers: authHeaders()
+                });
+                await loadOwnerSections();
+            } catch (e) { /* ignore */ }
+        }
+
+        function renderSubscriptions(subs) {
+            const list = document.getElementById('subscriptionsList');
+            if (!subs.length) {
+                list.innerHTML = '<p class="text-muted mb-0">No subscriptions yet.</p>';
+                return;
+            }
+            list.innerHTML = subs.map(s => `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span>${escapeHtml(s.name)} — ${escapeHtml(s.cadence)} <em>(${escapeHtml(s.status)})</em></span>
+                    ${s.status === 'active' ? `<button class="btn btn-sm btn-link text-danger" onclick="cancelSubscription('${s.id}')">cancel</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function createSubscription() {
+            const name = document.getElementById('subNameInput').value.trim();
+            const cadence = document.getElementById('subCadenceInput').value;
+            if (!name) return;
+            try {
+                const res = await fetch(`${PROFILE_API}/subscriptions`, {
+                    method: 'POST', headers: authHeaders(),
+                    body: JSON.stringify({ name, cadence })
+                });
+                if (res.ok) {
+                    document.getElementById('subNameInput').value = '';
+                    await loadOwnerSections();
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        async function cancelSubscription(subId) {
+            try {
+                await fetch(`${PROFILE_API}/subscriptions/${encodeURIComponent(subId)}/cancel`, {
+                    method: 'POST', headers: authHeaders()
+                });
+                await loadOwnerSections();
+            } catch (e) { /* ignore */ }
+        }
+
+        async function loadShareLink() {
+            try {
+                const res = await fetch(`${PROFILE_API}/profile/share_link`, { headers: authHeaders() });
+                if (!res.ok) return;
+                const data = await res.json();
+                ownSlug = data.profile_slug;
+                document.getElementById('shareLinkInput').value = `${location.origin}/profile.html?pid=${data.profile_slug}`;
+            } catch (e) { /* ignore */ }
+        }
+
+        function copyShareLink() {
+            const input = document.getElementById('shareLinkInput');
+            input.select();
+            navigator.clipboard && navigator.clipboard.writeText(input.value);
+        }
+
+        async function loadShopCatalog(cosmeticsOwned) {
+            const ownedKeyByCategory = { frame: 'frames', background: 'backgrounds', font: 'fonts', text_color: 'text_colors' };
+            try {
+                const res = await fetch(`${PROFILE_API}/shop/catalog`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const container = document.getElementById('shopCatalog');
+                container.innerHTML = data.items.map(item => {
+                    const ownedList = (cosmeticsOwned && cosmeticsOwned[ownedKeyByCategory[item.category]]) || [];
+                    const owned = ownedList.includes(item.id);
+                    return `
+                        <div class="col-md-3 col-sm-4 col-6">
+                            <div class="shop-item ${owned ? 'owned' : ''}">
+                                <div style="font-size:0.75rem; text-transform:uppercase; color: var(--text-dim);">${escapeHtml(item.category)}</div>
+                                <div>${escapeHtml(item.name)}</div>
+                                <div style="font-size:0.85rem;">${item.price_credits} credits</div>
+                                ${owned
+                                    ? `<button class="btn btn-sm btn-outline-light w-100 mt-1" onclick="equipCosmetic('${item.id}')">Equip</button>`
+                                    : `<button class="btn btn-sm btn-primary w-100 mt-1" onclick="purchaseCosmetic('${item.id}')">Buy</button>`}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) { /* ignore */ }
+        }
+
+        async function purchaseCosmetic(itemId) {
+            try {
+                const res = await fetch(`${PROFILE_API}/shop/purchase`, {
+                    method: 'POST', headers: authHeaders(),
+                    body: JSON.stringify({ item_id: itemId, payment_method: 'credits' })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.error || 'Purchase failed');
+                    return;
+                }
+                await loadOwnerSections();
+            } catch (e) { /* ignore */ }
+        }
+
+        async function equipCosmetic(itemId) {
+            try {
+                const res = await fetch(`${PROFILE_API}/shop/equip`, {
+                    method: 'POST', headers: authHeaders(),
+                    body: JSON.stringify({ item_id: itemId })
+                });
+                if (res.ok) {
+                    const res2 = await fetch(`${PROFILE_API}/profile/public/${encodeURIComponent(ownSlug)}`);
+                    if (res2.ok) renderPublicProfile(await res2.json());
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        async function loadRequestHistory() {
+            try {
+                const res = await fetch(`${PROFILE_API}/request_history`, { headers: authHeaders() });
+                if (!res.ok) return;
+                const data = await res.json();
+                const bidsList = document.getElementById('historyBidsList');
+                const jobsList = document.getElementById('historyJobsList');
+                bidsList.innerHTML = data.bids.length
+                    ? data.bids.map(b => `<div class="mb-1">${escapeHtml(b.service_description || b.service || '')} — ${escapeHtml(b.status || '')}</div>`).join('')
+                    : '<p class="text-muted mb-0">No demand-side requests yet.</p>';
+                jobsList.innerHTML = data.jobs.length
+                    ? data.jobs.map(j => `<div class="mb-1">${escapeHtml(j.service_description || j.service || '')} — ${escapeHtml(j.status || '')}</div>`).join('')
+                    : '<p class="text-muted mb-0">No supply-side jobs yet.</p>';
+            } catch (e) { /* ignore */ }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initProfilePage, 50);
+        });
+    </script>
+</body>
+</html>

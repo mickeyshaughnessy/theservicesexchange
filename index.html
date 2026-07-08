@@ -50,7 +50,7 @@
                     <div class="account-window">
                         <div class="account-header">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0" id="accountDisplayName">Loading...</h5>
+                                <a href="profile.html" id="accountDisplayName" class="mb-0 h5" title="View full profile" style="color: inherit; text-decoration: none;">Loading...</a>
                                 <button class="logout-btn" onclick="logout()">Logout</button>
                             </div>
                             <div class="reputation-display">
@@ -58,7 +58,11 @@
                                 <span id="ratingText">4.5 (12 ratings)</span>
                             </div>
                         </div>
-                        
+
+                        <div class="account-section">
+                            <a href="profile.html" class="btn btn-sm btn-outline-light w-100">View Full Profile</a>
+                        </div>
+
                         <div class="account-section">
                             <h6>Outstanding Requests</h6>
                             <div class="loading-spinner" id="bidsLoading">
@@ -496,5 +500,24 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js?v=5"></script>
+    <script>
+        // Deep link from a profile page's "Message" button: index.html?dm=<username>
+        document.addEventListener('DOMContentLoaded', () => {
+            const target = new URLSearchParams(location.search).get('dm');
+            if (!target) return;
+            setTimeout(() => {
+                if (!AppState.authToken) {
+                    showAuth();
+                    return;
+                }
+                showChat();
+                setTimeout(() => {
+                    showNewMessageForm();
+                    const recipient = document.getElementById('chatRecipient');
+                    if (recipient) recipient.value = target;
+                }, 300);
+            }, 100);
+        });
+    </script>
 </body>
 </html>

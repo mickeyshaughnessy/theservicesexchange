@@ -43,7 +43,24 @@ from handlers import (
     handle_post_feedback,
     handle_reply_feedback,
     handle_get_financing_partners,
-    handle_submit_financing
+    handle_submit_financing,
+    get_profile,
+    update_profile,
+    get_or_create_profile_slug,
+    get_public_profile,
+    upload_avatar,
+    follow_user,
+    unfollow_user,
+    get_follow_lists,
+    get_request_history,
+    add_robot_owned,
+    remove_robot_owned,
+    create_subscription,
+    cancel_subscription,
+    handle_get_cosmetics_catalog,
+    handle_purchase_cosmetic,
+    equip_cosmetic,
+    admin_adjust_credits,
 )
 from utils import get_token_username
 
@@ -150,6 +167,9 @@ def token_required(f):
 _SITE_PASSWORD = "12345678"
 _COOKIE_SECRET = "tse-gate-8f3a9c2d"
 _COOKIE_NAME = "tse_auth"
+
+# Stopgap shared-secret admin gate (no admin-role system exists yet)
+_ADMIN_KEY = "tse-admin-9f1c7b2e"
 
 def _make_auth_token():
     return hmac.new(_COOKIE_SECRET.encode(), _SITE_PASSWORD.encode(), hashlib.sha256).hexdigest()
@@ -470,6 +490,148 @@ def financing_apply():
     """Public endpoint to submit a robot financing application."""
     data = flask.request.get_json() or {}
     response, status = handle_submit_financing(data)
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# Profile Endpoints
+# -----------------------------------------------------------------------------
+
+@app.route('/profile', methods=['GET'])
+@token_required
+def profile(current_user):
+    response, status = get_profile({'username': current_user})
+    return flask.jsonify(response), status
+
+@app.route('/profile', methods=['POST'])
+@token_required
+def handle_update_profile(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = update_profile(data)
+    return flask.jsonify(response), status
+
+@app.route('/profile/share_link', methods=['GET'])
+@token_required
+def profile_share_link(current_user):
+    response, status = get_or_create_profile_slug({'username': current_user})
+    return flask.jsonify(response), status
+
+@app.route('/profile/public/<slug>', methods=['GET'])
+@limiter.limit(_STRICT_LIMIT)
+def profile_public(slug):
+    """Public, unauthenticated profile lookup by opaque share slug. Rate-limited to slow down slug enumeration."""
+    response, status = get_public_profile({'slug': slug})
+    return flask.jsonify(response), status
+
+@app.route('/profile/avatar', methods=['POST'])
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def profile_avatar(current_user):
+    file = flask.request.files.get('avatar')
+    if not file:
+        return flask.jsonify({"error": "No file uploaded"}), 400
+    response, status = upload_avatar({'username': current_user, 'file_bytes': file.read()})
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# Follow / Followers Endpoints
+# -----------------------------------------------------------------------------
+
+@app.route('/follow', methods=['POST'])
+@token_required
+def handle_follow(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = follow_user(data)
+    return flask.jsonify(response), status
+
+@app.route('/unfollow', methods=['POST'])
+@token_required
+def handle_unfollow(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = unfollow_user(data)
+    return flask.jsonify(response), status
+
+@app.route('/follows', methods=['GET'])
+@token_required
+def handle_get_follows(current_user):
+    response, status = get_follow_lists({'username': current_user})
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# Request History / Robots Owned / Subscriptions
+# -----------------------------------------------------------------------------
+
+@app.route('/request_history', methods=['GET'])
+@token_required
+def request_history(current_user):
+    response, status = get_request_history({'username': current_user})
+    return flask.jsonify(response), status
+
+@app.route('/robots_owned', methods=['POST'])
+@token_required
+def handle_add_robot_owned(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = add_robot_owned(data)
+    return flask.jsonify(response), status
+
+@app.route('/robots_owned/<robot_id>', methods=['DELETE'])
+@token_required
+def handle_remove_robot_owned(current_user, robot_id):
+    response, status = remove_robot_owned(current_user, robot_id)
+    return flask.jsonify(response), status
+
+@app.route('/subscriptions', methods=['POST'])
+@token_required
+def handle_create_subscription(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = create_subscription(data)
+    return flask.jsonify(response), status
+
+@app.route('/subscriptions/<subscription_id>/cancel', methods=['POST'])
+@token_required
+def handle_cancel_subscription(current_user, subscription_id):
+    response, status = cancel_subscription(current_user, subscription_id)
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# Cosmetics Shop Endpoints (payments stubbed; Phantom Wallet / XMoney pending)
+# -----------------------------------------------------------------------------
+
+@app.route('/shop/catalog', methods=['GET'])
+def shop_catalog():
+    """Public endpoint listing cosmetics items and payment providers."""
+    response, status = handle_get_cosmetics_catalog()
+    return flask.jsonify(response), status
+
+@app.route('/shop/purchase', methods=['POST'])
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def shop_purchase(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = handle_purchase_cosmetic(data)
+    return flask.jsonify(response), status
+
+@app.route('/shop/equip', methods=['POST'])
+@token_required
+def shop_equip(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = equip_cosmetic(data)
+    return flask.jsonify(response), status
+
+@app.route('/admin/credits', methods=['POST'])
+@limiter.limit(_STRICT_LIMIT)
+def admin_credits():
+    """Stopgap admin-only credits adjustment, gated on a shared secret header (no admin-role system exists yet)."""
+    if not hmac.compare_digest(flask.request.headers.get('X-Admin-Key', ''), _ADMIN_KEY):
+        return flask.jsonify({"error": "Unauthorized"}), 401
+    data = flask.request.get_json() or {}
+    response, status = admin_adjust_credits(data)
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
