@@ -399,7 +399,7 @@ def main():
 
     # ── Link your RSE Seat NFT wallet (do this once per account) ─────────────
     # Replace with the wallet address that holds your seat NFT.
-    # Contact mickeyshaughnessy@gmail.com to receive a seat allocation.
+    # Contact mickey@theservicesexchange.com to receive a seat allocation.
     # Comment this out after the first run if you prefer.
     SEAT_WALLET = os.environ.get("RSE_WALLET_ADDRESS", "")
     if SEAT_WALLET:
