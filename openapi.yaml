@@ -740,6 +740,7 @@ paths:
               properties:
                 member_username: { type: string }
                 share: { type: number, exclusiveMinimum: 0, exclusiveMaximum: 1 }
+                side: { type: string, enum: [supply, demand], default: supply, description: supply = co-providers; demand = co-buyers (DEMAND_PARTY_ENABLED) }
       responses:
         '201':
           description: Invitation created
@@ -954,6 +955,61 @@ paths:
         '400': { description: Commitment already responded to }
         '403': { description: Only the campaign owner can respond }
         '404': { description: Campaign or commitment not found }
+  /agents:
+    post:
+      tags: [Auth]
+      summary: Create an agent token (operator account)
+      description: |
+        Returns `agent_token` **once**. Default scopes are `history:read` only.
+        Agents use Bearer auth; routes not in the server allowlist return 403 (default-deny).
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label: { type: string }
+                robot_id: { type: string, description: Must match robots_owned[].id if set }
+                scopes:
+                  type: array
+                  items: { type: string }
+                  default: [history:read]
+                expires_at: { type: integer, nullable: true }
+      responses:
+        '201':
+          description: Agent created; agent_token shown once
+        '400': { description: Validation error }
+        '403': { description: Agent tokens disabled or max agents reached }
+    get:
+      tags: [Auth]
+      summary: List agents for the authenticated account
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Agents without secrets
+  /agents/{agent_id}:
+    delete:
+      tags: [Auth]
+      summary: Revoke an agent token
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: agent_id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Revoked }
+        '404': { description: Agent not found }
+  /agents/{agent_id}/rotate:
+    post:
+      tags: [Auth]
+      summary: Rotate agent secret (new token once)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: agent_id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: New agent_token }
+        '404': { description: Agent not found }
+
   /my_campaigns:
     get:
       tags: [Campaigns]

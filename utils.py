@@ -105,6 +105,10 @@ SHOP_ORDERS_KEY = f"{S3_PREFIX}/shop/orders.json"
 CAMPAIGNS_PREFIX = f"{S3_PREFIX}/campaigns"
 ENDORSEMENTS_PREFIX = f"{S3_PREFIX}/endorsements"
 DISPUTES_KEY = f"{S3_PREFIX}/disputes/list.json"
+AGENT_TOKENS_PREFIX = f"{S3_PREFIX}/agent_tokens"
+ACTIVITY_PREFIX = f"{S3_PREFIX}/activity"
+ACTIVITY_USER_INDEX_PREFIX = f"{S3_PREFIX}/activity_index/users"
+ACTIVITY_JOB_INDEX_PREFIX = f"{S3_PREFIX}/activity_index/jobs"
 
 # -----------------------------------------------------------------------------
 # S3 Helper Functions
@@ -265,6 +269,80 @@ def get_token_username(token: str) -> Optional[str]:
     if data and data.get('expiry', 0) > time.time():
         return data.get('username')
     return None
+
+# -----------------------------------------------------------------------------
+# Agent tokens (sha256 lookup; secrets never stored)
+# -----------------------------------------------------------------------------
+
+def save_agent_token_record(token_hash: str, record: Dict[str, Any]) -> bool:
+    """Persist agent auth record keyed by sha256 hex of the bearer secret."""
+    key = f"{AGENT_TOKENS_PREFIX}/{token_hash}.json"
+    return _s3_put(key, record)
+
+def get_agent_token_record(token_hash: str) -> Optional[Dict[str, Any]]:
+    key = f"{AGENT_TOKENS_PREFIX}/{token_hash}.json"
+    return _s3_get(key)
+
+def delete_agent_token_record(token_hash: str) -> bool:
+    key = f"{AGENT_TOKENS_PREFIX}/{token_hash}.json"
+    return _s3_delete(key)
+
+# -----------------------------------------------------------------------------
+# Activity events (append-only; best-effort relative to marketplace)
+# -----------------------------------------------------------------------------
+
+def append_activity_event(
+    event_type: str,
+    *,
+    username: Optional[str] = None,
+    job_id: Optional[str] = None,
+    payload: Optional[Dict[str, Any]] = None,
+    actor: Optional[Dict[str, Any]] = None,
+    idempotency_key: Optional[str] = None,
+) -> Optional[str]:
+    """
+    Best-effort append of an activity event. Returns event_id or None on failure.
+    Marketplace callers must not fail the parent action if this returns None.
+    """
+    if not getattr(config, 'ACTIVITY_LOG_ENABLED', True):
+        return None
+    try:
+        import uuid as _uuid
+        if idempotency_key:
+            event_id = str(_uuid.uuid5(_uuid.NAMESPACE_URL, f"rse:{idempotency_key}"))
+        else:
+            event_id = str(_uuid.uuid4())
+        now = int(time.time())
+        ts = time.gmtime(now)
+        yyyy, mm = time.strftime('%Y', ts), time.strftime('%m', ts)
+        body = {
+            'event_id': event_id,
+            'event_type': event_type,
+            'created_at': now,
+            'username': username,
+            'job_id': job_id,
+            'actor': actor,
+            'payload': payload or {},
+            'idempotency_key': idempotency_key,
+        }
+        body_key = f"{ACTIVITY_PREFIX}/{yyyy}/{mm}/{event_id}.json"
+        if not _s3_put(body_key, body):
+            logger.error(f"activity_append_fail body {event_type}")
+            return None
+        # Secondary indexes (best-effort)
+        try:
+            if username:
+                idx_key = f"{ACTIVITY_USER_INDEX_PREFIX}/{username}/{now}_{event_id}.json"
+                _s3_put(idx_key, {'event_id': event_id, 'event_type': event_type, 'created_at': now, 'path': body_key})
+            if job_id:
+                jidx = f"{ACTIVITY_JOB_INDEX_PREFIX}/{job_id}/{now}_{event_id}.json"
+                _s3_put(jidx, {'event_id': event_id, 'event_type': event_type, 'created_at': now, 'path': body_key})
+        except Exception as idx_err:
+            logger.warning(f"activity index put failed: {idx_err}")
+        return event_id
+    except Exception as e:
+        logger.error(f"activity_append_fail {event_type}: {e}")
+        return None
 
 # -----------------------------------------------------------------------------
 # Bid Management

@@ -44,6 +44,17 @@ NETWORK = SEAT_NETWORK                              # alias used by seat_admin s
 SEAT_VERIFICATION_ENABLED = False                   # set True to enforce NFT gate on /grab_job
 SEAT_METADATA_BASE_URI = 'https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/rse-seats/'
 
+# -----------------------------------------------------------------------------
+# Stage A feature flags (demand coop / identity / history / agents)
+# See docs/design-demand-coop-identity-history.md
+# -----------------------------------------------------------------------------
+DEMAND_PARTY_ENABLED = True          # buyers can invite co-buyers (side=demand)
+AGENT_TOKENS_ENABLED = True          # robot/operator scoped bearer tokens
+ACTIVITY_LOG_ENABLED = True          # append-only activity events (best-effort)
+CAMPAIGN_SPONSORS_ENABLED = False    # multi-sponsor campaigns (PR A4)
+PARTY_DISPUTE_ENABLED = False        # party members may file disputes
+PUBLIC_PORTFOLIO_ENABLED = False     # public portfolio pages (Stage C)
+
 # Logging
 LOG_LEVEL = 'INFO'
 

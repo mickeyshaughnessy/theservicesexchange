@@ -569,7 +569,8 @@ function updateActiveJobsDisplay() {
             ${job.location_type !== 'remote' ? `<small class="text-muted">Location: ${escapeHtml(job.address || 'Physical service')}</small>` : '<small class="text-muted">Remote service</small>'}
             ${partyBadgesHtml(job.party)}
             <div class="mt-1 d-flex gap-2 flex-wrap">
-                ${job.role === 'provider' ? `<button class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}')">+ Invite co-provider</button>` : ''}
+                ${job.role === 'provider' ? `<button class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}', 'supply')">+ Invite co-provider</button>` : ''}
+                ${job.role === 'buyer' ? `<button class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}', 'demand')">+ Invite co-buyer</button>` : ''}
                 ${(job.role === 'provider' || job.role === 'buyer') ? `<button class="btn btn-sm btn-link text-danger p-0" onclick="fileJobDispute('${job.job_id}')">File dispute</button>` : ''}
             </div>
         </div>
@@ -578,7 +579,7 @@ function updateActiveJobsDisplay() {
     const inviteHtml = invites.map(pi => `
         <div class="job-item">
             <h6>${typeof pi.service === 'object' ? escapeHtml(JSON.stringify(pi.service)) : escapeHtml(pi.service)}</h6>
-            <p class="text-muted">Job-party invite from ${escapeHtml(pi.primary_provider)} • Your share: ${Math.round(pi.share * 100)}% (rep credit)</p>
+            <p class="text-muted">${escapeHtml(pi.side || 'supply')} invite • share: ${pi.share != null ? Math.round(pi.share * 100) + '%' : 'n/a'} (attribution)</p>
             <div class="d-flex gap-2">
                 <button class="btn btn-sm btn-outline-light" onclick="respondToPartyInvite('${pi.job_id}', 'accept')">Accept</button>
                 <button class="btn btn-sm btn-outline-danger" onclick="respondToPartyInvite('${pi.job_id}', 'decline')">Decline</button>
@@ -630,10 +631,13 @@ function updateJobsDisplay() {
     container.innerHTML = completedHtml + partyCompletedHtml;
 }
 
-async function inviteToJobParty(jobId) {
-    const memberUsername = prompt('Username to invite as co-provider on this job:');
+async function inviteToJobParty(jobId, side) {
+    // side: 'supply' (co-provider) or 'demand' (co-buyer). Default supply.
+    const partySide = (side === 'demand') ? 'demand' : 'supply';
+    const roleLabel = partySide === 'demand' ? 'co-buyer' : 'co-provider';
+    const memberUsername = prompt(`Username to invite as ${roleLabel} on this job:`);
     if (!memberUsername) return;
-    const shareStr = prompt('Their share of the job credit (0-1, e.g. 0.4):', '0.4');
+    const shareStr = prompt('Their attribution share (0-1, e.g. 0.4) — UX hint only:', '0.4');
     const share = parseFloat(shareStr);
     if (!share || share <= 0 || share >= 1) {
         showToast('Share must be a number between 0 and 1.', 'error');
@@ -646,11 +650,11 @@ async function inviteToJobParty(jobId) {
                 'Authorization': `Bearer ${AppState.authToken}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ member_username: memberUsername, share })
+            body: JSON.stringify({ member_username: memberUsername, share, side: partySide })
         });
         const data = await response.json().catch(() => ({}));
         if (response.ok) {
-            showToast(`Invited ${memberUsername} to co-provide this job.`, 'success');
+            showToast(`Invited ${memberUsername} as ${roleLabel}.`, 'success');
             loadCompletedJobs();
         } else {
             showToast(`Failed to invite: ${data.error || 'Unknown error'}`, 'error');

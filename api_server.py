@@ -18,6 +18,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 import config
+import hashlib
 from handlers import (
     register_user,
     login_user,
@@ -76,8 +77,13 @@ from handlers import (
     file_dispute,
     admin_list_disputes,
     admin_resolve_dispute,
+    create_agent,
+    list_agents,
+    revoke_agent,
+    rotate_agent,
+    AGENT_ROUTE_SCOPES,
 )
-from utils import get_token_username
+from utils import get_token_username, get_agent_token_record
 
 # Configure logging
 logging.basicConfig(level=config.LOG_LEVEL)
@@ -155,23 +161,79 @@ def log_response(response):
     
     return response
 
+def _match_agent_route(method: str, path: str):
+    """Return allowed scopes for an agent on this route, or None if undeclared (default-deny)."""
+    # Exact match first
+    key = f"{method} {path}"
+    if key in AGENT_ROUTE_SCOPES:
+        return AGENT_ROUTE_SCOPES[key]
+    # Wildcard segments: /jobs/<id>/party etc.
+    for pattern, scopes in AGENT_ROUTE_SCOPES.items():
+        p_method, p_path = pattern.split(' ', 1)
+        if p_method != method:
+            continue
+        p_parts = p_path.strip('/').split('/')
+        parts = path.strip('/').split('/')
+        if len(p_parts) != len(parts):
+            continue
+        ok = True
+        for a, b in zip(p_parts, parts):
+            if a == '*':
+                continue
+            if a != b:
+                ok = False
+                break
+        if ok:
+            return scopes
+    return None
+
+
 def token_required(f):
-    """Decorator to require valid JWT token."""
+    """Require valid user or agent bearer token. Agents are default-deny per AGENT_ROUTE_SCOPES."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        auth_header = flask.request.headers.get('Authorization')
-        if not auth_header:
+        auth_header = flask.request.headers.get('Authorization') or ''
+        if not auth_header.lower().startswith('bearer '):
             return flask.jsonify({'error': 'Token is missing'}), 401
-        
-        try:
-            token = auth_header.split(" ")[-1]
-        except IndexError:
-            return flask.jsonify({'error': 'Invalid token format'}), 401
-            
+
+        token = auth_header.split(None, 1)[1].strip()
         username = get_token_username(token)
-        if not username:
-            return flask.jsonify({'error': 'Token is invalid or expired'}), 401
-            
+        flask.g.actor = {
+            'username': None,
+            'agent_id': None,
+            'robot_id': None,
+            'scopes': None,
+            'is_agent': False,
+        }
+
+        if username:
+            flask.g.actor['username'] = username
+        else:
+            # Agent token path
+            if not getattr(config, 'AGENT_TOKENS_ENABLED', True):
+                return flask.jsonify({'error': 'Token is invalid or expired'}), 401
+            token_hash = hashlib.sha256(token.encode()).hexdigest()
+            rec = get_agent_token_record(token_hash)
+            if not rec or rec.get('revoked'):
+                return flask.jsonify({'error': 'Token is invalid or expired'}), 401
+            if rec.get('expires_at') and rec['expires_at'] < time.time():
+                return flask.jsonify({'error': 'Token is invalid or expired'}), 401
+            username = rec['username']
+            flask.g.actor.update({
+                'username': username,
+                'agent_id': rec.get('agent_id'),
+                'robot_id': rec.get('robot_id'),
+                'scopes': list(rec.get('scopes') or []),
+                'is_agent': True,
+            })
+            # Default-deny: route must be in AGENT_ROUTE_SCOPES and scopes must intersect
+            allowed = _match_agent_route(flask.request.method, flask.request.path)
+            if allowed is None:
+                return flask.jsonify({'error': 'Agent not permitted on this route'}), 403
+            agent_scopes = set(flask.g.actor['scopes'] or [])
+            if not agent_scopes.intersection(allowed):
+                return flask.jsonify({'error': 'Insufficient agent scope'}), 403
+
         return f(username, *args, **kwargs)
     return decorated
 
@@ -315,6 +377,38 @@ def handle_set_wallet(current_user):
     data = flask.request.get_json() or {}
     data['username'] = current_user
     response, status = set_wallet(data)
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# Agent tokens (robot / operator scoped auth)
+# -----------------------------------------------------------------------------
+
+@app.route('/agents', methods=['POST'])
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_create_agent(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = create_agent(data)
+    return flask.jsonify(response), status
+
+@app.route('/agents', methods=['GET'])
+@token_required
+def handle_list_agents(current_user):
+    response, status = list_agents({'username': current_user})
+    return flask.jsonify(response), status
+
+@app.route('/agents/<agent_id>', methods=['DELETE'])
+@token_required
+def handle_revoke_agent(current_user, agent_id):
+    response, status = revoke_agent({'username': current_user, 'agent_id': agent_id})
+    return flask.jsonify(response), status
+
+@app.route('/agents/<agent_id>/rotate', methods=['POST'])
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_rotate_agent(current_user, agent_id):
+    response, status = rotate_agent({'username': current_user, 'agent_id': agent_id})
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
