@@ -800,6 +800,94 @@ paths:
                     items: { $ref: '#/components/schemas/JobPartyMember' }
         '403': { description: Not a party to this job }
         '404': { description: Job not found }
+  /jobs/{job_id}/channel:
+    get:
+      tags: [Communication]
+      summary: Get job channel metadata (members, state, read cursor)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: job_id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Channel meta for accepted participants }
+        '403': { description: Not a channel member (pending invitees excluded) }
+        '404': { description: Job not found }
+  /jobs/{job_id}/messages:
+    get:
+      tags: [Communication]
+      summary: List job channel messages (poll with since_ts / after_id)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: job_id, in: path, required: true, schema: { type: string } }
+        - { name: since_ts, in: query, schema: { type: integer } }
+        - { name: after_id, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 50, maximum: 100 } }
+      responses:
+        '200': { description: Paginated messages }
+        '403': { description: Not a channel member }
+    post:
+      tags: [Communication]
+      summary: Post a message to a job channel
+      description: |
+        Client message_type may be `user`, `agent_structured`, or `status`.
+        `system` is server-only (400 if sent by client). Channel is read-only
+        after job completed/rejected.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: job_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string, maxLength: 4000 }
+                message_type: { type: string, enum: [user, agent_structured, status], default: user }
+                payload: { type: object }
+                client_message_id: { type: string, description: Idempotency key per sender }
+      responses:
+        '201': { description: Message created }
+        '200': { description: Idempotent replay of client_message_id }
+        '400': { description: Validation error }
+        '403': { description: Not a member or channel read-only }
+        '429': { description: Rate limited }
+  /jobs/{job_id}/messages/read:
+    post:
+      tags: [Communication]
+      summary: Mark job channel as read (cursor)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: job_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [last_read_ts]
+              properties:
+                last_read_ts: { type: integer }
+      responses:
+        '200': { description: Cursor updated }
+  /chat/read:
+    post:
+      tags: [Communication]
+      summary: Mark a DM conversation as read (cursor-based)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [conversation_id, last_read_ts]
+              properties:
+                conversation_id: { type: string, description: Peer username }
+                last_read_ts: { type: integer }
+      responses:
+        '200': { description: Cursor updated }
+
   /jobs/{job_id}/dispute:
     post:
       tags: [Cooperation]

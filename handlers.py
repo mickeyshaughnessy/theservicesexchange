@@ -38,6 +38,9 @@ from utils import (
     get_disputes, save_disputes,
     save_agent_token_record, get_agent_token_record, delete_agent_token_record,
     append_activity_event,
+    save_channel, get_channel, save_channel_message, get_channel_message,
+    list_channel_messages, find_channel_message_by_client_id,
+    get_chat_cursors, save_chat_cursors,
 )
 
 # Configure logging
@@ -113,15 +116,27 @@ AGENT_ROUTE_SCOPES = {
     'POST /sign_job': {'jobs:write'},
     'POST /chat': {'chat:write'},
     'POST /chat/reply': {'chat:write'},
+    'POST /chat/read': {'chat:read', 'chat:write', 'history:read'},
     'GET /chat/conversations': {'chat:read', 'history:read'},
     'POST /chat/messages': {'chat:read', 'history:read'},
     'GET /jobs/*/party': {'jobs:read', 'history:read'},
     'POST /jobs/*/party/respond': {'jobs:write'},
+    'GET /jobs/*/channel': {'chat:read', 'history:read'},
+    'GET /jobs/*/messages': {'chat:read', 'history:read'},
+    'POST /jobs/*/messages': {'chat:write'},
+    'POST /jobs/*/messages/read': {'chat:read', 'chat:write', 'history:read'},
     'GET /agents': {'history:read'},
     'GET /campaigns': {'history:read'},
     'GET /campaigns/*': {'history:read'},
     'POST /campaigns/*/commit': {'jobs:grab', 'jobs:write'},
 }
+
+# In-process rate counters: key -> (window_start, count)
+_rate_buckets: Dict[str, Tuple[float, int]] = {}
+_CHANNEL_BODY_MAX = 4000
+_CHANNEL_PAYLOAD_MAX_BYTES = 8 * 1024
+_CHANNEL_POST_LIMIT_PER_MIN = 30
+_AGENT_STRUCTURED_LIMIT_PER_MIN = 10
 
 _MAX_AGENTS_PER_ACCOUNT = 10
 _DEFAULT_AGENT_SCOPES = ['history:read']
@@ -1614,6 +1629,13 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
               payload={'bid_id': best_bid['bid_id'], 'price': best_bid['price']},
               idempotency_key=f"job.grabbed:{job_id}")
 
+        ensure_job_channel(
+            job_record,
+            system_event='job.created',
+            system_body=f"Job matched: {job_record.get('service')}",
+            system_payload={'price': job_record.get('price'), 'bid_id': best_bid['bid_id']},
+        )
+
         logger.info(f"Job matched: {job_id}")
 
         return job_record, 200
@@ -1694,6 +1716,17 @@ def reject_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         job['rejection_reason'] = reason
         save_job(job_id, job)
 
+        ensure_job_channel(
+            job,
+            system_event='job.rejected',
+            system_body=f"Job rejected by provider: {reason}",
+            system_payload={'reason': reason},
+        )
+        _emit('job.rejected', username=username, job_id=job_id,
+              actor=public_actor(username),
+              payload={'reason': reason},
+              idempotency_key=f"job.rejected:{job_id}")
+
         logger.info(f"Job rejected: {job_id}")
 
         return {"message": "Job rejected successfully"}, 200
@@ -1773,6 +1806,26 @@ def sign_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             save_account(counterparty, counterparty_data)
         
         save_job(job_id, job)
+
+        role = 'buyer' if is_buyer else 'provider'
+        ensure_job_channel(
+            job,
+            system_event='job.signed',
+            system_body=f"{username} signed the job ({role}, rating {star_rating})",
+            system_payload={'role': role, 'rating': star_rating},
+        )
+        if job.get('status') == 'completed':
+            ensure_job_channel(
+                job,
+                system_event='job.completed',
+                system_body="Job completed — both parties signed",
+                system_payload={},
+            )
+            _emit('job.completed', username=username, job_id=job_id,
+                  actor=public_actor(username),
+                  payload={},
+                  idempotency_key=f"job.completed:{job_id}")
+
         logger.info(f"Job signed: {job_id}")
         
         return {"message": "Job signed successfully"}, 200
@@ -2014,13 +2067,17 @@ def get_exchange_data(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         return {"error": "Internal server error"}, 500
 
 def get_conversations(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
-    """Get list of conversations for the user."""
+    """Get list of conversations for the user (unread via chat read cursors)."""
     try:
         username = data.get('username')
+        job_filter = data.get('job_id')
         messages = get_user_messages(username)
+        cursors = get_chat_cursors(username).get('by_peer') or {}
         
         conversations = {}
         for msg in messages:
+            if job_filter and msg.get('job_id') != job_filter:
+                continue
             other_user = msg['recipient'] if msg['sender'] == username else msg['sender']
             
             if other_user not in conversations:
@@ -2029,14 +2086,18 @@ def get_conversations(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                     'lastMessage': msg['message'],
                     'timestamp': msg['sent_at'],
                     'unread': False,
-                    'conversation_id': other_user
+                    'conversation_id': other_user,
+                    'job_id': msg.get('job_id'),
                 }
             else:
                 if msg['sent_at'] > conversations[other_user]['timestamp']:
                     conversations[other_user]['lastMessage'] = msg['message']
                     conversations[other_user]['timestamp'] = msg['sent_at']
+                    conversations[other_user]['job_id'] = msg.get('job_id')
             
-            if msg['recipient'] == username and not msg.get('read'):
+            # Cursor-based unread: inbound messages after peer cursor
+            peer_cursor = int(cursors.get(other_user) or 0)
+            if msg.get('recipient') == username and int(msg.get('sent_at') or 0) > peer_cursor:
                 conversations[other_user]['unread'] = True
                 
         conv_list = list(conversations.values())
@@ -2289,6 +2350,358 @@ def handle_reply_feedback(post_id: str, data: Dict[str, Any]) -> Tuple[Dict[str,
         logger.error(f"Reply feedback error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
+
+# -----------------------------------------------------------------------------
+# Job channels (Stage B)
+# -----------------------------------------------------------------------------
+
+def _channel_members_from_job(job: Dict[str, Any]) -> List[str]:
+    """Primaries + accepted party members both sides (not pending invitees)."""
+    members = set()
+    if job.get('buyer_username'):
+        members.add(job['buyer_username'])
+    if job.get('provider_username'):
+        members.add(job['provider_username'])
+    for p in (job.get('party') or []) + (job.get('supply_party') or []) + (job.get('demand_party') or []):
+        if p.get('status') == 'accepted' and p.get('member_username'):
+            members.add(p['member_username'])
+    return sorted(members)
+
+
+def _channel_state_for_job(job: Dict[str, Any]) -> str:
+    status = job.get('status')
+    if status == 'accepted':
+        return 'active'
+    if status in ('completed', 'rejected'):
+        return 'read_only'
+    return 'read_only'
+
+
+def _rate_limit_ok(key: str, limit: int, window: float = 60.0) -> bool:
+    now = time.time()
+    start, count = _rate_buckets.get(key, (now, 0))
+    if now - start >= window:
+        _rate_buckets[key] = (now, 1)
+        return True
+    if count >= limit:
+        return False
+    _rate_buckets[key] = (start, count + 1)
+    return True
+
+
+def ensure_job_channel(job: Dict[str, Any], *, system_event: Optional[str] = None,
+                       system_body: Optional[str] = None,
+                       system_payload: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    """Create or refresh channel membership from job; optional system message."""
+    job_id = job.get('job_id')
+    if not job_id:
+        return None
+    members = _channel_members_from_job(job)
+    state = _channel_state_for_job(job)
+    ch = get_channel(job_id)
+    now = int(time.time())
+    if not ch:
+        ch = {
+            'job_id': job_id,
+            'channel_type': 'job',
+            'state': state,
+            'members': members,
+            'created_at': now,
+            'updated_at': now,
+            'read_cursors': {},
+            'message_count': 0,
+        }
+    else:
+        ch['members'] = members
+        ch['state'] = state
+        ch['updated_at'] = now
+        ch.setdefault('read_cursors', {})
+        ch.setdefault('message_count', 0)
+    save_channel(job_id, ch)
+    if system_event:
+        _post_system_message(job_id, system_event, system_body or system_event,
+                             payload=system_payload or {})
+        ch = get_channel(job_id) or ch
+    return ch
+
+
+def _post_system_message(job_id: str, event: str, body: str,
+                         payload: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    """Server-only system message. Never callable as client message_type=system."""
+    try:
+        message_id = str(uuid.uuid4())
+        now = int(time.time())
+        msg = {
+            'message_id': message_id,
+            'job_id': job_id,
+            'channel_type': 'job',
+            'message_type': 'system',
+            'sender': 'system',
+            'agent_id': None,
+            'robot_id': None,
+            'body': (body or event)[:_CHANNEL_BODY_MAX],
+            'payload': dict(payload or {}, event=event),
+            'sent_at': now,
+            'client_message_id': None,
+        }
+        if not save_channel_message(job_id, message_id, msg):
+            return None
+        ch = get_channel(job_id)
+        if ch:
+            ch['message_count'] = int(ch.get('message_count') or 0) + 1
+            ch['updated_at'] = now
+            ch['last_message_at'] = now
+            save_channel(job_id, ch)
+        _emit('message.posted', job_id=job_id,
+              payload={'message_type': 'system', 'event': event, 'message_id': message_id},
+              idempotency_key=f"msg.system:{job_id}:{event}:{message_id}")
+        return msg
+    except Exception as e:
+        logger.warning(f"system message failed {job_id}: {e}")
+        return None
+
+
+def _user_in_channel(username: str, ch: Dict[str, Any]) -> bool:
+    return username in (ch.get('members') or [])
+
+
+def get_job_channel(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """GET channel meta for a job (members must be accepted participants)."""
+    try:
+        username = data.get('username')
+        job_id = data.get('job_id')
+        job = get_job(job_id)
+        if not job:
+            return {"error": "Job not found"}, 404
+        ch = get_channel(job_id)
+        if not ch:
+            # lazy create for jobs that predate Stage B
+            ch = ensure_job_channel(job)
+        if not ch or not _user_in_channel(username, ch):
+            return {"error": "Not a channel member"}, 403
+        # refresh membership from job
+        ch = ensure_job_channel(job) or ch
+        if not _user_in_channel(username, ch):
+            return {"error": "Not a channel member"}, 403
+        return {
+            'job_id': job_id,
+            'channel_type': 'job',
+            'state': ch.get('state'),
+            'members': ch.get('members') or [],
+            'created_at': ch.get('created_at'),
+            'updated_at': ch.get('updated_at'),
+            'message_count': ch.get('message_count', 0),
+            'last_message_at': ch.get('last_message_at'),
+            'my_read_ts': (ch.get('read_cursors') or {}).get(username, 0),
+        }, 200
+    except Exception as e:
+        logger.error(f"Get job channel error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def post_job_channel_message(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """POST a message to a job channel (user / agent_structured / status)."""
+    try:
+        username = data.get('username')
+        job_id = data.get('job_id')
+        body = (data.get('body') or data.get('message') or '').strip()
+        message_type = (data.get('message_type') or 'user').strip().lower()
+        payload = data.get('payload') if isinstance(data.get('payload'), dict) else {}
+        client_message_id = data.get('client_message_id')
+
+        if message_type == 'system':
+            return {"error": "Clients cannot send system messages"}, 400
+        if message_type not in ('user', 'agent_structured', 'status'):
+            return {"error": "message_type must be user, agent_structured, or status"}, 400
+        if not body:
+            return {"error": "body required"}, 400
+        if len(body) > _CHANNEL_BODY_MAX:
+            return {"error": f"body max {_CHANNEL_BODY_MAX} characters"}, 400
+        try:
+            payload_bytes = len(json.dumps(payload).encode())
+        except (TypeError, ValueError):
+            return {"error": "payload must be JSON-serializable object"}, 400
+        if payload_bytes > _CHANNEL_PAYLOAD_MAX_BYTES:
+            return {"error": "payload exceeds 8KB"}, 400
+
+        job = get_job(job_id)
+        if not job:
+            return {"error": "Job not found"}, 404
+        ch = get_channel(job_id) or ensure_job_channel(job)
+        if not ch or not _user_in_channel(username, ch):
+            return {"error": "Not a channel member"}, 403
+        # refresh state
+        ch = ensure_job_channel(job) or ch
+        if ch.get('state') == 'read_only':
+            return {"error": "Channel is read-only (job completed or rejected)"}, 403
+
+        # Rate limits
+        if not _rate_limit_ok(f"channel:{username}", _CHANNEL_POST_LIMIT_PER_MIN):
+            return {"error": "Rate limit: channel posts max 30/min"}, 429
+        agent_id = None
+        robot_id = None
+        try:
+            import flask
+            actor = getattr(flask.g, 'actor', None) or {}
+            if actor.get('is_agent'):
+                agent_id = actor.get('agent_id')
+                robot_id = actor.get('robot_id')
+                if message_type == 'agent_structured':
+                    if not _rate_limit_ok(f"agent_struct:{agent_id}", _AGENT_STRUCTURED_LIMIT_PER_MIN):
+                        return {"error": "Rate limit: agent_structured max 10/min"}, 429
+        except Exception:
+            pass
+
+        if client_message_id:
+            existing = find_channel_message_by_client_id(job_id, username, str(client_message_id))
+            if existing:
+                return existing, 200
+
+        message_id = str(uuid.uuid4())
+        now = int(time.time())
+        msg = {
+            'message_id': message_id,
+            'job_id': job_id,
+            'channel_type': 'job',
+            'message_type': message_type,
+            'sender': username,
+            'agent_id': agent_id,
+            'robot_id': robot_id,
+            'body': body,
+            'payload': payload,
+            'sent_at': now,
+            'client_message_id': str(client_message_id) if client_message_id else None,
+        }
+        if not save_channel_message(job_id, message_id, msg):
+            return {"error": "Failed to save message"}, 500
+        ch['message_count'] = int(ch.get('message_count') or 0) + 1
+        ch['updated_at'] = now
+        ch['last_message_at'] = now
+        save_channel(job_id, ch)
+
+        _emit('message.posted', username=username, job_id=job_id,
+              actor=public_actor(username, agent={'agent_id': agent_id, 'robot_id': robot_id} if agent_id else None),
+              payload={'message_type': message_type, 'message_id': message_id},
+              idempotency_key=f"msg:{job_id}:{message_id}")
+
+        return msg, 201
+    except Exception as e:
+        logger.error(f"Post channel message error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_job_channel_messages(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """List/paginate job channel messages (since_ts + after_id + limit)."""
+    try:
+        username = data.get('username')
+        job_id = data.get('job_id')
+        after_id = data.get('after_id')
+        try:
+            limit = min(int(data.get('limit') or 50), 100)
+        except (TypeError, ValueError):
+            return {"error": "limit must be integer"}, 400
+
+        job = get_job(job_id)
+        if not job:
+            return {"error": "Job not found"}, 404
+        ch = get_channel(job_id) or ensure_job_channel(job)
+        if not ch or not _user_in_channel(username, ch):
+            return {"error": "Not a channel member"}, 403
+
+        all_msgs = list_channel_messages(job_id)
+        since_raw = data.get('since_ts')
+        if since_raw is not None and since_raw != '':
+            try:
+                since_ts = int(since_raw)
+            except (TypeError, ValueError):
+                return {"error": "since_ts must be integer"}, 400
+            filtered = []
+            for m in all_msgs:
+                ts = m.get('sent_at', 0)
+                mid = m.get('message_id') or ''
+                if ts > since_ts:
+                    filtered.append(m)
+                elif ts == since_ts:
+                    if after_id:
+                        if mid > after_id:
+                            filtered.append(m)
+                    else:
+                        filtered.append(m)
+            all_msgs = filtered
+
+        page = all_msgs[:limit]
+        has_more = len(all_msgs) > limit
+        next_since_ts = page[-1]['sent_at'] if page and has_more else None
+        next_after_id = page[-1]['message_id'] if page and has_more else None
+        my_read = (ch.get('read_cursors') or {}).get(username, 0)
+        return {
+            'job_id': job_id,
+            'messages': page,
+            'has_more': has_more,
+            'next_since_ts': next_since_ts,
+            'next_after_id': next_after_id,
+            'my_read_ts': my_read,
+        }, 200
+    except Exception as e:
+        logger.error(f"Get channel messages error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def mark_job_channel_read(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Cursor-based mark-as-read for a job channel."""
+    try:
+        username = data.get('username')
+        job_id = data.get('job_id')
+        last_read_ts = data.get('last_read_ts')
+        if last_read_ts is None:
+            return {"error": "last_read_ts required"}, 400
+        try:
+            last_read_ts = int(last_read_ts)
+        except (TypeError, ValueError):
+            return {"error": "last_read_ts must be integer"}, 400
+
+        job = get_job(job_id)
+        if not job:
+            return {"error": "Job not found"}, 404
+        ch = get_channel(job_id) or ensure_job_channel(job)
+        if not ch or not _user_in_channel(username, ch):
+            return {"error": "Not a channel member"}, 403
+        cursors = ch.setdefault('read_cursors', {})
+        prev = int(cursors.get(username) or 0)
+        cursors[username] = max(prev, last_read_ts)
+        ch['updated_at'] = int(time.time())
+        save_channel(job_id, ch)
+        return {'job_id': job_id, 'last_read_ts': cursors[username]}, 200
+    except Exception as e:
+        logger.error(f"Mark channel read error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def mark_chat_read(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Cursor-based mark-as-read for 1:1 DM conversations."""
+    try:
+        username = data.get('username')
+        peer = (data.get('conversation_id') or data.get('peer') or '').strip()
+        last_read_ts = data.get('last_read_ts')
+        if not peer:
+            return {"error": "conversation_id required"}, 400
+        if last_read_ts is None:
+            return {"error": "last_read_ts required"}, 400
+        try:
+            last_read_ts = int(last_read_ts)
+        except (TypeError, ValueError):
+            return {"error": "last_read_ts must be integer"}, 400
+        cursors = get_chat_cursors(username)
+        by_peer = cursors.setdefault('by_peer', {})
+        prev = int(by_peer.get(peer) or 0)
+        by_peer[peer] = max(prev, last_read_ts)
+        save_chat_cursors(username, cursors)
+        return {'conversation_id': peer, 'last_read_ts': by_peer[peer]}, 200
+    except Exception as e:
+        logger.error(f"Mark chat read error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
 # -----------------------------------------------------------------------------
 # Job Party (ad-hoc per-job coalitions — supply and demand sides)
 # -----------------------------------------------------------------------------
@@ -2397,6 +2810,23 @@ def invite_job_party(data):
               payload={'member_username': member_username, 'side': side, 'share': share},
               idempotency_key=f"party.invited:{job_id}:{side}:{member_username}")
 
+        # System note on channel for members; invitee gets a DM (pending invitees are not channel members)
+        ensure_job_channel(
+            job,
+            system_event='party.invited',
+            system_body=f"{username} invited {member_username} to the {side} party",
+            system_payload={'member_username': member_username, 'side': side, 'share': share},
+        )
+        try:
+            send_chat_message({
+                'username': username,
+                'recipient': member_username,
+                'message': f"You were invited to join job {job_id} as a {side} party member (share={share}). Respond via POST /jobs/{job_id}/party/respond.",
+                'job_id': job_id,
+            })
+        except Exception:
+            pass
+
         logger.info(f"Job party invite ({side}): {job_id} {username} -> {member_username} ({share})")
         return {
             "job_id": job_id,
@@ -2461,6 +2891,21 @@ def respond_job_party(data):
               actor=public_actor(username),
               payload={'side': side, 'share': invite.get('share')},
               idempotency_key=f"party.{invite['status']}:{job_id}:{username}")
+
+        if invite['status'] == 'accepted':
+            ensure_job_channel(
+                job,
+                system_event='party.accepted',
+                system_body=f"{username} joined the {side} party",
+                system_payload={'member_username': username, 'side': side, 'share': invite.get('share')},
+            )
+        else:
+            ensure_job_channel(
+                job,
+                system_event='party.declined',
+                system_body=f"{username} declined the {side} party invite",
+                system_payload={'member_username': username, 'side': side},
+            )
 
         return {"job_id": job_id, "status": invite['status'], "side": side}, 200
     except Exception as e:
@@ -2919,6 +3364,16 @@ def respond_campaign_commitment(campaign_id: str, commitment_id: str, data: Dict
             'provider_seat_token_id': (provider_data or {}).get('seat_token_id'),
         }
         save_job(job_id, job_record)
+        ensure_job_channel(
+            job_record,
+            system_event='campaign.commitment_accepted',
+            system_body=f"Campaign commitment accepted — job opened ({commitment['units']} units)",
+            system_payload={
+                'campaign_id': campaign_id,
+                'commitment_id': commitment_id,
+                'units': commitment['units'],
+            },
+        )
 
         commitment['status'] = 'accepted'
         commitment['responded_at'] = int(time.time())
@@ -3117,6 +3572,17 @@ def file_dispute(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         disputes = get_disputes()
         disputes.insert(0, dispute)
         save_disputes(disputes[:2000])
+
+        ensure_job_channel(
+            job,
+            system_event='dispute.filed',
+            system_body=f"Dispute filed by {username}: {reason[:200]}",
+            system_payload={'dispute_id': dispute['dispute_id'], 'filed_by': username},
+        )
+        _emit('dispute.filed', username=username, job_id=job_id,
+              actor=public_actor(username),
+              payload={'dispute_id': dispute['dispute_id']},
+              idempotency_key=f"dispute.filed:{dispute['dispute_id']}")
 
         logger.info(f"Dispute filed: {dispute['dispute_id']} on job {job_id} by {username}")
         return dispute, 201

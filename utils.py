@@ -109,6 +109,9 @@ AGENT_TOKENS_PREFIX = f"{S3_PREFIX}/agent_tokens"
 ACTIVITY_PREFIX = f"{S3_PREFIX}/activity"
 ACTIVITY_USER_INDEX_PREFIX = f"{S3_PREFIX}/activity_index/users"
 ACTIVITY_JOB_INDEX_PREFIX = f"{S3_PREFIX}/activity_index/jobs"
+CHANNELS_PREFIX = f"{S3_PREFIX}/channels"
+CHANNEL_MESSAGES_PREFIX = f"{S3_PREFIX}/channel_messages"
+CHAT_CURSORS_PREFIX = f"{S3_PREFIX}/chat_cursors"
 
 # -----------------------------------------------------------------------------
 # S3 Helper Functions
@@ -452,6 +455,65 @@ def get_user_messages(username: str) -> List[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Error loading messages: {e}")
     return messages
+
+# -----------------------------------------------------------------------------
+# Job channels
+# -----------------------------------------------------------------------------
+
+def save_channel(job_id: str, data: Dict[str, Any]) -> bool:
+    key = f"{CHANNELS_PREFIX}/{job_id}.json"
+    return _s3_put(key, data)
+
+def get_channel(job_id: str) -> Optional[Dict[str, Any]]:
+    key = f"{CHANNELS_PREFIX}/{job_id}.json"
+    return _s3_get(key)
+
+def save_channel_message(job_id: str, message_id: str, data: Dict[str, Any]) -> bool:
+    key = f"{CHANNEL_MESSAGES_PREFIX}/{job_id}/{message_id}.json"
+    return _s3_put(key, data)
+
+def get_channel_message(job_id: str, message_id: str) -> Optional[Dict[str, Any]]:
+    key = f"{CHANNEL_MESSAGES_PREFIX}/{job_id}/{message_id}.json"
+    return _s3_get(key)
+
+def list_channel_messages(job_id: str) -> List[Dict[str, Any]]:
+    """Load all messages for a job channel (caller paginates/filters)."""
+    messages = []
+    prefix = f"{CHANNEL_MESSAGES_PREFIX}/{job_id}/"
+    try:
+        for key in _s3_list(prefix):
+            if key.endswith('.json'):
+                msg = _s3_get(key)
+                if msg:
+                    messages.append(msg)
+    except Exception as e:
+        logger.error(f"Error listing channel messages for {job_id}: {e}")
+    messages.sort(key=lambda m: (m.get('sent_at', 0), m.get('message_id', '')))
+    return messages
+
+def find_channel_message_by_client_id(job_id: str, sender: str, client_message_id: str) -> Optional[Dict[str, Any]]:
+    if not client_message_id:
+        return None
+    for msg in list_channel_messages(job_id):
+        if msg.get('sender') == sender and msg.get('client_message_id') == client_message_id:
+            return msg
+    return None
+
+# -----------------------------------------------------------------------------
+# Chat read cursors (DM mark-as-read; not dual-write mutation)
+# -----------------------------------------------------------------------------
+
+def get_chat_cursors(username: str) -> Dict[str, Any]:
+    key = f"{CHAT_CURSORS_PREFIX}/{username}.json"
+    data = _s3_get(key)
+    if not data:
+        return {'by_peer': {}}
+    data.setdefault('by_peer', {})
+    return data
+
+def save_chat_cursors(username: str, data: Dict[str, Any]) -> bool:
+    key = f"{CHAT_CURSORS_PREFIX}/{username}.json"
+    return _s3_put(key, data)
 
 # -----------------------------------------------------------------------------
 # Bulletin Management

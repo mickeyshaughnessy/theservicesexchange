@@ -82,6 +82,11 @@ from handlers import (
     revoke_agent,
     rotate_agent,
     AGENT_ROUTE_SCOPES,
+    get_job_channel,
+    post_job_channel_message,
+    get_job_channel_messages,
+    mark_job_channel_read,
+    mark_chat_read,
 )
 from utils import get_token_username, get_agent_token_record
 
@@ -509,6 +514,56 @@ def handle_file_dispute(current_user, job_id):
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
+# Job channels (Stage B)
+# -----------------------------------------------------------------------------
+
+@app.route('/jobs/<job_id>/channel', methods=['GET'])
+@token_required
+def handle_get_job_channel(current_user, job_id):
+    response, status = get_job_channel({'username': current_user, 'job_id': job_id})
+    return flask.jsonify(response), status
+
+@app.route('/jobs/<job_id>/messages', methods=['GET'])
+@token_required
+def handle_get_job_channel_messages(current_user, job_id):
+    data = {
+        'username': current_user,
+        'job_id': job_id,
+        'since_ts': flask.request.args.get('since_ts'),
+        'after_id': flask.request.args.get('after_id'),
+        'limit': flask.request.args.get('limit', 50),
+    }
+    response, status = get_job_channel_messages(data)
+    return flask.jsonify(response), status
+
+@app.route('/jobs/<job_id>/messages', methods=['POST'])
+@token_required
+@limiter.limit(_CHAT_LIMIT)
+def handle_post_job_channel_message(current_user, job_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['job_id'] = job_id
+    response, status = post_job_channel_message(data)
+    return flask.jsonify(response), status
+
+@app.route('/jobs/<job_id>/messages/read', methods=['POST'])
+@token_required
+def handle_mark_job_channel_read(current_user, job_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['job_id'] = job_id
+    response, status = mark_job_channel_read(data)
+    return flask.jsonify(response), status
+
+@app.route('/chat/read', methods=['POST'])
+@token_required
+def handle_mark_chat_read(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = mark_chat_read(data)
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
 # Campaign Endpoints (multi-unit demand-side initiatives)
 # -----------------------------------------------------------------------------
 
@@ -643,7 +698,10 @@ def chat(current_user):
 @token_required
 @limiter.limit(_CHAT_LIMIT)
 def chat_conversations(current_user):
-    data = {'username': current_user}
+    data = {
+        'username': current_user,
+        'job_id': flask.request.args.get('job_id'),
+    }
     response, status = get_conversations(data)
     return flask.jsonify(response), status
 

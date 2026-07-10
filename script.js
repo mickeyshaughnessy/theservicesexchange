@@ -569,6 +569,7 @@ function updateActiveJobsDisplay() {
             ${job.location_type !== 'remote' ? `<small class="text-muted">Location: ${escapeHtml(job.address || 'Physical service')}</small>` : '<small class="text-muted">Remote service</small>'}
             ${partyBadgesHtml(job.party)}
             <div class="mt-1 d-flex gap-2 flex-wrap">
+                <button class="btn btn-sm btn-outline-light" onclick="openJobChannel('${job.job_id}')">💬 Job chat</button>
                 ${job.role === 'provider' ? `<button class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}', 'supply')">+ Invite co-provider</button>` : ''}
                 ${job.role === 'buyer' ? `<button class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}', 'demand')">+ Invite co-buyer</button>` : ''}
                 ${(job.role === 'provider' || job.role === 'buyer') ? `<button class="btn btn-sm btn-link text-danger p-0" onclick="fileJobDispute('${job.job_id}')">File dispute</button>` : ''}
@@ -1593,6 +1594,84 @@ window.cancelBid = cancelBid;
 window.inviteToJobParty = inviteToJobParty;
 window.respondToPartyInvite = respondToPartyInvite;
 window.fileJobDispute = fileJobDispute;
+window.openJobChannel = openJobChannel;
+window.postJobChannelMessage = postJobChannelMessage;
+
+async function openJobChannel(jobId) {
+    if (!AppState.authToken) {
+        showAuth();
+        return;
+    }
+    try {
+        const metaRes = await fetch(`${API_URL}/jobs/${jobId}/channel`, {
+            headers: { 'Authorization': `Bearer ${AppState.authToken}` }
+        });
+        const meta = await metaRes.json().catch(() => ({}));
+        if (!metaRes.ok) {
+            showToast(meta.error || 'Cannot open job channel', 'error');
+            return;
+        }
+        const msgRes = await fetch(`${API_URL}/jobs/${jobId}/messages?limit=50`, {
+            headers: { 'Authorization': `Bearer ${AppState.authToken}` }
+        });
+        const data = await msgRes.json().catch(() => ({}));
+        if (!msgRes.ok) {
+            showToast(data.error || 'Failed to load messages', 'error');
+            return;
+        }
+        const lines = (data.messages || []).map(m => {
+            const who = m.sender === 'system' ? '[system]' : m.sender;
+            const t = m.message_type && m.message_type !== 'user' ? ` (${m.message_type})` : '';
+            return `${who}${t}: ${m.body}`;
+        });
+        const text = lines.length ? lines.join('\n') : '(no messages yet)';
+        const reply = prompt(
+            `Job channel (${meta.state || 'active'}) members: ${(meta.members || []).join(', ')}\n\n${text}\n\nType a reply (Cancel to close):`
+        );
+        if (reply && reply.trim()) {
+            await postJobChannelMessage(jobId, reply.trim());
+        }
+        // mark read
+        const lastTs = (data.messages || []).slice(-1)[0]?.sent_at || Math.floor(Date.now() / 1000);
+        await fetch(`${API_URL}/jobs/${jobId}/messages/read`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${AppState.authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ last_read_ts: lastTs })
+        }).catch(() => {});
+    } catch (e) {
+        showToast('Network error opening job channel', 'error');
+    }
+}
+
+async function postJobChannelMessage(jobId, body, messageType = 'user', payload = null) {
+    try {
+        const res = await fetch(`${API_URL}/jobs/${jobId}/messages`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${AppState.authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                body,
+                message_type: messageType,
+                payload: payload || undefined
+            })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            showToast('Message sent to job channel', 'success');
+            return data;
+        }
+        showToast(data.error || 'Failed to send', 'error');
+        return null;
+    } catch (e) {
+        showToast('Network error posting to channel', 'error');
+        return null;
+    }
+}
 window.selectConversation = selectConversation;
 window.showNewMessageForm = showNewMessageForm;
 window.hideNewMessageForm = hideNewMessageForm;
