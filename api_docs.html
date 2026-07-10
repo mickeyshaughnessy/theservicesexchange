@@ -79,19 +79,42 @@
         #swagger-ui .swagger-ui .dialog-ux .modal-ux { background: var(--bg-panel); border: 1px solid rgba(0,255,255,0.4); }
         #swagger-ui .swagger-ui .dialog-ux .modal-ux-header { border-bottom: 1px solid rgba(0,255,255,0.25); }
         #swagger-ui .swagger-ui .markdown p, #swagger-ui .swagger-ui .markdown li { color: var(--text); }
-        #swagger-ui .swagger-ui .markdown code, #swagger-ui .swagger-ui .renderedMarkdown code { color: var(--accent); }
-        /* Filter/search fuzzy matches — bright yellow, readable on dark theme */
+        /* Inline code (`like this`) + filter marks — bright yellow, black text (readable on dark theme) */
+        #swagger-ui .swagger-ui .markdown code,
+        #swagger-ui .swagger-ui .renderedMarkdown code,
+        #swagger-ui .swagger-ui .info code,
+        #swagger-ui .swagger-ui .opblock-description-wrapper code,
+        #swagger-ui .swagger-ui .opblock-tag small code,
         #swagger-ui .swagger-ui mark,
         #swagger-ui .swagger-ui .opblock-tag mark,
         #swagger-ui .swagger-ui .opblock-summary-description mark,
         #swagger-ui .swagger-ui .opblock-summary-path mark,
         #swagger-ui .swagger-ui .markdown mark,
-        #swagger-ui .swagger-ui .renderedMarkdown mark {
+        #swagger-ui .swagger-ui .renderedMarkdown mark,
+        #swagger-ui .swagger-ui .info mark {
             background-color: #ffff00 !important;
             color: #000000 !important;
             text-shadow: none !important;
-            padding: 0 0.15em;
+            font-weight: 600;
+            padding: 0 0.2em;
             border-radius: 2px;
+        }
+        /* Multi-line code blocks: keep readable yellow text on dark panel, not full yellow wash */
+        #swagger-ui .swagger-ui .markdown pre code,
+        #swagger-ui .swagger-ui .renderedMarkdown pre code,
+        #swagger-ui .swagger-ui .info pre code {
+            background-color: transparent !important;
+            color: #ffff00 !important;
+            display: block;
+            padding: 0.5em 0;
+            font-weight: normal;
+        }
+        #swagger-ui .swagger-ui .markdown pre,
+        #swagger-ui .swagger-ui .renderedMarkdown pre,
+        #swagger-ui .swagger-ui .info pre {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 0, 0.35);
+            padding: 0.75em 1em;
         }
         .docs-links-strip {
             background: var(--bg-dark);
