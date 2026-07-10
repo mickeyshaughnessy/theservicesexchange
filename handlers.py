@@ -3353,7 +3353,7 @@ def commit_to_campaign(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         if not user_data or user_data.get('user_type') != 'supply':
             return {"error": "Only supply-type accounts can commit to campaigns"}, 403
 
-        campaign = get_campaign(campaign_id)
+        campaign = get_campaign(campaign_id, force_refresh=True)
         if not campaign:
             return {"error": "Campaign not found"}, 404
         if campaign['owner_username'] == username:
@@ -3392,7 +3392,7 @@ def respond_campaign_commitment(campaign_id: str, commitment_id: str, data: Dict
         if action not in ('accept', 'reject'):
             return {"error": "action must be 'accept' or 'reject'"}, 400
 
-        campaign = get_campaign(campaign_id)
+        campaign = get_campaign(campaign_id, force_refresh=True)
         if not campaign:
             return {"error": "Campaign not found"}, 404
         if campaign['owner_username'] != username:
@@ -3907,7 +3907,7 @@ def invite_campaign_sponsor(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             return {"error": "campaign_id and member_username required"}, 400
         if member_username == username:
             return {"error": "Cannot invite yourself"}, 400
-        campaign = get_campaign(campaign_id)
+        campaign = get_campaign(campaign_id, force_refresh=True)
         if not campaign:
             return {"error": "Campaign not found"}, 404
         if campaign.get('owner_username') != username:
@@ -3958,7 +3958,7 @@ def respond_campaign_sponsor(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]
         action = (data.get('action') or '').strip().lower()
         if action not in ('accept', 'decline'):
             return {"error": "action must be accept or decline"}, 400
-        campaign = get_campaign(campaign_id)
+        campaign = get_campaign(campaign_id, force_refresh=True)
         if not campaign:
             return {"error": "Campaign not found"}, 404
         sponsors = campaign.setdefault('sponsors', [])
@@ -3985,7 +3985,7 @@ def get_campaign_sponsors(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     """List sponsors for a campaign (public on open campaigns; owner always)."""
     try:
         campaign_id = data.get('campaign_id')
-        campaign = get_campaign(campaign_id)
+        campaign = get_campaign(campaign_id, force_refresh=True)
         if not campaign:
             return {"error": "Campaign not found"}, 404
         return {

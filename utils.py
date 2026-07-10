@@ -42,6 +42,9 @@ def _cache_ttl_for(key: str) -> float:
         return _TTL_BIDS
     if '/jobs/' in key:
         return _TTL_JOBS
+    # Campaigns mutate often (sponsors, commitments) under multi-worker.
+    if '/campaigns/' in key:
+        return _TTL_JOBS
     return _TTL_STATS
 
 
@@ -742,9 +745,14 @@ def save_campaign(campaign_id: str, data: Dict[str, Any]) -> None:
     if not _s3_put(key, data):
         logger.error(f"Failed to save campaign {campaign_id}")
 
-def get_campaign(campaign_id: str) -> Optional[Dict[str, Any]]:
-    """Retrieve campaign data from S3."""
+def get_campaign(campaign_id: str, force_refresh: bool = False) -> Optional[Dict[str, Any]]:
+    """Retrieve campaign data from S3.
+
+    force_refresh=True for sponsor/commitment read-modify-write under multi-worker.
+    """
     key = f"{CAMPAIGNS_PREFIX}/{campaign_id}.json"
+    if force_refresh:
+        _cache_delete(key)
     return _s3_get(key)
 
 def get_all_campaigns() -> List[Dict[str, Any]]:
