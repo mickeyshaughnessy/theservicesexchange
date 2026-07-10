@@ -80,6 +80,19 @@
         #swagger-ui .swagger-ui .dialog-ux .modal-ux-header { border-bottom: 1px solid rgba(0,255,255,0.25); }
         #swagger-ui .swagger-ui .markdown p, #swagger-ui .swagger-ui .markdown li { color: var(--text); }
         #swagger-ui .swagger-ui .markdown code, #swagger-ui .swagger-ui .renderedMarkdown code { color: var(--accent); }
+        /* Filter/search fuzzy matches — bright yellow, readable on dark theme */
+        #swagger-ui .swagger-ui mark,
+        #swagger-ui .swagger-ui .opblock-tag mark,
+        #swagger-ui .swagger-ui .opblock-summary-description mark,
+        #swagger-ui .swagger-ui .opblock-summary-path mark,
+        #swagger-ui .swagger-ui .markdown mark,
+        #swagger-ui .swagger-ui .renderedMarkdown mark {
+            background-color: #ffff00 !important;
+            color: #000000 !important;
+            text-shadow: none !important;
+            padding: 0 0.15em;
+            border-radius: 2px;
+        }
         .docs-links-strip {
             background: var(--bg-dark);
             border-bottom: 1px solid rgba(0,255,255,0.2);
