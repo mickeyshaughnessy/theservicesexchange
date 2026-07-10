@@ -87,6 +87,12 @@ from handlers import (
     get_job_channel_messages,
     mark_job_channel_read,
     mark_chat_read,
+    get_activity_me,
+    get_activity_for_job,
+    get_portfolio,
+    get_portfolio_by_seat,
+    export_history,
+    export_job_proof,
 )
 from utils import get_token_username, get_agent_token_record
 
@@ -561,6 +567,60 @@ def handle_mark_chat_read(current_user):
     data = flask.request.get_json() or {}
     data['username'] = current_user
     response, status = mark_chat_read(data)
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# Activity, portfolio, export (Stage C)
+# -----------------------------------------------------------------------------
+
+@app.route('/activity/me', methods=['GET'])
+@token_required
+def handle_activity_me(current_user):
+    data = {
+        'username': current_user,
+        'limit': flask.request.args.get('limit', 50),
+        'since': flask.request.args.get('since'),
+    }
+    response, status = get_activity_me(data)
+    return flask.jsonify(response), status
+
+@app.route('/activity/jobs/<job_id>', methods=['GET'])
+@token_required
+def handle_activity_job(current_user, job_id):
+    data = {
+        'username': current_user,
+        'job_id': job_id,
+        'limit': flask.request.args.get('limit', 50),
+    }
+    response, status = get_activity_for_job(data)
+    return flask.jsonify(response), status
+
+@app.route('/portfolio/<username>', methods=['GET'])
+def handle_portfolio(username):
+    """Public portfolio by username."""
+    viewer = None
+    auth = flask.request.headers.get('Authorization') or ''
+    if auth.lower().startswith('bearer '):
+        # optional auth — not required
+        pass
+    response, status = get_portfolio({'target_username': username, 'viewer': viewer})
+    return flask.jsonify(response), status
+
+@app.route('/portfolio/seat/<int:token_id>', methods=['GET'])
+def handle_portfolio_seat(token_id):
+    response, status = get_portfolio_by_seat({'token_id': token_id})
+    return flask.jsonify(response), status
+
+@app.route('/export/history', methods=['GET'])
+@token_required
+def handle_export_history(current_user):
+    response, status = export_history({'username': current_user})
+    return flask.jsonify(response), status
+
+@app.route('/export/proof/<job_id>', methods=['GET'])
+@token_required
+def handle_export_proof(current_user, job_id):
+    response, status = export_job_proof({'username': current_user, 'job_id': job_id})
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------

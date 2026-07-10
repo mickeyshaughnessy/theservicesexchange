@@ -126,6 +126,11 @@ AGENT_ROUTE_SCOPES = {
     'POST /jobs/*/messages': {'chat:write'},
     'POST /jobs/*/messages/read': {'chat:read', 'chat:write', 'history:read'},
     'GET /agents': {'history:read'},
+    'GET /activity/me': {'history:read'},
+    'GET /activity/jobs/*': {'history:read'},
+    'GET /export/history': {'history:read'},
+    'GET /export/proof/*': {'history:read'},
+    'GET /portfolio/*': {'history:read'},
     'GET /campaigns': {'history:read'},
     'GET /campaigns/*': {'history:read'},
     'POST /campaigns/*/commit': {'jobs:grab', 'jobs:write'},
@@ -456,6 +461,10 @@ def register_user(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         }
         
         save_account(username, user_data)
+        _emit('account.registered', username=username,
+              actor={'username': username, 'user_type': user_type, 'public_id': username, 'handle': username},
+              payload={'user_type': user_type},
+              idempotency_key=f"account.registered:{username}")
         logger.info(f"User registered: {username} (type: {user_type})")
         
         return {"message": "Registration successful"}, 201
@@ -3533,6 +3542,266 @@ def get_leaderboard() -> Tuple[Dict[str, Any], int]:
     except Exception as e:
         logger.error(f"Get leaderboard error: {str(e)}")
         return {"error": "Internal server error"}, 500
+
+
+
+# -----------------------------------------------------------------------------
+# Stage C — Activity read, portfolio, export, proofs
+# -----------------------------------------------------------------------------
+
+def get_activity_me(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Authenticated activity feed for the caller (best-effort index)."""
+    try:
+        from utils import _s3_list, _s3_get, ACTIVITY_USER_INDEX_PREFIX, ACTIVITY_PREFIX
+        username = data.get('username')
+        limit = min(int(data.get('limit') or 50), 100)
+        since = data.get('since')
+        prefix = f"{ACTIVITY_USER_INDEX_PREFIX}/{username}/"
+        keys = sorted(_s3_list(prefix), reverse=True)[: limit * 2]
+        events = []
+        for key in keys:
+            if not key.endswith('.json'):
+                continue
+            idx = _s3_get(key)
+            if not idx:
+                continue
+            path = idx.get('path')
+            ev = _s3_get(path) if path else None
+            if not ev:
+                continue
+            if since and int(ev.get('created_at') or 0) < int(since):
+                continue
+            events.append(ev)
+            if len(events) >= limit:
+                break
+        return {'events': events, 'count': len(events)}, 200
+    except Exception as e:
+        logger.error(f"get_activity_me error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_activity_for_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Activity events for a job — participants only."""
+    try:
+        from utils import _s3_list, _s3_get, ACTIVITY_JOB_INDEX_PREFIX
+        username = data.get('username')
+        job_id = data.get('job_id')
+        job = get_job(job_id)
+        if not job:
+            return {"error": "Job not found"}, 404
+        if not user_is_job_participant(username, job):
+            return {"error": "Not authorized"}, 403
+        limit = min(int(data.get('limit') or 50), 100)
+        prefix = f"{ACTIVITY_JOB_INDEX_PREFIX}/{job_id}/"
+        keys = sorted(_s3_list(prefix), reverse=True)[:limit * 2]
+        events = []
+        for key in keys:
+            if not key.endswith('.json'):
+                continue
+            idx = _s3_get(key)
+            if not idx:
+                continue
+            path = idx.get('path')
+            ev = _s3_get(path) if path else None
+            if ev:
+                events.append(ev)
+            if len(events) >= limit:
+                break
+        return {'job_id': job_id, 'events': events}, 200
+    except Exception as e:
+        logger.error(f"get_activity_for_job error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def _public_completion_cards(username: str, limit: int = 20) -> List[Dict[str, Any]]:
+    jobs = get_user_jobs(username)
+    cards = []
+    for job in jobs:
+        if job.get('status') != 'completed':
+            continue
+        if username == job.get('buyer_username'):
+            counter = job.get('provider_username')
+            role = 'buyer'
+        elif username == job.get('provider_username'):
+            counter = job.get('buyer_username')
+            role = 'provider'
+        else:
+            continue
+        counter_actor = public_actor(counter) if counter else {}
+        cards.append({
+            'job_id': job.get('job_id'),
+            'service': job.get('service'),
+            'price': job.get('price'),
+            'currency': job.get('currency', 'USD'),
+            'completed_at': job.get('completed_at'),
+            'role': role,
+            'counterparty_public_id': counter_actor.get('public_id'),
+            'counterparty_username': counter,
+            'supply_party_size': len([p for p in (job.get('party') or []) if p.get('status') == 'accepted']),
+            'demand_party_size': len([p for p in (job.get('demand_party') or []) if p.get('status') == 'accepted']),
+            'rating_received': job.get('provider_rating') if role == 'provider' else job.get('buyer_rating'),
+        })
+    cards.sort(key=lambda c: c.get('completed_at') or 0, reverse=True)
+    return cards[:limit]
+
+
+def get_portfolio(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Public portfolio by username (or authenticated self)."""
+    try:
+        if not getattr(config, 'PUBLIC_PORTFOLIO_ENABLED', True):
+            # Still allow authenticated owner to view own portfolio when flag false
+            pass
+        target = (data.get('target_username') or data.get('username') or '').strip()
+        viewer = data.get('viewer')
+        if not target:
+            return {"error": "username required"}, 400
+        acc = get_account(target)
+        if not acc:
+            return {"error": "User not found"}, 404
+        identity = public_actor(target)
+        breakdown = _reputation_breakdown(target)
+        cards = _public_completion_cards(target)
+        endo = get_endorsements(target) or {}
+        # endorsements structure varies - normalize lightly
+        skills = []
+        if isinstance(endo, dict):
+            skills = endo.get('skills') or endo.get('top_skills') or []
+        resp = {
+            'username': target,
+            'identity': identity,
+            'user_type': acc.get('user_type'),
+            'reputation_score': round(calculate_reputation_score(acc), 2),
+            'total_ratings': acc.get('total_ratings', 0),
+            'completed_jobs': acc.get('completed_jobs', 0),
+            'reputation_breakdown': breakdown,
+            'completions': cards,
+            'endorsements_summary': skills[:10] if isinstance(skills, list) else [],
+            'display_name': acc.get('display_name'),
+            'about': acc.get('about'),
+            'location': acc.get('location'),
+            'profile_slug': acc.get('profile_slug'),
+        }
+        if identity.get('seat_token_id') is not None and identity.get('public_id', '').startswith('seat:'):
+            resp['canonical_portfolio'] = f"/portfolio/seat/{identity['seat_token_id']}"
+        return resp, 200
+    except Exception as e:
+        logger.error(f"get_portfolio error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_portfolio_by_seat(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Public portfolio by seat token id."""
+    try:
+        token_id = data.get('token_id')
+        try:
+            token_id = int(token_id)
+        except (TypeError, ValueError):
+            return {"error": "token_id must be integer"}, 400
+        # Scan accounts for matching seat_token_id (acceptable for Stage C scale)
+        owner = None
+        for uname, acc in get_all_accounts():
+            if acc.get('seat_token_id') == token_id:
+                owner = uname
+                break
+        if not owner:
+            return {"error": "Seat portfolio not found"}, 404
+        resp, status = get_portfolio({'target_username': owner})
+        if status == 200:
+            resp['seat_token_id'] = token_id
+            resp['canonical'] = True
+        return resp, status
+    except Exception as e:
+        logger.error(f"get_portfolio_by_seat error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def export_history(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Authenticated private history export (bids + jobs + activity sample)."""
+    try:
+        username = data.get('username')
+        bids = get_user_bids(username)
+        jobs = get_user_jobs(username)
+        act, _ = get_activity_me({'username': username, 'limit': 100})
+        export = {
+            'exported_at': int(time.time()),
+            'username': username,
+            'identity': public_actor(username),
+            'bids': bids,
+            'jobs': jobs,
+            'activity': (act or {}).get('events', []),
+            'schema_version': 1,
+        }
+        return export, 200
+    except Exception as e:
+        logger.error(f"export_history error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def export_job_proof(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Participant-only completion/participation proof for a job."""
+    try:
+        import hashlib as _hashlib
+        username = data.get('username')
+        job_id = data.get('job_id')
+        job = get_job(job_id)
+        if not job:
+            return {"error": "Job not found"}, 404
+        if not user_is_job_participant(username, job):
+            return {"error": "Not authorized"}, 403
+
+        def _member_cards(members, side):
+            out = []
+            for m in members or []:
+                if m.get('status') != 'accepted':
+                    continue
+                actor = public_actor(m['member_username'])
+                out.append({
+                    'username': m['member_username'],
+                    'public_id': actor.get('public_id'),
+                    'share': m.get('share'),
+                    'side': side,
+                })
+            return out
+
+        body = {
+            'job_id': job_id,
+            'status': job.get('status'),
+            'service': job.get('service'),
+            'price': job.get('price'),
+            'currency': job.get('currency', 'USD'),
+            'buyer': public_actor(job.get('buyer_username') or ''),
+            'provider': public_actor(job.get('provider_username') or ''),
+            'provider_seat_token_id': job.get('provider_seat_token_id'),
+            'accepted_at': job.get('accepted_at'),
+            'completed_at': job.get('completed_at'),
+            'ratings': {
+                'buyer': job.get('buyer_rating'),
+                'provider': job.get('provider_rating'),
+            },
+            'supply_party': _member_cards(job.get('party') or job.get('supply_party'), 'supply'),
+            'demand_party': _member_cards(job.get('demand_party'), 'demand'),
+            'campaign_id': job.get('campaign_id'),
+            'schema_version': 1,
+            'issued_at': int(time.time()),
+            'issued_to': username,
+        }
+        canonical = json.dumps(body, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
+        content_hash = _hashlib.sha256(canonical.encode()).hexdigest()
+        body['integrity'] = {
+            'schema_version': 1,
+            'content_hash': f'sha256:{content_hash}',
+        }
+        # Optional HMAC if configured
+        key = getattr(config, 'RSE_PROOF_SIGNING_KEY', None) or ''
+        if key:
+            import hmac as _hmac
+            sig = _hmac.new(key.encode(), content_hash.encode(), _hashlib.sha256).hexdigest()
+            body['integrity']['hmac_sha256'] = sig
+        return body, 200
+    except Exception as e:
+        logger.error(f"export_job_proof error: {e}")
+        return {"error": "Internal server error"}, 500
+
 
 # -----------------------------------------------------------------------------
 # Disputes (flagged jobs, admin review queue)

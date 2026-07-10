@@ -1664,6 +1664,99 @@ section[style*="background:#f"],
 }
 
 /* =====================
+   JOB CHANNEL MODAL
+   ===================== */
+.job-channel-feed {
+    height: 360px;
+    overflow-y: auto;
+    background: var(--bg-deep);
+    border: 1px solid rgba(0,255,255,0.2);
+    padding: 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+}
+
+.job-channel-msg {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-left: 2px solid rgba(0,255,255,0.3);
+    background: rgba(0,255,255,0.04);
+}
+
+.job-channel-msg.system {
+    border-left-color: var(--yellow);
+    color: var(--yellow);
+    background: rgba(255,255,0,0.04);
+}
+
+.job-channel-msg.mine {
+    border-left-color: var(--accent);
+    background: rgba(57,255,20,0.05);
+}
+
+.job-channel-msg .jc-meta {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 0.25rem;
+}
+
+.job-channel-msg .jc-body {
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.identity-pill {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    margin-left: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.identity-pill.seat {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.portfolio-card {
+    background: var(--bg-panel);
+    border: 1px solid rgba(0,255,255,0.25);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.portfolio-card h6 {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.activity-row {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.82rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0,255,255,0.1);
+    color: var(--text);
+}
+
+.activity-row .act-type {
+    color: var(--primary);
+    margin-right: 0.5rem;
+}
+
+.activity-row .act-ts {
+    color: var(--text-dim);
+    font-size: 0.72rem;
+}
+
+/* =====================
    TOASTS
    ===================== */
 .toast-container-rse {

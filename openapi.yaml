@@ -1043,6 +1043,60 @@ paths:
         '400': { description: Commitment already responded to }
         '403': { description: Only the campaign owner can respond }
         '404': { description: Campaign or commitment not found }
+  /activity/me:
+    get:
+      tags: [Discovery]
+      summary: My activity events (authenticated)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 50 } }
+        - { name: since, in: query, schema: { type: integer } }
+      responses:
+        '200': { description: Recent activity events }
+  /activity/jobs/{job_id}:
+    get:
+      tags: [Discovery]
+      summary: Job activity (participants only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: job_id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Job activity events }
+        '403': { description: Not a participant }
+  /portfolio/{username}:
+    get:
+      tags: [Discovery]
+      summary: Public portfolio by username
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Public completions and identity }
+  /portfolio/seat/{token_id}:
+    get:
+      tags: [Discovery]
+      summary: Public portfolio by seat token id
+      parameters:
+        - { name: token_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: Canonical supply portfolio }
+  /export/history:
+    get:
+      tags: [Discovery]
+      summary: Private full history export (JSON)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Export bundle }
+  /export/proof/{job_id}:
+    get:
+      tags: [Discovery]
+      summary: Participant job proof with content hash
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: job_id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Proof document }
+        '403': { description: Not a participant }
+
   /agents:
     post:
       tags: [Auth]

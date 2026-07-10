@@ -449,8 +449,26 @@ function updateAccountDisplay() {
         ratingText: document.getElementById('ratingText')
     };
     
-    if (els.username) els.username.textContent = AppState.currentUser.username;
-    if (els.displayName) els.displayName.textContent = AppState.currentUser.username;
+    const u = AppState.currentUser;
+    const ident = u.identity || {};
+    const typeLabel = u.user_type || ident.user_type || '';
+    const publicId = ident.public_id || u.username;
+    if (els.username) els.username.textContent = u.username + (typeLabel ? ` (${typeLabel})` : '');
+    if (els.displayName) {
+        els.displayName.textContent = u.username;
+        let pill = document.getElementById('accountIdentityPill');
+        if (!pill && els.displayName.parentElement) {
+            pill = document.createElement('span');
+            pill.id = 'accountIdentityPill';
+            pill.className = 'identity-pill' + (String(publicId).startsWith('seat:') ? ' seat' : '');
+            els.displayName.parentElement.appendChild(pill);
+        }
+        if (pill) {
+            pill.textContent = publicId;
+            pill.className = 'identity-pill' + (String(publicId).startsWith('seat:') ? ' seat' : '');
+            pill.title = typeLabel ? `user_type=${typeLabel}` : 'identity';
+        }
+    }
     
     if (els.starDisplay && els.ratingText) {
         const stars = Math.round(AppState.currentUser.stars || 0);
@@ -632,38 +650,6 @@ function updateJobsDisplay() {
     container.innerHTML = completedHtml + partyCompletedHtml;
 }
 
-async function inviteToJobParty(jobId, side) {
-    // side: 'supply' (co-provider) or 'demand' (co-buyer). Default supply.
-    const partySide = (side === 'demand') ? 'demand' : 'supply';
-    const roleLabel = partySide === 'demand' ? 'co-buyer' : 'co-provider';
-    const memberUsername = prompt(`Username to invite as ${roleLabel} on this job:`);
-    if (!memberUsername) return;
-    const shareStr = prompt('Their attribution share (0-1, e.g. 0.4) — UX hint only:', '0.4');
-    const share = parseFloat(shareStr);
-    if (!share || share <= 0 || share >= 1) {
-        showToast('Share must be a number between 0 and 1.', 'error');
-        return;
-    }
-    try {
-        const response = await fetch(`${API_URL}/jobs/${jobId}/party/invite`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${AppState.authToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ member_username: memberUsername, share, side: partySide })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (response.ok) {
-            showToast(`Invited ${memberUsername} as ${roleLabel}.`, 'success');
-            loadCompletedJobs();
-        } else {
-            showToast(`Failed to invite: ${data.error || 'Unknown error'}`, 'error');
-        }
-    } catch (error) {
-        showToast('Network error while inviting party member', 'error');
-    }
-}
 
 async function respondToPartyInvite(jobId, action) {
     try {
@@ -1597,11 +1583,166 @@ window.fileJobDispute = fileJobDispute;
 window.openJobChannel = openJobChannel;
 window.postJobChannelMessage = postJobChannelMessage;
 
+
+AppState.jobChannel = { jobId: null, pollTimer: null, lastTs: 0, lastId: null, readOnly: false };
+
+function ensureCoopModals() {
+    if (document.getElementById('jobChannelModal')) return;
+    const html = `
+<div class="modal fade" id="jobChannelModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title">Job channel</h5>
+          <small class="text-muted" id="jobChannelMeta"></small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="job-channel-feed" id="jobChannelFeed"></div>
+        <form id="jobChannelForm" class="mt-3">
+          <div class="input-group">
+            <input type="text" class="form-control" id="jobChannelInput" placeholder="Message the job team…" maxlength="4000" autocomplete="off">
+            <button class="btn btn-primary" type="submit" id="jobChannelSendBtn">Send</button>
+          </div>
+          <small class="text-muted" id="jobChannelHint">Members only · poll every 8s</small>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="partyInviteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="partyInviteTitle">Invite to job party</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="partyInviteJobId">
+        <input type="hidden" id="partyInviteSide" value="supply">
+        <div class="mb-3">
+          <label class="form-label" for="partyInviteUsername">Username</label>
+          <input class="form-control" id="partyInviteUsername" required placeholder="co-worker username">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="partyInviteShare">Attribution share (0–1)</label>
+          <input type="number" class="form-control" id="partyInviteShare" min="0.01" max="0.95" step="0.01" value="0.4">
+          <small class="text-muted">UX hint only — demand co-buyers do not earn matching reputation</small>
+        </div>
+        <button class="btn btn-primary w-100" id="partyInviteSubmit">Send invite</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+    document.getElementById('jobChannelForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = document.getElementById('jobChannelInput');
+        const body = (input.value || '').trim();
+        if (!body || !AppState.jobChannel.jobId) return;
+        const sent = await postJobChannelMessage(AppState.jobChannel.jobId, body);
+        if (sent) {
+            input.value = '';
+            await refreshJobChannelMessages(true);
+        }
+    });
+    document.getElementById('partyInviteSubmit').addEventListener('click', async () => {
+        const jobId = document.getElementById('partyInviteJobId').value;
+        const side = document.getElementById('partyInviteSide').value || 'supply';
+        const memberUsername = document.getElementById('partyInviteUsername').value.trim();
+        const share = parseFloat(document.getElementById('partyInviteShare').value);
+        if (!memberUsername || !share || share <= 0 || share >= 1) {
+            showToast('Username and share (0–1 exclusive) required', 'error');
+            return;
+        }
+        try {
+            const response = await fetch(`${API_URL}/jobs/${jobId}/party/invite`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${AppState.authToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ member_username: memberUsername, share, side })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (response.ok) {
+                showToast(`Invited ${memberUsername}`, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('partyInviteModal'))?.hide();
+                loadCompletedJobs();
+            } else {
+                showToast(data.error || 'Invite failed', 'error');
+            }
+        } catch (err) {
+            showToast('Network error inviting party member', 'error');
+        }
+    });
+    document.getElementById('jobChannelModal').addEventListener('hidden.bs.modal', () => {
+        if (AppState.jobChannel.pollTimer) {
+            clearInterval(AppState.jobChannel.pollTimer);
+            AppState.jobChannel.pollTimer = null;
+        }
+    });
+}
+
+function renderJobChannelMessages(messages, append) {
+    const feed = document.getElementById('jobChannelFeed');
+    if (!feed) return;
+    if (!append) feed.innerHTML = '';
+    (messages || []).forEach(m => {
+        const div = document.createElement('div');
+        const mine = m.sender === AppState.currentUsername;
+        div.className = 'job-channel-msg' + (m.message_type === 'system' ? ' system' : mine ? ' mine' : '');
+        const when = m.sent_at ? new Date(m.sent_at * 1000).toLocaleString() : '';
+        const who = m.sender === 'system' ? 'system' : escapeHtml(m.sender || '');
+        const t = m.message_type && m.message_type !== 'user' ? ` · ${escapeHtml(m.message_type)}` : '';
+        div.innerHTML = `<div class="jc-meta">${who}${t} · ${when}</div><div class="jc-body">${escapeHtml(m.body || '')}</div>`;
+        feed.appendChild(div);
+    });
+    feed.scrollTop = feed.scrollHeight;
+}
+
+async function refreshJobChannelMessages(full) {
+    const jobId = AppState.jobChannel.jobId;
+    if (!jobId || !AppState.authToken) return;
+    let url = `${API_URL}/jobs/${jobId}/messages?limit=50`;
+    if (!full && AppState.jobChannel.lastTs) {
+        url += `&since_ts=${AppState.jobChannel.lastTs}`;
+        if (AppState.jobChannel.lastId) url += `&after_id=${encodeURIComponent(AppState.jobChannel.lastId)}`;
+    }
+    try {
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${AppState.authToken}` } });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return;
+        const msgs = data.messages || [];
+        if (full) renderJobChannelMessages(msgs, false);
+        else if (msgs.length) renderJobChannelMessages(msgs, true);
+        if (msgs.length) {
+            const last = msgs[msgs.length - 1];
+            AppState.jobChannel.lastTs = last.sent_at;
+            AppState.jobChannel.lastId = last.message_id;
+            fetch(`${API_URL}/jobs/${jobId}/messages/read`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${AppState.authToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ last_read_ts: last.sent_at })
+            }).catch(() => {});
+        }
+    } catch (e) { /* poll soft-fail */ }
+}
+
 async function openJobChannel(jobId) {
     if (!AppState.authToken) {
         showAuth();
         return;
     }
+    ensureCoopModals();
+    AppState.jobChannel.jobId = jobId;
+    AppState.jobChannel.lastTs = 0;
+    AppState.jobChannel.lastId = null;
     try {
         const metaRes = await fetch(`${API_URL}/jobs/${jobId}/channel`, {
             headers: { 'Authorization': `Bearer ${AppState.authToken}` }
@@ -1611,36 +1752,23 @@ async function openJobChannel(jobId) {
             showToast(meta.error || 'Cannot open job channel', 'error');
             return;
         }
-        const msgRes = await fetch(`${API_URL}/jobs/${jobId}/messages?limit=50`, {
-            headers: { 'Authorization': `Bearer ${AppState.authToken}` }
-        });
-        const data = await msgRes.json().catch(() => ({}));
-        if (!msgRes.ok) {
-            showToast(data.error || 'Failed to load messages', 'error');
-            return;
-        }
-        const lines = (data.messages || []).map(m => {
-            const who = m.sender === 'system' ? '[system]' : m.sender;
-            const t = m.message_type && m.message_type !== 'user' ? ` (${m.message_type})` : '';
-            return `${who}${t}: ${m.body}`;
-        });
-        const text = lines.length ? lines.join('\n') : '(no messages yet)';
-        const reply = prompt(
-            `Job channel (${meta.state || 'active'}) members: ${(meta.members || []).join(', ')}\n\n${text}\n\nType a reply (Cancel to close):`
-        );
-        if (reply && reply.trim()) {
-            await postJobChannelMessage(jobId, reply.trim());
-        }
-        // mark read
-        const lastTs = (data.messages || []).slice(-1)[0]?.sent_at || Math.floor(Date.now() / 1000);
-        await fetch(`${API_URL}/jobs/${jobId}/messages/read`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${AppState.authToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ last_read_ts: lastTs })
-        }).catch(() => {});
+        const metaEl = document.getElementById('jobChannelMeta');
+        const members = (meta.members || []).join(', ');
+        metaEl.textContent = `${meta.state || 'active'} · members: ${members} · ${jobId.slice(0, 8)}…`;
+        AppState.jobChannel.readOnly = meta.state === 'read_only';
+        const input = document.getElementById('jobChannelInput');
+        const sendBtn = document.getElementById('jobChannelSendBtn');
+        input.disabled = AppState.jobChannel.readOnly;
+        sendBtn.disabled = AppState.jobChannel.readOnly;
+        document.getElementById('jobChannelHint').textContent = AppState.jobChannel.readOnly
+            ? 'Channel is read-only (job completed or rejected)'
+            : 'Members only · polls every 8s';
+
+        await refreshJobChannelMessages(true);
+        const modal = new bootstrap.Modal(document.getElementById('jobChannelModal'));
+        modal.show();
+        if (AppState.jobChannel.pollTimer) clearInterval(AppState.jobChannel.pollTimer);
+        AppState.jobChannel.pollTimer = setInterval(() => refreshJobChannelMessages(false), 8000);
     } catch (e) {
         showToast('Network error opening job channel', 'error');
     }
@@ -1662,7 +1790,6 @@ async function postJobChannelMessage(jobId, body, messageType = 'user', payload 
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
-            showToast('Message sent to job channel', 'success');
             return data;
         }
         showToast(data.error || 'Failed to send', 'error');
@@ -1672,6 +1799,24 @@ async function postJobChannelMessage(jobId, body, messageType = 'user', payload 
         return null;
     }
 }
+
+async function inviteToJobParty(jobId, side) {
+    if (!AppState.authToken) {
+        showAuth();
+        return;
+    }
+    ensureCoopModals();
+    const partySide = (side === 'demand') ? 'demand' : 'supply';
+    document.getElementById('partyInviteJobId').value = jobId;
+    document.getElementById('partyInviteSide').value = partySide;
+    document.getElementById('partyInviteTitle').textContent =
+        partySide === 'demand' ? 'Invite co-buyer' : 'Invite co-provider';
+    document.getElementById('partyInviteUsername').value = '';
+    document.getElementById('partyInviteShare').value = '0.4';
+    new bootstrap.Modal(document.getElementById('partyInviteModal')).show();
+}
+
+
 window.selectConversation = selectConversation;
 window.showNewMessageForm = showNewMessageForm;
 window.hideNewMessageForm = hideNewMessageForm;
