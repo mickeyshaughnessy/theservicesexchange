@@ -79,7 +79,28 @@
         #swagger-ui .swagger-ui .dialog-ux .modal-ux { background: var(--bg-panel); border: 1px solid rgba(0,255,255,0.4); }
         #swagger-ui .swagger-ui .dialog-ux .modal-ux-header { border-bottom: 1px solid rgba(0,255,255,0.25); }
         #swagger-ui .swagger-ui .markdown p, #swagger-ui .swagger-ui .markdown li { color: var(--text); }
-        /* Inline code (`like this`) + filter marks — bright yellow, black text (readable on dark theme) */
+        /* Headings: Swagger default is dark gray (#3b4151) — unreadable on navy. Solid yellow, no glow. */
+        #swagger-ui .swagger-ui .info h1,
+        #swagger-ui .swagger-ui .info h2,
+        #swagger-ui .swagger-ui .info h3,
+        #swagger-ui .swagger-ui .info h4,
+        #swagger-ui .swagger-ui .info h5,
+        #swagger-ui .swagger-ui .markdown h1,
+        #swagger-ui .swagger-ui .markdown h2,
+        #swagger-ui .swagger-ui .markdown h3,
+        #swagger-ui .swagger-ui .markdown h4,
+        #swagger-ui .swagger-ui .markdown h5,
+        #swagger-ui .swagger-ui .renderedMarkdown h1,
+        #swagger-ui .swagger-ui .renderedMarkdown h2,
+        #swagger-ui .swagger-ui .renderedMarkdown h3,
+        #swagger-ui .swagger-ui .renderedMarkdown h4,
+        #swagger-ui .swagger-ui .renderedMarkdown h5 {
+            color: #ffff00 !important;
+            text-shadow: none !important;
+            font-family: 'Share Tech Mono', monospace !important;
+            font-weight: 700;
+        }
+        /* Inline code + filter marks: yellow text only — no yellow backgrounds */
         #swagger-ui .swagger-ui .markdown code,
         #swagger-ui .swagger-ui .renderedMarkdown code,
         #swagger-ui .swagger-ui .info code,
@@ -92,18 +113,18 @@
         #swagger-ui .swagger-ui .markdown mark,
         #swagger-ui .swagger-ui .renderedMarkdown mark,
         #swagger-ui .swagger-ui .info mark {
-            background-color: #ffff00 !important;
-            color: #000000 !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            color: #ffff00 !important;
             text-shadow: none !important;
             font-weight: 600;
-            padding: 0 0.2em;
-            border-radius: 2px;
+            padding: 0;
+            border-radius: 0;
         }
-        /* Multi-line code blocks: keep readable yellow text on dark panel, not full yellow wash */
         #swagger-ui .swagger-ui .markdown pre code,
         #swagger-ui .swagger-ui .renderedMarkdown pre code,
         #swagger-ui .swagger-ui .info pre code {
-            background-color: transparent !important;
+            background: transparent !important;
             color: #ffff00 !important;
             display: block;
             padding: 0.5em 0;
@@ -113,8 +134,9 @@
         #swagger-ui .swagger-ui .renderedMarkdown pre,
         #swagger-ui .swagger-ui .info pre {
             background: var(--bg-card);
-            border: 1px solid rgba(255, 255, 0, 0.35);
+            border: 1px solid rgba(0, 255, 255, 0.25);
             padding: 0.75em 1em;
+            color: #ffff00;
         }
         .docs-links-strip {
             background: var(--bg-dark);
