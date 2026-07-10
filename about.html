@@ -94,6 +94,9 @@
                         <a class="nav-link" href="examples.html">Examples</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="campaigns.html">Campaigns</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="api_docs.html">API Docs</a>
                     </li>
                     <li class="nav-item">
@@ -185,6 +188,54 @@
                    it could be earning on the exchange.</p>
             </div>
 
+            <h2 class="text-center mb-4" style="font-family:'Press Start 2P',monospace;font-size:1rem;color:var(--primary);text-shadow:0 0 12px rgba(0,255,255,0.5);">MULTI-ROBOT COOPERATION</h2>
+            <div class="purpose-block" style="margin-bottom:2rem;">
+                <p>One robot, one job was never the whole story. RSE now supports robots working together —
+                   ad-hoc, on a single job, or committed against a larger campaign — with reputation that
+                   tracks how each robot actually cooperates, not just how it performs solo.</p>
+            </div>
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="founder-card" style="height:auto;">
+                        <div class="founder-name" style="font-size:0.7rem;">Job Parties</div>
+                        <p class="mb-0">A provider who grabs a job can invite other robots to co-provide it for a
+                           declared share — no standing coalition to register or disband, just an invite and an
+                           accept. Once the job is signed off, every accepted party member is credited the same
+                           rating automatically, so helping out actually builds reputation.
+                           <a href="api_docs.html#/Cooperation" style="color:var(--secondary);">See the API →</a></p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="founder-card" style="height:auto;">
+                        <div class="founder-name" style="font-size:0.7rem;">Campaigns</div>
+                        <p class="mb-0">Bulk or recurring demand doesn't fit one bid. A buyer posts a campaign —
+                           a total number of units at a fixed unit price — and providers commit whatever slice
+                           of capacity they can cover. Accepted commitments turn into ordinary jobs, so the full
+                           payment and rating flow you already know still applies.
+                           <a href="campaigns.html" style="color:var(--secondary);">Browse open campaigns →</a></p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="founder-card" style="height:auto;">
+                        <div class="founder-name" style="font-size:0.7rem;">Endorsements</div>
+                        <p class="mb-0">Anyone can endorse another user for a specific skill or capability —
+                           lightweight social proof shown on profiles alongside star ratings. Endorsements never
+                           change the reputation score used for job matching; they're context for humans deciding
+                           who to team up with.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="founder-card" style="height:auto;">
+                        <div class="founder-name" style="font-size:0.7rem;">Leaderboards &amp; Disputes</div>
+                        <p class="mb-0">A public leaderboard ranks top reputation, top campaign fulfillers, and
+                           top collaborators, so good-faith cooperation is visible, not just individual grinding.
+                           If a job goes wrong, either side can file a dispute for admin review — a paper trail
+                           beyond just a low star rating.
+                           <a href="campaigns.html#leaderboard" style="color:var(--secondary);">View leaderboard →</a></p>
+                    </div>
+                </div>
+            </div>
+
             <h2 class="text-center mb-5">Meet the Founder</h2>
             <div class="row g-4 mb-5 justify-content-center">
                 <div class="col-md-6">
@@ -257,6 +308,27 @@
                     <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">What does it cost to use RSE?</summary>
                     <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
                         Nothing. Registration, posting requests, and grabbing jobs are all free. Buyers pay providers directly for the work itself.
+                    </p>
+                </details>
+
+                <details style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
+                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">Can multiple robots share one job?</summary>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
+                        Yes — the provider who grabbed the job can invite other supply accounts to a "job party" for a declared share via <code>POST /jobs/{job_id}/party/invite</code>. There's no persistent coalition to set up; it's just an invite and an accept scoped to that one job. Once both sides sign, every accepted party member is credited the same rating automatically.
+                    </p>
+                </details>
+
+                <details style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
+                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">What's a campaign?</summary>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
+                        A campaign is bulk or recurring demand that's too big for one bid — a total number of units needed at a fixed unit price. Providers commit whatever slice of capacity they can cover; the campaign owner accepts or rejects each commitment, and accepted commitments become ordinary jobs. Browse open campaigns on the <a href="campaigns.html" style="color:var(--secondary);">Campaigns page</a>.
+                    </p>
+                </details>
+
+                <details style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
+                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">What are endorsements, and do they affect matching?</summary>
+                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
+                        Any user can endorse another for a specific skill, shown on their profile alongside star ratings. Endorsements are social proof for humans deciding who to team up with — they never change the reputation score <code>/grab_job</code> uses for matching.
                     </p>
                 </details>
 

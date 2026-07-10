@@ -10,7 +10,7 @@ import time
 import logging
 import boto3
 from botocore.exceptions import ClientError
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 import config
 
 logger = logging.getLogger(__name__)
@@ -102,6 +102,9 @@ FOLLOWS_PREFIX = f"{S3_PREFIX}/follows"
 SLUGS_PREFIX = f"{S3_PREFIX}/slugs"
 AVATARS_PREFIX = f"{S3_PREFIX}/avatars"
 SHOP_ORDERS_KEY = f"{S3_PREFIX}/shop/orders.json"
+CAMPAIGNS_PREFIX = f"{S3_PREFIX}/campaigns"
+ENDORSEMENTS_PREFIX = f"{S3_PREFIX}/endorsements"
+DISPUTES_KEY = f"{S3_PREFIX}/disputes/list.json"
 
 # -----------------------------------------------------------------------------
 # S3 Helper Functions
@@ -210,6 +213,21 @@ def account_exists(username: str) -> bool:
     """Check if an account exists in S3."""
     key = f"{ACCOUNTS_PREFIX}/{username}.json"
     return _s3_exists(key)
+
+def get_all_accounts() -> List[Tuple[str, Dict[str, Any]]]:
+    """Retrieve all accounts as (username, data) pairs from S3. Full scan — used for admin/leaderboard views."""
+    accounts = []
+    try:
+        keys = _s3_list(ACCOUNTS_PREFIX)
+        for key in keys:
+            if key.endswith('.json'):
+                data = _s3_get(key)
+                if data:
+                    username = key.rsplit('/', 1)[-1][:-5]
+                    accounts.append((username, data))
+    except Exception as e:
+        logger.error(f"Error loading accounts: {e}")
+    return accounts
 
 def get_signup_stats() -> Dict[str, int]:
     """Get counts of demand and supply signups from S3."""
@@ -472,3 +490,66 @@ def save_shop_orders(orders: List[Dict[str, Any]]) -> None:
     """Persist cosmetics shop orders list to S3."""
     if not _s3_put(SHOP_ORDERS_KEY, {'orders': orders}):
         logger.error("Failed to save shop orders")
+
+# -----------------------------------------------------------------------------
+# Campaigns (multi-unit demand-side initiatives)
+# -----------------------------------------------------------------------------
+
+def save_campaign(campaign_id: str, data: Dict[str, Any]) -> None:
+    """Save campaign data to S3."""
+    key = f"{CAMPAIGNS_PREFIX}/{campaign_id}.json"
+    if not _s3_put(key, data):
+        logger.error(f"Failed to save campaign {campaign_id}")
+
+def get_campaign(campaign_id: str) -> Optional[Dict[str, Any]]:
+    """Retrieve campaign data from S3."""
+    key = f"{CAMPAIGNS_PREFIX}/{campaign_id}.json"
+    return _s3_get(key)
+
+def get_all_campaigns() -> List[Dict[str, Any]]:
+    """Retrieve all campaigns from S3."""
+    campaigns = []
+    try:
+        keys = _s3_list(CAMPAIGNS_PREFIX)
+        for key in keys:
+            if key.endswith('.json'):
+                campaign = _s3_get(key)
+                if campaign:
+                    campaigns.append(campaign)
+    except Exception as e:
+        logger.error(f"Error loading campaigns: {e}")
+    return campaigns
+
+# -----------------------------------------------------------------------------
+# Endorsements (peer skill endorsements)
+# -----------------------------------------------------------------------------
+
+def get_endorsements(username: str) -> List[Dict[str, Any]]:
+    """Retrieve all endorsements received by a user from S3."""
+    key = f"{ENDORSEMENTS_PREFIX}/{username}.json"
+    data = _s3_get(key)
+    if isinstance(data, dict):
+        return data.get('endorsements', [])
+    return []
+
+def save_endorsements(username: str, endorsements: List[Dict[str, Any]]) -> None:
+    """Persist a user's received endorsements list to S3."""
+    key = f"{ENDORSEMENTS_PREFIX}/{username}.json"
+    if not _s3_put(key, {'endorsements': endorsements}):
+        logger.error(f"Failed to save endorsements for {username}")
+
+# -----------------------------------------------------------------------------
+# Disputes (flagged jobs, admin review queue)
+# -----------------------------------------------------------------------------
+
+def get_disputes() -> List[Dict[str, Any]]:
+    """Retrieve all filed disputes from S3."""
+    data = _s3_get(DISPUTES_KEY)
+    if isinstance(data, dict):
+        return data.get('disputes', [])
+    return []
+
+def save_disputes(disputes: List[Dict[str, Any]]) -> None:
+    """Persist disputes list to S3."""
+    if not _s3_put(DISPUTES_KEY, {'disputes': disputes}):
+        logger.error("Failed to save disputes")

@@ -232,6 +232,7 @@
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="robots.html">Buy a Robot</a></li>
                     <li class="nav-item"><a class="nav-link" href="examples.html">Examples</a></li>
+                    <li class="nav-item"><a class="nav-link" href="campaigns.html">Campaigns</a></li>
                     <li class="nav-item"><a class="nav-link" href="api_docs.html">API Docs</a></li>
                     <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
                     <li class="nav-item"><a class="nav-link" href="feedback.html">Feedback</a></li>
@@ -266,6 +267,8 @@
                     <a href="#wf8">08 Rideshare Trip</a>
                     <a href="#wf9">09 Reputation &amp; Premium Bid</a>
                     <a href="#wf10">10 Community &amp; Chat</a>
+                    <a href="#wf11">11 Job-Party Coalition</a>
+                    <a href="#wf12">12 Campaign Fulfillment</a>
                     <hr style="border-color: rgba(0,255,255,0.15); margin: 1rem 0;">
                     <a href="https://spec.openapis.org/arazzo/latest.html" target="_blank" style="color:#ff00ff;">Arazzo Spec ↗</a>
                     <a href="api_docs.html">API Reference</a>
@@ -2230,6 +2233,480 @@ workflows:
     outputs:
       bulletin_post_id: $steps.provider-posts-bulletin.outputs.post_id
       job_id: $steps.provider-grabs-job.outputs.job_id</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ WF11 ═══ -->
+                <div id="wf11" class="workflow-card">
+                    <div class="workflow-header">
+                        <div class="workflow-number">11</div>
+                        <div class="workflow-title-block">
+                            <p class="workflow-title">Job-Party Coalition — Ad-Hoc Multi-Robot Split</p>
+                            <p class="workflow-subtitle">Primary provider invites a co-provider to split one job; both are credited on completion.</p>
+                            <span class="scenario-tag">Cooperation</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Coalitions</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Reputation</span>
+                        </div>
+                    </div>
+                    <div class="workflow-body">
+                        <p class="workflow-desc">
+                            A job party is an ad-hoc, per-job coalition with no persistent identity: the primary
+                            provider who grabbed a job can invite other supply-type accounts to co-provide it via
+                            <code>POST /jobs/{job_id}/party/invite</code> with a declared <code>share</code> (0–1).
+                            The invitee accepts via <code>POST /jobs/{job_id}/party/respond</code>. The primary
+                            provider always keeps at least 5% of the job. Once the buyer and primary provider both
+                            sign, every <em>accepted</em> party member is automatically credited the same rating
+                            the buyer gave the provider — their <code>stars</code>, <code>total_ratings</code>, and
+                            <code>completed_jobs</code> all increment, and the job counts toward their
+                            <code>party_jobs_completed</code> reputation breakdown (visible on <code>GET /profile</code>).
+                            The party dissolves with the job — there is nothing to disband.
+                        </p>
+                        <div class="steps-glance">
+                            <div class="steps-glance-title">// Steps at a glance</div>
+                            <ol>
+                                <li><strong>submit-bid</strong> — Buyer posts a warehouse pallet-sort job, $400 (POST /submit_bid)</li>
+                                <li><strong>robot-a-grabs</strong> — Robot A matched as primary provider (POST /grab_job)</li>
+                                <li><strong>robot-a-invites-b</strong> — Robot A invites Robot B for a 40% share (POST /jobs/{job_id}/party/invite)</li>
+                                <li><strong>robot-b-accepts</strong> — Robot B accepts the invitation (POST /jobs/{job_id}/party/respond)</li>
+                                <li><strong>view-party</strong> — Robot A confirms the roster and residual share (GET /jobs/{job_id}/party)</li>
+                                <li><strong>buyer-signs</strong> — Buyer rates the job 5 stars (POST /sign_job)</li>
+                                <li><strong>robot-a-signs</strong> — Robot A signs; job completes; Robot B is auto-credited (POST /sign_job)</li>
+                            </ol>
+                        </div>
+                        <div class="yaml-block">
+                            <div class="yaml-bar">
+                                <span>// arazzo 1.0.0 — job-party-coalition.yaml</span>
+                                <button class="yaml-copy-btn" onclick="copyYaml('yaml11')">Copy</button>
+                            </div>
+<pre class="arazzo-yaml" id="yaml11">arazzo: 1.0.0
+info:
+  title: RSE Job-Party Coalition — Ad-Hoc Multi-Robot Split
+  summary: Primary provider invites a co-provider to split one job; both earn reputation credit
+  description: >
+    Demonstrates the ad-hoc "job party" cooperation model: no
+    persistent coalition entity, just a per-job invite/accept flow
+    layered on top of the normal grab_job → sign_job lifecycle.
+    Robot A grabs a large warehouse job, invites Robot B to help
+    for a declared share of the credit, Robot B accepts, and once
+    both the buyer and Robot A sign, Robot B is automatically
+    credited the same rating — visible in Robot B's reputation
+    breakdown on GET /profile.
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: rse-api
+    url: https://rse-api.com:5003/openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: job-party-coalition
+    summary: Bid → Robot A grabs → invite Robot B → accept → both sign → Robot B credited
+    inputs:
+      type: object
+      required:
+        - buyer_token
+        - robot_a_token
+        - robot_b_token
+        - robot_b_username
+      properties:
+        buyer_token:
+          type: string
+        robot_a_token:
+          type: string
+        robot_b_token:
+          type: string
+        robot_b_username:
+          type: string
+          description: Robot B's username, used as the party invite target
+
+    steps:
+
+      - stepId: submit-bid
+        description: >
+          Buyer posts a bulk warehouse pallet-sorting job — too
+          large for one robot to comfortably claim credit for
+          alone, a natural candidate for a job party.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1submit_bid/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            service: "Warehouse pallet sort and stage, 400 pallets, single 8-hour shift"
+            price: 400
+            currency: USD
+            payment_method: cash
+            end_time: 1798070400
+            location_type: physical
+            address: 2200 Distribution Way, Denver, CO 80216
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          bid_id: $response.body#/bid_id
+
+      - stepId: robot-a-grabs
+        description: >
+          Robot A grabs the job and becomes the primary provider —
+          the only account with authority to invite party members.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1grab_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.robot_a_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            capabilities: warehouse pallet sorting, staging, forklift navigation, barcode scanning
+            location_type: physical
+            address: 2100 Distribution Way, Denver, CO 80216
+            max_distance: 10
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          job_id: $response.body#/job_id
+
+      - stepId: robot-a-invites-b
+        description: >
+          Robot A invites Robot B to co-provide the job for a 40%
+          share. The primary provider always keeps at least 5%, so
+          up to 95% total may be invited across all party members.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1jobs~1{job_id}~1party~1invite/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.robot_a_token}"
+          - name: job_id
+            in: path
+            value: $steps.robot-a-grabs.outputs.job_id
+        requestBody:
+          contentType: application/json
+          payload:
+            member_username: $inputs.robot_b_username
+            share: 0.4
+        successCriteria:
+          - condition: $statusCode == 201
+
+      - stepId: robot-b-accepts
+        description: >
+          Robot B accepts the invitation. Its share now counts
+          toward the payout split and, on completion, toward its
+          own reputation credit.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1jobs~1{job_id}~1party~1respond/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.robot_b_token}"
+          - name: job_id
+            in: path
+            value: $steps.robot-a-grabs.outputs.job_id
+        requestBody:
+          contentType: application/json
+          payload:
+            action: accept
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: view-party
+        description: >
+          Robot A confirms the roster: Robot B accepted at 40%,
+          leaving Robot A a 60% residual share.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1jobs~1{job_id}~1party/get'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.robot_a_token}"
+          - name: job_id
+            in: path
+            value: $steps.robot-a-grabs.outputs.job_id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          provider_share: $response.body#/provider_share
+
+      - stepId: buyer-signs
+        description: >
+          Buyer rates the completed pallet sort 5 stars.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.robot-a-grabs.outputs.job_id
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: robot-a-signs
+        description: >
+          Robot A signs. Both signatures present — the job
+          transitions to "completed". Robot A's stats update as
+          usual, and because Robot B's party invite is in
+          "accepted" status, Robot B is automatically credited the
+          same 5-star rating: its stars, total_ratings, and
+          completed_jobs all increment with no further action.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.robot_a_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.robot-a-grabs.outputs.job_id
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+    outputs:
+      job_id: $steps.robot-a-grabs.outputs.job_id
+      robot_a_residual_share: $steps.view-party.outputs.provider_share</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ WF12 ═══ -->
+                <div id="wf12" class="workflow-card">
+                    <div class="workflow-header">
+                        <div class="workflow-number">12</div>
+                        <div class="workflow-title-block">
+                            <p class="workflow-title">Campaign Fulfillment — Bulk Demand, Multi-Provider Capacity</p>
+                            <p class="workflow-subtitle">Buyer posts a multi-unit campaign; a provider commits capacity; owner accepts, spinning up a job.</p>
+                            <span class="scenario-tag">Campaigns</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Cooperation</span>
+                            <span class="scenario-tag" style="margin-left:6px;">Reputation</span>
+                        </div>
+                    </div>
+                    <div class="workflow-body">
+                        <p class="workflow-desc">
+                            Campaigns are for demand that's too big for one <code>/submit_bid</code>: a buyer
+                            declares a total <code>units_needed</code> at a fixed <code>unit_price</code> and a
+                            deadline (<code>POST /campaigns</code>). Providers browse open campaigns
+                            (<code>GET /campaigns</code>) and commit a slice of capacity
+                            (<code>POST /campaigns/{campaign_id}/commit</code>). The campaign owner reviews each
+                            commitment and accepts or rejects it; accepting
+                            (<code>POST /campaigns/{campaign_id}/commitments/{commitment_id}/accept</code>) creates
+                            a normal job record for that provider — identical in shape to a <code>/grab_job</code>
+                            result — and decrements <code>units_remaining</code>. The job then follows the usual
+                            <code>/sign_job</code> completion flow, and counts toward the provider's
+                            <code>campaign_jobs_completed</code> reputation breakdown. This run finishes by having
+                            the buyer endorse the provider's skill — endorsements are shown on profiles alongside
+                            <code>reputation_score</code> as extra social proof.
+                        </p>
+                        <div class="steps-glance">
+                            <div class="steps-glance-title">// Steps at a glance</div>
+                            <ol>
+                                <li><strong>create-campaign</strong> — Buyer posts a 20-unit delivery campaign, $18/unit (POST /campaigns)</li>
+                                <li><strong>browse-campaigns</strong> — Provider browses open campaigns (GET /campaigns)</li>
+                                <li><strong>commit-capacity</strong> — Provider commits to 5 units (POST /campaigns/{campaign_id}/commit)</li>
+                                <li><strong>owner-reviews</strong> — Buyer views the campaign with pending commitments (GET /campaigns/{campaign_id})</li>
+                                <li><strong>accept-commitment</strong> — Buyer accepts; a job is created for the 5 units (POST /campaigns/{campaign_id}/commitments/{commitment_id}/accept)</li>
+                                <li><strong>provider-signs</strong> — Provider completes and rates the buyer (POST /sign_job)</li>
+                                <li><strong>buyer-signs</strong> — Buyer rates the provider; job → completed (POST /sign_job)</li>
+                                <li><strong>buyer-endorses</strong> — Buyer endorses the provider for "bulk logistics" (POST /endorsements)</li>
+                            </ol>
+                        </div>
+                        <div class="yaml-block">
+                            <div class="yaml-bar">
+                                <span>// arazzo 1.0.0 — campaign-fulfillment.yaml</span>
+                                <button class="yaml-copy-btn" onclick="copyYaml('yaml12')">Copy</button>
+                            </div>
+<pre class="arazzo-yaml" id="yaml12">arazzo: 1.0.0
+info:
+  title: RSE Campaign Fulfillment — Bulk Demand, Multi-Provider Capacity
+  summary: Post a multi-unit campaign, accept a provider's committed capacity, complete and endorse
+  description: >
+    Demonstrates the campaign cooperation model for bulk/recurring
+    demand that doesn't fit a single bid. A buyer posts a 20-unit
+    delivery campaign; a provider commits 5 units of capacity; the
+    buyer accepts the commitment, which creates a job identical in
+    shape to a normal grab_job result; both parties complete the
+    usual sign_job flow; the buyer closes the loop by endorsing the
+    provider's skill.
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: rse-api
+    url: https://rse-api.com:5003/openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: campaign-fulfillment
+    summary: Create campaign → browse → commit → accept → sign both → endorse
+    inputs:
+      type: object
+      required:
+        - buyer_token
+        - provider_token
+        - provider_username
+      properties:
+        buyer_token:
+          type: string
+        provider_token:
+          type: string
+        provider_username:
+          type: string
+          description: Provider's username, used as the endorsement target
+
+    steps:
+
+      - stepId: create-campaign
+        description: >
+          Buyer posts a bulk same-day delivery campaign: 20 units
+          needed at $18/unit, open for 7 days.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1campaigns/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            title: "Same-day parcel delivery — 20 units needed"
+            description: "Recurring same-day delivery capacity needed across the metro area for one week."
+            service: "Same-day parcel delivery, up to 15lb, metro area"
+            unit_price: 18
+            units_needed: 20
+            currency: USD
+            payment_method: cash
+            location_type: remote
+            end_time: 1798070400
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          campaign_id: $response.body#/campaign_id
+
+      - stepId: browse-campaigns
+        description: >
+          Provider browses open campaigns (public endpoint, no
+          auth required) and finds the delivery campaign.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1campaigns/get'
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          campaigns: $response.body#/campaigns
+
+      - stepId: commit-capacity
+        description: >
+          Provider commits to fulfilling 5 of the 20 units,
+          describing its delivery fleet capabilities. The
+          commitment starts in "pending" status.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1campaigns~1{campaign_id}~1commit/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+          - name: campaign_id
+            in: path
+            value: $steps.create-campaign.outputs.campaign_id
+        requestBody:
+          contentType: application/json
+          payload:
+            units: 5
+            capabilities: last-mile delivery fleet, 15 vehicles, real-time tracking
+        successCriteria:
+          - condition: $statusCode == 201
+        outputs:
+          commitment_id: $response.body#/commitment/commitment_id
+
+      - stepId: owner-reviews
+        description: >
+          Buyer fetches the full campaign detail, including the
+          pending commitment, to decide whether to accept it.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1campaigns~1{campaign_id}/get'
+        parameters:
+          - name: campaign_id
+            in: path
+            value: $steps.create-campaign.outputs.campaign_id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          commitments: $response.body#/commitments
+
+      - stepId: accept-commitment
+        description: >
+          Buyer accepts the commitment. The exchange creates a job
+          record for the 5 committed units ($90 total) and
+          decrements the campaign's units_remaining from 20 to 15.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1campaigns~1{campaign_id}~1commitments~1{commitment_id}~1accept/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+          - name: campaign_id
+            in: path
+            value: $steps.create-campaign.outputs.campaign_id
+          - name: commitment_id
+            in: path
+            value: $steps.commit-capacity.outputs.commitment_id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          job_id: $response.body#/job/job_id
+
+      - stepId: provider-signs
+        description: >
+          Provider completes the 5-unit delivery run and signs,
+          rating the buyer 5 stars.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.provider_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.accept-commitment.outputs.job_id
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: buyer-signs
+        description: >
+          Buyer signs, rating the provider 5 stars. Both
+          signatures present — the job transitions to "completed"
+          and counts toward the provider's campaign_jobs_completed
+          reputation breakdown.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1sign_job/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            job_id: $steps.accept-commitment.outputs.job_id
+            rating: 5
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: buyer-endorses
+        description: >
+          Buyer endorses the provider for "bulk logistics" — a
+          skill-specific credential shown on the provider's profile
+          alongside reputation_score, but never altering the score
+          used for grab_job matching.
+        operationPath: '{$sourceDescriptions.rse-api}#/paths/~1endorsements/post'
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$inputs.buyer_token}"
+        requestBody:
+          contentType: application/json
+          payload:
+            target_username: $inputs.provider_username
+            skill: bulk logistics
+        successCriteria:
+          - condition: $statusCode == 201
+
+    outputs:
+      campaign_id: $steps.create-campaign.outputs.campaign_id
+      job_id: $steps.accept-commitment.outputs.job_id</pre>
                         </div>
                     </div>
                 </div>

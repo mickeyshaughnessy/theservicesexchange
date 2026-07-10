@@ -31,6 +31,10 @@ from utils import (
     get_username_by_slug, save_slug_mapping,
     save_avatar,
     get_shop_orders, save_shop_orders,
+    get_all_accounts,
+    save_campaign, get_campaign, get_all_campaigns,
+    get_endorsements, save_endorsements,
+    get_disputes, save_disputes,
 )
 
 # Configure logging
@@ -487,6 +491,45 @@ def _profile_defaults(user_data: Dict[str, Any]) -> Dict[str, Any]:
     return user_data
 
 
+def _reputation_breakdown(username: str) -> Dict[str, int]:
+    """
+    Count a user's completed jobs by cooperation type: solo, ad-hoc job-party,
+    or campaign-fulfilled. Purely additive context for profiles — does not
+    feed back into calculate_reputation_score (which grab_job matching relies on).
+    """
+    solo = party = campaign = 0
+    for job in get_all_jobs():
+        if job.get('status') != 'completed':
+            continue
+        is_primary = username in (job.get('buyer_username'), job.get('provider_username'))
+        is_party_member = any(
+            p.get('member_username') == username and p.get('status') == 'accepted'
+            for p in job.get('party', [])
+        )
+        if not is_primary and not is_party_member:
+            continue
+        if job.get('campaign_id'):
+            campaign += 1
+        elif is_party_member or any(p.get('status') == 'accepted' for p in job.get('party', [])):
+            party += 1
+        else:
+            solo += 1
+    return {'solo_jobs_completed': solo, 'party_jobs_completed': party, 'campaign_jobs_completed': campaign}
+
+
+def _endorsement_summary(username: str) -> Dict[str, Any]:
+    """Lightweight endorsement summary for profile display."""
+    endorsements = get_endorsements(username)
+    by_skill: Dict[str, int] = {}
+    for e in endorsements:
+        by_skill[e['skill']] = by_skill.get(e['skill'], 0) + 1
+    top_skills = sorted(by_skill.items(), key=lambda kv: kv[1], reverse=True)[:5]
+    return {
+        'total_endorsements': len(endorsements),
+        'top_skills': [{'skill': s, 'count': c} for s, c in top_skills],
+    }
+
+
 def get_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     """Get the authenticated user's full profile (private + public fields)."""
     try:
@@ -517,6 +560,8 @@ def get_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'follower_count': len(follows['followers']),
             'following_count': len(follows['following']),
             'profile_slug': user_data.get('profile_slug'),
+            'reputation_breakdown': _reputation_breakdown(username),
+            'endorsements': _endorsement_summary(username),
         }, 200
     except Exception as e:
         logger.error(f"Get profile error: {str(e)}")
@@ -598,6 +643,8 @@ def get_public_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'cosmetics_equipped': user_data['cosmetics_equipped'],
             'follower_count': len(follows['followers']),
             'following_count': len(follows['following']),
+            'reputation_breakdown': _reputation_breakdown(username),
+            'endorsements': _endorsement_summary(username),
         }, 200
     except Exception as e:
         logger.error(f"Get public profile error: {str(e)}")
@@ -1040,11 +1087,12 @@ def get_my_bids(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         return {"error": "Internal server error"}, 500
 
 def get_my_jobs(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
-    """Get user's completed and active jobs."""
+    """Get user's completed and active jobs, plus any pending/past job-party invitations."""
     try:
         username = data.get('username')
-        user_jobs = get_user_jobs(username)
-        
+        all_jobs = get_all_jobs()
+        user_jobs = [j for j in all_jobs if j.get('buyer_username') == username or j.get('provider_username') == username]
+
         completed_jobs = []
         active_jobs = []
         rejected_jobs = []
@@ -1067,8 +1115,10 @@ def get_my_jobs(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                 'provider_username': job['provider_username'],
                 'buyer_reputation': job.get('buyer_reputation'),
                 'provider_reputation': job.get('provider_reputation'),
+                'party': job.get('party', []),
+                'campaign_id': job.get('campaign_id'),
             }
-            
+
             # Add role information
             if username == job['buyer_username']:
                 job_info['role'] = 'buyer'
@@ -1095,12 +1145,34 @@ def get_my_jobs(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         active_jobs.sort(key=lambda x: x['accepted_at'], reverse=True)
         rejected_jobs.sort(key=lambda x: x.get('rejected_at', 0), reverse=True)
 
+        # Jobs where this user was invited as an ad-hoc job-party co-provider
+        # (not the primary provider, so not covered by user_jobs above).
+        party_invites = []
+        for job in all_jobs:
+            if job.get('provider_username') == username:
+                continue
+            member = next((p for p in job.get('party', []) if p.get('member_username') == username), None)
+            if not member:
+                continue
+            party_invites.append({
+                'job_id': job['job_id'],
+                'service': job['service'],
+                'price': job['price'],
+                'currency': job.get('currency', 'USD'),
+                'primary_provider': job.get('provider_username'),
+                'share': member['share'],
+                'invite_status': member['status'],
+                'job_status': job.get('status'),
+            })
+        party_invites.sort(key=lambda x: x['job_status'] != 'accepted')
+
         return {
             "completed_jobs": completed_jobs[:10],  # Limit to last 10
             "active_jobs": active_jobs,
-            "rejected_jobs": rejected_jobs[:10]
+            "rejected_jobs": rejected_jobs[:10],
+            "party_invites": party_invites,
         }, 200
-        
+
     except Exception as e:
         logger.error(f"Get my jobs error: {str(e)}")
         return {"error": "Internal server error"}, 500
@@ -1415,44 +1487,61 @@ def reject_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         
         if job['status'] != 'accepted':
             return {"error": "Can only reject jobs in accepted state"}, 400
-        
-        # Restore the bid, preserving the original bid_id so the buyer can still track it
-        bid_id = job['bid_id']
-        rejected_by = list(job.get('rejected_by', []))
-        if username not in rejected_by:
-            rejected_by.append(username)
-        bid = {
-            'bid_id': bid_id,
-            'username': job['buyer_username'],
-            'service': job['service'],
-            'price': job['price'],
-            'currency': job.get('currency', 'USD'),
-            'payment_method': job.get('payment_method', 'cash'),
-            'xmoney_account': job.get('xmoney_account'),
-            'end_time': int(time.time()) + 3600,  # Extend by 1 hour
-            'location_type': job['location_type'],
-            'lat': job.get('lat'),
-            'lon': job.get('lon'),
-            'address': job.get('address'),
-            'start_address': job.get('start_address'),
-            'end_address': job.get('end_address'),
-            'start_lat': job.get('start_lat'),
-            'start_lon': job.get('start_lon'),
-            'end_lat': job.get('end_lat'),
-            'end_lon': job.get('end_lon'),
-            'created_at': int(time.time()),
-            'buyer_reputation': job['buyer_reputation'],
-            'rejected_by': rejected_by
-        }
-        save_bid(bid_id, bid)
-        
+
+        if job.get('campaign_id'):
+            # Campaign-originated jobs have no bid to restore — return the
+            # committed units to the campaign's pool instead.
+            campaign = get_campaign(job['campaign_id'])
+            if campaign:
+                campaign['units_remaining'] = campaign.get('units_remaining', 0) + job.get('campaign_units', 1)
+                if campaign['status'] == 'fulfilled' and campaign['end_time'] > time.time():
+                    campaign['status'] = 'open'
+                commitment = next(
+                    (c for c in campaign.get('commitments', []) if c.get('commitment_id') == job.get('campaign_commitment_id')),
+                    None
+                )
+                if commitment:
+                    commitment['status'] = 'rejected'
+                    commitment['job_ids'] = []
+                save_campaign(campaign['campaign_id'], campaign)
+        else:
+            # Restore the bid, preserving the original bid_id so the buyer can still track it
+            bid_id = job['bid_id']
+            rejected_by = list(job.get('rejected_by', []))
+            if username not in rejected_by:
+                rejected_by.append(username)
+            bid = {
+                'bid_id': bid_id,
+                'username': job['buyer_username'],
+                'service': job['service'],
+                'price': job['price'],
+                'currency': job.get('currency', 'USD'),
+                'payment_method': job.get('payment_method', 'cash'),
+                'xmoney_account': job.get('xmoney_account'),
+                'end_time': int(time.time()) + 3600,  # Extend by 1 hour
+                'location_type': job['location_type'],
+                'lat': job.get('lat'),
+                'lon': job.get('lon'),
+                'address': job.get('address'),
+                'start_address': job.get('start_address'),
+                'end_address': job.get('end_address'),
+                'start_lat': job.get('start_lat'),
+                'start_lon': job.get('start_lon'),
+                'end_lat': job.get('end_lat'),
+                'end_lon': job.get('end_lon'),
+                'created_at': int(time.time()),
+                'buyer_reputation': job['buyer_reputation'],
+                'rejected_by': rejected_by
+            }
+            save_bid(bid_id, bid)
+
         job['status'] = 'rejected'
         job['rejected_at'] = int(time.time())
         job['rejection_reason'] = reason
         save_job(job_id, job)
-        
+
         logger.info(f"Job rejected: {job_id}")
-        
+
         return {"message": "Job rejected successfully"}, 200
         
     except Exception as e:
@@ -1505,13 +1594,28 @@ def sign_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                 counterparty_data['completed_jobs'] = counterparty_data.get('completed_jobs', 0) + 1
                 job['status'] = 'completed'
                 job['completed_at'] = int(time.time())
-                
+
                 # Update own completed jobs count too
                 own_data = get_account(username)
                 if own_data:
                     own_data['completed_jobs'] = own_data.get('completed_jobs', 0) + 1
                     save_account(username, own_data)
-            
+
+                # Credit accepted job-party members with the same rating the
+                # buyer gave the primary provider, so ad-hoc coalition work
+                # reflects on every contributor's reputation.
+                buyer_rating = job.get('buyer_rating')
+                if buyer_rating:
+                    for member in job.get('party', []):
+                        if member.get('status') != 'accepted':
+                            continue
+                        member_data = get_account(member['member_username'])
+                        if member_data:
+                            member_data['stars'] = member_data.get('stars', 0) + buyer_rating
+                            member_data['total_ratings'] = member_data.get('total_ratings', 0) + 1
+                            member_data['completed_jobs'] = member_data.get('completed_jobs', 0) + 1
+                            save_account(member['member_username'], member_data)
+
             save_account(counterparty, counterparty_data)
         
         save_job(job_id, job)
@@ -2029,4 +2133,623 @@ def handle_reply_feedback(post_id: str, data: Dict[str, Any]) -> Tuple[Dict[str,
         return {"reply": reply}, 201
     except Exception as e:
         logger.error(f"Reply feedback error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+# -----------------------------------------------------------------------------
+# Job Party (ad-hoc per-job coalitions — no persistent identity)
+# -----------------------------------------------------------------------------
+# A provider who grabbed (or was assigned) a job can invite other supply-type
+# accounts to co-provide that single job. Invitees must accept before their
+# share counts. There is no standing "coalition" entity — the party lives on
+# the job record itself and dissolves once the job is completed or rejected.
+
+_PARTY_MIN_PROVIDER_SHARE = 0.05  # primary provider always keeps at least 5%
+
+def invite_job_party(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Invite a co-provider to share a job the caller is the primary provider on."""
+    try:
+        username = data.get('username')
+        job_id = data.get('job_id')
+        member_username = (data.get('member_username') or '').strip()
+        share = data.get('share')
+
+        if not job_id or not member_username or share is None:
+            return {"error": "job_id, member_username, and share required"}, 400
+        try:
+            share = float(share)
+        except (TypeError, ValueError):
+            return {"error": "share must be a number"}, 400
+        if share <= 0 or share >= 1:
+            return {"error": "share must be between 0 and 1 (exclusive)"}, 400
+        if member_username == username:
+            return {"error": "Cannot invite yourself"}, 400
+
+        job = get_job(job_id)
+        if not job:
+            return {"error": "Job not found"}, 404
+        if job['provider_username'] != username:
+            return {"error": "Only the primary provider can invite party members"}, 403
+        if job.get('status') != 'accepted':
+            return {"error": "Job must be in accepted state to form a party"}, 400
+
+        member_account = get_account(member_username)
+        if not member_account:
+            return {"error": "member_username not found"}, 404
+        if member_account.get('user_type') != 'supply':
+            return {"error": "Only supply-type accounts can join a job party"}, 400
+
+        party = job.setdefault('party', [])
+        if any(p['member_username'] == member_username for p in party):
+            return {"error": "Already invited"}, 400
+
+        committed = sum(p['share'] for p in party if p['status'] in ('invited', 'accepted'))
+        available = round(1 - _PARTY_MIN_PROVIDER_SHARE - committed, 4)
+        if share > available:
+            return {"error": f"Share exceeds available capacity (max additional share: {max(available, 0)})"}, 400
+
+        invite = {
+            'member_username': member_username,
+            'share': share,
+            'status': 'invited',
+            'invited_at': int(time.time()),
+            'responded_at': None,
+        }
+        party.append(invite)
+        save_job(job_id, job)
+
+        logger.info(f"Job party invite: {job_id} {username} -> {member_username} ({share})")
+        return {"job_id": job_id, "party": party}, 201
+    except Exception as e:
+        logger.error(f"Invite job party error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def respond_job_party(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Accept or decline a pending job-party invitation."""
+    try:
+        username = data.get('username')
+        job_id = data.get('job_id')
+        action = (data.get('action') or '').strip().lower()
+
+        if not job_id or action not in ('accept', 'decline'):
+            return {"error": "job_id and action ('accept' or 'decline') required"}, 400
+
+        job = get_job(job_id)
+        if not job:
+            return {"error": "Job not found"}, 404
+
+        party = job.setdefault('party', [])
+        invite = next((p for p in party if p['member_username'] == username), None)
+        if not invite:
+            return {"error": "No invitation found for this job"}, 404
+        if invite['status'] != 'invited':
+            return {"error": f"Invitation already {invite['status']}"}, 400
+        if job.get('status') != 'accepted':
+            return {"error": f"Cannot respond to an invitation on a job with status '{job.get('status')}'"}, 400
+
+        invite['status'] = 'accepted' if action == 'accept' else 'declined'
+        invite['responded_at'] = int(time.time())
+        save_job(job_id, job)
+
+        return {"job_id": job_id, "status": invite['status']}, 200
+    except Exception as e:
+        logger.error(f"Respond job party error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_job_party(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """View the party roster for a job. Visible to the buyer, primary provider, and party members."""
+    try:
+        username = data.get('username')
+        job_id = data.get('job_id')
+
+        job = get_job(job_id)
+        if not job:
+            return {"error": "Job not found"}, 404
+
+        party = job.get('party', [])
+        involved = (
+            username == job.get('buyer_username')
+            or username == job.get('provider_username')
+            or any(p['member_username'] == username for p in party)
+        )
+        if not involved:
+            return {"error": "Not authorized"}, 403
+
+        accepted_share = sum(p['share'] for p in party if p['status'] == 'accepted')
+        return {
+            "job_id": job_id,
+            "provider_username": job.get('provider_username'),
+            "provider_share": round(1 - accepted_share, 4),
+            "party": party,
+        }, 200
+    except Exception as e:
+        logger.error(f"Get job party error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+# -----------------------------------------------------------------------------
+# Campaigns (multi-unit demand-side initiatives; providers commit capacity)
+# -----------------------------------------------------------------------------
+# A demand-side account posts a campaign describing a bulk/recurring need
+# (e.g. "500 deliveries this month, need 10 robots") along with a per-unit
+# price and total units needed. Supply-side accounts commit to fulfilling a
+# slice of it; the campaign owner accepts or rejects each commitment.
+# Accepting a commitment spins up a normal job record (reusing sign_job/
+# reputation exactly as the grab_job flow does) for that slice of work.
+
+def create_campaign(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Create a multi-unit campaign. Demand-type accounts only."""
+    try:
+        username = data.get('username')
+        title = (data.get('title') or '').strip()
+        description = (data.get('description') or '').strip()
+        service = data.get('service')
+        unit_price = data.get('unit_price')
+        units_needed = data.get('units_needed')
+        currency = data.get('currency', 'USD')
+        payment_method = data.get('payment_method', 'cash')
+        location_type = data.get('location_type', 'physical')
+        end_time = data.get('end_time')
+
+        if not title or not service or unit_price is None or units_needed is None or end_time is None:
+            return {"error": "title, service, unit_price, units_needed, and end_time required"}, 400
+        try:
+            unit_price = float(unit_price)
+            units_needed = int(units_needed)
+        except (TypeError, ValueError):
+            return {"error": "unit_price must be a number and units_needed an integer"}, 400
+        if unit_price <= 0:
+            return {"error": "unit_price must be positive"}, 400
+        if units_needed < 1:
+            return {"error": "units_needed must be at least 1"}, 400
+        if end_time <= time.time():
+            return {"error": "end_time must be in the future"}, 400
+        if location_type not in ('physical', 'hybrid', 'remote'):
+            return {"error": "location_type must be 'physical', 'hybrid', or 'remote'"}, 400
+
+        user_data = get_account(username)
+        if not user_data or user_data.get('user_type') != 'demand':
+            return {"error": "Only demand-type accounts can create campaigns"}, 403
+
+        lat, lon = None, None
+        address = data.get('address')
+        if location_type in ('physical', 'hybrid'):
+            if 'lat' in data and 'lon' in data:
+                lat, lon = data['lat'], data['lon']
+            elif address:
+                lat, lon = simple_geocode(address)
+            else:
+                return {"error": "Location required for physical/hybrid campaigns"}, 400
+
+        campaign_id = str(uuid.uuid4())
+        campaign = {
+            'campaign_id': campaign_id,
+            'owner_username': username,
+            'title': title[:120],
+            'description': description[:2000],
+            'service': service,
+            'unit_price': unit_price,
+            'currency': currency,
+            'payment_method': payment_method,
+            'units_needed': units_needed,
+            'units_remaining': units_needed,
+            'location_type': location_type,
+            'address': address,
+            'lat': lat,
+            'lon': lon,
+            'end_time': end_time,
+            'created_at': int(time.time()),
+            'status': 'open',
+            'commitments': [],
+        }
+        save_campaign(campaign_id, campaign)
+        logger.info(f"Campaign created: {campaign_id} by {username} ({units_needed} units @ {unit_price})")
+        return campaign, 201
+    except Exception as e:
+        logger.error(f"Create campaign error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def _campaign_is_open(campaign: Dict[str, Any]) -> bool:
+    return (
+        campaign.get('status') == 'open'
+        and campaign.get('end_time', 0) > time.time()
+        and campaign.get('units_remaining', 0) > 0
+    )
+
+
+def get_campaigns(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """List open campaigns (public), optionally filtered by category/location."""
+    try:
+        category_filter = data.get('category')
+        location_filter = data.get('location')
+        limit = min(data.get('limit', 50), 200)
+
+        campaigns = get_all_campaigns()
+        open_campaigns = []
+        for c in campaigns:
+            if not _campaign_is_open(c):
+                continue
+            if category_filter:
+                service_str = json.dumps(c['service']) if isinstance(c['service'], dict) else str(c['service'])
+                haystack = f"{c.get('title', '')} {service_str}".lower()
+                if category_filter.lower() not in haystack:
+                    continue
+            if location_filter:
+                if not c.get('address') or location_filter.lower() not in c['address'].lower():
+                    continue
+            open_campaigns.append({k: v for k, v in c.items() if k != 'commitments'})
+
+        open_campaigns.sort(key=lambda x: x['created_at'], reverse=True)
+        return {"campaigns": open_campaigns[:limit]}, 200
+    except Exception as e:
+        logger.error(f"Get campaigns error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_campaign_detail(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Get full campaign detail including commitments (public)."""
+    try:
+        campaign_id = data.get('campaign_id')
+        campaign = get_campaign(campaign_id)
+        if not campaign:
+            return {"error": "Campaign not found"}, 404
+        return campaign, 200
+    except Exception as e:
+        logger.error(f"Get campaign detail error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def commit_to_campaign(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Commit capacity (a number of units) toward fulfilling a campaign. Supply-type accounts only."""
+    try:
+        username = data.get('username')
+        campaign_id = data.get('campaign_id')
+        units = data.get('units')
+        capabilities = (data.get('capabilities') or '').strip()
+        message = (data.get('message') or '').strip()
+
+        if not campaign_id or units is None:
+            return {"error": "campaign_id and units required"}, 400
+        try:
+            units = int(units)
+        except (TypeError, ValueError):
+            return {"error": "units must be an integer"}, 400
+        if units < 1:
+            return {"error": "units must be at least 1"}, 400
+
+        user_data = get_account(username)
+        if not user_data or user_data.get('user_type') != 'supply':
+            return {"error": "Only supply-type accounts can commit to campaigns"}, 403
+
+        campaign = get_campaign(campaign_id)
+        if not campaign:
+            return {"error": "Campaign not found"}, 404
+        if campaign['owner_username'] == username:
+            return {"error": "Cannot commit to your own campaign"}, 400
+        if not _campaign_is_open(campaign):
+            return {"error": "Campaign is not open for commitments"}, 400
+        if units > campaign['units_remaining']:
+            return {"error": f"Only {campaign['units_remaining']} unit(s) remaining"}, 400
+
+        commitment = {
+            'commitment_id': str(uuid.uuid4()),
+            'provider_username': username,
+            'units': units,
+            'capabilities': capabilities[:400],
+            'message': message[:500],
+            'status': 'pending',
+            'created_at': int(time.time()),
+            'responded_at': None,
+            'job_ids': [],
+        }
+        campaign['commitments'].append(commitment)
+        save_campaign(campaign_id, campaign)
+
+        logger.info(f"Campaign commitment: {campaign_id} <- {username} ({units} units)")
+        return {"campaign_id": campaign_id, "commitment": commitment}, 201
+    except Exception as e:
+        logger.error(f"Commit to campaign error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def respond_campaign_commitment(campaign_id: str, commitment_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Accept or reject a pending commitment. Campaign owner only. Accepting spins up a job record."""
+    try:
+        username = data.get('username')
+        action = (data.get('action') or '').strip().lower()
+        if action not in ('accept', 'reject'):
+            return {"error": "action must be 'accept' or 'reject'"}, 400
+
+        campaign = get_campaign(campaign_id)
+        if not campaign:
+            return {"error": "Campaign not found"}, 404
+        if campaign['owner_username'] != username:
+            return {"error": "Only the campaign owner can respond to commitments"}, 403
+
+        commitment = next((c for c in campaign['commitments'] if c['commitment_id'] == commitment_id), None)
+        if not commitment:
+            return {"error": "Commitment not found"}, 404
+        if commitment['status'] != 'pending':
+            return {"error": f"Commitment already {commitment['status']}"}, 400
+
+        if action == 'reject':
+            commitment['status'] = 'rejected'
+            commitment['responded_at'] = int(time.time())
+            save_campaign(campaign_id, campaign)
+            return {"campaign_id": campaign_id, "commitment": commitment}, 200
+
+        # Accept: turn the commitment into a real job
+        if not _campaign_is_open(campaign):
+            return {"error": "Campaign is no longer open"}, 400
+        if commitment['units'] > campaign['units_remaining']:
+            return {"error": "Insufficient units remaining to accept this commitment"}, 400
+
+        provider_data = get_account(commitment['provider_username'])
+        provider_reputation = calculate_reputation_score(provider_data) if provider_data else 2.5
+        owner_reputation = calculate_reputation_score(get_account(username) or {})
+
+        job_id = str(uuid.uuid4())
+        job_record = {
+            'job_id': job_id,
+            'bid_id': None,
+            'status': 'accepted',
+            'service': campaign['service'],
+            'price': round(campaign['unit_price'] * commitment['units'], 2),
+            'currency': campaign.get('currency', 'USD'),
+            'payment_method': campaign.get('payment_method', 'cash'),
+            'location_type': campaign['location_type'],
+            'lat': campaign.get('lat'),
+            'lon': campaign.get('lon'),
+            'address': campaign.get('address'),
+            'buyer_username': username,
+            'provider_username': commitment['provider_username'],
+            'accepted_at': int(time.time()),
+            'buyer_reputation': owner_reputation,
+            'provider_reputation': provider_reputation,
+            'campaign_id': campaign_id,
+            'campaign_commitment_id': commitment_id,
+            'campaign_units': commitment['units'],
+        }
+        save_job(job_id, job_record)
+
+        commitment['status'] = 'accepted'
+        commitment['responded_at'] = int(time.time())
+        commitment['job_ids'] = [job_id]
+
+        campaign['units_remaining'] -= commitment['units']
+        if campaign['units_remaining'] <= 0:
+            campaign['status'] = 'fulfilled'
+        save_campaign(campaign_id, campaign)
+
+        logger.info(f"Campaign commitment accepted: {campaign_id}/{commitment_id} -> job {job_id}")
+        return {"campaign_id": campaign_id, "commitment": commitment, "job": job_record}, 200
+    except Exception as e:
+        logger.error(f"Respond campaign commitment error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_my_campaigns(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Campaigns owned by the caller, plus commitments the caller has made on others' campaigns."""
+    try:
+        username = data.get('username')
+        all_campaigns = get_all_campaigns()
+
+        owned = [c for c in all_campaigns if c['owner_username'] == username]
+        owned.sort(key=lambda x: x['created_at'], reverse=True)
+
+        committed = []
+        for c in all_campaigns:
+            if c['owner_username'] == username:
+                continue
+            for commitment in c.get('commitments', []):
+                if commitment['provider_username'] == username:
+                    committed.append({
+                        'campaign_id': c['campaign_id'],
+                        'campaign_title': c['title'],
+                        'campaign_status': c['status'],
+                        **commitment,
+                    })
+        committed.sort(key=lambda x: x['created_at'], reverse=True)
+
+        return {"owned_campaigns": owned, "my_commitments": committed}, 200
+    except Exception as e:
+        logger.error(f"Get my campaigns error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+# -----------------------------------------------------------------------------
+# Endorsements (peer skill endorsements)
+# -----------------------------------------------------------------------------
+# Lightweight social proof that complements star ratings: any user can
+# endorse another for a specific skill/capability. Endorsements are shown on
+# profiles alongside reputation_score but never alter calculate_reputation_score
+# itself (which grab_job matching depends on).
+
+def submit_endorsement(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Endorse another user for a specific skill/capability. Idempotent per (endorser, target, skill)."""
+    try:
+        endorser = data.get('username')
+        target_username = (data.get('target_username') or '').strip()
+        skill = (data.get('skill') or '').strip()
+
+        if not target_username or not skill:
+            return {"error": "target_username and skill required"}, 400
+        if target_username == endorser:
+            return {"error": "Cannot endorse yourself"}, 400
+        if not account_exists(target_username):
+            return {"error": "User not found"}, 404
+
+        skill = skill[:40]
+        endorsements = get_endorsements(target_username)
+        existing = next(
+            (e for e in endorsements if e['endorser'] == endorser and e['skill'].lower() == skill.lower()),
+            None
+        )
+        if existing:
+            existing['created_at'] = int(time.time())
+        else:
+            endorsements.append({'endorser': endorser, 'skill': skill, 'created_at': int(time.time())})
+        save_endorsements(target_username, endorsements[:1000])
+
+        return {"target_username": target_username, "skill": skill, "message": "Endorsement recorded"}, 201
+    except Exception as e:
+        logger.error(f"Submit endorsement error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_user_endorsements(username: str) -> Tuple[Dict[str, Any], int]:
+    """Get a user's received endorsements, aggregated by skill (public)."""
+    try:
+        if not account_exists(username):
+            return {"error": "User not found"}, 404
+
+        endorsements = get_endorsements(username)
+        by_skill: Dict[str, List[str]] = {}
+        for e in endorsements:
+            by_skill.setdefault(e['skill'], []).append(e['endorser'])
+
+        skills = [
+            {'skill': skill, 'count': len(endorsers), 'endorsers': endorsers}
+            for skill, endorsers in by_skill.items()
+        ]
+        skills.sort(key=lambda s: s['count'], reverse=True)
+
+        return {"username": username, "total_endorsements": len(endorsements), "skills": skills}, 200
+    except Exception as e:
+        logger.error(f"Get user endorsements error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+# -----------------------------------------------------------------------------
+# Leaderboard
+# -----------------------------------------------------------------------------
+
+def get_leaderboard() -> Tuple[Dict[str, Any], int]:
+    """Public leaderboard: top reputation, top campaign fulfillers, top job-party collaborators."""
+    try:
+        accounts = get_all_accounts()
+        rep_ranked = []
+        for username, acc in accounts:
+            total_ratings = acc.get('total_ratings', 0)
+            if total_ratings < 3:
+                continue
+            rep_ranked.append({
+                'username': username,
+                'reputation_score': round(calculate_reputation_score(acc), 2),
+                'total_ratings': total_ratings,
+                'completed_jobs': acc.get('completed_jobs', 0),
+            })
+        rep_ranked.sort(key=lambda x: (x['reputation_score'], x['total_ratings']), reverse=True)
+
+        completed_jobs = [j for j in get_all_jobs() if j.get('status') == 'completed']
+
+        campaign_units: Dict[str, int] = {}
+        for j in completed_jobs:
+            if j.get('campaign_id'):
+                campaign_units[j['provider_username']] = campaign_units.get(j['provider_username'], 0) + j.get('campaign_units', 1)
+        top_campaign_fulfillers = [
+            {'username': u, 'units_fulfilled': n}
+            for u, n in sorted(campaign_units.items(), key=lambda kv: kv[1], reverse=True)
+        ]
+
+        collaborator_counts: Dict[str, int] = {}
+        for j in completed_jobs:
+            accepted_members = [p for p in j.get('party', []) if p.get('status') == 'accepted']
+            for member in accepted_members:
+                collaborator_counts[member['member_username']] = collaborator_counts.get(member['member_username'], 0) + 1
+            if accepted_members:
+                collaborator_counts[j['provider_username']] = collaborator_counts.get(j['provider_username'], 0) + 1
+        top_collaborators = [
+            {'username': u, 'party_jobs_completed': n}
+            for u, n in sorted(collaborator_counts.items(), key=lambda kv: kv[1], reverse=True)
+        ]
+
+        return {
+            "top_reputation": rep_ranked[:10],
+            "top_campaign_fulfillers": top_campaign_fulfillers[:10],
+            "top_collaborators": top_collaborators[:10],
+        }, 200
+    except Exception as e:
+        logger.error(f"Get leaderboard error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+# -----------------------------------------------------------------------------
+# Disputes (flagged jobs, admin review queue)
+# -----------------------------------------------------------------------------
+
+_VALID_DISPUTE_RESOLUTIONS = ('resolved', 'dismissed')
+
+def file_dispute(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """File a dispute on a job. Either the buyer or the provider on that job may file."""
+    try:
+        username = data.get('username')
+        job_id = data.get('job_id')
+        reason = (data.get('reason') or '').strip()
+
+        if not job_id or not reason:
+            return {"error": "job_id and reason required"}, 400
+
+        job = get_job(job_id)
+        if not job:
+            return {"error": "Job not found"}, 404
+
+        if username not in (job.get('buyer_username'), job.get('provider_username')):
+            return {"error": "Only the buyer or provider on this job can file a dispute"}, 403
+
+        counterparty = job['provider_username'] if username == job['buyer_username'] else job['buyer_username']
+        dispute = {
+            'dispute_id': str(uuid.uuid4()),
+            'job_id': job_id,
+            'filed_by': username,
+            'counterparty': counterparty,
+            'reason': reason[:1000],
+            'filed_at': int(time.time()),
+            'status': 'open',
+            'resolution_note': None,
+            'resolved_at': None,
+        }
+        disputes = get_disputes()
+        disputes.insert(0, dispute)
+        save_disputes(disputes[:2000])
+
+        logger.info(f"Dispute filed: {dispute['dispute_id']} on job {job_id} by {username}")
+        return dispute, 201
+    except Exception as e:
+        logger.error(f"File dispute error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def admin_list_disputes(status_filter: Optional[str] = None) -> Tuple[Dict[str, Any], int]:
+    """Admin-only: list all filed disputes, optionally filtered by status."""
+    try:
+        disputes = get_disputes()
+        if status_filter:
+            disputes = [d for d in disputes if d.get('status') == status_filter]
+        return {"disputes": disputes}, 200
+    except Exception as e:
+        logger.error(f"Admin list disputes error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def admin_resolve_dispute(dispute_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Admin-only: resolve or dismiss a dispute."""
+    try:
+        status = (data.get('status') or '').strip().lower()
+        note = (data.get('note') or '').strip()
+
+        if status not in _VALID_DISPUTE_RESOLUTIONS:
+            return {"error": f"status must be one of {_VALID_DISPUTE_RESOLUTIONS}"}, 400
+
+        disputes = get_disputes()
+        dispute = next((d for d in disputes if d['dispute_id'] == dispute_id), None)
+        if not dispute:
+            return {"error": "Dispute not found"}, 404
+
+        dispute['status'] = status
+        dispute['resolution_note'] = note[:1000] or None
+        dispute['resolved_at'] = int(time.time())
+        save_disputes(disputes)
+
+        return dispute, 200
+    except Exception as e:
+        logger.error(f"Admin resolve dispute error: {str(e)}")
         return {"error": "Internal server error"}, 500

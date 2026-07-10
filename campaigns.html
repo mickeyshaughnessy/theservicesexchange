@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Services Exchange - Campaigns</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css?v=5" rel="stylesheet">
+    <style>
+        .campaigns-header {
+            background: var(--bg-dark);
+            border-bottom: 1px solid rgba(0,255,255,0.25);
+            padding: 50px 0 30px;
+        }
+        .campaigns-header h1 { font-size: 1.1rem; }
+        .campaigns-tabs {
+            background: var(--bg-dark);
+            border-bottom: 1px solid rgba(0,255,255,0.25);
+            padding: 0.75rem 0 0;
+        }
+        .campaigns-tabs .tab-btn {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            background: transparent;
+            border: 1px solid transparent;
+            border-bottom: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .campaigns-tabs .tab-btn:hover { color: var(--primary); }
+        .campaigns-tabs .tab-btn.active {
+            color: var(--primary);
+            text-shadow: 0 0 8px rgba(0,255,255,0.6);
+            border-color: rgba(0,255,255,0.35);
+            background: var(--bg-deep);
+        }
+        .campaigns-panel { display: none; padding: 2rem 0; }
+        .campaigns-panel.active { display: block; }
+        .campaign-card {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.3);
+            box-shadow: 0 0 20px rgba(0,255,255,0.08);
+            padding: 1.25rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .campaign-card:hover { border-color: var(--primary); box-shadow: 0 0 30px rgba(0,255,255,0.18); }
+        .campaign-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            color: #ffffff;
+            margin-bottom: 0.4rem;
+        }
+        .campaign-meta { font-family: 'Share Tech Mono', monospace; font-size: 0.78rem; color: var(--text-dim); }
+        .campaign-price { color: var(--accent); font-family: 'Share Tech Mono', monospace; font-size: 1.1rem; margin: 0.5rem 0; }
+        .campaign-progress {
+            background: var(--bg-card);
+            height: 6px;
+            margin: 0.5rem 0 0.75rem;
+            overflow: hidden;
+        }
+        .campaign-progress-bar { background: var(--primary); height: 100%; }
+        .status-pill {
+            display: inline-block;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            padding: 2px 8px;
+            border: 1px solid;
+            text-transform: uppercase;
+        }
+        .status-open { color: var(--accent); border-color: var(--accent); }
+        .status-fulfilled { color: var(--primary); border-color: var(--primary); }
+        .status-pending { color: var(--yellow); border-color: var(--yellow); }
+        .status-accepted { color: var(--accent); border-color: var(--accent); }
+        .status-rejected, .status-declined { color: var(--danger); border-color: var(--danger); }
+        .lb-table { width: 100%; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; }
+        .lb-table th { color: var(--text-dim); text-align: left; padding: 6px 10px; border-bottom: 1px solid rgba(0,255,255,0.2); }
+        .lb-table td { padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--text); }
+        .lb-rank { color: var(--primary); width: 2em; }
+        .commit-row { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.08); padding: 0.75rem; margin-bottom: 0.5rem; }
+        .empty-note { color: var(--text-dim); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; }
+        #campaignDetailBody label { color: var(--text-dim); font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">RSE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="robots.html">Buy a Robot</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="examples.html">Examples</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="campaigns.html" aria-current="page">Campaigns</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="api_docs.html">API Docs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="about.html">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="feedback.html">Feedback</a>
+                    </li>
+                </ul>
+
+                <!-- Chat and Bulletin buttons (shown when logged in) -->
+                <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
+                <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
+
+                <!-- Account dropdown (shown when logged in) -->
+                <div id="accountDropdown" class="account-dropdown ms-3" style="display: none;">
+                    <button class="account-btn">
+                        <span id="accountUsername">Account</span> ▼
+                    </button>
+                    <div class="account-window">
+                        <div class="account-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" id="accountDisplayName">Loading...</h5>
+                                <button class="logout-btn" onclick="logout()">Logout</button>
+                            </div>
+                            <div class="reputation-display">
+                                <span class="star-rating" id="starDisplay">★★★★★</span>
+                                <span id="ratingText">4.5 (12 ratings)</span>
+                            </div>
+                        </div>
+
+                        <div class="account-section">
+                            <h6>Outstanding Requests</h6>
+                            <div class="loading-spinner" id="bidsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading requests...</span>
+                            </div>
+                            <div id="outstandingBids">
+                                <p class="text-muted mb-0">No outstanding requests</p>
+                            </div>
+                        </div>
+
+                        <div class="account-section">
+                            <h6>Active Services</h6>
+                            <div class="loading-spinner" id="activeJobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading active services...</span>
+                            </div>
+                            <div id="activeJobs">
+                                <p class="text-muted mb-0">No active services</p>
+                            </div>
+                        </div>
+
+                        <div class="account-section">
+                            <h6>Recent Completed Services</h6>
+                            <div class="loading-spinner" id="jobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading services...</span>
+                            </div>
+                            <div id="completedJobs">
+                                <p class="text-muted mb-0">No completed services</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Login button (shown when not logged in) -->
+                <button id="loginButton" class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="campaigns-header">
+        <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h1>Campaigns</h1>
+                <p class="mb-0">Bulk demand, fulfilled by committed capacity — post a multi-unit need or commit your fleet to one.</p>
+            </div>
+            <button class="btn btn-hero-secondary" onclick="openCreateCampaignModal()">+ Post a Campaign</button>
+        </div>
+    </div>
+
+    <div class="campaigns-tabs">
+        <div class="container">
+            <button class="tab-btn" data-tab="open" onclick="showCampaignsTab('open')">OPEN CAMPAIGNS</button>
+            <button class="tab-btn" data-tab="mine" onclick="showCampaignsTab('mine')">MY CAMPAIGNS</button>
+            <button class="tab-btn" data-tab="leaderboard" id="leaderboard" onclick="showCampaignsTab('leaderboard')">LEADERBOARD</button>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- Open Campaigns -->
+        <div class="campaigns-panel" id="panel-open">
+            <div class="d-flex gap-2 mb-3 flex-wrap">
+                <input type="text" class="form-control form-control-sm" style="max-width:220px;" id="campaignCategoryFilter" placeholder="Filter by category/service">
+                <input type="text" class="form-control form-control-sm" style="max-width:220px;" id="campaignLocationFilter" placeholder="Filter by location">
+                <button class="btn btn-sm btn-outline-light" onclick="loadOpenCampaigns()">Search</button>
+            </div>
+            <div id="openCampaignsGrid" class="row g-3"></div>
+            <p class="empty-note" id="openCampaignsEmpty" style="display:none;">No open campaigns right now — be the first to post one.</p>
+        </div>
+
+        <!-- My Campaigns -->
+        <div class="campaigns-panel" id="panel-mine">
+            <div id="mineLoggedOutNote" class="empty-note">Log in to see campaigns you've created or committed to.</div>
+            <div id="mineContent" style="display:none;">
+                <h5 class="mt-2">Campaigns I Created</h5>
+                <div id="ownedCampaignsList"></div>
+                <p class="empty-note" id="ownedCampaignsEmpty" style="display:none;">You haven't posted a campaign yet.</p>
+
+                <h5 class="mt-4">My Commitments</h5>
+                <div id="myCommitmentsList"></div>
+                <p class="empty-note" id="myCommitmentsEmpty" style="display:none;">You haven't committed capacity to any campaign yet.</p>
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="campaigns-panel" id="panel-leaderboard">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h6 style="font-family:'Press Start 2P',monospace;font-size:0.7rem;color:var(--primary);">Top Reputation</h6>
+                    <table class="lb-table"><tbody id="lbReputation"></tbody></table>
+                </div>
+                <div class="col-md-4">
+                    <h6 style="font-family:'Press Start 2P',monospace;font-size:0.7rem;color:var(--primary);">Top Campaign Fulfillers</h6>
+                    <table class="lb-table"><tbody id="lbCampaigns"></tbody></table>
+                </div>
+                <div class="col-md-4">
+                    <h6 style="font-family:'Press Start 2P',monospace;font-size:0.7rem;color:var(--primary);">Top Collaborators</h6>
+                    <table class="lb-table"><tbody id="lbCollaborators"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Create Campaign Modal -->
+    <div class="modal fade" id="createCampaignModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Post a Campaign</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="createCampaignError" class="error-message" style="display:none;"></div>
+                    <form id="createCampaignForm">
+                        <div class="mb-2"><input class="form-control form-control-sm" id="ccTitle" placeholder="Title" required maxlength="120"></div>
+                        <div class="mb-2"><textarea class="form-control form-control-sm" id="ccDescription" placeholder="Description" rows="2" maxlength="2000"></textarea></div>
+                        <div class="mb-2"><input class="form-control form-control-sm" id="ccService" placeholder="Service (what you need done)" required></div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6"><input type="number" step="0.01" min="0.01" class="form-control form-control-sm" id="ccUnitPrice" placeholder="Unit price (USD)" required></div>
+                            <div class="col-6"><input type="number" min="1" class="form-control form-control-sm" id="ccUnitsNeeded" placeholder="Units needed" required></div>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <select class="form-control form-control-sm" id="ccLocationType">
+                                    <option value="remote">Remote</option>
+                                    <option value="physical">Physical</option>
+                                    <option value="hybrid">Hybrid</option>
+                                </select>
+                            </div>
+                            <div class="col-6"><input type="number" class="form-control form-control-sm" id="ccDurationDays" placeholder="Open for (days)" value="7" min="1"></div>
+                        </div>
+                        <div class="mb-2"><input class="form-control form-control-sm" id="ccAddress" placeholder="Address (physical/hybrid only)"></div>
+                        <button type="submit" class="btn btn-primary w-100" id="ccSubmitBtn">Post Campaign</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Detail Modal -->
+    <div class="modal fade" id="campaignDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="campaignDetailTitle">Campaign</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="campaignDetailBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const CAMPAIGNS_API = 'https://rse-api.com:5003';
+
+    function authHeaders() {
+        return window.authToken ? { 'Authorization': 'Bearer ' + window.authToken } : {};
+    }
+
+    function showCampaignsTab(name) {
+        document.querySelectorAll('.campaigns-tabs .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+        document.querySelectorAll('.campaigns-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+        history.replaceState(null, '', 'campaigns.html' + (name === 'open' ? '' : '#' + name));
+        if (name === 'mine') loadMyCampaigns();
+        if (name === 'leaderboard') loadLeaderboard();
+    }
+
+    function serviceText(service) {
+        return typeof service === 'object' ? JSON.stringify(service) : service;
+    }
+
+    function statusPill(status) {
+        return `<span class="status-pill status-${escapeHtml(status)}">${escapeHtml(status)}</span>`;
+    }
+
+    // ── Open Campaigns ──────────────────────────────────────────────────
+    async function loadOpenCampaigns() {
+        const grid = document.getElementById('openCampaignsGrid');
+        const empty = document.getElementById('openCampaignsEmpty');
+        grid.innerHTML = '<p class="empty-note">Loading campaigns…</p>';
+        const params = new URLSearchParams();
+        const cat = document.getElementById('campaignCategoryFilter').value.trim();
+        const loc = document.getElementById('campaignLocationFilter').value.trim();
+        if (cat) params.set('category', cat);
+        if (loc) params.set('location', loc);
+        try {
+            const r = await fetch(`${CAMPAIGNS_API}/campaigns?` + params.toString());
+            const data = await r.json();
+            const campaigns = data.campaigns || [];
+            grid.innerHTML = '';
+            empty.style.display = campaigns.length ? 'none' : 'block';
+            campaigns.forEach(c => grid.appendChild(campaignCardEl(c)));
+        } catch (e) {
+            grid.innerHTML = '<p class="empty-note">Failed to load campaigns.</p>';
+        }
+    }
+
+    function campaignCardEl(c) {
+        const col = document.createElement('div');
+        col.className = 'col-md-4';
+        const pct = c.units_needed ? Math.round(100 * (c.units_needed - c.units_remaining) / c.units_needed) : 0;
+        col.innerHTML = `
+            <div class="campaign-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="campaign-title">${escapeHtml(c.title)}</div>
+                    ${statusPill(c.status)}
+                </div>
+                <div class="campaign-meta">${escapeHtml(serviceText(c.service))}</div>
+                <div class="campaign-price">${escapeHtml(c.currency || 'USD')} ${c.unit_price} / unit</div>
+                <div class="campaign-progress"><div class="campaign-progress-bar" style="width:${pct}%"></div></div>
+                <div class="campaign-meta">${c.units_remaining} of ${c.units_needed} units remaining</div>
+                <div class="campaign-meta">Posted by ${escapeHtml(c.owner_username)} • Ends ${new Date(c.end_time * 1000).toLocaleDateString()}</div>
+                <button class="btn btn-sm btn-outline-light mt-2" onclick="openCampaignDetail('${c.campaign_id}')">View / Commit</button>
+            </div>`;
+        return col;
+    }
+
+    // ── Create Campaign ─────────────────────────────────────────────────
+    function openCreateCampaignModal() {
+        if (!window.authToken) { showAuth(); return; }
+        new bootstrap.Modal(document.getElementById('createCampaignModal')).show();
+    }
+
+    document.getElementById('createCampaignForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const errEl = document.getElementById('createCampaignError');
+        errEl.style.display = 'none';
+        const locationType = document.getElementById('ccLocationType').value;
+        const days = parseFloat(document.getElementById('ccDurationDays').value) || 7;
+        const body = {
+            title: document.getElementById('ccTitle').value,
+            description: document.getElementById('ccDescription').value,
+            service: document.getElementById('ccService').value,
+            unit_price: parseFloat(document.getElementById('ccUnitPrice').value),
+            units_needed: parseInt(document.getElementById('ccUnitsNeeded').value, 10),
+            location_type: locationType,
+            end_time: Math.floor(Date.now() / 1000) + Math.round(days * 86400)
+        };
+        if (locationType !== 'remote') {
+            const addr = document.getElementById('ccAddress').value.trim();
+            if (addr) body.address = addr;
+        }
+        try {
+            const r = await fetch(`${CAMPAIGNS_API}/campaigns`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
+                body: JSON.stringify(body)
+            });
+            const data = await r.json();
+            if (r.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('createCampaignModal')).hide();
+                document.getElementById('createCampaignForm').reset();
+                showCampaignsTab('open');
+                loadOpenCampaigns();
+            } else {
+                errEl.textContent = data.error || 'Failed to create campaign';
+                errEl.style.display = 'block';
+            }
+        } catch (err) {
+            errEl.textContent = 'Network error';
+            errEl.style.display = 'block';
+        }
+    });
+
+    // ── Campaign Detail / Commit / Accept / Reject ──────────────────────
+    async function openCampaignDetail(campaignId) {
+        const modalEl = document.getElementById('campaignDetailModal');
+        const body = document.getElementById('campaignDetailBody');
+        document.getElementById('campaignDetailTitle').textContent = 'Loading…';
+        body.innerHTML = '';
+        new bootstrap.Modal(modalEl).show();
+        await renderCampaignDetail(campaignId);
+    }
+
+    async function renderCampaignDetail(campaignId) {
+        const body = document.getElementById('campaignDetailBody');
+        try {
+            const r = await fetch(`${CAMPAIGNS_API}/campaigns/${campaignId}`);
+            const c = await r.json();
+            if (!r.ok) { body.innerHTML = `<p class="empty-note">${escapeHtml(c.error || 'Campaign not found')}</p>`; return; }
+
+            document.getElementById('campaignDetailTitle').textContent = c.title;
+            const isOwner = window.currentUsername && window.currentUsername === c.owner_username;
+            const pct = c.units_needed ? Math.round(100 * (c.units_needed - c.units_remaining) / c.units_needed) : 0;
+
+            let commitmentsHtml = '<p class="empty-note">No commitments yet.</p>';
+            if ((c.commitments || []).length) {
+                commitmentsHtml = c.commitments.map(cm => `
+                    <div class="commit-row d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <div>${escapeHtml(cm.provider_username)} — ${cm.units} unit(s) ${statusPill(cm.status)}</div>
+                            ${cm.capabilities ? `<div class="campaign-meta">${escapeHtml(cm.capabilities)}</div>` : ''}
+                            ${cm.message ? `<div class="campaign-meta">"${escapeHtml(cm.message)}"</div>` : ''}
+                        </div>
+                        ${isOwner && cm.status === 'pending' ? `
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-light" onclick="respondCommitment('${c.campaign_id}','${cm.commitment_id}','accept')">Accept</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="respondCommitment('${c.campaign_id}','${cm.commitment_id}','reject')">Reject</button>
+                            </div>` : ''}
+                    </div>`).join('');
+            }
+
+            const canCommit = window.authToken && !isOwner && c.status === 'open' && c.units_remaining > 0;
+
+            body.innerHTML = `
+                <p class="campaign-meta">${escapeHtml(c.description || '')}</p>
+                <p class="campaign-meta">${escapeHtml(serviceText(c.service))}</p>
+                <div class="campaign-price">${escapeHtml(c.currency || 'USD')} ${c.unit_price} / unit</div>
+                <div class="campaign-progress"><div class="campaign-progress-bar" style="width:${pct}%"></div></div>
+                <p class="campaign-meta">${c.units_remaining} of ${c.units_needed} units remaining • ${statusPill(c.status)}</p>
+                <p class="campaign-meta">Posted by ${escapeHtml(c.owner_username)} • Ends ${new Date(c.end_time * 1000).toLocaleString()}</p>
+                <hr style="border-color:rgba(0,255,255,0.15);">
+                <h6>Commitments</h6>
+                <div id="commitmentsList">${commitmentsHtml}</div>
+                ${canCommit ? `
+                    <hr style="border-color:rgba(0,255,255,0.15);">
+                    <h6>Commit Capacity</h6>
+                    <div id="commitError" class="error-message" style="display:none;"></div>
+                    <div class="row g-2">
+                        <div class="col-4"><input type="number" min="1" max="${c.units_remaining}" class="form-control form-control-sm" id="commitUnits" placeholder="Units" value="1"></div>
+                        <div class="col-8"><input class="form-control form-control-sm" id="commitCapabilities" placeholder="Your capabilities"></div>
+                    </div>
+                    <div class="row g-2 mt-1">
+                        <div class="col-12"><input class="form-control form-control-sm" id="commitMessage" placeholder="Message to the campaign owner (optional)" maxlength="500"></div>
+                    </div>
+                    <button class="btn btn-sm btn-primary mt-2" onclick="submitCommitment('${c.campaign_id}')">Commit</button>
+                ` : (!window.authToken ? '<p class="empty-note mt-2">Log in to commit capacity.</p>' : '')}
+            `;
+        } catch (e) {
+            body.innerHTML = '<p class="empty-note">Failed to load campaign.</p>';
+        }
+    }
+
+    async function submitCommitment(campaignId) {
+        const errEl = document.getElementById('commitError');
+        const units = parseInt(document.getElementById('commitUnits').value, 10);
+        const capabilities = document.getElementById('commitCapabilities').value;
+        const message = document.getElementById('commitMessage').value;
+        try {
+            const r = await fetch(`${CAMPAIGNS_API}/campaigns/${campaignId}/commit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
+                body: JSON.stringify({ units, capabilities, message })
+            });
+            const data = await r.json();
+            if (r.ok) {
+                await renderCampaignDetail(campaignId);
+            } else {
+                errEl.textContent = data.error || 'Failed to commit';
+                errEl.style.display = 'block';
+            }
+        } catch (e) {
+            errEl.textContent = 'Network error';
+            errEl.style.display = 'block';
+        }
+    }
+
+    async function respondCommitment(campaignId, commitmentId, action) {
+        try {
+            const r = await fetch(`${CAMPAIGNS_API}/campaigns/${campaignId}/commitments/${commitmentId}/${action}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...authHeaders() }
+            });
+            if (!r.ok) {
+                const data = await r.json().catch(() => ({}));
+                alert(`Failed to ${action} commitment: ${data.error || 'Unknown error'}`);
+                return;
+            }
+            await renderCampaignDetail(campaignId);
+            loadOpenCampaigns();
+        } catch (e) {
+            alert('Network error while responding to commitment');
+        }
+    }
+
+    // ── My Campaigns ─────────────────────────────────────────────────────
+    async function loadMyCampaigns() {
+        const loggedOutNote = document.getElementById('mineLoggedOutNote');
+        const content = document.getElementById('mineContent');
+        if (!window.authToken) { loggedOutNote.style.display = 'block'; content.style.display = 'none'; return; }
+        loggedOutNote.style.display = 'none';
+        content.style.display = 'block';
+
+        try {
+            const r = await fetch(`${CAMPAIGNS_API}/my_campaigns`, { headers: authHeaders() });
+            const data = await r.json();
+            const owned = data.owned_campaigns || [];
+            const mine = data.my_commitments || [];
+
+            const ownedList = document.getElementById('ownedCampaignsList');
+            document.getElementById('ownedCampaignsEmpty').style.display = owned.length ? 'none' : 'block';
+            ownedList.innerHTML = owned.map(c => `
+                <div class="commit-row d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <strong>${escapeHtml(c.title)}</strong> ${statusPill(c.status)}
+                        <div class="campaign-meta">${c.units_remaining}/${c.units_needed} units remaining • ${(c.commitments||[]).filter(cm=>cm.status==='pending').length} pending commitment(s)</div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-light" onclick="openCampaignDetail('${c.campaign_id}')">Manage</button>
+                </div>`).join('');
+
+            const mineList = document.getElementById('myCommitmentsList');
+            document.getElementById('myCommitmentsEmpty').style.display = mine.length ? 'none' : 'block';
+            mineList.innerHTML = mine.map(cm => `
+                <div class="commit-row d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <strong>${escapeHtml(cm.campaign_title)}</strong> ${statusPill(cm.status)}
+                        <div class="campaign-meta">${cm.units} unit(s) committed • campaign ${escapeHtml(cm.campaign_status)}</div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-light" onclick="openCampaignDetail('${cm.campaign_id}')">View</button>
+                </div>`).join('');
+        } catch (e) {
+            console.error('Failed to load my campaigns', e);
+        }
+    }
+
+    // ── Leaderboard ───────────────────────────────────────────────────────
+    async function loadLeaderboard() {
+        try {
+            const r = await fetch(`${CAMPAIGNS_API}/leaderboard`);
+            const data = await r.json();
+            const rows = (list, valueKey, label) => (list && list.length)
+                ? list.map((row, i) => `<tr><td class="lb-rank">#${i+1}</td><td>${escapeHtml(row.username)}</td><td>${escapeHtml(String(row[valueKey]))} ${label}</td></tr>`).join('')
+                : '<tr><td colspan="3" class="empty-note">No data yet</td></tr>';
+
+            document.getElementById('lbReputation').innerHTML = rows(data.top_reputation, 'reputation_score', '★');
+            document.getElementById('lbCampaigns').innerHTML = rows(data.top_campaign_fulfillers, 'units_fulfilled', 'units');
+            document.getElementById('lbCollaborators').innerHTML = rows(data.top_collaborators, 'party_jobs_completed', 'jobs');
+        } catch (e) {
+            console.error('Failed to load leaderboard', e);
+        }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+        loadOpenCampaigns();
+        const initialTab = (location.hash || '').replace('#', '') || 'open';
+        showCampaignsTab(['open', 'mine', 'leaderboard'].includes(initialTab) ? initialTab : 'open');
+    });
+    </script>
+
+    <!-- Auth Modal -->
+    <div class="modal fade" id="authModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Get Started</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="authError" class="error-message" style="display: none;"></div>
+
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#register">Register</a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="login">
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" placeholder="Username" id="loginUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="password" class="form-control" placeholder="Password" id="loginPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">Login</button>
+                            </form>
+                        </div>
+
+                        <div class="tab-pane" id="register">
+                            <form id="registerForm">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" placeholder="Username" id="regUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">I want to:</label>
+                                    <div class="user-type-selector">
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="demand" id="typeDemand" required>
+                                            <span class="user-type-card">
+                                                <strong>Buy Services</strong>
+                                                <small>Post requests and hire providers</small>
+                                            </span>
+                                        </label>
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="supply" id="typeSupply">
+                                            <span class="user-type-card">
+                                                <strong>Provide Services</strong>
+                                                <small>Find work and earn money</small>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">Register</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=5"></script>
+</body>
+</html>

@@ -36,6 +36,21 @@ tags:
     description: Public feedback board with threaded replies
   - name: Financing
     description: Robot financing applications (partner integrations pending)
+  - name: Cooperation
+    description: |
+      Multi-robot cooperation — ad-hoc per-job coalitions ("job parties") and
+      dispute filing. A job party has no persistent identity: a provider who
+      grabbed a job can invite co-providers just for that job, and the split
+      dissolves once the job completes.
+  - name: Campaigns
+    description: |
+      Multi-unit demand-side initiatives. A buyer posts a bulk/recurring need;
+      providers commit capacity (a number of units); the campaign owner accepts
+      or rejects each commitment. Accepted commitments become normal jobs.
+  - name: Reputation
+    description: Peer skill endorsements and platform leaderboards
+  - name: Admin
+    description: Stopgap admin endpoints gated on the X-Admin-Key shared-secret header
 
 components:
   securitySchemes:
@@ -73,6 +88,11 @@ components:
         start_lon: { type: number, nullable: true }
         end_lat: { type: number, nullable: true }
         end_lon: { type: number, nullable: true }
+        party:
+          type: array
+          items: { $ref: '#/components/schemas/JobPartyMember' }
+          description: Ad-hoc co-provider invitations on this job (empty unless the provider formed a party)
+        campaign_id: { type: string, nullable: true, description: Set when this job was spun up by accepting a campaign commitment }
     FeedbackPost:
       type: object
       properties:
@@ -99,6 +119,71 @@ components:
         min_amount: { type: number }
         max_amount: { type: number }
         integration_status: { type: string, example: pending }
+    JobPartyMember:
+      type: object
+      properties:
+        member_username: { type: string }
+        share: { type: number, description: Fraction of the job (0-1, exclusive) this member earns credit for }
+        status: { type: string, enum: [invited, accepted, declined] }
+        invited_at: { type: integer }
+        responded_at: { type: integer, nullable: true }
+    Campaign:
+      type: object
+      properties:
+        campaign_id: { type: string, format: uuid }
+        owner_username: { type: string }
+        title: { type: string }
+        description: { type: string }
+        service: { type: string, description: Service description (string, or JSON object) }
+        unit_price: { type: number }
+        currency: { type: string, example: USD }
+        payment_method: { type: string, example: cash }
+        units_needed: { type: integer }
+        units_remaining: { type: integer }
+        location_type: { type: string, enum: [physical, remote, hybrid] }
+        address: { type: string, nullable: true }
+        lat: { type: number, nullable: true }
+        lon: { type: number, nullable: true }
+        end_time: { type: integer, description: Unix timestamp when the campaign closes }
+        created_at: { type: integer }
+        status: { type: string, enum: [open, fulfilled, closed, expired] }
+        commitments:
+          type: array
+          items: { $ref: '#/components/schemas/CampaignCommitment' }
+    CampaignCommitment:
+      type: object
+      properties:
+        commitment_id: { type: string, format: uuid }
+        provider_username: { type: string }
+        units: { type: integer }
+        capabilities: { type: string }
+        message: { type: string }
+        status: { type: string, enum: [pending, accepted, rejected] }
+        created_at: { type: integer }
+        responded_at: { type: integer, nullable: true }
+        job_ids:
+          type: array
+          items: { type: string }
+    Dispute:
+      type: object
+      properties:
+        dispute_id: { type: string, format: uuid }
+        job_id: { type: string }
+        filed_by: { type: string }
+        counterparty: { type: string }
+        reason: { type: string }
+        filed_at: { type: integer }
+        status: { type: string, enum: [open, resolved, dismissed] }
+        resolution_note: { type: string, nullable: true }
+        resolved_at: { type: integer, nullable: true }
+    EndorsementSkill:
+      type: object
+      properties:
+        skill: { type: string }
+        count: { type: integer }
+        endorsers:
+          type: array
+          items: { type: string }
 
 paths:
   /ping:
@@ -633,3 +718,356 @@ paths:
                     status: pending
                     note: Application queued — partner integration pending. You will be contacted by email.
         '400': { description: Validation error }
+
+  /jobs/{job_id}/party/invite:
+    post:
+      tags: [Cooperation]
+      summary: Invite a co-provider to share a job (ad-hoc job party)
+      description: |
+        Only the job's primary provider may invite. The job must be in
+        `accepted` state. The primary provider always keeps at least a 5%
+        share, so the sum of invited/accepted shares is capped at 0.95.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: job_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [member_username, share]
+              properties:
+                member_username: { type: string }
+                share: { type: number, exclusiveMinimum: 0, exclusiveMaximum: 1 }
+      responses:
+        '201':
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id: { type: string }
+                  party:
+                    type: array
+                    items: { $ref: '#/components/schemas/JobPartyMember' }
+        '400': { description: Validation error, already invited, or share exceeds available capacity }
+        '403': { description: Only the primary provider can invite }
+        '404': { description: Job or member_username not found }
+  /jobs/{job_id}/party/respond:
+    post:
+      tags: [Cooperation]
+      summary: Accept or decline a job-party invitation
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: job_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [accept, decline] }
+      responses:
+        '200': { description: Invitation updated }
+        '400': { description: Missing fields or already responded }
+        '404': { description: Job not found or no invitation for this user }
+  /jobs/{job_id}/party:
+    get:
+      tags: [Cooperation]
+      summary: View a job's party roster
+      description: Visible to the buyer, the primary provider, and any invited/accepted party members.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: job_id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Party roster and the primary provider's residual share
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id: { type: string }
+                  provider_username: { type: string }
+                  provider_share: { type: number }
+                  party:
+                    type: array
+                    items: { $ref: '#/components/schemas/JobPartyMember' }
+        '403': { description: Not a party to this job }
+        '404': { description: Job not found }
+  /jobs/{job_id}/dispute:
+    post:
+      tags: [Cooperation]
+      summary: File a dispute on a job
+      description: Either the buyer or the provider on the job may file. Reviewed by admins via GET /admin/disputes.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: job_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, maxLength: 1000 }
+      responses:
+        '201':
+          description: Dispute filed
+          content: { application/json: { schema: { $ref: '#/components/schemas/Dispute' } } }
+        '400': { description: reason required }
+        '403': { description: Not a party to this job }
+        '404': { description: Job not found }
+
+  /campaigns:
+    post:
+      tags: [Campaigns]
+      summary: Create a multi-unit campaign (buyer)
+      description: Demand-type accounts only. Physical/hybrid campaigns require `lat`+`lon` or `address`.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, service, unit_price, units_needed, end_time]
+              properties:
+                title: { type: string, maxLength: 120 }
+                description: { type: string, maxLength: 2000 }
+                service: { type: string, description: What you need done (string or JSON object) }
+                unit_price: { type: number, exclusiveMinimum: 0 }
+                units_needed: { type: integer, minimum: 1 }
+                currency: { type: string, default: USD }
+                payment_method: { type: string, default: cash }
+                location_type: { type: string, enum: [physical, remote, hybrid], default: physical }
+                address: { type: string }
+                lat: { type: number }
+                lon: { type: number }
+                end_time: { type: integer, description: Unix timestamp when the campaign closes (must be in the future) }
+      responses:
+        '201':
+          description: Campaign created
+          content: { application/json: { schema: { $ref: '#/components/schemas/Campaign' } } }
+        '400': { description: Validation error }
+        '403': { description: Only demand-type accounts can create campaigns }
+    get:
+      tags: [Campaigns]
+      summary: List open campaigns (public)
+      parameters:
+        - { name: category, in: query, schema: { type: string }, description: Substring filter on title/service }
+        - { name: location, in: query, schema: { type: string }, description: Substring filter on address }
+        - { name: limit, in: query, schema: { type: integer, default: 50, maximum: 200 } }
+      responses:
+        '200':
+          description: Open campaigns (commitments omitted from this list view), newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  campaigns:
+                    type: array
+                    items: { $ref: '#/components/schemas/Campaign' }
+  /campaigns/{campaign_id}:
+    get:
+      tags: [Campaigns]
+      summary: Get full campaign detail, including commitments (public)
+      parameters:
+        - { name: campaign_id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Campaign detail, content: { application/json: { schema: { $ref: '#/components/schemas/Campaign' } } } }
+        '404': { description: Campaign not found }
+  /campaigns/{campaign_id}/commit:
+    post:
+      tags: [Campaigns]
+      summary: Commit capacity toward fulfilling a campaign (provider)
+      description: Supply-type accounts only. Cannot commit to your own campaign.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: campaign_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [units]
+              properties:
+                units: { type: integer, minimum: 1 }
+                capabilities: { type: string, maxLength: 400 }
+                message: { type: string, maxLength: 500 }
+      responses:
+        '201':
+          description: Commitment created (pending owner review)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  campaign_id: { type: string }
+                  commitment: { $ref: '#/components/schemas/CampaignCommitment' }
+        '400': { description: Validation error, campaign not open, or insufficient units remaining }
+        '403': { description: Only supply-type accounts can commit, or campaign is your own }
+        '404': { description: Campaign not found }
+  /campaigns/{campaign_id}/commitments/{commitment_id}/accept:
+    post:
+      tags: [Campaigns]
+      summary: Accept a pending commitment (campaign owner)
+      description: |
+        Creates a normal job record for the committed units (same shape as a
+        grab_job result) and decrements the campaign's units_remaining. The
+        campaign is marked `fulfilled` once units_remaining reaches zero.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: campaign_id, in: path, required: true, schema: { type: string } }
+        - { name: commitment_id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Commitment accepted and job created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  campaign_id: { type: string }
+                  commitment: { $ref: '#/components/schemas/CampaignCommitment' }
+                  job: { $ref: '#/components/schemas/Job' }
+        '400': { description: Commitment already responded to, or campaign no longer open }
+        '403': { description: Only the campaign owner can respond }
+        '404': { description: Campaign or commitment not found }
+  /campaigns/{campaign_id}/commitments/{commitment_id}/reject:
+    post:
+      tags: [Campaigns]
+      summary: Reject a pending commitment (campaign owner)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: campaign_id, in: path, required: true, schema: { type: string } }
+        - { name: commitment_id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Commitment rejected }
+        '400': { description: Commitment already responded to }
+        '403': { description: Only the campaign owner can respond }
+        '404': { description: Campaign or commitment not found }
+  /my_campaigns:
+    get:
+      tags: [Campaigns]
+      summary: List my owned campaigns and my commitments on others' campaigns
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: owned_campaigns and my_commitments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  owned_campaigns:
+                    type: array
+                    items: { $ref: '#/components/schemas/Campaign' }
+                  my_commitments:
+                    type: array
+                    items: { type: object }
+
+  /endorsements:
+    post:
+      tags: [Reputation]
+      summary: Endorse another user for a skill
+      description: |
+        Idempotent per (endorser, target, skill) — re-endorsing the same skill
+        just refreshes the timestamp. Endorsements are shown on profiles as
+        social proof; they do not alter reputation_score used for job matching.
+        Rate limited to 20/minute.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_username, skill]
+              properties:
+                target_username: { type: string }
+                skill: { type: string, maxLength: 40 }
+      responses:
+        '201': { description: Endorsement recorded }
+        '400': { description: Missing fields or endorsing yourself }
+        '404': { description: target_username not found }
+  /endorsements/{username}:
+    get:
+      tags: [Reputation]
+      summary: Get a user's received endorsements, aggregated by skill (public)
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Endorsement summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username: { type: string }
+                  total_endorsements: { type: integer }
+                  skills:
+                    type: array
+                    items: { $ref: '#/components/schemas/EndorsementSkill' }
+        '404': { description: User not found }
+  /leaderboard:
+    get:
+      tags: [Reputation]
+      summary: Platform leaderboards (public)
+      description: |
+        Three rankings, top 10 each: `top_reputation` (accounts with 3+
+        ratings), `top_campaign_fulfillers` (units fulfilled via accepted
+        campaign commitments), and `top_collaborators` (completed job-party
+        participations).
+      responses:
+        '200': { description: Leaderboard rankings }
+
+  /admin/disputes:
+    get:
+      tags: [Admin]
+      summary: List filed disputes (admin)
+      description: Requires the `X-Admin-Key` header (shared secret; no per-admin accounts exist yet).
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [open, resolved, dismissed] } }
+      responses:
+        '200':
+          description: Disputes, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  disputes:
+                    type: array
+                    items: { $ref: '#/components/schemas/Dispute' }
+        '401': { description: Missing or invalid X-Admin-Key }
+  /admin/disputes/{dispute_id}/resolve:
+    post:
+      tags: [Admin]
+      summary: Resolve or dismiss a dispute (admin)
+      description: Requires the `X-Admin-Key` header.
+      parameters:
+        - { name: dispute_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [resolved, dismissed] }
+                note: { type: string, maxLength: 1000 }
+      responses:
+        '200': { description: Dispute updated, content: { application/json: { schema: { $ref: '#/components/schemas/Dispute' } } } }
+        '400': { description: Invalid status }
+        '401': { description: Missing or invalid X-Admin-Key }
+        '404': { description: Dispute not found }

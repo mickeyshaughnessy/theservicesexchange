@@ -61,6 +61,21 @@ from handlers import (
     handle_purchase_cosmetic,
     equip_cosmetic,
     admin_adjust_credits,
+    invite_job_party,
+    respond_job_party,
+    get_job_party,
+    create_campaign,
+    get_campaigns,
+    get_campaign_detail,
+    commit_to_campaign,
+    respond_campaign_commitment,
+    get_my_campaigns,
+    submit_endorsement,
+    get_user_endorsements,
+    get_leaderboard,
+    file_dispute,
+    admin_list_disputes,
+    admin_resolve_dispute,
 )
 from utils import get_token_username
 
@@ -363,6 +378,129 @@ def handle_sign_job(current_user):
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
+# Job Party Endpoints (ad-hoc per-job coalitions)
+# -----------------------------------------------------------------------------
+
+@app.route('/jobs/<job_id>/party/invite', methods=['POST'])
+@token_required
+def handle_invite_job_party(current_user, job_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['job_id'] = job_id
+    response, status = invite_job_party(data)
+    return flask.jsonify(response), status
+
+@app.route('/jobs/<job_id>/party/respond', methods=['POST'])
+@token_required
+def handle_respond_job_party(current_user, job_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['job_id'] = job_id
+    response, status = respond_job_party(data)
+    return flask.jsonify(response), status
+
+@app.route('/jobs/<job_id>/party', methods=['GET'])
+@token_required
+def handle_get_job_party(current_user, job_id):
+    response, status = get_job_party({'username': current_user, 'job_id': job_id})
+    return flask.jsonify(response), status
+
+@app.route('/jobs/<job_id>/dispute', methods=['POST'])
+@token_required
+def handle_file_dispute(current_user, job_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['job_id'] = job_id
+    response, status = file_dispute(data)
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# Campaign Endpoints (multi-unit demand-side initiatives)
+# -----------------------------------------------------------------------------
+
+@app.route('/campaigns', methods=['POST'])
+@token_required
+def handle_create_campaign(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = create_campaign(data)
+    return flask.jsonify(response), status
+
+@app.route('/campaigns', methods=['GET'])
+def handle_get_campaigns():
+    """Public endpoint listing open campaigns."""
+    try:
+        data = {
+            'category': flask.request.args.get('category'),
+            'location': flask.request.args.get('location'),
+            'limit': int(flask.request.args.get('limit', 50)),
+        }
+        response, status = get_campaigns(data)
+        return flask.jsonify(response), status
+    except ValueError:
+        return flask.jsonify({"error": "Invalid parameters"}), 400
+
+@app.route('/campaigns/<campaign_id>', methods=['GET'])
+def handle_get_campaign_detail(campaign_id):
+    """Public endpoint for full campaign detail, including commitments."""
+    response, status = get_campaign_detail({'campaign_id': campaign_id})
+    return flask.jsonify(response), status
+
+@app.route('/campaigns/<campaign_id>/commit', methods=['POST'])
+@token_required
+def handle_commit_to_campaign(current_user, campaign_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['campaign_id'] = campaign_id
+    response, status = commit_to_campaign(data)
+    return flask.jsonify(response), status
+
+@app.route('/campaigns/<campaign_id>/commitments/<commitment_id>/accept', methods=['POST'])
+@token_required
+def handle_accept_campaign_commitment(current_user, campaign_id, commitment_id):
+    data = {'username': current_user, 'action': 'accept'}
+    response, status = respond_campaign_commitment(campaign_id, commitment_id, data)
+    return flask.jsonify(response), status
+
+@app.route('/campaigns/<campaign_id>/commitments/<commitment_id>/reject', methods=['POST'])
+@token_required
+def handle_reject_campaign_commitment(current_user, campaign_id, commitment_id):
+    data = {'username': current_user, 'action': 'reject'}
+    response, status = respond_campaign_commitment(campaign_id, commitment_id, data)
+    return flask.jsonify(response), status
+
+@app.route('/my_campaigns', methods=['GET'])
+@token_required
+def handle_get_my_campaigns(current_user):
+    response, status = get_my_campaigns({'username': current_user})
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# Endorsement & Leaderboard Endpoints
+# -----------------------------------------------------------------------------
+
+@app.route('/endorsements', methods=['POST'])
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_submit_endorsement(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = submit_endorsement(data)
+    return flask.jsonify(response), status
+
+@app.route('/endorsements/<username>', methods=['GET'])
+def handle_get_user_endorsements(username):
+    """Public endpoint listing endorsements a user has received."""
+    response, status = get_user_endorsements(username)
+    return flask.jsonify(response), status
+
+@app.route('/leaderboard', methods=['GET'])
+def handle_leaderboard():
+    """Public endpoint for the reputation/campaign/collaboration leaderboards."""
+    response, status = get_leaderboard()
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
 # Public Endpoints
 # -----------------------------------------------------------------------------
 
@@ -632,6 +770,23 @@ def admin_credits():
         return flask.jsonify({"error": "Unauthorized"}), 401
     data = flask.request.get_json() or {}
     response, status = admin_adjust_credits(data)
+    return flask.jsonify(response), status
+
+@app.route('/admin/disputes', methods=['GET'])
+def admin_disputes():
+    """Stopgap admin-only dispute queue, gated on the shared secret header."""
+    if not hmac.compare_digest(flask.request.headers.get('X-Admin-Key', ''), _ADMIN_KEY):
+        return flask.jsonify({"error": "Unauthorized"}), 401
+    response, status = admin_list_disputes(flask.request.args.get('status'))
+    return flask.jsonify(response), status
+
+@app.route('/admin/disputes/<dispute_id>/resolve', methods=['POST'])
+def admin_resolve_dispute_route(dispute_id):
+    """Stopgap admin-only dispute resolution, gated on the shared secret header."""
+    if not hmac.compare_digest(flask.request.headers.get('X-Admin-Key', ''), _ADMIN_KEY):
+        return flask.jsonify({"error": "Unauthorized"}), 401
+    data = flask.request.get_json() or {}
+    response, status = admin_resolve_dispute(dispute_id, data)
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------

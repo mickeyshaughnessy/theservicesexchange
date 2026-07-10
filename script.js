@@ -19,6 +19,7 @@ const AppState = {
     outstandingBids: [],
     completedJobs: [],
     activeJobs: [],
+    partyInvites: [],
     conversations: [],
     currentConversation: null,
     bulletinPosts: [],
@@ -460,6 +461,7 @@ async function loadCompletedJobs() {
             const data = await response.json();
             AppState.completedJobs = data.completed_jobs || [];
             AppState.activeJobs = data.active_jobs || [];
+            AppState.partyInvites = data.party_invites || [];
             updateJobsDisplay();
             updateActiveJobsDisplay();
             updateProviderDashboard();
@@ -472,35 +474,74 @@ async function loadCompletedJobs() {
     }
 }
 
+function partyBadgesHtml(party) {
+    if (!party || !party.length) return '';
+    const badges = party.map(p =>
+        `<span class="badge bg-secondary me-1" title="${Math.round(p.share * 100)}% share">${escapeHtml(p.member_username)}: ${escapeHtml(p.status)}</span>`
+    ).join('');
+    return `<div class="mt-1">${badges}</div>`;
+}
+
 function updateActiveJobsDisplay() {
     const container = document.getElementById('activeJobs');
     if (!container) return;
-    
-    if (AppState.activeJobs.length === 0) {
+
+    const invites = (AppState.partyInvites || []).filter(pi => pi.invite_status === 'invited' && pi.job_status === 'accepted');
+    const coProviding = (AppState.partyInvites || []).filter(pi => pi.invite_status === 'accepted' && pi.job_status === 'accepted');
+
+    if (AppState.activeJobs.length === 0 && invites.length === 0 && coProviding.length === 0) {
         container.innerHTML = '<p class="text-muted mb-0">No active services</p>';
         return;
     }
-    
-    container.innerHTML = AppState.activeJobs.map(job => `
+
+    const activeHtml = AppState.activeJobs.map(job => `
         <div class="job-item">
             <h6>${typeof job.service === 'object' ? escapeHtml(JSON.stringify(job.service)) : escapeHtml(job.service)}</h6>
             <p>Price: ${escapeHtml(job.currency || 'USD')} ${job.price} • Accepted: ${new Date(job.accepted_at * 1000).toLocaleDateString()}</p>
             <p class="text-muted">Role: ${escapeHtml(job.role)} • Partner: ${escapeHtml(job.counterparty)}</p>
             ${job.location_type !== 'remote' ? `<small class="text-muted">Location: ${escapeHtml(job.address || 'Physical service')}</small>` : '<small class="text-muted">Remote service</small>'}
+            ${partyBadgesHtml(job.party)}
+            <div class="mt-1 d-flex gap-2 flex-wrap">
+                ${job.role === 'provider' ? `<button class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}')">+ Invite co-provider</button>` : ''}
+                <button class="btn btn-sm btn-link text-danger p-0" onclick="fileJobDispute('${job.job_id}')">File dispute</button>
+            </div>
         </div>
     `).join('');
+
+    const inviteHtml = invites.map(pi => `
+        <div class="job-item">
+            <h6>${typeof pi.service === 'object' ? escapeHtml(JSON.stringify(pi.service)) : escapeHtml(pi.service)}</h6>
+            <p class="text-muted">Job-party invite from ${escapeHtml(pi.primary_provider)} • Your share: ${Math.round(pi.share * 100)}%</p>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-light" onclick="respondToPartyInvite('${pi.job_id}', 'accept')">Accept</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="respondToPartyInvite('${pi.job_id}', 'decline')">Decline</button>
+            </div>
+        </div>
+    `).join('');
+
+    const coProvidingHtml = coProviding.map(pi => `
+        <div class="job-item">
+            <h6>${typeof pi.service === 'object' ? escapeHtml(JSON.stringify(pi.service)) : escapeHtml(pi.service)}</h6>
+            <p class="text-muted">Co-providing with ${escapeHtml(pi.primary_provider)} • Your share: ${Math.round(pi.share * 100)}%</p>
+            <button class="btn btn-sm btn-link text-danger p-0" onclick="fileJobDispute('${pi.job_id}')">File dispute</button>
+        </div>
+    `).join('');
+
+    container.innerHTML = activeHtml + inviteHtml + coProvidingHtml;
 }
 
 function updateJobsDisplay() {
     const container = document.getElementById('completedJobs');
     if (!container) return;
-    
-    if (AppState.completedJobs.length === 0) {
+
+    const completedAsParty = (AppState.partyInvites || []).filter(pi => pi.invite_status === 'accepted' && pi.job_status === 'completed');
+
+    if (AppState.completedJobs.length === 0 && completedAsParty.length === 0) {
         container.innerHTML = '<p class="text-muted mb-0">No completed services</p>';
         return;
     }
-    
-    container.innerHTML = AppState.completedJobs.map(job => `
+
+    const completedHtml = AppState.completedJobs.map(job => `
         <div class="job-item">
             <h6>${typeof job.service === 'object' ? escapeHtml(JSON.stringify(job.service)) : escapeHtml(job.service)}</h6>
             <p>Price: ${escapeHtml(job.currency || 'USD')} ${job.price} • Completed: ${new Date(job.completed_at * 1000).toLocaleDateString()}</p>
@@ -508,8 +549,94 @@ function updateJobsDisplay() {
                 <small>Role: ${escapeHtml(job.role)}</small>
                 <small>Rating: ${job.their_rating ? '★'.repeat(job.their_rating) : 'Not rated'}</small>
             </div>
+            ${partyBadgesHtml(job.party)}
+            <button class="btn btn-sm btn-link text-danger p-0 mt-1" onclick="fileJobDispute('${job.job_id}')">File dispute</button>
         </div>
     `).join('');
+
+    const partyCompletedHtml = completedAsParty.map(pi => `
+        <div class="job-item">
+            <h6>${typeof pi.service === 'object' ? escapeHtml(JSON.stringify(pi.service)) : escapeHtml(pi.service)}</h6>
+            <p class="text-muted">Co-provided with ${escapeHtml(pi.primary_provider)} • Your share: ${Math.round(pi.share * 100)}%</p>
+            <button class="btn btn-sm btn-link text-danger p-0" onclick="fileJobDispute('${pi.job_id}')">File dispute</button>
+        </div>
+    `).join('');
+
+    container.innerHTML = completedHtml + partyCompletedHtml;
+}
+
+async function inviteToJobParty(jobId) {
+    const memberUsername = prompt('Username to invite as co-provider on this job:');
+    if (!memberUsername) return;
+    const shareStr = prompt('Their share of the job credit (0-1, e.g. 0.4):', '0.4');
+    const share = parseFloat(shareStr);
+    if (!share || share <= 0 || share >= 1) {
+        alert('Share must be a number between 0 and 1.');
+        return;
+    }
+    try {
+        const response = await fetch(`${API_URL}/jobs/${jobId}/party/invite`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${AppState.authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ member_username: memberUsername, share })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok) {
+            alert(`Invited ${memberUsername} to co-provide this job.`);
+            loadCompletedJobs();
+        } else {
+            alert(`Failed to invite: ${data.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        alert('Network error while inviting party member');
+    }
+}
+
+async function respondToPartyInvite(jobId, action) {
+    try {
+        const response = await fetch(`${API_URL}/jobs/${jobId}/party/respond`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${AppState.authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ action })
+        });
+        if (response.ok) {
+            loadCompletedJobs();
+        } else {
+            const data = await response.json().catch(() => ({}));
+            alert(`Failed to respond: ${data.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        alert('Network error while responding to invite');
+    }
+}
+
+async function fileJobDispute(jobId) {
+    const reason = prompt('Describe the issue with this job:');
+    if (!reason) return;
+    try {
+        const response = await fetch(`${API_URL}/jobs/${jobId}/dispute`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${AppState.authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason })
+        });
+        if (response.ok) {
+            alert('Dispute filed. An admin will review it.');
+        } else {
+            const data = await response.json().catch(() => ({}));
+            alert(`Failed to file dispute: ${data.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        alert('Network error while filing dispute');
+    }
 }
 
 async function cancelBid(bidId) {

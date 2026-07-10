@@ -90,6 +90,7 @@
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="robots.html">Buy a Robot</a></li>
                     <li class="nav-item"><a class="nav-link" href="examples.html">Examples</a></li>
+                    <li class="nav-item"><a class="nav-link" href="campaigns.html">Campaigns</a></li>
                     <li class="nav-item"><a class="nav-link" href="api_docs.html">API Docs</a></li>
                     <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
                     <li class="nav-item"><a class="nav-link" href="feedback.html">Feedback</a></li>
@@ -161,6 +162,25 @@
                         <div class="col-md-6"><input class="form-control form-control-sm" id="robotCapsInput" placeholder="Capabilities, comma separated"></div>
                         <div class="col-md-2"><button class="btn btn-sm btn-outline-light w-100" onclick="addRobotOwned()">Add</button></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Cooperation & reputation breakdown (shown in both modes) -->
+            <div class="profile-card">
+                <h6>Cooperation</h6>
+                <div id="reputationBreakdown" class="d-flex gap-4 flex-wrap"></div>
+            </div>
+
+            <!-- Endorsements (shown in both modes; endorse form only for viewers) -->
+            <div class="profile-card">
+                <h6>Endorsements</h6>
+                <div id="endorsementsList"></div>
+                <div id="endorseForm" style="display: none; margin-top: 12px;">
+                    <div class="row g-2">
+                        <div class="col-md-8"><input class="form-control form-control-sm" id="endorseSkillInput" placeholder="Endorse a skill (e.g. warehouse sorting)" maxlength="40"></div>
+                        <div class="col-md-4"><button class="btn btn-sm btn-outline-light w-100" onclick="submitEndorsement()">Endorse</button></div>
+                    </div>
+                    <div id="endorseStatus" class="mt-2" style="font-size: 0.85rem;"></div>
                 </div>
             </div>
 
@@ -366,6 +386,52 @@
             if (equipped.frame) wrap.classList.add(equipped.frame);
 
             renderRobotsOwned(p.robots_owned || [], isOwnProfile);
+            renderCooperation(p);
+            renderEndorsements(p);
+        }
+
+        function renderCooperation(p) {
+            const rb = p.reputation_breakdown || {};
+            const el = document.getElementById('reputationBreakdown');
+            el.innerHTML = `
+                <div><strong>${rb.solo_jobs_completed || 0}</strong><div class="text-muted" style="font-size:0.75rem;">Solo jobs</div></div>
+                <div><strong>${rb.party_jobs_completed || 0}</strong><div class="text-muted" style="font-size:0.75rem;">Job-party jobs</div></div>
+                <div><strong>${rb.campaign_jobs_completed || 0}</strong><div class="text-muted" style="font-size:0.75rem;">Campaign jobs</div></div>
+            `;
+        }
+
+        function renderEndorsements(p) {
+            const list = document.getElementById('endorsementsList');
+            const end = p.endorsements || { total_endorsements: 0, top_skills: [] };
+            list.innerHTML = end.top_skills.length
+                ? end.top_skills.map(s => `<span class="cap-chip">${escapeHtml(s.skill)} (${s.count})</span>`).join('')
+                : '<p class="text-muted mb-0">No endorsements yet.</p>';
+            document.getElementById('endorseForm').style.display = (!isOwnProfile && AppState.authToken) ? 'block' : 'none';
+        }
+
+        async function submitEndorsement() {
+            const skillInput = document.getElementById('endorseSkillInput');
+            const status = document.getElementById('endorseStatus');
+            const skill = skillInput.value.trim();
+            if (!skill) return;
+            try {
+                const res = await fetch(`${PROFILE_API}/endorsements`, {
+                    method: 'POST', headers: authHeaders(),
+                    body: JSON.stringify({ target_username: viewedProfile.username, skill })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    status.textContent = 'Endorsed!';
+                    skillInput.value = '';
+                    const pid = new URLSearchParams(location.search).get('pid');
+                    const res2 = await fetch(`${PROFILE_API}/profile/public/${encodeURIComponent(pid)}`);
+                    if (res2.ok) { viewedProfile = await res2.json(); renderEndorsements(viewedProfile); }
+                } else {
+                    status.textContent = data.error || 'Failed to endorse';
+                }
+            } catch (e) {
+                status.textContent = 'Network error';
+            }
         }
 
         function renderRobotsOwned(robots, editable) {
