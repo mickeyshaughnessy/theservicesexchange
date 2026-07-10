@@ -1718,7 +1718,7 @@ def reject_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         if not job_id:
             return {"error": "Job ID required"}, 400
         
-        job = get_job(job_id)
+        job = get_job(job_id, force_refresh=True)
         if not job:
             return {"error": "Job not found"}, 404
         
@@ -1815,7 +1815,8 @@ def sign_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         if not isinstance(star_rating, int) or star_rating < 1 or star_rating > 5:
             return {"error": "Rating must be an integer between 1 and 5"}, 400
         
-        job = get_job(job_id)
+        # force_refresh: multi-worker cache otherwise loses the other party's signature
+        job = get_job(job_id, force_refresh=True)
         if not job:
             return {"error": "Job not found"}, 404
         
@@ -1837,7 +1838,7 @@ def sign_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         
         # Update counterparty stats
         counterparty = job['provider_username'] if is_buyer else job['buyer_username']
-        counterparty_data = get_account(counterparty)
+        counterparty_data = get_account(counterparty, force_refresh=True)
         if counterparty_data:
             counterparty_data['stars'] = counterparty_data.get('stars', 0) + star_rating
             counterparty_data['total_ratings'] = counterparty_data.get('total_ratings', 0) + 1
@@ -1849,7 +1850,7 @@ def sign_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                 job['completed_at'] = int(time.time())
 
                 # Update own completed jobs count too
-                own_data = get_account(username)
+                own_data = get_account(username, force_refresh=True)
                 if own_data:
                     own_data['completed_jobs'] = own_data.get('completed_jobs', 0) + 1
                     save_account(username, own_data)
@@ -2816,7 +2817,7 @@ def invite_job_party(data):
         if member_username == username:
             return {"error": "Cannot invite yourself"}, 400
 
-        job = get_job(job_id)
+        job = get_job(job_id, force_refresh=True)
         if not job:
             return {"error": "Job not found"}, 404
         if job.get('status') != 'accepted':
@@ -2924,7 +2925,7 @@ def respond_job_party(data):
         if not job_id or action not in ('accept', 'decline'):
             return {"error": "job_id and action ('accept' or 'decline') required"}, 400
 
-        job = get_job(job_id)
+        job = get_job(job_id, force_refresh=True)
         if not job:
             return {"error": "Job not found"}, 404
 

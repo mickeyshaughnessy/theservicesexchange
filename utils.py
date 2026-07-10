@@ -27,8 +27,9 @@ _mem_cache_ts: Dict[str, float] = {}
 # read-your-writes bugs (e.g. empty GET /agents right after create).
 _TTL_ACCOUNTS = 2
 _TTL_TOKENS = 300
-_TTL_BIDS = 30
-_TTL_JOBS = 15
+_TTL_BIDS = 15
+# Short job TTL: multi-worker sign/party RMW must not serve stale job docs.
+_TTL_JOBS = 2
 _TTL_STATS = 30
 
 
@@ -469,9 +470,15 @@ def save_job(job_id: str, data: Dict[str, Any]) -> None:
     if not _s3_put(key, data):
         logger.error(f"Failed to save job {job_id}")
 
-def get_job(job_id: str) -> Optional[Dict[str, Any]]:
-    """Retrieve job data from S3."""
+def get_job(job_id: str, force_refresh: bool = False) -> Optional[Dict[str, Any]]:
+    """Retrieve job data from S3.
+
+    force_refresh=True bypasses the in-process cache — required for
+    read-modify-write under multi-worker gunicorn (sign, party, reject).
+    """
     key = f"{JOBS_PREFIX}/{job_id}.json"
+    if force_refresh:
+        _cache_delete(key)
     return _s3_get(key)
 
 def get_all_jobs() -> List[Dict[str, Any]]:
