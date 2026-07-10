@@ -698,12 +698,20 @@ a:hover {
     max-height: calc(100vh - 100px);
     overflow-y: auto;
     border-radius: 0;
+    pointer-events: none;
 }
 
-.account-dropdown:hover .account-window {
+/* Click/tap open — not hover (hover fails on touch) */
+.account-dropdown.open .account-window {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+    pointer-events: auto;
+}
+
+.account-btn[aria-expanded="true"] {
+    background: rgba(0,255,255,0.12);
+    box-shadow: 0 0 15px rgba(0,255,255,0.35);
 }
 
 .account-header {
@@ -1656,9 +1664,85 @@ section[style*="background:#f"],
 }
 
 /* =====================
+   TOASTS
+   ===================== */
+.toast-container-rse {
+    position: fixed;
+    top: 80px;
+    right: 16px;
+    z-index: 10050;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: min(360px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
+.toast-rse {
+    pointer-events: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    padding: 12px 16px;
+    border: 1px solid var(--primary);
+    background: var(--bg-panel);
+    color: var(--text-bright);
+    box-shadow: 0 0 20px rgba(0,255,255,0.25);
+    opacity: 0;
+    transform: translateX(12px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    letter-spacing: 0.02em;
+}
+
+.toast-rse.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-rse.success {
+    border-color: var(--accent);
+    box-shadow: 0 0 18px rgba(57,255,20,0.25);
+    color: var(--accent);
+}
+
+.toast-rse.error {
+    border-color: var(--danger);
+    box-shadow: 0 0 18px rgba(255,51,51,0.25);
+    color: var(--danger);
+}
+
+.toast-rse.info {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Chat modal stacks on small screens when using .chat-col classes */
+@media (max-width: 768px) {
+    .chat-col-list,
+    .chat-col-thread {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .chat-inbox {
+        max-height: 200px;
+        border-right: none;
+        border-bottom: 1px solid rgba(0,255,255,0.15);
+        margin-bottom: 1rem;
+    }
+
+    .message-history {
+        height: 240px;
+    }
+}
+
+/* =====================
    MOBILE
    ===================== */
 @media (max-width: 768px) {
+    body::after {
+        opacity: 0.45;
+    }
+
     .hero h1 {
         font-size: 1.6rem;
     }
@@ -1676,17 +1760,18 @@ section[style*="background:#f"],
     }
 
     .service-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
     }
 
     .service-grid-item {
-        padding: 14px 8px;
-        font-size: 0.65rem;
+        padding: 16px 10px;
+        font-size: 0.72rem;
+        min-height: 44px;
     }
 
     .sg-icon {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
     }
 
     .header {
@@ -1694,7 +1779,11 @@ section[style*="background:#f"],
     }
 
     .account-window {
-        width: 300px;
+        left: 12px;
+        right: 12px;
+        width: auto;
+        top: 64px;
+        max-height: 80vh;
     }
 
     .stat-badge {
@@ -1711,7 +1800,25 @@ section[style*="background:#f"],
     }
 
     .navbar-brand {
-        font-size: 0.6rem;
+        font-size: 0.7rem;
+    }
+
+    .toast-container-rse {
+        top: auto;
+        bottom: 16px;
+        right: 12px;
+        left: 12px;
+        max-width: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::after {
+        display: none;
+    }
+
+    .toast-rse {
+        transition: none;
     }
 }
 

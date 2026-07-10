@@ -8,7 +8,8 @@ const API_URL = 'https://rse-api.com:5003';
 const STORAGE_KEYS = {
     AUTH_TOKEN: 'auth_token',
     USERNAME: 'current_username',
-    PROVIDER_PROFILE: 'provider_capabilities_profile'
+    PROVIDER_PROFILE: 'provider_capabilities_profile',
+    PENDING_SERVICE: 'rse_pending_service'
 };
 
 // Global state
@@ -107,10 +108,75 @@ function setupEventListeners() {
     if (forms.nearby) forms.nearby.addEventListener('submit', handleNearbySearch);
     if (forms.filter) forms.filter.addEventListener('submit', handleFilterApplication);
 
-    // Base URL span is selectable via CSS user-select:all; copy button handles clipboard
+    setupAccountDropdown();
 }
 
 // Utility Functions
+function showToast(message, type = 'info', durationMs = 3500) {
+    let container = document.getElementById('toastContainerRse');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainerRse';
+        container.className = 'toast-container-rse';
+        container.setAttribute('aria-live', 'polite');
+        document.body.appendChild(container);
+    }
+    const el = document.createElement('div');
+    el.className = `toast-rse ${type}`;
+    el.setAttribute('role', 'status');
+    el.textContent = message;
+    container.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => {
+        el.classList.remove('show');
+        setTimeout(() => el.remove(), 220);
+    }, durationMs);
+}
+
+function setupAccountDropdown() {
+    document.querySelectorAll('.account-dropdown').forEach((dropdown) => {
+        const btn = dropdown.querySelector('.account-btn');
+        if (!btn || btn.dataset.accountToggleBound === '1') return;
+        btn.dataset.accountToggleBound = '1';
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-haspopup', 'true');
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const willOpen = !dropdown.classList.contains('open');
+            document.querySelectorAll('.account-dropdown.open').forEach((d) => {
+                if (d !== dropdown) {
+                    d.classList.remove('open');
+                    const b = d.querySelector('.account-btn');
+                    if (b) b.setAttribute('aria-expanded', 'false');
+                }
+            });
+            dropdown.classList.toggle('open', willOpen);
+            btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        });
+    });
+
+    if (!window._rseAccountOutsideBound) {
+        window._rseAccountOutsideBound = true;
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.account-dropdown')) return;
+            document.querySelectorAll('.account-dropdown.open').forEach((d) => {
+                d.classList.remove('open');
+                const b = d.querySelector('.account-btn');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            });
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            document.querySelectorAll('.account-dropdown.open').forEach((d) => {
+                d.classList.remove('open');
+                const b = d.querySelector('.account-btn');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            });
+        });
+    }
+}
+
 function showError(message, containerId = 'authError') {
     const errorDiv = document.getElementById(containerId);
     if (errorDiv) {
@@ -121,7 +187,7 @@ function showError(message, containerId = 'authError') {
         }, 5000);
     } else {
         console.error(message);
-        alert(message);
+        showToast(message, 'error');
     }
 }
 
@@ -224,47 +290,43 @@ async function handleLogin(e) {
     }
     
     setLoading(true, 'loginSubmitBtn');
-    
     try {
-        const response = await fetch(`${API_URL}/login`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username, password })
-        });
-        
-        const data = await response.json();
-        setLoading(false, 'loginSubmitBtn');
-        
-        if (response.ok) {
-            AppState.authToken = data.access_token;
-            AppState.currentUsername = username;
-            
-            // Sync global window vars for compatibility
-            window.authToken = AppState.authToken;
-            window.currentUsername = AppState.currentUsername;
-            
-            localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, AppState.authToken);
-            localStorage.setItem(STORAGE_KEYS.USERNAME, AppState.currentUsername);
-            
-            const authModal = document.getElementById('authModal');
-            if (authModal) {
-                const modal = bootstrap.Modal.getInstance(authModal);
-                if (modal) modal.hide();
-            }
-            
-            updateUIForLoggedInUser();
-            await loadAccountData();
-            
-            // Only show alert if manual login (not auto-login)
-            if (e) alert('Login successful!');
-        } else {
-            showError(data.error || 'Login failed. Please check your credentials.');
-        }
+        await performLogin(username, password, { quiet: false });
     } catch (error) {
-        setLoading(false, 'loginSubmitBtn');
-        showError('Network error. Please check your connection and try again.');
+        showError(error.message || 'Login failed. Please check your credentials.');
         console.error('Login error:', error);
+    } finally {
+        setLoading(false, 'loginSubmitBtn');
     }
+}
+
+async function performLogin(username, password, { quiet } = {}) {
+    const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ username, password })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+    }
+    AppState.authToken = data.access_token;
+    AppState.currentUsername = username;
+    window.authToken = AppState.authToken;
+    window.currentUsername = AppState.currentUsername;
+    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, AppState.authToken);
+    localStorage.setItem(STORAGE_KEYS.USERNAME, AppState.currentUsername);
+    const authModal = document.getElementById('authModal');
+    if (authModal) {
+        const modal = bootstrap.Modal.getInstance(authModal);
+        if (modal) modal.hide();
+    }
+    updateUIForLoggedInUser();
+    await loadAccountData();
+    setupAccountDropdown();
+    if (!quiet) showToast('Logged in successfully', 'success');
+    await resumePendingBuyerIntent();
+    return data;
 }
 
 async function handleRegister(e) {
@@ -299,19 +361,24 @@ async function handleRegister(e) {
             body: JSON.stringify({ username, password, user_type: userType })
         });
         
-        setLoading(false, 'registerSubmitBtn');
-        
         if (response.ok) {
-            alert('Registration successful! Please login.');
-            // Switch to login tab
-            const loginTab = document.querySelector('a[href="#login"]');
-            if (loginTab) {
-                // Bootstrap 5 tab activation
-                const tab = new bootstrap.Tab(loginTab);
-                tab.show();
+            try {
+                await performLogin(username, password, { quiet: true });
+                showToast('Account created — you are logged in', 'success');
+            } catch (loginErr) {
+                setLoading(false, 'registerSubmitBtn');
+                showToast('Registered — please log in', 'info');
+                const loginTab = document.querySelector('a[href="#login"]');
+                if (loginTab) {
+                    const tab = new bootstrap.Tab(loginTab);
+                    tab.show();
+                }
+                const loginUser = document.getElementById('loginUsername');
+                if (loginUser) loginUser.value = username;
             }
-            document.getElementById('loginUsername').value = username;
+            setLoading(false, 'registerSubmitBtn');
         } else {
+            setLoading(false, 'registerSubmitBtn');
             const errorData = await response.json().catch(() => ({}));
             showError(errorData.error || 'Registration failed. Please try a different username.');
         }
@@ -340,7 +407,7 @@ function logout() {
     AppState.activeJobs = [];
     
     updateProviderDashboard();
-    alert('Logged out successfully');
+    showToast('Logged out', 'info');
 }
 
 // Account Management Functions
@@ -503,7 +570,7 @@ function updateActiveJobsDisplay() {
             ${partyBadgesHtml(job.party)}
             <div class="mt-1 d-flex gap-2 flex-wrap">
                 ${job.role === 'provider' ? `<button class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}')">+ Invite co-provider</button>` : ''}
-                <button class="btn btn-sm btn-link text-danger p-0" onclick="fileJobDispute('${job.job_id}')">File dispute</button>
+                ${(job.role === 'provider' || job.role === 'buyer') ? `<button class="btn btn-sm btn-link text-danger p-0" onclick="fileJobDispute('${job.job_id}')">File dispute</button>` : ''}
             </div>
         </div>
     `).join('');
@@ -511,7 +578,7 @@ function updateActiveJobsDisplay() {
     const inviteHtml = invites.map(pi => `
         <div class="job-item">
             <h6>${typeof pi.service === 'object' ? escapeHtml(JSON.stringify(pi.service)) : escapeHtml(pi.service)}</h6>
-            <p class="text-muted">Job-party invite from ${escapeHtml(pi.primary_provider)} • Your share: ${Math.round(pi.share * 100)}%</p>
+            <p class="text-muted">Job-party invite from ${escapeHtml(pi.primary_provider)} • Your share: ${Math.round(pi.share * 100)}% (rep credit)</p>
             <div class="d-flex gap-2">
                 <button class="btn btn-sm btn-outline-light" onclick="respondToPartyInvite('${pi.job_id}', 'accept')">Accept</button>
                 <button class="btn btn-sm btn-outline-danger" onclick="respondToPartyInvite('${pi.job_id}', 'decline')">Decline</button>
@@ -522,8 +589,7 @@ function updateActiveJobsDisplay() {
     const coProvidingHtml = coProviding.map(pi => `
         <div class="job-item">
             <h6>${typeof pi.service === 'object' ? escapeHtml(JSON.stringify(pi.service)) : escapeHtml(pi.service)}</h6>
-            <p class="text-muted">Co-providing with ${escapeHtml(pi.primary_provider)} • Your share: ${Math.round(pi.share * 100)}%</p>
-            <button class="btn btn-sm btn-link text-danger p-0" onclick="fileJobDispute('${pi.job_id}')">File dispute</button>
+            <p class="text-muted">Co-providing with ${escapeHtml(pi.primary_provider)} • Your share: ${Math.round(pi.share * 100)}% (rep credit)</p>
         </div>
     `).join('');
 
@@ -550,15 +616,14 @@ function updateJobsDisplay() {
                 <small>Rating: ${job.their_rating ? '★'.repeat(job.their_rating) : 'Not rated'}</small>
             </div>
             ${partyBadgesHtml(job.party)}
-            <button class="btn btn-sm btn-link text-danger p-0 mt-1" onclick="fileJobDispute('${job.job_id}')">File dispute</button>
+            ${(job.role === 'provider' || job.role === 'buyer') ? `<button class="btn btn-sm btn-link text-danger p-0 mt-1" onclick="fileJobDispute('${job.job_id}')">File dispute</button>` : ''}
         </div>
     `).join('');
 
     const partyCompletedHtml = completedAsParty.map(pi => `
         <div class="job-item">
             <h6>${typeof pi.service === 'object' ? escapeHtml(JSON.stringify(pi.service)) : escapeHtml(pi.service)}</h6>
-            <p class="text-muted">Co-provided with ${escapeHtml(pi.primary_provider)} • Your share: ${Math.round(pi.share * 100)}%</p>
-            <button class="btn btn-sm btn-link text-danger p-0" onclick="fileJobDispute('${pi.job_id}')">File dispute</button>
+            <p class="text-muted">Co-provided with ${escapeHtml(pi.primary_provider)} • Your share: ${Math.round(pi.share * 100)}% (rep credit)</p>
         </div>
     `).join('');
 
@@ -571,7 +636,7 @@ async function inviteToJobParty(jobId) {
     const shareStr = prompt('Their share of the job credit (0-1, e.g. 0.4):', '0.4');
     const share = parseFloat(shareStr);
     if (!share || share <= 0 || share >= 1) {
-        alert('Share must be a number between 0 and 1.');
+        showToast('Share must be a number between 0 and 1.', 'error');
         return;
     }
     try {
@@ -585,13 +650,13 @@ async function inviteToJobParty(jobId) {
         });
         const data = await response.json().catch(() => ({}));
         if (response.ok) {
-            alert(`Invited ${memberUsername} to co-provide this job.`);
+            showToast(`Invited ${memberUsername} to co-provide this job.`, 'success');
             loadCompletedJobs();
         } else {
-            alert(`Failed to invite: ${data.error || 'Unknown error'}`);
+            showToast(`Failed to invite: ${data.error || 'Unknown error'}`, 'error');
         }
     } catch (error) {
-        alert('Network error while inviting party member');
+        showToast('Network error while inviting party member', 'error');
     }
 }
 
@@ -609,10 +674,10 @@ async function respondToPartyInvite(jobId, action) {
             loadCompletedJobs();
         } else {
             const data = await response.json().catch(() => ({}));
-            alert(`Failed to respond: ${data.error || 'Unknown error'}`);
+            showToast(`Failed to respond: ${data.error || 'Unknown error'}`, 'error');
         }
     } catch (error) {
-        alert('Network error while responding to invite');
+        showToast('Network error while responding to invite', 'error');
     }
 }
 
@@ -629,13 +694,13 @@ async function fileJobDispute(jobId) {
             body: JSON.stringify({ reason })
         });
         if (response.ok) {
-            alert('Dispute filed. An admin will review it.');
+            showToast('Dispute filed. An admin will review it.', 'success');
         } else {
             const data = await response.json().catch(() => ({}));
-            alert(`Failed to file dispute: ${data.error || 'Unknown error'}`);
+            showToast(`Failed to file dispute: ${data.error || 'Unknown error'}`, 'error');
         }
     } catch (error) {
-        alert('Network error while filing dispute');
+        showToast('Network error while filing dispute', 'error');
     }
 }
 
@@ -653,15 +718,15 @@ async function cancelBid(bidId) {
         });
         
         if (response.ok) {
-            alert('Request cancelled successfully');
+            showToast('Request cancelled', 'success');
             AppState.outstandingBids = AppState.outstandingBids.filter(bid => bid.bid_id !== bidId);
             updateBidsDisplay();
         } else {
             const error = await response.json();
-            alert(`Failed to cancel request: ${error.error || 'Unknown error'}`);
+            showToast(`Failed to cancel request: ${error.error || 'Unknown error'}`, 'error');
         }
     } catch (error) {
-        alert('Network error while cancelling request');
+        showToast('Network error while cancelling request', 'error');
     }
 }
 
@@ -689,7 +754,7 @@ async function handleBidSubmission(e) {
         } else if (AppState.userLocation) {
             data.address = `${AppState.userLocation.latitude}, ${AppState.userLocation.longitude}`;
         } else {
-            alert('Please provide an address or allow location access for physical services.');
+            showToast('Please provide an address or allow location access for physical services.', 'error');
             return;
         }
     }
@@ -706,7 +771,7 @@ async function handleBidSubmission(e) {
         
         if (response.ok) {
             const result = await response.json();
-            alert(`Service request submitted! ID: ${result.bid_id}`);
+            showToast(`Request submitted (${result.bid_id})`, 'success');
             
             const bidModal = document.getElementById('bidModal');
             if (bidModal) {
@@ -720,10 +785,10 @@ async function handleBidSubmission(e) {
             }
         } else {
             const errorData = await response.json().catch(() => ({}));
-            alert(`Failed to submit request: ${errorData.error || 'Unknown error'}`);
+            showToast(`Failed to submit request: ${errorData.error || 'Unknown error'}`, 'error');
         }
     } catch (error) {
-        alert('Network error while submitting request');
+        showToast('Network error while submitting request', 'error');
     }
 }
 
@@ -864,16 +929,16 @@ async function handleChatMessage(e) {
         
         if (response.ok) {
             const result = await response.json();
-            alert('Message sent successfully!');
+            showToast('Message sent', 'success');
             document.getElementById('chatForm').reset();
             hideNewMessageForm();
             await loadConversations();
         } else {
             const error = await response.json();
-            alert(`Failed to send message: ${error.error || 'Unknown error'}`);
+            showToast(`Failed to send message: ${error.error || 'Unknown error'}`, 'error');
         }
     } catch (error) {
-        alert('Network error while sending message');
+        showToast('Network error while sending message', 'error');
     }
 }
 
@@ -921,10 +986,10 @@ async function handleReply(e) {
             updateConversationsDisplay();
         } else {
             const error = await response.json();
-            alert(`Failed to send message: ${error.error || 'Unknown error'}`);
+            showToast(`Failed to send message: ${error.error || 'Unknown error'}`, 'error');
         }
     } catch (error) {
-        alert('Network error while sending message');
+        showToast('Network error while sending message', 'error');
     }
 }
 
@@ -1012,15 +1077,15 @@ async function handleBulletinPost(e) {
         });
         
         if (response.ok) {
-            alert('Posted to bulletin successfully!');
+            showToast('Posted to bulletin', 'success');
             hideNewPostForm();
             await loadBulletinFeed();
         } else {
             const error = await response.json();
-            alert(`Failed to post: ${error.error || 'Unknown error'}`);
+            showToast(`Failed to post: ${error.error || 'Unknown error'}`, 'error');
         }
     } catch (error) {
-        alert('Network error while posting to bulletin');
+        showToast('Network error while posting to bulletin', 'error');
     }
 }
 
@@ -1049,20 +1114,35 @@ function showAuth() {
     }
 }
 
-async function showBuyerForm() {
+async function showBuyerForm(prefillService) {
     if (!AppState.authToken) {
+        if (prefillService) {
+            sessionStorage.setItem(STORAGE_KEYS.PENDING_SERVICE, prefillService);
+        }
         showAuth();
         return;
     }
-    
-    await requestUserLocation();
-    
+
+    // Non-blocking location: open modal immediately
+    requestUserLocation();
+
     const bidModal = document.getElementById('bidModal');
     if (bidModal) {
         const modal = new bootstrap.Modal(bidModal);
         modal.show();
         loadPopularServices();
+        if (prefillService) {
+            const bidService = document.getElementById('bidService');
+            if (bidService) bidService.value = prefillService;
+        }
     }
+}
+
+async function resumePendingBuyerIntent() {
+    const pending = sessionStorage.getItem(STORAGE_KEYS.PENDING_SERVICE);
+    if (!pending || !AppState.authToken) return;
+    sessionStorage.removeItem(STORAGE_KEYS.PENDING_SERVICE);
+    await showBuyerForm(pending);
 }
 
 async function loadPopularServices() {
@@ -1129,14 +1209,7 @@ async function showBulletin() {
 }
 
 function selectService(serviceName) {
-    showBuyerForm();
-    // Small delay to ensure modal is ready and form exists
-    setTimeout(() => {
-        const bidService = document.getElementById('bidService');
-        if (bidService) {
-            bidService.value = serviceName;
-        }
-    }, 200);
+    showBuyerForm(serviceName);
 }
 
 function escapeHtml(value) {
@@ -1510,8 +1583,12 @@ window.showBuyerForm = showBuyerForm;
 window.showChat = showChat;
 window.showBulletin = showBulletin;
 window.selectService = selectService;
+window.showToast = showToast;
 window.logout = logout;
 window.cancelBid = cancelBid;
+window.inviteToJobParty = inviteToJobParty;
+window.respondToPartyInvite = respondToPartyInvite;
+window.fileJobDispute = fileJobDispute;
 window.selectConversation = selectConversation;
 window.showNewMessageForm = showNewMessageForm;
 window.hideNewMessageForm = hideNewMessageForm;

@@ -431,6 +431,18 @@
     </style>
 </head>
 <body>
+    <script>
+    (function () {
+        try {
+            const embed = window.self !== window.top || new URLSearchParams(location.search).has('embed');
+            if (embed) document.documentElement.classList.add('rse-embed');
+        } catch (e) { document.documentElement.classList.add('rse-embed'); }
+    })();
+    </script>
+    <style>
+        html.rse-embed .navbar,
+        html.rse-embed .footer { display: none !important; }
+    </style>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
@@ -443,6 +455,8 @@
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="robots.html">Buy a Robot</a></li>
                     <li class="nav-item"><a class="nav-link active" href="examples.html" aria-current="page">Examples</a></li>
+                    <li class="nav-item"><a class="nav-link" href="campaigns.html">Campaigns</a></li>
+                    <li class="nav-item"><a class="nav-link" href="grab_job.html">Find Work</a></li>
                     <li class="nav-item"><a class="nav-link" href="api_docs.html">API Docs</a></li>
                     <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
                     <li class="nav-item"><a class="nav-link" href="feedback.html">Feedback</a></li>
