@@ -1,75 +1,161 @@
 openapi: 3.0.3
 info:
   title: Robot Services Exchange API
-  version: 1.0.0
+  version: 1.1.0
   description: |
-    The Robot Services Exchange (RSE) is an open marketplace for robot labor.
-    Buyers post service requests ("bids") with a price and expiry; providers
-    (robots or their operators) call `/grab_job` to be matched with the best
-    available request. The exchange handles matching and reputation — payment
-    is settled directly between the parties.
+    # Robot Services Exchange (RSE)
 
-    **Authentication** — most endpoints require a Bearer token from `/login`:
-    `Authorization: Bearer <access_token>`. Tokens expire after 24 hours.
+    An open marketplace for **robot labor** and operator-run services. Demand accounts
+    post priced, expiring service requests ("bids"). Supply accounts call matching
+    endpoints to claim work. The exchange provides matching, reputation, cooperation
+    tools (job parties, campaigns), chat, and portable history — **payment is settled
+    directly between parties** (cash, crypto, or other off-platform methods).
 
-    **Rate limits** — global default 1000/hour and 60/minute per IP.
-    `/register`, `/login`, `POST /feedback`, `POST /feedback/{post_id}/reply`,
-    and `POST /financing/apply` are limited to 20/minute. Chat endpoints allow
-    120/minute. `/grab_job` additionally enforces a 15-minute per-account
-    cooldown at the application level (HTTP 429 with seconds remaining).
+    ## Core marketplace loop
+
+    1. **Demand** registers as `user_type: demand`, logs in, and `POST /submit_bid`.
+    2. **Supply** registers as `user_type: supply`, logs in, and `POST /grab_job` with
+       plain-language `capabilities` (and location for physical work).
+    3. The server matches by location → capability fitness → reputation alignment → price.
+    4. Both parties complete work, then each `POST /sign_job` with a 1–5 star rating.
+       The job becomes `completed` only after **both** have signed.
+    5. Either party may `POST /reject_job` (provider only) or file a dispute if needed.
+
+    ## Identity and account types
+
+    | `user_type` | Role | Typical actions |
+    |-------------|------|-----------------|
+    | `demand` | Buyer / job requester | submit_bid, campaigns, demand-side party invites |
+    | `supply` | Provider / robot operator | grab_job, supply-side party invites, campaign commits |
+
+    Optional wallet linking (`POST /set_wallet`) and RSE Seat NFT fields appear on
+    `/account` but do **not** gate marketplace access unless seat verification is
+    enabled server-side.
+
+    ## Authentication
+
+    Most endpoints require a Bearer token from `POST /login`:
+
+    ```
+    Authorization: Bearer <access_token>
+    ```
+
+    Tokens expire after **24 hours**. Re-login to refresh. Public endpoints
+    (discovery, feedback, financing partners, open campaigns list, public portfolios)
+    do not require auth.
+
+    ## Rate limits and cooldowns
+
+    - Global default: **1000/hour** and **60/minute** per IP.
+    - Stricter **20/minute**: `/register`, `/login`, feedback posts/replies, financing apply.
+    - Chat: **120/minute**.
+    - `/grab_job`: additional **per-account cooldown** (default **900 seconds / 15 minutes**).
+      HTTP **429** includes how long to wait. Configurable via server `GRAB_JOB_COOLDOWN_SECONDS`.
+
+    ## Cooperation models
+
+    - **Job parties** — ad-hoc co-providers (`side=supply`) or co-buyers (`side=demand`)
+      on a single accepted job. Share is attribution/UX; demand parties do **not** change
+      matching reputation. Max accepted demand members is server-limited.
+    - **Campaigns** — bulk multi-unit demand. Providers commit capacity; owner accepts
+      to spin up normal jobs. Optional **co-sponsors** (demand accounts) copy onto jobs
+      as demand-party members for attribution.
+    - **Job channels** — per-job message threads for primaries + accepted party members.
+
+    ## Portable history
+
+    - `/my_jobs` and `/request_history` include accepted party memberships (co-buyer /
+      co-provider roles).
+    - `/portfolio/{username}` is public social proof (completions, breakdowns).
+    - `/export/history` and `/export/proof/{job_id}` support private audit/export.
+
+    ## Errors
+
+    Error bodies are typically `{ "error": "<message>" }`. Common codes:
+    **400** validation, **401** auth, **403** wrong role/forbidden, **404** missing,
+    **409** conflict, **429** rate limit/cooldown, **204** no matching work (grab).
   contact:
     email: mickeyshaughnessy@gmail.com
+
 servers:
   - url: https://rse-api.com:5003
+    description: Production API
+
 tags:
   - name: System
-    description: Health, status, and platform statistics
+    description: |
+      Liveness, detailed health, process metrics, and high-level platform statistics.
+      Use these for monitoring and dashboards — they do not require authentication.
   - name: Auth
-    description: Registration, login, and account management
+    description: |
+      Account lifecycle: register (demand or supply), login for a 24h Bearer token,
+      read account/reputation snapshot, and optionally link a wallet.
   - name: Marketplace
-    description: Posting requests, grabbing jobs, and completing work
+    description: |
+      The primary economic loop — post requests (bids), cancel, grab matches, reject,
+      and dual-sign completion with ratings. Supply vs demand capabilities are enforced
+      by `user_type`.
   - name: Discovery
-    description: Public browsing of exchange activity
+    description: |
+      Public market browsing (nearby bids, exchange activity), authenticated activity
+      feeds, public portfolios, and private export/proof documents.
   - name: Communication
-    description: Chat and community bulletin (authenticated)
+    description: |
+      Direct messages between users, community bulletin board, mark-as-read cursors,
+      and per-job channels (shared workspace for a matched job and its party).
   - name: Feedback
-    description: Public feedback board with threaded replies
+    description: |
+      Public product feedback board (no login). Useful for site visitors and operators
+      collecting unstructured product notes with threaded replies.
   - name: Financing
-    description: Robot financing applications (partner integrations pending)
+    description: |
+      Robot financing applications routed to partner queues. Partner bank integrations
+      are pending — applications are validated and stored, not underwritten in real time.
   - name: Cooperation
     description: |
-      Multi-robot cooperation — ad-hoc per-job coalitions ("job parties") and
-      dispute filing. A job party has no persistent identity: a provider who
-      grabbed a job can invite co-providers just for that job, and the split
-      dissolves once the job completes.
+      Multi-party job work: invite/respond/view job parties (supply or demand side)
+      and file disputes for admin review. Parties are per-job and dissolve after completion.
   - name: Campaigns
     description: |
-      Multi-unit demand-side initiatives. A buyer posts a bulk/recurring need;
-      providers commit capacity (a number of units); the campaign owner accepts
-      or rejects each commitment. Accepted commitments become normal jobs.
+      Multi-unit demand campaigns, provider capacity commitments, owner accept/reject
+      (spins up jobs), co-sponsor invite/accept, and "my campaigns" dashboard data.
   - name: Reputation
-    description: Peer skill endorsements and platform leaderboards
+    description: |
+      Peer skill endorsements (social proof only — does not change matching score)
+      and public leaderboards (reputation, campaign fulfillment, collaboration).
   - name: Admin
-    description: Stopgap admin endpoints gated on the X-Admin-Key shared-secret header
+    description: |
+      Stopgap admin tools gated by the `X-Admin-Key` shared-secret header
+      (no per-admin user roles yet). Dispute queue and resolution.
 
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      description: Access token from POST /login
+      description: |
+        Access token returned as `access_token` from `POST /login`.
+        Send as `Authorization: Bearer <access_token>`.
   schemas:
     Error:
       type: object
       properties:
-        error: { type: string }
+        error:
+          type: string
+          description: Human-readable error message
     Job:
       type: object
+      description: |
+        A matched engagement between a buyer and provider. Created by successful
+        `/grab_job` or by accepting a campaign commitment. Progresses
+        accepted → completed (both signs) or rejected (provider).
       properties:
         job_id: { type: string, format: uuid }
-        bid_id: { type: string, format: uuid }
+        bid_id: { type: string, format: uuid, nullable: true }
         status: { type: string, enum: [accepted, completed, rejected] }
-        service: { type: string, description: Service description (string, or JSON object for structured requests) }
+        service:
+          type: string
+          description: Service description (plain string, or stringified JSON for structured requests)
         price: { type: number }
         currency: { type: string, example: USD }
         payment_method: { type: string, example: cash }
@@ -79,11 +165,11 @@ components:
         address: { type: string, nullable: true }
         buyer_username: { type: string }
         provider_username: { type: string }
-        accepted_at: { type: integer, description: Unix timestamp }
+        accepted_at: { type: integer, description: Unix timestamp when the match was created }
         buyer_reputation: { type: number }
         provider_reputation: { type: number }
         start_address: { type: string, nullable: true, description: Rideshare pickup (null for non-rideshare) }
-        end_address: { type: string, nullable: true, description: Rideshare dropoff (null for non-rideshare) }
+        end_address: { type: string, nullable: true, description: Rideshare dropoff }
         start_lat: { type: number, nullable: true }
         start_lon: { type: number, nullable: true }
         end_lat: { type: number, nullable: true }
@@ -91,8 +177,15 @@ components:
         party:
           type: array
           items: { $ref: '#/components/schemas/JobPartyMember' }
-          description: Ad-hoc co-provider invitations on this job (empty unless the provider formed a party)
-        campaign_id: { type: string, nullable: true, description: Set when this job was spun up by accepting a campaign commitment }
+          description: Supply-side co-provider roster (also mirrored as supply_party in some responses)
+        demand_party:
+          type: array
+          items: { $ref: '#/components/schemas/JobPartyMember' }
+          description: Demand-side co-buyer roster (attribution; not matching reputation)
+        campaign_id:
+          type: string
+          nullable: true
+          description: Set when this job was spun up by accepting a campaign commitment
     FeedbackPost:
       type: object
       properties:
@@ -121,20 +214,35 @@ components:
         integration_status: { type: string, example: pending }
     JobPartyMember:
       type: object
+      description: |
+        One invited or accepted co-participant on a job. `share` is a fraction of
+        credit/attribution (0–1 exclusive for invited shares). Demand-side members
+        may have null share when copied from campaign sponsors.
       properties:
         member_username: { type: string }
-        share: { type: number, description: Fraction of the job (0-1, exclusive) this member earns credit for }
+        share:
+          type: number
+          nullable: true
+          description: Fraction of the job this member is associated with (attribution/UX)
         status: { type: string, enum: [invited, accepted, declined] }
+        side: { type: string, enum: [supply, demand] }
         invited_at: { type: integer }
         responded_at: { type: integer, nullable: true }
+        source:
+          type: string
+          description: e.g. invite or campaign_sponsor
     Campaign:
       type: object
+      description: |
+        Bulk demand initiative. Owner posts units_needed at unit_price; supply
+        accounts commit capacity; owner acceptance creates normal Job records and
+        decrements units_remaining.
       properties:
         campaign_id: { type: string, format: uuid }
         owner_username: { type: string }
         title: { type: string }
         description: { type: string }
-        service: { type: string, description: Service description (string, or JSON object) }
+        service: { type: string }
         unit_price: { type: number }
         currency: { type: string, example: USD }
         payment_method: { type: string, example: cash }
@@ -150,6 +258,10 @@ components:
         commitments:
           type: array
           items: { $ref: '#/components/schemas/CampaignCommitment' }
+        sponsors:
+          type: array
+          items: { $ref: '#/components/schemas/CampaignSponsor' }
+          description: Co-buyer demand accounts invited/accepted on this campaign
     CampaignCommitment:
       type: object
       properties:
@@ -164,6 +276,15 @@ components:
         job_ids:
           type: array
           items: { type: string }
+    CampaignSponsor:
+      type: object
+      description: Demand-side co-sponsor invite on a campaign (not a provider commitment).
+      properties:
+        member_username: { type: string }
+        status: { type: string, enum: [invited, accepted, declined] }
+        invited_at: { type: integer }
+        responded_at: { type: integer, nullable: true }
+        share: { type: number, nullable: true }
     Dispute:
       type: object
       properties:
@@ -189,46 +310,82 @@ paths:
   /ping:
     get:
       tags: [System]
-      summary: Health check
+      summary: Lightweight health check
+      description: |
+        Returns a short operational message. Use for uptime probes and load-balancer
+        checks. Does not verify S3/Spaces connectivity or deep dependencies —
+        prefer `/health` when you need a slightly richer status payload.
       responses:
         '200':
-          description: API is operational
+          description: API process is accepting requests
           content:
             application/json:
               example: { message: Service Exchange API is operational }
+
   /health:
     get:
       tags: [System]
       summary: Detailed health check
+      description: |
+        Returns service name, version, and a server timestamp. Still a lightweight
+        check (does not open database/S3 connections on every call), but more
+        informative than `/ping` for operator dashboards.
       responses:
         '200':
           description: Health details
           content:
             application/json:
-              example: { status: healthy, timestamp: 1751630000, service: Service Exchange API, version: 1.0.0 }
+              example:
+                status: healthy
+                timestamp: 1751630000
+                service: Service Exchange API
+                version: 1.0.0
+
   /metrics:
     get:
       tags: [System]
-      summary: Performance metrics
-      description: Request counts and per-endpoint timing statistics since process start.
+      summary: Process performance metrics
+      description: |
+        Snapshot of request counts and per-endpoint timing statistics accumulated
+        since this API process started. Resets on deploy/restart. Useful for
+        rough performance debugging; not a long-term metrics store.
       responses:
-        '200': { description: Metrics snapshot }
+        '200':
+          description: Metrics snapshot for the current process
+
   /stats:
     get:
       tags: [System]
-      summary: Platform statistics
+      summary: Platform signup and activity statistics
+      description: |
+        Public aggregate counts: demand vs supply signups, total users, number of
+        currently active (open) requests, and completed jobs. Intended for landing
+        pages and "exchange pulse" widgets.
       responses:
         '200':
           description: Signup and activity counts
           content:
             application/json:
-              example: { demand_signups: 120, supply_signups: 85, total_users: 205, active_requests: 14, completed_jobs: 96 }
+              example:
+                demand_signups: 120
+                supply_signups: 85
+                total_users: 205
+                active_requests: 14
+                completed_jobs: 96
 
   /register:
     post:
       tags: [Auth]
-      summary: Register a new user
-      description: Rate limited to 20/minute.
+      summary: Register a new demand or supply account
+      description: |
+        Creates a new user. You must choose `user_type` at registration — this
+        permanently shapes marketplace permissions:
+
+        - **demand** — post bids and campaigns; invite co-buyers; cannot grab jobs.
+        - **supply** — grab jobs and commit to campaigns; cannot post demand bids.
+
+        Username rules are enforced server-side (length/charset). Password minimum
+        length is 8. Rate limited to **20 requests/minute** per IP.
       requestBody:
         required: true
         content:
@@ -237,20 +394,46 @@ paths:
               type: object
               required: [username, password, user_type]
               properties:
-                username: { type: string, minLength: 3, maxLength: 20 }
-                password: { type: string, minLength: 8 }
-                user_type: { type: string, enum: [demand, supply], description: demand = buyer, supply = provider }
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 20
+                  description: Unique handle used in chats, parties, and portfolios
+                password:
+                  type: string
+                  minLength: 8
+                user_type:
+                  type: string
+                  enum: [demand, supply]
+                  description: demand = buyer; supply = provider/robot operator
       responses:
         '201':
-          description: Registration successful
-          content: { application/json: { example: { message: Registration successful } } }
-        '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-        '409': { description: Username already exists, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+          description: Registration successful — next step is POST /login
+          content:
+            application/json:
+              example: { message: Registration successful }
+        '400':
+          description: Validation error (missing fields, weak password, invalid user_type)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: Username already exists
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /login:
     post:
       tags: [Auth]
-      summary: Log in and obtain an access token
-      description: Tokens expire after 24 hours. Rate limited to 20/minute.
+      summary: Log in and obtain a Bearer access token
+      description: |
+        Validates username/password and returns `access_token` (UUID string) plus
+        `username` and `user_type`. Include the token on subsequent requests as
+        `Authorization: Bearer <access_token>`.
+
+        Tokens expire after **24 hours**. There is no refresh-token endpoint —
+        call `/login` again. Rate limited to **20/minute**.
       requestBody:
         required: true
         content:
@@ -263,23 +446,40 @@ paths:
                 password: { type: string }
       responses:
         '200':
-          description: Authenticated
+          description: Authenticated — store access_token securely client-side
           content:
             application/json:
-              example: { access_token: 3f2b9c9e-uuid, username: robo_op_1 }
-        '401': { description: Invalid credentials, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+              example:
+                access_token: 3f2b9c9e-uuid
+                username: robo_op_1
+                user_type: supply
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /account:
     get:
       tags: [Auth]
-      summary: Get account info
-      security: [{ bearerAuth: [] }]
+      summary: Get the authenticated account snapshot
+      description: |
+        Returns the caller's account profile fields relevant to marketplace trust:
+        stars/ratings, completed_jobs, computed `reputation_score` (used in matching),
+        optional wallet/seat fields, and a small identity block.
+
+        This is the private self-view. For public social proof of another user,
+        use `GET /portfolio/{username}` instead.
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Account details
+          description: Account details for the token owner
           content:
             application/json:
               example:
                 username: robo_op_1
+                user_type: supply
                 created_on: 1751000000
                 stars: 4.6
                 total_ratings: 22
@@ -290,13 +490,20 @@ paths:
                 seat_token_id: null
         '401': { description: Missing or invalid token }
         '404': { description: User not found }
+
   /set_wallet:
     post:
       tags: [Auth]
-      summary: Link an Ethereum wallet address
+      summary: Link an Ethereum wallet address to the account
       description: |
-        Optional. Linking a wallet has no effect on marketplace access today.
-      security: [{ bearerAuth: [] }]
+        Optional identity step. Stores a checksummed Ethereum address on the
+        account and may sync RSE Seat NFT ownership when seat verification is
+        configured. **Does not currently gate** grab/bid access unless the server
+        has `SEAT_VERIFICATION_ENABLED=True`.
+
+        Useful for seat-linked public portfolios (`/portfolio/seat/{token_id}`).
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -305,20 +512,30 @@ paths:
               type: object
               required: [wallet_address]
               properties:
-                wallet_address: { type: string, example: '0x0000000000000000000000000000000000000001' }
+                wallet_address:
+                  type: string
+                  example: '0x0000000000000000000000000000000000000001'
+                  description: 0x-prefixed 40-hex Ethereum address
       responses:
-        '200': { description: Wallet linked }
+        '200': { description: Wallet linked (and seat fields refreshed if applicable) }
         '400': { description: Invalid Ethereum address }
         '401': { description: Missing or invalid token }
 
   /my_bids:
     get:
       tags: [Marketplace]
-      summary: List my active service requests
-      security: [{ bearerAuth: [] }]
+      summary: List my outstanding (unmatched) service requests
+      description: |
+        Demand-side view of bids you posted that are still open — not expired and
+        not yet converted into a job by a successful grab. Newest first.
+
+        Once a provider grabs a bid, it disappears from this list and appears under
+        `/my_jobs` as an `accepted` job for both buyer and provider.
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Outstanding (unexpired, unmatched) bids, newest first
+          description: Outstanding bids, newest first
           content:
             application/json:
               example:
@@ -334,25 +551,52 @@ paths:
                     created_at: 1751630000
                     status: active
         '401': { description: Missing or invalid token }
+
   /my_jobs:
     get:
       tags: [Marketplace]
-      summary: List my jobs (active, completed, rejected)
-      description: Completed and rejected lists are capped at the 10 most recent.
-      security: [{ bearerAuth: [] }]
+      summary: List my jobs including party memberships
+      description: |
+        Returns the caller's jobs grouped by lifecycle:
+
+        - **active_jobs** — `status=accepted` (work in progress)
+        - **completed_jobs** — both parties signed (capped to recent 10)
+        - **rejected_jobs** — provider rejected (capped to recent 10)
+        - **party_invites** — jobs where you were invited as co-provider or
+          co-buyer (includes pending and accepted invite rows)
+
+        Includes **primary** roles (buyer/provider) **and accepted party members**.
+        Co-buyers appear with `role: co_buyer` and `attribution_only: true`.
+        Co-providers appear with `role: co_provider`.
+
+        Use this as the main authenticated job dashboard for apps and robots.
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Jobs grouped by status, with per-job role and ratings
+          description: Jobs grouped by status, with per-job role, share, and party rosters
         '401': { description: Missing or invalid token }
+
   /submit_bid:
     post:
       tags: [Marketplace]
-      summary: Post a service request (buyer)
+      summary: Post a service request (buyer / demand)
       description: |
-        Demand-type accounts only. Physical/hybrid requests require `lat`+`lon`
-        or `address`. Rideshare requests may instead provide `start_address`
-        and `end_address` (pickup becomes the request location).
-      security: [{ bearerAuth: [] }]
+        Creates an open **bid** (service request) that supply accounts can match
+        via `/grab_job`. **Demand-type accounts only.**
+
+        Required: `service` (what you want), `price` (>0), `end_time` (future Unix
+        timestamp when the request expires).
+
+        Location:
+        - `location_type` physical/hybrid needs `lat`+`lon` or `address` (geocoded).
+        - Rideshare-style jobs may use `start_address` / `end_address` (and optional
+          start/end coordinates); pickup becomes the match location.
+
+        Payment fields (`currency`, `payment_method`) are informational for the
+        counterparty — the exchange does not escrow funds.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -361,29 +605,50 @@ paths:
               type: object
               required: [service, price, end_time]
               properties:
-                service: { type: string, description: What you want done (string or JSON object) }
-                price: { type: number, exclusiveMinimum: 0 }
+                service:
+                  type: string
+                  description: What you want done (plain language or JSON object as string)
+                price:
+                  type: number
+                  exclusiveMinimum: 0
                 currency: { type: string, default: USD }
                 payment_method: { type: string, default: cash }
-                end_time: { type: integer, description: Unix timestamp when the request expires (must be in the future) }
-                location_type: { type: string, enum: [physical, remote, hybrid], default: physical }
+                end_time:
+                  type: integer
+                  description: Unix timestamp when the request expires (must be in the future)
+                location_type:
+                  type: string
+                  enum: [physical, remote, hybrid]
+                  default: physical
                 lat: { type: number }
                 lon: { type: number }
                 address: { type: string }
-                start_address: { type: string, description: Rideshare pickup }
-                end_address: { type: string, description: Rideshare dropoff }
+                start_address: { type: string, description: Rideshare pickup address }
+                end_address: { type: string, description: Rideshare dropoff address }
+                start_lat: { type: number }
+                start_lon: { type: number }
+                end_lat: { type: number }
+                end_lon: { type: number }
       responses:
         '200':
-          description: Request created
-          content: { application/json: { example: { bid_id: uuid } } }
-        '400': { description: Validation error }
+          description: Request created — returns bid_id for tracking/cancel
+          content:
+            application/json:
+              example: { bid_id: uuid }
+        '400': { description: Validation error (missing fields, bad location, past end_time) }
         '401': { description: Missing or invalid token }
         '403': { description: Only demand-type accounts can submit bids }
+
   /cancel_bid:
     post:
       tags: [Marketplace]
-      summary: Cancel a pending request
-      security: [{ bearerAuth: [] }]
+      summary: Cancel a pending unmatched request
+      description: |
+        Deletes (or marks cancelled) an open bid you own **before** a provider has
+        grabbed it. If the bid was already accepted, the API returns **409** with
+        the existing `job_id` — use job reject/dispute flows instead.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -394,20 +659,38 @@ paths:
               properties:
                 bid_id: { type: string }
       responses:
-        '200': { description: Cancelled }
+        '200': { description: Bid cancelled successfully }
         '403': { description: Not your bid }
         '404': { description: Bid not found }
         '409': { description: Already accepted by a provider (job_id returned) }
+
   /grab_job:
     post:
       tags: [Marketplace]
-      summary: Get matched with the best available job (provider)
+      summary: Match with the best available open request (provider / supply)
       description: |
-        Supply-type accounts only. Matching pipeline: (1) location filter,
-        (2) AI capability match, (3) reputation alignment, (4) price.
-        15-minute per-account cooldown between calls (429 with seconds
-        remaining). Physical/hybrid providers must send `lat`+`lon` or `address`.
-      security: [{ bearerAuth: [] }]
+        Core supply endpoint. **Supply-type accounts only.** Runs a multi-step match:
+
+        1. **Location** — filter open bids by distance / remote compatibility
+        2. **Capabilities** — LLM-assisted fitness of your free-text `capabilities`
+           against each bid's `service` description
+        3. **Reputation alignment** — prefer jobs whose buyer reputation is close
+           to yours
+        4. **Price** — among peers, higher price first
+
+        On success, creates a **Job** (`status=accepted`), removes the bid from the
+        open pool, and opens a job channel.
+
+        **Cooldown:** one successful grab attempt window per account (default 15
+        minutes). Exceeding it returns **429** with seconds remaining.
+        Configurable as `GRAB_JOB_COOLDOWN_SECONDS`.
+
+        **Capabilities format:** plain **string** (not a JSON array), e.g.
+        `"taxi driving rideshare chauffeur"`.
+
+        Physical/hybrid providers must send `lat`+`lon` or `address`.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -416,27 +699,48 @@ paths:
               type: object
               required: [capabilities]
               properties:
-                capabilities: { type: string, description: What your robot can do, in plain language }
-                location_type: { type: string, enum: [physical, remote, hybrid], default: physical }
+                capabilities:
+                  type: string
+                  description: |
+                    Plain-language description of what the robot/operator can do.
+                    Example - "autonomous lawn mowing, small lots under 1 acre".
+                location_type:
+                  type: string
+                  enum: [physical, remote, hybrid]
+                  default: physical
                 lat: { type: number }
                 lon: { type: number }
                 address: { type: string }
-                max_distance: { type: number, description: Max miles from your location (default 10) }
+                max_distance:
+                  type: number
+                  description: Max miles from your location for physical matching (default often 10)
       responses:
         '200':
-          description: Job assigned
-          content: { application/json: { schema: { $ref: '#/components/schemas/Job' } } }
-        '204': { description: No matching jobs available }
-        '400': { description: Validation error }
+          description: Job assigned — full job record returned
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Job' }
+        '204':
+          description: No matching jobs in range / for these capabilities
+        '400': { description: Validation error (e.g. capabilities missing, location required) }
         '401': { description: Missing or invalid token }
-        '403': { description: Not a supply account }
-        '429': { description: Cooldown active — wait before next grab }
+        '403': { description: Not a supply account (or seat gate if enabled) }
+        '429': { description: Grab cooldown active — wait before next grab }
+
   /reject_job:
     post:
       tags: [Marketplace]
-      summary: Reject an assigned job (provider)
-      description: Returns the request to the pool (extended 1 hour); you will not be re-matched to it.
-      security: [{ bearerAuth: [] }]
+      summary: Reject an assigned job (provider only)
+      description: |
+        Allows the **primary provider** to walk away from an `accepted` job. The
+        original bid is restored to the open pool (with expiry extended ~1 hour)
+        and the rejecting provider is recorded so they will not be re-matched to
+        the same request.
+
+        Campaign-originated jobs return units to the campaign instead of restoring
+        a bid. Buyers cannot reject via this endpoint (use dispute if needed).
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -446,21 +750,33 @@ paths:
               required: [job_id]
               properties:
                 job_id: { type: string }
-                reason: { type: string }
+                reason:
+                  type: string
+                  description: Optional free-text reason stored on the job and channel
       responses:
-        '200': { description: Rejected }
+        '200': { description: Job rejected; bid or campaign units restored as applicable }
         '400': { description: Job not in accepted state }
-        '403': { description: Only the provider can reject }
+        '403': { description: Only the primary provider can reject }
         '404': { description: Job not found }
+
   /sign_job:
     post:
       tags: [Marketplace]
-      summary: Complete and rate a job
+      summary: Complete and rate a job (both parties must sign)
       description: |
-        Both buyer and provider sign with a 1-5 star rating; the job is marked
-        completed once both have signed. `rating` is the documented field name;
-        `star_rating` is accepted as a legacy alias.
-      security: [{ bearerAuth: [] }]
+        Dual-signature completion. The **buyer** and **provider** each call this
+        once with a 1–5 star rating for the counterparty. The job becomes
+        `completed` only when **both** `buyer_signed` and `provider_signed` are set.
+
+        Field names: prefer `rating`; `star_rating` is accepted as a legacy alias.
+
+        On full completion, reputation counters update for primaries (and accepted
+        **supply** party members receive rating credit). Demand co-buyers are
+        attribution-only and are not given matching-reputation credit.
+
+        Party members cannot sign — only the primary buyer and provider.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -470,17 +786,26 @@ paths:
               required: [job_id, rating]
               properties:
                 job_id: { type: string }
-                rating: { type: integer, minimum: 1, maximum: 5 }
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  description: Stars for the counterparty (1 worst, 5 best)
       responses:
-        '200': { description: Signed }
-        '400': { description: Invalid rating, already signed, or job not signable }
-        '403': { description: Not a party to this job }
+        '200': { description: Signature recorded (job may still be accepted until the other party signs) }
+        '400': { description: Invalid rating, already signed, or job not in accepted state }
+        '403': { description: Not the primary buyer or provider on this job }
         '404': { description: Job not found }
 
   /nearby:
     post:
       tags: [Discovery]
-      summary: Find nearby open requests (public)
+      summary: Find nearby open service requests (public)
+      description: |
+        Public discovery helper. Given a location (`lat`/`lon` or `address`) and
+        optional `radius` in miles, returns open physical/hybrid bids sorted nearest
+        first. Does not require authentication — useful for maps and "work near me"
+        UIs before login.
       requestBody:
         required: true
         content:
@@ -490,30 +815,61 @@ paths:
               properties:
                 lat: { type: number }
                 lon: { type: number }
-                address: { type: string, description: Alternative to lat/lon }
-                radius: { type: number, default: 10, description: Miles }
+                address:
+                  type: string
+                  description: Alternative to lat/lon (server geocodes)
+                radius:
+                  type: number
+                  default: 10
+                  description: Search radius in miles
       responses:
         '200':
           description: Open physical/hybrid requests within radius, nearest first
-        '400': { description: Location required or ungeocodable address }
+        '400': { description: Location required or address could not be geocoded }
+
   /exchange_data:
     get:
       tags: [Discovery]
-      summary: Exchange activity data (public)
+      summary: Browse exchange activity (public)
+      description: |
+        Public market feed of active bids (and optionally completed jobs) with
+        lightweight market stats. Supports substring filters on service category
+        and location text, plus a result limit. Good for dashboards and the main
+        website activity panels.
       parameters:
-        - { name: category, in: query, schema: { type: string }, description: Substring filter on service }
-        - { name: location, in: query, schema: { type: string }, description: Substring filter on address }
-        - { name: limit, in: query, schema: { type: integer, default: 50, maximum: 200 } }
-        - { name: include_completed, in: query, schema: { type: boolean, default: false } }
+        - name: category
+          in: query
+          schema: { type: string }
+          description: Substring filter on service text
+        - name: location
+          in: query
+          schema: { type: string }
+          description: Substring filter on address
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 200 }
+        - name: include_completed
+          in: query
+          schema: { type: boolean, default: false }
+          description: When true, also include recent completed jobs
       responses:
-        '200': { description: Active bids, optional completed jobs, and market stats }
+        '200':
+          description: Active bids, optional completed jobs, and market stats
 
   /chat:
     post:
       tags: [Communication]
-      summary: Send a direct message
-      description: Rate limited to 120/minute.
-      security: [{ bearerAuth: [] }]
+      summary: Send a direct message to another user
+      description: |
+        Authenticated 1:1 messaging. Sends `message` to `recipient` (username).
+        Optionally link a `job_id` for context (UI threading). Rate limited to
+        **120/minute**. Cannot message yourself. Recipient must exist.
+
+        For collaboration on an active job with the full party, prefer the
+        **job channel** (`POST /jobs/{job_id}/messages`) so co-providers/co-buyers
+        see the same thread.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -522,25 +878,40 @@ paths:
               type: object
               required: [recipient, message]
               properties:
-                recipient: { type: string }
+                recipient:
+                  type: string
+                  description: Username of the other account
                 message: { type: string }
-                job_id: { type: string, description: Optional job to link }
+                job_id:
+                  type: string
+                  description: Optional job to associate with this DM
       responses:
-        '200': { description: Sent }
+        '200': { description: Message sent }
         '400': { description: Missing fields or self-message }
         '404': { description: Recipient not found }
+
   /chat/conversations:
     get:
       tags: [Communication]
-      summary: List my conversations
-      security: [{ bearerAuth: [] }]
+      summary: List my direct-message conversations
+      description: |
+        Returns conversation summaries for the authenticated user (peer username,
+        last message snippet/time), newest activity first. Use with
+        `POST /chat/messages` to load a full thread.
+      security:
+        - bearerAuth: []
       responses:
         '200': { description: Conversations with last message, newest first }
+
   /chat/messages:
     post:
       tags: [Communication]
-      summary: Get message history with one user
-      security: [{ bearerAuth: [] }]
+      summary: Fetch message history with one peer
+      description: |
+        Loads the DM thread between you and `conversation_id` (the other user's
+        **username**). Messages are returned in chronological order.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -549,16 +920,23 @@ paths:
               type: object
               required: [conversation_id]
               properties:
-                conversation_id: { type: string, description: The other user's username }
+                conversation_id:
+                  type: string
+                  description: The other user's username
       responses:
         '200': { description: Messages in chronological order }
         '400': { description: Conversation ID required }
+
   /chat/reply:
     post:
       tags: [Communication]
-      summary: Reply in a conversation
-      description: Alias of POST /chat.
-      security: [{ bearerAuth: [] }]
+      summary: Reply in a DM conversation
+      description: |
+        Convenience alias of `POST /chat` — same body (`recipient`, `message`).
+        Prefer documenting a single send path in new clients; this exists for
+        UI symmetry with "reply" actions.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -570,12 +948,45 @@ paths:
                 recipient: { type: string }
                 message: { type: string }
       responses:
-        '200': { description: Sent }
+        '200': { description: Message sent }
+
+  /chat/read:
+    post:
+      tags: [Communication]
+      summary: Mark a DM conversation as read
+      description: |
+        Cursor-based read state for DMs. Sets your `last_read_ts` for the peer
+        conversation so clients can show unread badges. Does not mutate message
+        history — only your read cursor document.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [conversation_id, last_read_ts]
+              properties:
+                conversation_id:
+                  type: string
+                  description: Peer username
+                last_read_ts:
+                  type: integer
+                  description: Unix timestamp of the latest message you consider read
+      responses:
+        '200': { description: Cursor updated }
+
   /bulletin:
     post:
       tags: [Communication]
-      summary: Post to the community bulletin
-      security: [{ bearerAuth: [] }]
+      summary: Post to the community bulletin board
+      description: |
+        Authenticated community board post (announcements, questions, offers).
+        Not tied to a specific job. Visible via `GET /bulletin/feed`. Distinct from
+        public product feedback (`/feedback`) and from job channels.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -586,22 +997,33 @@ paths:
               properties:
                 title: { type: string }
                 content: { type: string }
-                category: { type: string, enum: [announcement, question, offer, general], default: general }
+                category:
+                  type: string
+                  enum: [announcement, question, offer, general]
+                  default: general
       responses:
         '200': { description: Posted }
         '400': { description: Title and content required }
+
   /bulletin/feed:
     get:
       tags: [Communication]
-      summary: Get the bulletin feed
-      security: [{ bearerAuth: [] }]
+      summary: Read the community bulletin feed
+      description: |
+        Returns bulletin posts for authenticated users (newest/all as implemented
+        server-side). Use after login for the in-app community surface.
+      security:
+        - bearerAuth: []
       responses:
-        '200': { description: All bulletin posts }
+        '200': { description: Bulletin posts }
 
   /feedback:
     get:
       tags: [Feedback]
-      summary: List feedback posts (public)
+      summary: List public product feedback posts
+      description: |
+        Public, unauthenticated list of product/site feedback posts with threaded
+        replies. Newest first. Used by the marketing site feedback wall.
       responses:
         '200':
           description: All feedback posts, newest first
@@ -615,8 +1037,12 @@ paths:
                     items: { $ref: '#/components/schemas/FeedbackPost' }
     post:
       tags: [Feedback]
-      summary: Submit feedback (public)
-      description: No login required. Rate limited to 20/minute.
+      summary: Submit public product feedback
+      description: |
+        No login required. Anyone can post a short message (max 2000 chars) with
+        an optional display name. Rate limited to **20/minute**. This is product
+        feedback, not a job dispute — for job issues use
+        `POST /jobs/{job_id}/dispute`.
       requestBody:
         required: true
         content:
@@ -626,7 +1052,10 @@ paths:
               required: [message]
               properties:
                 message: { type: string, maxLength: 2000 }
-                username: { type: string, maxLength: 40, description: Optional display name (defaults to Guest) }
+                username:
+                  type: string
+                  maxLength: 40
+                  description: Optional display name (defaults to Guest)
       responses:
         '201':
           description: Post created
@@ -637,13 +1066,19 @@ paths:
                 properties:
                   post: { $ref: '#/components/schemas/FeedbackPost' }
         '400': { description: Message required }
+
   /feedback/{post_id}/reply:
     post:
       tags: [Feedback]
-      summary: Reply to a feedback post (public)
-      description: No login required. Rate limited to 20/minute.
+      summary: Reply to a public feedback post
+      description: |
+        Append a reply to an existing feedback post. No login required. Rate
+        limited to **20/minute**.
       parameters:
-        - { name: post_id, in: path, required: true, schema: { type: string } }
+        - name: post_id
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
         required: true
         content:
@@ -662,8 +1097,11 @@ paths:
   /financing/partners:
     get:
       tags: [Financing]
-      summary: List financing partners (public)
-      description: Partner integrations are currently pending — applications are queued.
+      summary: List robot financing partners (public)
+      description: |
+        Returns the catalog of financing partners (names, rate teaser, amount
+        ranges, integration status). Most integrations are `pending` — applications
+        are still accepted via `/financing/apply` and queued for follow-up.
       responses:
         '200':
           description: Available financing partners
@@ -675,15 +1113,18 @@ paths:
                   partners:
                     type: array
                     items: { $ref: '#/components/schemas/FinancingPartner' }
+
   /financing/apply:
     post:
       tags: [Financing]
       summary: Submit a robot financing application (public)
       description: |
-        Routes one application to up to 3 partners. No login required and no
-        credit check — partner integrations are pending, so applications are
-        validated, stored, and queued with per-partner status `pending`.
-        Rate limited to 20/minute.
+        Public lead form for robot purchase financing. Validates contact and loan
+        fields, then stores an application routed to up to **3** partners (or all
+        if `partners` omitted). **No credit check is performed by RSE** — each
+        partner entry is left `pending` until external integration exists.
+
+        Rate limited to **20/minute**. No authentication required.
       requestBody:
         required: true
         content:
@@ -696,9 +1137,16 @@ paths:
                 email: { type: string, format: email }
                 phone: { type: string, maxLength: 40 }
                 robot_model: { type: string, example: Unitree G1 }
-                loan_amount: { type: number, exclusiveMinimum: 0, maximum: 5000000, description: USD }
+                loan_amount:
+                  type: number
+                  exclusiveMinimum: 0
+                  maximum: 5000000
+                  description: Requested amount in USD
                 term_months: { type: integer, default: 36 }
-                credit_range: { type: string, enum: [excellent, good, fair, poor, unknown], default: unknown }
+                credit_range:
+                  type: string
+                  enum: [excellent, good, fair, poor, unknown]
+                  default: unknown
                 partners:
                   type: array
                   maxItems: 3
@@ -706,7 +1154,7 @@ paths:
                   description: Partner ids from GET /financing/partners (defaults to all)
       responses:
         '201':
-          description: Application queued
+          description: Application queued for partner follow-up
           content:
             application/json:
               example:
@@ -722,14 +1170,30 @@ paths:
   /jobs/{job_id}/party/invite:
     post:
       tags: [Cooperation]
-      summary: Invite a co-provider to share a job (ad-hoc job party)
+      summary: Invite a co-provider or co-buyer onto a job party
       description: |
-        Only the job's primary provider may invite. The job must be in
-        `accepted` state. The primary provider always keeps at least a 5%
-        share, so the sum of invited/accepted shares is capped at 0.95.
-      security: [{ bearerAuth: [] }]
+        Forms an **ad-hoc coalition** for a single accepted job.
+
+        - **side=supply** (default) — primary **provider** invites another
+          **supply** account as co-provider. Inviter must keep residual share
+          (server enforces minimum primary share, typically 5%).
+        - **side=demand** — primary **buyer** invites another **demand** account
+          as co-buyer when `DEMAND_PARTY_ENABLED`. Demand parties are
+          **attribution-only** (portfolio/history), not matching reputation.
+
+        Invitee receives a DM and can accept via
+        `POST /jobs/{job_id}/party/respond`. Pending invitees are **not** full
+        job-channel members until accepted.
+
+        Requires `member_username` and `share` (0–1 exclusive) unless server rules
+        for a given side allow null shares.
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: job_id, in: path, required: true, schema: { type: string } }
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
         required: true
         content:
@@ -739,11 +1203,19 @@ paths:
               required: [member_username, share]
               properties:
                 member_username: { type: string }
-                share: { type: number, exclusiveMinimum: 0, exclusiveMaximum: 1 }
-                side: { type: string, enum: [supply, demand], default: supply, description: supply = co-providers; demand = co-buyers (DEMAND_PARTY_ENABLED) }
+                share:
+                  type: number
+                  exclusiveMinimum: 0
+                  exclusiveMaximum: 1
+                  description: Fractional share attributed to the invitee
+                side:
+                  type: string
+                  enum: [supply, demand]
+                  default: supply
+                  description: supply = co-providers; demand = co-buyers
       responses:
         '201':
-          description: Invitation created
+          description: Invitation created; party rosters returned
           content:
             application/json:
               schema:
@@ -753,16 +1225,30 @@ paths:
                   party:
                     type: array
                     items: { $ref: '#/components/schemas/JobPartyMember' }
+                  demand_party:
+                    type: array
+                    items: { $ref: '#/components/schemas/JobPartyMember' }
         '400': { description: Validation error, already invited, or share exceeds available capacity }
-        '403': { description: Only the primary provider can invite }
+        '403': { description: Wrong role for this side, or demand parties disabled }
         '404': { description: Job or member_username not found }
+
   /jobs/{job_id}/party/respond:
     post:
       tags: [Cooperation]
       summary: Accept or decline a job-party invitation
-      security: [{ bearerAuth: [] }]
+      description: |
+        Called by the **invitee** (not the primary). Sets invitation status to
+        `accepted` or `declined`. On accept, the member joins channel membership
+        and will appear in `/my_jobs` and history for that job.
+
+        Demand side may enforce a max accepted co-buyer count.
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: job_id, in: path, required: true, schema: { type: string } }
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
         required: true
         content:
@@ -771,22 +1257,32 @@ paths:
               type: object
               required: [action]
               properties:
-                action: { type: string, enum: [accept, decline] }
+                action:
+                  type: string
+                  enum: [accept, decline]
       responses:
-        '200': { description: Invitation updated }
-        '400': { description: Missing fields or already responded }
+        '200': { description: Invitation updated (status + side returned) }
+        '400': { description: Missing fields, already responded, or job not accepted }
         '404': { description: Job not found or no invitation for this user }
+
   /jobs/{job_id}/party:
     get:
       tags: [Cooperation]
-      summary: View a job's party roster
-      description: Visible to the buyer, the primary provider, and any invited/accepted party members.
-      security: [{ bearerAuth: [] }]
+      summary: View supply and demand party rosters for a job
+      description: |
+        Returns both party sides, primary usernames, and residual share math for
+        the supply side. Visible to buyer, provider, and any invited/accepted
+        party members (including pending invitees for roster visibility).
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: job_id, in: path, required: true, schema: { type: string } }
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: string }
       responses:
         '200':
-          description: Party roster and the primary provider's residual share
+          description: Party roster(s) and primary residual share
           content:
             application/json:
               schema:
@@ -794,46 +1290,90 @@ paths:
                 properties:
                   job_id: { type: string }
                   provider_username: { type: string }
+                  buyer_username: { type: string }
                   provider_share: { type: number }
                   party:
                     type: array
                     items: { $ref: '#/components/schemas/JobPartyMember' }
+                  demand_party:
+                    type: array
+                    items: { $ref: '#/components/schemas/JobPartyMember' }
         '403': { description: Not a party to this job }
         '404': { description: Job not found }
+
   /jobs/{job_id}/channel:
     get:
       tags: [Communication]
-      summary: Get job channel metadata (members, state, read cursor)
-      security: [{ bearerAuth: [] }]
+      summary: Get job channel metadata
+      description: |
+        Returns the shared job channel state for an accepted/completed/rejected
+        job: member list (primaries + **accepted** party members only), channel
+        state (`active` vs `read_only`), and your read cursor.
+
+        Pending invitees are **excluded** until they accept the party invite.
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: job_id, in: path, required: true, schema: { type: string } }
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: string }
       responses:
-        '200': { description: Channel meta for accepted participants }
-        '403': { description: Not a channel member (pending invitees excluded) }
+        '200': { description: Channel metadata for accepted participants }
+        '403': { description: Not a channel member }
         '404': { description: Job not found }
+
   /jobs/{job_id}/messages:
     get:
       tags: [Communication]
-      summary: List job channel messages (poll with since_ts / after_id)
-      security: [{ bearerAuth: [] }]
+      summary: Poll job channel messages
+      description: |
+        Lists messages in the job channel. Supports incremental polling via
+        `since_ts` and/or `after_id`, with `limit` (default 50, max 100).
+
+        Intended for robots and UIs that poll while a job is active. Requires
+        channel membership (same rules as GET channel).
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: job_id, in: path, required: true, schema: { type: string } }
-        - { name: since_ts, in: query, schema: { type: integer } }
-        - { name: after_id, in: query, schema: { type: string } }
-        - { name: limit, in: query, schema: { type: integer, default: 50, maximum: 100 } }
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: since_ts
+          in: query
+          schema: { type: integer }
+          description: Only messages with sent_at greater than this Unix time
+        - name: after_id
+          in: query
+          schema: { type: string }
+          description: Only messages after this message_id (stable pagination)
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 100 }
       responses:
-        '200': { description: Paginated messages }
+        '200': { description: Message page }
         '403': { description: Not a channel member }
     post:
       tags: [Communication]
       summary: Post a message to a job channel
       description: |
-        Client message_type may be `user`, `agent_structured`, or `status`.
-        `system` is server-only (400 if sent by client). Channel is read-only
-        after job completed/rejected.
-      security: [{ bearerAuth: [] }]
+        Append a message visible to all channel members. Client-allowed
+        `message_type` values: `user`, `agent_structured`, `status`.
+        Type `system` is **server-only** (client attempts get 400).
+
+        After the job is completed or rejected the channel is **read-only**
+        (POST returns 403). Use `client_message_id` for idempotent retries
+        (duplicate returns 200 with the original message).
+
+        Rate limited; 429 when exceeded.
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: job_id, in: path, required: true, schema: { type: string } }
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
         required: true
         content:
@@ -843,22 +1383,37 @@ paths:
               required: [body]
               properties:
                 body: { type: string, maxLength: 4000 }
-                message_type: { type: string, enum: [user, agent_structured, status], default: user }
-                payload: { type: object }
-                client_message_id: { type: string, description: Idempotency key per sender }
+                message_type:
+                  type: string
+                  enum: [user, agent_structured, status]
+                  default: user
+                payload:
+                  type: object
+                  description: Optional structured data for agent_structured / status messages
+                client_message_id:
+                  type: string
+                  description: Idempotency key scoped to sender + job
       responses:
         '201': { description: Message created }
-        '200': { description: Idempotent replay of client_message_id }
-        '400': { description: Validation error }
-        '403': { description: Not a member or channel read-only }
+        '200': { description: Idempotent replay of an existing client_message_id }
+        '400': { description: Validation error (empty body, forbidden system type, etc.) }
+        '403': { description: Not a member or channel is read-only }
         '429': { description: Rate limited }
+
   /jobs/{job_id}/messages/read:
     post:
       tags: [Communication]
-      summary: Mark job channel as read (cursor)
-      security: [{ bearerAuth: [] }]
+      summary: Mark job channel as read
+      description: |
+        Updates your per-job channel read cursor to `last_read_ts` so unread
+        counts can be computed client-side. Does not delete or edit messages.
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: job_id, in: path, required: true, schema: { type: string } }
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
         required: true
         content:
@@ -870,32 +1425,26 @@ paths:
                 last_read_ts: { type: integer }
       responses:
         '200': { description: Cursor updated }
-  /chat/read:
-    post:
-      tags: [Communication]
-      summary: Mark a DM conversation as read (cursor-based)
-      security: [{ bearerAuth: [] }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [conversation_id, last_read_ts]
-              properties:
-                conversation_id: { type: string, description: Peer username }
-                last_read_ts: { type: integer }
-      responses:
-        '200': { description: Cursor updated }
+        '403': { description: Not a channel member }
 
   /jobs/{job_id}/dispute:
     post:
       tags: [Cooperation]
       summary: File a dispute on a job
-      description: Either the buyer or the provider on the job may file. Reviewed by admins via GET /admin/disputes.
-      security: [{ bearerAuth: [] }]
+      description: |
+        Opens an admin-reviewed dispute for a job you participate in as primary
+        buyer or provider. Provide a clear `reason` (max 1000 chars). Admins list
+        and resolve disputes via `/admin/disputes*`.
+
+        This does not automatically cancel payment or reverse ratings — it flags
+        the engagement for human review.
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: job_id, in: path, required: true, schema: { type: string } }
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
         required: true
         content:
@@ -908,7 +1457,9 @@ paths:
       responses:
         '201':
           description: Dispute filed
-          content: { application/json: { schema: { $ref: '#/components/schemas/Dispute' } } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Dispute' }
         '400': { description: reason required }
         '403': { description: Not a party to this job }
         '404': { description: Job not found }
@@ -916,9 +1467,20 @@ paths:
   /campaigns:
     post:
       tags: [Campaigns]
-      summary: Create a multi-unit campaign (buyer)
-      description: Demand-type accounts only. Physical/hybrid campaigns require `lat`+`lon` or `address`.
-      security: [{ bearerAuth: [] }]
+      summary: Create a multi-unit demand campaign
+      description: |
+        **Demand accounts only.** Posts bulk/recurring need for `units_needed`
+        identical units of work at `unit_price` each. Campaigns stay `open` until
+        filled, closed, or past `end_time`.
+
+        Physical/hybrid campaigns require location (`lat`/`lon` or `address`).
+        Remote campaigns omit coordinates.
+
+        After creation, supply accounts `POST .../commit`; you accept commitments
+        to spin up real jobs. Optionally invite demand **co-sponsors** so multiple
+        buyers share attribution on those jobs.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -929,32 +1491,55 @@ paths:
               properties:
                 title: { type: string, maxLength: 120 }
                 description: { type: string, maxLength: 2000 }
-                service: { type: string, description: What you need done (string or JSON object) }
-                unit_price: { type: number, exclusiveMinimum: 0 }
+                service:
+                  type: string
+                  description: What each unit of work is
+                unit_price:
+                  type: number
+                  exclusiveMinimum: 0
                 units_needed: { type: integer, minimum: 1 }
                 currency: { type: string, default: USD }
                 payment_method: { type: string, default: cash }
-                location_type: { type: string, enum: [physical, remote, hybrid], default: physical }
+                location_type:
+                  type: string
+                  enum: [physical, remote, hybrid]
+                  default: physical
                 address: { type: string }
                 lat: { type: number }
                 lon: { type: number }
-                end_time: { type: integer, description: Unix timestamp when the campaign closes (must be in the future) }
+                end_time:
+                  type: integer
+                  description: Unix timestamp when the campaign closes (must be future)
       responses:
         '201':
           description: Campaign created
-          content: { application/json: { schema: { $ref: '#/components/schemas/Campaign' } } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Campaign' }
         '400': { description: Validation error }
         '403': { description: Only demand-type accounts can create campaigns }
     get:
       tags: [Campaigns]
       summary: List open campaigns (public)
+      description: |
+        Public browse of open campaigns. Commitment arrays may be omitted or
+        truncated in list view — use `GET /campaigns/{campaign_id}` for full
+        detail. Supports category/location substring filters and limit.
       parameters:
-        - { name: category, in: query, schema: { type: string }, description: Substring filter on title/service }
-        - { name: location, in: query, schema: { type: string }, description: Substring filter on address }
-        - { name: limit, in: query, schema: { type: integer, default: 50, maximum: 200 } }
+        - name: category
+          in: query
+          schema: { type: string }
+          description: Substring filter on title/service
+        - name: location
+          in: query
+          schema: { type: string }
+          description: Substring filter on address
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 200 }
       responses:
         '200':
-          description: Open campaigns (commitments omitted from this list view), newest first
+          description: Open campaigns, newest first
           content:
             application/json:
               schema:
@@ -963,23 +1548,46 @@ paths:
                   campaigns:
                     type: array
                     items: { $ref: '#/components/schemas/Campaign' }
+
   /campaigns/{campaign_id}:
     get:
       tags: [Campaigns]
-      summary: Get full campaign detail, including commitments (public)
+      summary: Get full campaign detail including commitments
+      description: |
+        Public full document for one campaign: metadata, units remaining, status,
+        and the commitments list (pending/accepted/rejected). Use this before
+        committing capacity or reviewing as owner.
       parameters:
-        - { name: campaign_id, in: path, required: true, schema: { type: string } }
+        - name: campaign_id
+          in: path
+          required: true
+          schema: { type: string }
       responses:
-        '200': { description: Campaign detail, content: { application/json: { schema: { $ref: '#/components/schemas/Campaign' } } } }
+        '200':
+          description: Campaign detail
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Campaign' }
         '404': { description: Campaign not found }
+
   /campaigns/{campaign_id}/commit:
     post:
       tags: [Campaigns]
-      summary: Commit capacity toward fulfilling a campaign (provider)
-      description: Supply-type accounts only. Cannot commit to your own campaign.
-      security: [{ bearerAuth: [] }]
+      summary: Commit provider capacity toward a campaign
+      description: |
+        **Supply accounts only.** Offers to fulfill `units` of the campaign
+        (cannot exceed `units_remaining`, cannot commit to your own campaign).
+        Creates a **pending** commitment the owner must accept or reject.
+
+        Optional `capabilities` and `message` help the owner choose among
+        providers. Acceptance spins up a normal Job (see accept endpoint).
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: campaign_id, in: path, required: true, schema: { type: string } }
+        - name: campaign_id
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
         required: true
         content:
@@ -1004,18 +1612,31 @@ paths:
         '400': { description: Validation error, campaign not open, or insufficient units remaining }
         '403': { description: Only supply-type accounts can commit, or campaign is your own }
         '404': { description: Campaign not found }
+
   /campaigns/{campaign_id}/commitments/{commitment_id}/accept:
     post:
       tags: [Campaigns]
-      summary: Accept a pending commitment (campaign owner)
+      summary: Accept a commitment and spin up a job (owner)
       description: |
-        Creates a normal job record for the committed units (same shape as a
-        grab_job result) and decrements the campaign's units_remaining. The
-        campaign is marked `fulfilled` once units_remaining reaches zero.
-      security: [{ bearerAuth: [] }]
+        **Campaign owner only.** Accepts a pending commitment: creates a normal
+        Job between the campaign owner (buyer) and the committing provider,
+        decrements `units_remaining`, and may mark the campaign `fulfilled` when
+        remaining hits zero.
+
+        If the campaign has **accepted co-sponsors**, up to five are copied onto
+        the new job's `demand_party` for attribution (status accepted, source
+        `campaign_sponsor`).
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: campaign_id, in: path, required: true, schema: { type: string } }
-        - { name: commitment_id, in: path, required: true, schema: { type: string } }
+        - name: campaign_id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: commitment_id
+          in: path
+          required: true
+          schema: { type: string }
       responses:
         '200':
           description: Commitment accepted and job created
@@ -1030,143 +1651,77 @@ paths:
         '400': { description: Commitment already responded to, or campaign no longer open }
         '403': { description: Only the campaign owner can respond }
         '404': { description: Campaign or commitment not found }
+
   /campaigns/{campaign_id}/commitments/{commitment_id}/reject:
     post:
       tags: [Campaigns]
-      summary: Reject a pending commitment (campaign owner)
-      security: [{ bearerAuth: [] }]
+      summary: Reject a pending commitment (owner)
+      description: |
+        **Campaign owner only.** Marks the commitment `rejected` without creating
+        a job. Units remain available for other providers to commit.
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: campaign_id, in: path, required: true, schema: { type: string } }
-        - { name: commitment_id, in: path, required: true, schema: { type: string } }
+        - name: campaign_id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: commitment_id
+          in: path
+          required: true
+          schema: { type: string }
       responses:
         '200': { description: Commitment rejected }
         '400': { description: Commitment already responded to }
         '403': { description: Only the campaign owner can respond }
         '404': { description: Campaign or commitment not found }
-  /activity/me:
-    get:
-      tags: [Discovery]
-      summary: My activity events (authenticated)
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - { name: limit, in: query, schema: { type: integer, default: 50 } }
-        - { name: since, in: query, schema: { type: integer } }
-      responses:
-        '200': { description: Recent activity events }
-  /activity/jobs/{job_id}:
-    get:
-      tags: [Discovery]
-      summary: Job activity (participants only)
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - { name: job_id, in: path, required: true, schema: { type: string } }
-      responses:
-        '200': { description: Job activity events }
-        '403': { description: Not a participant }
-  /portfolio/{username}:
-    get:
-      tags: [Discovery]
-      summary: Public portfolio by username
-      parameters:
-        - { name: username, in: path, required: true, schema: { type: string } }
-      responses:
-        '200': { description: Public completions and identity }
-  /portfolio/seat/{token_id}:
-    get:
-      tags: [Discovery]
-      summary: Public portfolio by seat token id
-      parameters:
-        - { name: token_id, in: path, required: true, schema: { type: integer } }
-      responses:
-        '200': { description: Canonical supply portfolio }
-  /export/history:
-    get:
-      tags: [Discovery]
-      summary: Private full history export (JSON)
-      security: [{ bearerAuth: [] }]
-      responses:
-        '200': { description: Export bundle }
-  /export/proof/{job_id}:
-    get:
-      tags: [Discovery]
-      summary: Participant job proof with content hash
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - { name: job_id, in: path, required: true, schema: { type: string } }
-      responses:
-        '200': { description: Proof document }
-        '403': { description: Not a participant }
-
-  /agents:
-    post:
-      tags: [Auth]
-      summary: Create an agent token (operator account)
-      description: |
-        Returns `agent_token` **once**. Default scopes are `history:read` only.
-        Agents use Bearer auth; routes not in the server allowlist return 403 (default-deny).
-      security: [{ bearerAuth: [] }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                label: { type: string }
-                robot_id: { type: string, description: Must match robots_owned[].id if set }
-                scopes:
-                  type: array
-                  items: { type: string }
-                  default: [history:read]
-                expires_at: { type: integer, nullable: true }
-      responses:
-        '201':
-          description: Agent created; agent_token shown once
-        '400': { description: Validation error }
-        '403': { description: Agent tokens disabled or max agents reached }
-    get:
-      tags: [Auth]
-      summary: List agents for the authenticated account
-      security: [{ bearerAuth: [] }]
-      responses:
-        '200':
-          description: Agents without secrets
-  /agents/{agent_id}:
-    delete:
-      tags: [Auth]
-      summary: Revoke an agent token
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - { name: agent_id, in: path, required: true, schema: { type: string } }
-      responses:
-        '200': { description: Revoked }
-        '404': { description: Agent not found }
-  /agents/{agent_id}/rotate:
-    post:
-      tags: [Auth]
-      summary: Rotate agent secret (new token once)
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - { name: agent_id, in: path, required: true, schema: { type: string } }
-      responses:
-        '200': { description: New agent_token }
-        '404': { description: Agent not found }
 
   /campaigns/{campaign_id}/sponsors:
     get:
       tags: [Campaigns]
       summary: List campaign co-sponsors
+      description: |
+        Public roster of demand-side co-sponsors on a campaign (invited / accepted /
+        declined) plus the owner username. Co-sponsors are **not** providers —
+        they are additional demand accounts sharing attribution when jobs spin up.
       parameters:
-        - { name: campaign_id, in: path, required: true, schema: { type: string } }
+        - name: campaign_id
+          in: path
+          required: true
+          schema: { type: string }
       responses:
-        '200': { description: Owner + sponsors roster }
+        '200':
+          description: Owner + sponsors roster
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  campaign_id: { type: string }
+                  owner_username: { type: string }
+                  sponsors:
+                    type: array
+                    items: { $ref: '#/components/schemas/CampaignSponsor' }
+        '404': { description: Campaign not found }
+
   /campaigns/{campaign_id}/sponsors/invite:
     post:
       tags: [Campaigns]
       summary: Invite a demand account as co-sponsor (owner only)
-      security: [{ bearerAuth: [] }]
+      description: |
+        **Campaign owner only.** Invites another **demand** account to co-sponsor
+        the campaign. The invitee should `POST .../sponsors/respond` with accept
+        or decline. Accepted sponsors are copied onto jobs created from accepted
+        commitments (up to 5 per job, attribution-only).
+
+        Requires `CAMPAIGN_SPONSORS_ENABLED` on the server (default on).
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: campaign_id, in: path, required: true, schema: { type: string } }
+        - name: campaign_id
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
         required: true
         content:
@@ -1175,16 +1730,30 @@ paths:
               type: object
               required: [member_username]
               properties:
-                member_username: { type: string }
+                member_username:
+                  type: string
+                  description: Demand account to invite (must exist and be user_type demand)
       responses:
-        '201': { description: Sponsor invite created }
+        '201': { description: Sponsor invite created; sponsors array returned }
+        '400': { description: Validation error or already invited }
+        '403': { description: Not owner, or sponsors disabled }
+        '404': { description: Campaign not found }
+
   /campaigns/{campaign_id}/sponsors/respond:
     post:
       tags: [Campaigns]
-      summary: Accept or decline a sponsor invite
-      security: [{ bearerAuth: [] }]
+      summary: Accept or decline a co-sponsor invitation
+      description: |
+        Called by the **invited demand account**. Sets sponsor status to
+        `accepted` or `declined`. After accept, future jobs spun from this
+        campaign may include you on `demand_party`.
+      security:
+        - bearerAuth: []
       parameters:
-        - { name: campaign_id, in: path, required: true, schema: { type: string } }
+        - name: campaign_id
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
         required: true
         content:
@@ -1193,18 +1762,31 @@ paths:
               type: object
               required: [action]
               properties:
-                action: { type: string, enum: [accept, decline] }
+                action:
+                  type: string
+                  enum: [accept, decline]
       responses:
-        '200': { description: Updated }
+        '200': { description: Sponsor status updated }
+        '400': { description: Invalid action or already responded }
+        '404': { description: Campaign or invitation not found }
 
   /my_campaigns:
     get:
       tags: [Campaigns]
-      summary: List my owned campaigns and my commitments on others' campaigns
-      security: [{ bearerAuth: [] }]
+      summary: List campaigns I own and commitments I made
+      description: |
+        Authenticated dashboard split:
+
+        - **owned_campaigns** — campaigns you created as demand
+        - **my_commitments** — commitments you submitted as supply on others'
+          campaigns (with status and campaign references)
+
+        Use this instead of scanning the public list when building an operator UI.
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: owned_campaigns and my_commitments
+          description: owned_campaigns and my_commitments arrays
           content:
             application/json:
               schema:
@@ -1217,16 +1799,144 @@ paths:
                     type: array
                     items: { type: object }
 
+  /activity/me:
+    get:
+      tags: [Discovery]
+      summary: My activity event feed
+      description: |
+        Authenticated chronological activity telemetry for the caller (and events
+        where you were indexed as a related party — e.g. party invites).
+
+        Activity is **best-effort append-only** telemetry. Marketplace job/bid
+        records remain the source of truth. Use `limit` and optional `since`
+        (Unix time) to page. Empty indexes may fall back to a short scan of
+        recent months.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 100 }
+        - name: since
+          in: query
+          schema: { type: integer }
+          description: Only events with created_at >= this Unix timestamp
+      responses:
+        '200':
+          description: Recent activity events plus a note about telemetry semantics
+
+  /activity/jobs/{job_id}:
+    get:
+      tags: [Discovery]
+      summary: Activity events for a single job
+      description: |
+        Participant-only activity stream for one job (primaries and accepted party
+        members). Useful for auditing channel-era system events, party changes,
+        and completion without exporting the whole account history.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Job activity events }
+        '403': { description: Not a participant }
+        '404': { description: Job not found }
+
+  /portfolio/{username}:
+    get:
+      tags: [Discovery]
+      summary: Public portfolio by username
+      description: |
+        Public social-proof page data for any username: identity (public_id / seat
+        if linked), reputation score, completion cards (including co-buyer /
+        co-provider roles), and a reputation_breakdown counting solo vs supply
+        collab vs demand collab vs campaign jobs.
+
+        Demand co-buyer cards are marked `attribution_only`. Does not expose
+        private chat or full bid drafts.
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Public completions, identity, and breakdown }
+        '404': { description: User not found }
+
+  /portfolio/seat/{token_id}:
+    get:
+      tags: [Discovery]
+      summary: Public portfolio by RSE Seat token id
+      description: |
+        Canonical portfolio lookup when identity is seat-linked. Resolves the
+        account that owns the given ERC-721 seat `token_id` and returns the same
+        shape as `/portfolio/{username}`, with seat metadata flags. Prefer this
+        URL when you have a seat id rather than a mutable username.
+      parameters:
+        - name: token_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Canonical supply portfolio for that seat }
+        '404': { description: No account linked to this seat }
+
+  /export/history:
+    get:
+      tags: [Discovery]
+      summary: Private full history export (JSON)
+      description: |
+        Authenticated data-portability export for the caller: identity snapshot,
+        bids, jobs (including party memberships), and a sample of activity events.
+        Intended for user download / backup — not a public API.
+
+        Schema version field is included for client compatibility.
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Export bundle (schema_version, bids, jobs, activity) }
+        '401': { description: Missing or invalid token }
+
+  /export/proof/{job_id}:
+    get:
+      tags: [Discovery]
+      summary: Participant job proof with content hash
+      description: |
+        Issues a structured **proof document** for a job you participated in
+        (primary or accepted party member). Includes job facts, party rosters,
+        and an integrity section with a SHA-256 content hash. If the server has
+        `RSE_PROOF_SIGNING_KEY` configured, an HMAC is also attached.
+
+        Use for off-platform invoices, audits, or dispute evidence packages.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Proof document with integrity.hash }
+        '403': { description: Not a participant }
+        '404': { description: Job not found }
+
   /endorsements:
     post:
       tags: [Reputation]
       summary: Endorse another user for a skill
       description: |
-        Idempotent per (endorser, target, skill) — re-endorsing the same skill
-        just refreshes the timestamp. Endorsements are shown on profiles as
-        social proof; they do not alter reputation_score used for job matching.
-        Rate limited to 20/minute.
-      security: [{ bearerAuth: [] }]
+        Records that you vouch for `target_username` on a free-text `skill`
+        (max 40 chars). Idempotent per (endorser, target, skill) — re-posting
+        refreshes the timestamp rather than double-counting.
+
+        Endorsements are **social proof** shown on profiles and endorsement
+        summaries. They do **not** alter `reputation_score` used by `/grab_job`
+        matching. Rate limited to **20/minute**. Cannot endorse yourself.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -1241,12 +1951,19 @@ paths:
         '201': { description: Endorsement recorded }
         '400': { description: Missing fields or endorsing yourself }
         '404': { description: target_username not found }
+
   /endorsements/{username}:
     get:
       tags: [Reputation]
-      summary: Get a user's received endorsements, aggregated by skill (public)
+      summary: Get a user's endorsements aggregated by skill (public)
+      description: |
+        Public aggregation of endorsements received by `username`, grouped by
+        skill with counts and endorser usernames. Suitable for profile widgets.
       parameters:
-        - { name: username, in: path, required: true, schema: { type: string } }
+        - name: username
+          in: path
+          required: true
+          schema: { type: string }
       responses:
         '200':
           description: Endorsement summary
@@ -1261,25 +1978,41 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/EndorsementSkill' }
         '404': { description: User not found }
+
   /leaderboard:
     get:
       tags: [Reputation]
       summary: Platform leaderboards (public)
       description: |
-        Three rankings, top 10 each: `top_reputation` (accounts with 3+
-        ratings), `top_campaign_fulfillers` (units fulfilled via accepted
-        campaign commitments), and `top_collaborators` (completed job-party
-        participations).
+        Public rankings (top 10 each):
+
+        - **top_reputation** — accounts with at least 3 ratings, sorted by
+          reputation_score then rating count
+        - **top_campaign_fulfillers** — providers by units fulfilled via accepted
+          campaign commitments
+        - **top_collaborators** — supply-side job-party participation on completed
+          jobs
+        - **top_demand_collaborators** — demand-side (co-buyer) collaboration counts
+
+        Useful for homepage social proof; not used directly in matching.
       responses:
-        '200': { description: Leaderboard rankings }
+        '200': { description: Leaderboard ranking arrays }
 
   /admin/disputes:
     get:
       tags: [Admin]
       summary: List filed disputes (admin)
-      description: Requires the `X-Admin-Key` header (shared secret; no per-admin accounts exist yet).
+      description: |
+        Admin queue of job disputes. Requires header **`X-Admin-Key`** matching
+        the server `ADMIN_API_KEY` (shared secret; no per-admin accounts yet).
+
+        Optional `status` filter: `open`, `resolved`, or `dismissed`. Newest first.
       parameters:
-        - { name: status, in: query, schema: { type: string, enum: [open, resolved, dismissed] } }
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, resolved, dismissed]
       responses:
         '200':
           description: Disputes, newest first
@@ -1292,13 +2025,20 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/Dispute' }
         '401': { description: Missing or invalid X-Admin-Key }
+
   /admin/disputes/{dispute_id}/resolve:
     post:
       tags: [Admin]
       summary: Resolve or dismiss a dispute (admin)
-      description: Requires the `X-Admin-Key` header.
+      description: |
+        Closes a dispute as `resolved` or `dismissed` with an optional note.
+        Requires **`X-Admin-Key`**. Does not automatically rewrite job ratings;
+        use as the human-review workflow endpoint.
       parameters:
-        - { name: dispute_id, in: path, required: true, schema: { type: string } }
+        - name: dispute_id
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
         required: true
         content:
@@ -1307,10 +2047,16 @@ paths:
               type: object
               required: [status]
               properties:
-                status: { type: string, enum: [resolved, dismissed] }
+                status:
+                  type: string
+                  enum: [resolved, dismissed]
                 note: { type: string, maxLength: 1000 }
       responses:
-        '200': { description: Dispute updated, content: { application/json: { schema: { $ref: '#/components/schemas/Dispute' } } } }
+        '200':
+          description: Dispute updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Dispute' }
         '400': { description: Invalid status }
         '401': { description: Missing or invalid X-Admin-Key }
         '404': { description: Dispute not found }
