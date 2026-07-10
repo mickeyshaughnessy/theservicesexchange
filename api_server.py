@@ -1,7 +1,7 @@
 """
-Service Exchange API Server
---------------------------
-Main entry point for the Service Exchange Protocol API.
+The RSE API Server
+------------------
+Main entry point for The RSE (Robot Services Exchange) Protocol API.
 Handles HTTP requests, authentication, and routing to business logic.
 """
 
@@ -302,7 +302,7 @@ def site_login():
 @app.route('/ping', methods=['GET'])
 def ping():
     """Health check endpoint."""
-    return flask.jsonify({"message": "Service Exchange API is operational"}), 200
+    return flask.jsonify({"message": "The RSE API is operational"}), 200
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -310,7 +310,7 @@ def health():
     return flask.jsonify({
         "status": "healthy",
         "timestamp": int(time.time()),
-        "service": "Service Exchange API",
+        "service": "The RSE API",
         "version": "1.0.0"
     }), 200
 
@@ -342,7 +342,7 @@ def metrics():
 def root():
     """Redirect to API documentation."""
     return flask.jsonify({
-        "message": "Service Exchange API",
+        "message": "The RSE API",
         "documentation": f"http://{config.API_HOST}:{config.API_PORT}/api_docs.html",
         "status": "operational"
     }), 200

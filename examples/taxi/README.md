@@ -1,6 +1,6 @@
 # Taxi Integration Examples (D5 — agent + job channel)
 
-Two reference apps for rideshare-style integration with The Robot Services Exchange.
+Two reference apps for rideshare-style integration with The RSE.
 
 | File | Side | Auth |
 |------|------|------|
@@ -14,7 +14,7 @@ There is no taxi-specific schema. Passengers post plain-English bids; vehicles s
 ## End-to-end (agent era)
 
 ```text
-Passenger (demand)              RSE                         Taxi agent (supply token)
+Passenger (demand)           The RSE                      Taxi agent (supply token)
      |                           |                                    |
      | submit_bid "ride A→B"     |                                    |
      |-------------------------->|                                    |

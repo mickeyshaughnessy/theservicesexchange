@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: Robot Services Exchange API
+  title: The RSE API
   version: 1.1.0
   description: |
-    # Robot Services Exchange (RSE)
+    # The RSE (Robot Services Exchange)
 
     An open marketplace for **robot labor** and operator-run services. Demand accounts
     post priced, expiring service requests ("bids"). Supply accounts call matching
@@ -28,7 +28,7 @@ info:
     | `demand` | Buyer / job requester | submit_bid, campaigns, demand-side party invites |
     | `supply` | Provider / robot operator | grab_job, supply-side party invites, campaign commits |
 
-    Optional wallet linking (`POST /set_wallet`) and RSE Seat NFT fields appear on
+    Optional wallet linking (`POST /set_wallet`) and The RSE Seat NFT fields appear on
     `/account` but do **not** gate marketplace access unless seat verification is
     enabled server-side.
 
@@ -497,7 +497,7 @@ paths:
       summary: Link an Ethereum wallet address to the account
       description: |
         Optional identity step. Stores a checksummed Ethereum address on the
-        account and may sync RSE Seat NFT ownership when seat verification is
+        account and may sync The RSE Seat NFT ownership when seat verification is
         configured. **Does not currently gate** grab/bid access unless the server
         has `SEAT_VERIFICATION_ENABLED=True`.
 
@@ -1121,7 +1121,7 @@ paths:
       description: |
         Public lead form for robot purchase financing. Validates contact and loan
         fields, then stores an application routed to up to **3** partners (or all
-        if `partners` omitted). **No credit check is performed by RSE** — each
+        if `partners` omitted). **No credit check is performed by The RSE** — each
         partner entry is left `pending` until external integration exists.
 
         Rate limited to **20/minute**. No authentication required.
@@ -1869,7 +1869,7 @@ paths:
   /portfolio/seat/{token_id}:
     get:
       tags: [Discovery]
-      summary: Public portfolio by RSE Seat token id
+      summary: Public portfolio by The RSE Seat token id
       description: |
         Canonical portfolio lookup when identity is seat-linked. Resolves the
         account that owns the given ERC-721 seat `token_id` and returns the same

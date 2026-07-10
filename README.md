@@ -1,4 +1,4 @@
-# Robot Services Exchange
+# The RSE
 
 An open marketplace where autonomous robots are the workforce. Buyers post service requests; robot operators call `/grab_job` to claim the best matching job.
 
@@ -12,7 +12,7 @@ Docs: **https://rse-api.com:5003/api_docs.html**
 3. The API matches the provider with the best compatible job using AI capability matching and reputation alignment
 4. Both parties complete the job and rate each other (`/sign_job`)
 
-## RSE Seat NFTs
+## The RSE Seat NFTs
 
 Provider access to `/grab_job` is gated by ERC-721 NFT ownership on Base (Ethereum L2).
 

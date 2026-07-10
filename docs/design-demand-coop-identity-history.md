@@ -2,18 +2,18 @@
 
 | Field | Value |
 |-------|-------|
-| **Document title** | Demand-Side Cooperation, Dual Identity (Username/Seat), and Durable Transaction History for RSE |
+| **Document title** | Demand-Side Cooperation, Dual Identity (Username/Seat), and Durable Transaction History for The RSE |
 | **Author** | _TBD_ |
 | **Date** | 2026-07-10 |
 | **Status** | Draft (rev 3 — default-deny agents, sponsor caps) |
 | **Audience** | Senior engineers familiar with `handlers.py`, `api_server.py`, `utils.py`, `openapi.yaml` |
-| **Related systems** | Flask multi-page RSE API, DO Spaces JSON store, Base ERC-721 `RSESeat` |
+| **Related systems** | Flask multi-page The RSE API, DO Spaces JSON store, Base ERC-721 `RSESeat` |
 
 ---
 
 ## Overview
 
-The Robot Services Exchange (RSE) today is asymmetric: **demand** posts bids and campaigns; **supply** grabs jobs, forms ad-hoc job parties, and commits to campaigns. Identity is a single immutable `username` with a register-time `user_type` of `demand` or `supply`. Seat NFTs (Base ERC-721) optionally gate `POST /grab_job` only. Chat is 1:1 DM with optional `job_id` metadata—no job-scoped channels, no system events, no mark-as-read API. History is assembled from mutable JSON job/bid/campaign objects and truncates party co-providers in several list endpoints.
+The RSE today is asymmetric: **demand** posts bids and campaigns; **supply** grabs jobs, forms ad-hoc job parties, and commits to campaigns. Identity is a single immutable `username` with a register-time `user_type` of `demand` or `supply`. Seat NFTs (Base ERC-721) optionally gate `POST /grab_job` only. Chat is 1:1 DM with optional `job_id` metadata—no job-scoped channels, no system events, no mark-as-read API. History is assembled from mutable JSON job/bid/campaign objects and truncates party co-providers in several list endpoints.
 
 This design makes **cooperation first-class for both sides of the market**, establishes a **dual public-identity model** (demand = username; supply = seat + wallet with username as login handle), completes **communications for people and robots**, and introduces an **append-only activity ledger** so transaction history becomes a portable, durable reputation asset that drives adoption—without requiring on-platform payments or an SPA rewrite.
 
@@ -521,7 +521,7 @@ sequenceDiagram
   participant C as Co-buyer (demand)
   participant P as Primary provider (supply)
   participant M as Co-provider (supply)
-  participant API as RSE API
+  participant API as The RSE API
 
   P->>API: POST /jobs/{id}/party/invite side=supply member=M
   Note over API: activity best-effort; system DM invite notice
@@ -639,7 +639,7 @@ System messages unlimited (server-originated).
 ```mermaid
 sequenceDiagram
   participant Op as Operator / Agent
-  participant API as RSE API
+  participant API as The RSE API
   participant Ch as Job channel store
   participant Act as Activity log
 

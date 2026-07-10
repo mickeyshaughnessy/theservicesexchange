@@ -1,7 +1,7 @@
 """
-Service Exchange Business Logic
-------------------------------
-This module contains the core business logic for the Service Exchange Protocol.
+The RSE Business Logic
+----------------------
+This module contains the core business logic for The RSE (Robot Services Exchange) Protocol.
 It handles user management, bid/job matching, messaging, and seat verification.
 """
 
@@ -1549,7 +1549,7 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                 wallet = user_data.get('wallet_address')
                 if not wallet:
                     return {"error": "No wallet address linked. Use /set_wallet to link your Ethereum wallet."}, 403
-                return {"error": f"No valid RSE Seat found for wallet {wallet}. Use /set_wallet to re-sync after acquiring a seat."}, 403
+                return {"error": f"No valid The RSE Seat NFT found for wallet {wallet}. Use /set_wallet to re-sync after acquiring a seat."}, 403
 
         _GRAB_COOLDOWN = int(getattr(config, 'GRAB_JOB_COOLDOWN_SECONDS', 900) or 900)
         last_grab = user_data.get('last_grab_at', 0)
