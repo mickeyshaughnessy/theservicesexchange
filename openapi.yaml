@@ -1152,6 +1152,51 @@ paths:
         '200': { description: New agent_token }
         '404': { description: Agent not found }
 
+  /campaigns/{campaign_id}/sponsors:
+    get:
+      tags: [Campaigns]
+      summary: List campaign co-sponsors
+      parameters:
+        - { name: campaign_id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Owner + sponsors roster }
+  /campaigns/{campaign_id}/sponsors/invite:
+    post:
+      tags: [Campaigns]
+      summary: Invite a demand account as co-sponsor (owner only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: campaign_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [member_username]
+              properties:
+                member_username: { type: string }
+      responses:
+        '201': { description: Sponsor invite created }
+  /campaigns/{campaign_id}/sponsors/respond:
+    post:
+      tags: [Campaigns]
+      summary: Accept or decline a sponsor invite
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: campaign_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [accept, decline] }
+      responses:
+        '200': { description: Updated }
+
   /my_campaigns:
     get:
       tags: [Campaigns]

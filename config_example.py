@@ -45,15 +45,29 @@ SEAT_VERIFICATION_ENABLED = False                   # set True to enforce NFT ga
 SEAT_METADATA_BASE_URI = 'https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/rse-seats/'
 
 # -----------------------------------------------------------------------------
-# Stage A feature flags (demand coop / identity / history / agents)
+# Feature flags (demand coop / identity / history / agents)
 # See docs/design-demand-coop-identity-history.md
 # -----------------------------------------------------------------------------
 DEMAND_PARTY_ENABLED = True          # buyers can invite co-buyers (side=demand)
 AGENT_TOKENS_ENABLED = True          # robot/operator scoped bearer tokens
 ACTIVITY_LOG_ENABLED = True          # append-only activity events (best-effort)
-CAMPAIGN_SPONSORS_ENABLED = False    # multi-sponsor campaigns (PR A4)
+CAMPAIGN_SPONSORS_ENABLED = True     # multi-buyer campaign sponsors → demand_party
 PARTY_DISPUTE_ENABLED = False        # party members may file disputes
-PUBLIC_PORTFOLIO_ENABLED = False     # public portfolio pages (Stage C)
+PUBLIC_PORTFOLIO_ENABLED = True      # public portfolio API + pages
+
+# Grab cooldown (seconds). Taxi demos: set 30–60 in config.py for non-prod.
+GRAB_JOB_COOLDOWN_SECONDS = 900
+
+# Agent tokens: default expiry days when expires_at omitted (0 = no default expiry)
+AGENT_TOKEN_DEFAULT_EXPIRY_DAYS = 90
+
+# Site gate + admin (CHANGE THESE IN PRODUCTION config.py — never commit real secrets)
+SITE_ACCESS_PASSWORD = 'change-me-site-gate'
+SITE_COOKIE_SECRET = 'change-me-cookie-hmac-secret'
+ADMIN_API_KEY = 'change-me-admin-key'
+
+# Optional HMAC for job proofs (export/proof)
+RSE_PROOF_SIGNING_KEY = ''
 
 # Logging
 LOG_LEVEL = 'INFO'

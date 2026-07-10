@@ -69,7 +69,14 @@ export RSE_VERIFY_SSL=0
    - `POST /sign_job` / `POST /reject_job`
 5. Agent cannot create agents, change wallet, or hit undeclared routes (default-deny).
 
-`/grab_job` is limited to roughly **one call per 15 minutes per operator account**.
+`/grab_job` is limited per **operator account** (server `GRAB_JOB_COOLDOWN_SECONDS`, default **900s**).  
+Client wait: `RSE_GRAB_COOLDOWN` (default 900).
+
+**Fleet DX tips**
+- Use **one supply account per vehicle** (or accept 15‑min spacing per account).
+- Create the agent once and reuse with `export RSE_AGENT_TOKEN=…` (avoids create/list cache confusion).
+- `GET /agents` now force-refreshes account meta; still prefer caching the token client-side.
+- Non-prod only: lower `GRAB_JOB_COOLDOWN_SECONDS` in server `config.py` for load tests.
 
 ---
 

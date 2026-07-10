@@ -57,7 +57,9 @@ CURRENT_LOCATION = {
     "max_distance": 20,
 }
 
-POLL_INTERVAL = 900  # /grab_job cooldown per account
+# Must match server GRAB_JOB_COOLDOWN_SECONDS (default 900). For demos use a
+# dedicated supply account per vehicle, or set server cooldown lower in config.
+POLL_INTERVAL = int(os.environ.get("RSE_GRAB_COOLDOWN", "900"))
 
 AGENT_SCOPES = [
     "history:read",

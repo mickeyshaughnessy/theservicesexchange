@@ -211,7 +211,8 @@
         const bd = data.reputation_breakdown || {};
         document.getElementById('pfBreakdown').innerHTML = [
             ['Solo', bd.solo_jobs_completed],
-            ['Supply party', bd.party_jobs_completed],
+            ['Supply collab', bd.supply_party_jobs_completed ?? bd.party_jobs_completed],
+            ['Demand collab', bd.demand_party_jobs_completed],
             ['Campaign', bd.campaign_jobs_completed],
             ['Total jobs', data.completed_jobs],
         ].map(([l, v]) => `<div class="col-auto"><div class="stat-badge"><span class="stat-number">${v ?? 0}</span><span class="stat-label">${l}</span></div></div>`).join('');

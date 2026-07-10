@@ -23,10 +23,12 @@ _mem_cache: Dict[str, Any] = {}
 _mem_cache_ts: Dict[str, float] = {}
 
 # TTL per key prefix (seconds)
-_TTL_ACCOUNTS = 60
+# Short account TTL: multi-worker gunicorn cannot share memory; long TTLs cause
+# read-your-writes bugs (e.g. empty GET /agents right after create).
+_TTL_ACCOUNTS = 2
 _TTL_TOKENS = 300
 _TTL_BIDS = 30
-_TTL_JOBS = 30
+_TTL_JOBS = 15
 _TTL_STATS = 30
 
 
@@ -206,14 +208,20 @@ def _s3_list(prefix: str) -> List[str]:
 # -----------------------------------------------------------------------------
 
 def save_account(username: str, data: Dict[str, Any]) -> None:
-    """Save account data to S3."""
+    """Save account data to S3 and refresh local cache."""
     key = f"{ACCOUNTS_PREFIX}/{username}.json"
     if not _s3_put(key, data):
         logger.error(f"Failed to save account {username}")
 
-def get_account(username: str) -> Optional[Dict[str, Any]]:
-    """Retrieve account data from S3."""
+def get_account(username: str, force_refresh: bool = False) -> Optional[Dict[str, Any]]:
+    """Retrieve account data from S3.
+
+    force_refresh=True bypasses the in-process cache (use after multi-step
+    agent/meta mutations and always for GET /agents list).
+    """
     key = f"{ACCOUNTS_PREFIX}/{username}.json"
+    if force_refresh:
+        _cache_delete(key)
     return _s3_get(key)
 
 def account_exists(username: str) -> bool:
@@ -302,10 +310,13 @@ def append_activity_event(
     payload: Optional[Dict[str, Any]] = None,
     actor: Optional[Dict[str, Any]] = None,
     idempotency_key: Optional[str] = None,
+    related_usernames: Optional[List[str]] = None,
 ) -> Optional[str]:
     """
     Best-effort append of an activity event. Returns event_id or None on failure.
     Marketplace callers must not fail the parent action if this returns None.
+
+    related_usernames: extra users who should get a user-index entry (e.g. party members).
     """
     if not getattr(config, 'ACTIVITY_LOG_ENABLED', True):
         return None
@@ -318,6 +329,10 @@ def append_activity_event(
         now = int(time.time())
         ts = time.gmtime(now)
         yyyy, mm = time.strftime('%Y', ts), time.strftime('%m', ts)
+        related = [u for u in (related_usernames or []) if u]
+        body_payload = dict(payload or {})
+        if related and 'related_usernames' not in body_payload:
+            body_payload['related_usernames'] = related
         body = {
             'event_id': event_id,
             'event_type': event_type,
@@ -325,17 +340,22 @@ def append_activity_event(
             'username': username,
             'job_id': job_id,
             'actor': actor,
-            'payload': payload or {},
+            'payload': body_payload,
             'idempotency_key': idempotency_key,
         }
         body_key = f"{ACTIVITY_PREFIX}/{yyyy}/{mm}/{event_id}.json"
         if not _s3_put(body_key, body):
             logger.error(f"activity_append_fail body {event_type}")
             return None
-        # Secondary indexes (best-effort)
+        # Secondary indexes (best-effort) — index for actor + related parties
         try:
+            index_users = set()
             if username:
-                idx_key = f"{ACTIVITY_USER_INDEX_PREFIX}/{username}/{now}_{event_id}.json"
+                index_users.add(username)
+            for u in related:
+                index_users.add(u)
+            for u in index_users:
+                idx_key = f"{ACTIVITY_USER_INDEX_PREFIX}/{u}/{now}_{event_id}.json"
                 _s3_put(idx_key, {'event_id': event_id, 'event_type': event_type, 'created_at': now, 'path': body_key})
             if job_id:
                 jidx = f"{ACTIVITY_JOB_INDEX_PREFIX}/{job_id}/{now}_{event_id}.json"
@@ -346,6 +366,59 @@ def append_activity_event(
     except Exception as e:
         logger.error(f"activity_append_fail {event_type}: {e}")
         return None
+
+
+def list_activity_for_user(username: str, limit: int = 50, since: Optional[int] = None) -> List[Dict[str, Any]]:
+    """Load activity for a user via index, falling back to recent canonical scan if empty."""
+    events: List[Dict[str, Any]] = []
+    prefix = f"{ACTIVITY_USER_INDEX_PREFIX}/{username}/"
+    keys = sorted(_s3_list(prefix), reverse=True)[: max(limit * 3, 50)]
+    for key in keys:
+        if not key.endswith('.json'):
+            continue
+        idx = _s3_get(key)
+        if not idx:
+            continue
+        path = idx.get('path')
+        ev = _s3_get(path) if path else None
+        if not ev:
+            continue
+        if since and int(ev.get('created_at') or 0) < int(since):
+            continue
+        events.append(ev)
+        if len(events) >= limit:
+            return events
+
+    # Fallback: scan recent activity months if index empty (telemetry repair path)
+    if events:
+        return events
+    now = time.gmtime()
+    for month_back in range(0, 3):
+        y = now.tm_year
+        m = now.tm_mon - month_back
+        while m <= 0:
+            m += 12
+            y -= 1
+        month_prefix = f"{ACTIVITY_PREFIX}/{y:04d}/{m:02d}/"
+        for key in sorted(_s3_list(month_prefix), reverse=True)[:200]:
+            if not key.endswith('.json'):
+                continue
+            ev = _s3_get(key)
+            if not ev:
+                continue
+            if ev.get('username') != username:
+                # also match related via payload members if present
+                payload = ev.get('payload') or {}
+                related = payload.get('related_usernames') or []
+                if username not in related and username != (ev.get('actor') or {}).get('username'):
+                    continue
+            if since and int(ev.get('created_at') or 0) < int(since):
+                continue
+            events.append(ev)
+            if len(events) >= limit:
+                return events
+    events.sort(key=lambda e: e.get('created_at') or 0, reverse=True)
+    return events[:limit]
 
 # -----------------------------------------------------------------------------
 # Bid Management
@@ -415,12 +488,33 @@ def get_all_jobs() -> List[Dict[str, Any]]:
         logger.error(f"Error loading jobs: {e}")
     return jobs
 
-def get_user_jobs(username: str) -> List[Dict[str, Any]]:
-    """Retrieve jobs for a user (as buyer or provider) from S3."""
-    return [
-        job for job in get_all_jobs() 
-        if job.get('buyer_username') == username or job.get('provider_username') == username
-    ]
+def _user_on_job_party(username: str, job: Dict[str, Any], *, accepted_only: bool = False) -> Optional[str]:
+    """Return side 'supply'/'demand' if username appears on a party roster, else None."""
+    for p in job.get('party') or job.get('supply_party') or []:
+        if p.get('member_username') != username:
+            continue
+        if accepted_only and p.get('status') != 'accepted':
+            continue
+        return 'supply'
+    for p in job.get('demand_party') or []:
+        if p.get('member_username') != username:
+            continue
+        if accepted_only and p.get('status') != 'accepted':
+            continue
+        return 'demand'
+    return None
+
+
+def get_user_jobs(username: str, *, include_party: bool = True) -> List[Dict[str, Any]]:
+    """Jobs where user is buyer, provider, or (optionally) accepted party member."""
+    out = []
+    for job in get_all_jobs():
+        if job.get('buyer_username') == username or job.get('provider_username') == username:
+            out.append(job)
+            continue
+        if include_party and _user_on_job_party(username, job, accepted_only=True):
+            out.append(job)
+    return out
 
 def delete_job(job_id: str) -> None:
     """Delete a job from S3."""

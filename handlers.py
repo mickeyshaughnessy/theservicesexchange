@@ -37,10 +37,11 @@ from utils import (
     get_endorsements, save_endorsements,
     get_disputes, save_disputes,
     save_agent_token_record, get_agent_token_record, delete_agent_token_record,
-    append_activity_event,
+    append_activity_event, list_activity_for_user,
     save_channel, get_channel, save_channel_message, get_channel_message,
     list_channel_messages, find_channel_message_by_client_id,
     get_chat_cursors, save_chat_cursors,
+    _user_on_job_party,
 )
 
 # Configure logging
@@ -82,7 +83,10 @@ def public_actor(username: str, *, agent: Optional[Dict[str, Any]] = None) -> Di
 
 
 def _emit(event_type: str, **kwargs) -> None:
-    """Best-effort activity emit; never raises to caller."""
+    """Best-effort activity emit; never raises to caller.
+
+    Supports related_usernames= so party members get index entries.
+    """
     try:
         append_activity_event(event_type, **kwargs)
     except Exception as e:
@@ -650,28 +654,44 @@ def _profile_defaults(user_data: Dict[str, Any]) -> Dict[str, Any]:
 
 def _reputation_breakdown(username: str) -> Dict[str, int]:
     """
-    Count a user's completed jobs by cooperation type: solo, ad-hoc job-party,
-    or campaign-fulfilled. Purely additive context for profiles — does not
-    feed back into calculate_reputation_score (which grab_job matching relies on).
+    Count completed jobs by cooperation type. Attribution counters only —
+    does not feed calculate_reputation_score (grab matching).
     """
-    solo = party = campaign = 0
+    solo = supply_party = demand_party = campaign = 0
     for job in get_all_jobs():
         if job.get('status') != 'completed':
             continue
         is_primary = username in (job.get('buyer_username'), job.get('provider_username'))
-        is_party_member = any(
+        supply_member = any(
             p.get('member_username') == username and p.get('status') == 'accepted'
-            for p in job.get('party', [])
+            for p in (job.get('party') or job.get('supply_party') or [])
         )
-        if not is_primary and not is_party_member:
+        demand_member = any(
+            p.get('member_username') == username and p.get('status') == 'accepted'
+            for p in (job.get('demand_party') or [])
+        )
+        if not is_primary and not supply_member and not demand_member:
             continue
-        if job.get('campaign_id'):
+        if job.get('campaign_id') and is_primary:
             campaign += 1
-        elif is_party_member or any(p.get('status') == 'accepted' for p in job.get('party', [])):
-            party += 1
+        elif demand_member and not is_primary:
+            demand_party += 1
+        elif supply_member and not is_primary:
+            supply_party += 1
+        elif is_primary and (supply_member or demand_member or
+                             any(p.get('status') == 'accepted' for p in (job.get('party') or [])) or
+                             any(p.get('status') == 'accepted' for p in (job.get('demand_party') or []))):
+            # primary on a party job — count as solo primary with collab context
+            solo += 1
         else:
             solo += 1
-    return {'solo_jobs_completed': solo, 'party_jobs_completed': party, 'campaign_jobs_completed': campaign}
+    return {
+        'solo_jobs_completed': solo,
+        'party_jobs_completed': supply_party,  # legacy key = supply collab
+        'supply_party_jobs_completed': supply_party,
+        'demand_party_jobs_completed': demand_party,
+        'campaign_jobs_completed': campaign,
+    }
 
 
 def _endorsement_summary(username: str) -> Dict[str, Any]:
@@ -1243,51 +1263,78 @@ def get_my_bids(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         logger.error(f"Get my bids error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
+def _job_info_for_user(job: Dict[str, Any], username: str) -> Dict[str, Any]:
+    """Build job list entry including co-buyer / co-provider roles."""
+    job_info = {
+        'job_id': job['job_id'],
+        'bid_id': job.get('bid_id'),
+        'service': job['service'],
+        'price': job['price'],
+        'currency': job.get('currency', 'USD'),
+        'payment_method': job.get('payment_method', 'cash'),
+        'location_type': job.get('location_type'),
+        'address': job.get('address'),
+        'start_address': job.get('start_address'),
+        'end_address': job.get('end_address'),
+        'accepted_at': job.get('accepted_at'),
+        'status': job.get('status'),
+        'buyer_username': job.get('buyer_username'),
+        'provider_username': job.get('provider_username'),
+        'buyer_reputation': job.get('buyer_reputation'),
+        'provider_reputation': job.get('provider_reputation'),
+        'party': job.get('party', []),
+        'supply_party': job.get('party') or job.get('supply_party') or [],
+        'demand_party': job.get('demand_party') or [],
+        'campaign_id': job.get('campaign_id'),
+    }
+    if username == job.get('buyer_username'):
+        job_info['role'] = 'buyer'
+        job_info['counterparty'] = job.get('provider_username')
+        job_info['my_rating'] = job.get('buyer_rating')
+        job_info['their_rating'] = job.get('provider_rating')
+    elif username == job.get('provider_username'):
+        job_info['role'] = 'provider'
+        job_info['counterparty'] = job.get('buyer_username')
+        job_info['my_rating'] = job.get('provider_rating')
+        job_info['their_rating'] = job.get('buyer_rating')
+    else:
+        side = _user_on_job_party(username, job, accepted_only=False) or 'supply'
+        job_info['role'] = 'co_buyer' if side == 'demand' else 'co_provider'
+        job_info['party_side'] = side
+        job_info['counterparty'] = (
+            job.get('provider_username') if side == 'demand' else job.get('buyer_username')
+        )
+        # find share
+        roster = (job.get('demand_party') if side == 'demand'
+                  else (job.get('party') or job.get('supply_party') or []))
+        member = next((p for p in roster if p.get('member_username') == username), None)
+        job_info['share'] = member.get('share') if member else None
+        job_info['invite_status'] = member.get('status') if member else None
+        job_info['my_rating'] = None
+        job_info['their_rating'] = None
+        job_info['attribution_only'] = side == 'demand'
+    return job_info
+
+
 def get_my_jobs(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
-    """Get user's completed and active jobs, plus any pending/past job-party invitations."""
+    """Get user's jobs including accepted party memberships, plus pending invites."""
     try:
         username = data.get('username')
         all_jobs = get_all_jobs()
-        user_jobs = [j for j in all_jobs if j.get('buyer_username') == username or j.get('provider_username') == username]
+        # Primaries + accepted party members
+        user_jobs = []
+        for j in all_jobs:
+            if j.get('buyer_username') == username or j.get('provider_username') == username:
+                user_jobs.append(j)
+            elif _user_on_job_party(username, j, accepted_only=True):
+                user_jobs.append(j)
 
         completed_jobs = []
         active_jobs = []
         rejected_jobs = []
 
         for job in user_jobs:
-            job_info = {
-                'job_id': job['job_id'],
-                'bid_id': job.get('bid_id'),
-                'service': job['service'],
-                'price': job['price'],
-                'currency': job.get('currency', 'USD'),
-                'payment_method': job.get('payment_method', 'cash'),
-                'location_type': job['location_type'],
-                'address': job.get('address'),
-                'start_address': job.get('start_address'),
-                'end_address': job.get('end_address'),
-                'accepted_at': job['accepted_at'],
-                'status': job['status'],
-                'buyer_username': job['buyer_username'],
-                'provider_username': job['provider_username'],
-                'buyer_reputation': job.get('buyer_reputation'),
-                'provider_reputation': job.get('provider_reputation'),
-                'party': job.get('party', []),
-                'campaign_id': job.get('campaign_id'),
-            }
-
-            # Add role information
-            if username == job['buyer_username']:
-                job_info['role'] = 'buyer'
-                job_info['counterparty'] = job['provider_username']
-                job_info['my_rating'] = job.get('buyer_rating')
-                job_info['their_rating'] = job.get('provider_rating')
-            else:
-                job_info['role'] = 'provider'
-                job_info['counterparty'] = job['buyer_username']
-                job_info['my_rating'] = job.get('provider_rating')
-                job_info['their_rating'] = job.get('buyer_rating')
-            
+            job_info = _job_info_for_user(job, username)
             if job['status'] == 'completed':
                 job_info['completed_at'] = job.get('completed_at')
                 completed_jobs.append(job_info)
@@ -1432,6 +1479,9 @@ def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         }
         
         save_bid(bid_id, bid)
+        _emit('bid.posted', username=username, actor=public_actor(username),
+              payload={'bid_id': bid_id, 'price': price, 'currency': currency},
+              idempotency_key=f"bid.posted:{bid_id}")
         logger.info(f"Bid created: {bid_id}")
         
         return {"bid_id": bid_id}, 200
@@ -1468,6 +1518,9 @@ def cancel_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             return {"error": "Not authorized"}, 403
         
         delete_bid(bid_id)
+        _emit('bid.cancelled', username=username, actor=public_actor(username),
+              payload={'bid_id': bid_id},
+              idempotency_key=f"bid.cancelled:{bid_id}")
         logger.info(f"Bid cancelled: {bid_id}")
         
         return {"message": "Bid cancelled"}, 200
@@ -1498,7 +1551,7 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                     return {"error": "No wallet address linked. Use /set_wallet to link your Ethereum wallet."}, 403
                 return {"error": f"No valid RSE Seat found for wallet {wallet}. Use /set_wallet to re-sync after acquiring a seat."}, 403
 
-        _GRAB_COOLDOWN = 900
+        _GRAB_COOLDOWN = int(getattr(config, 'GRAB_JOB_COOLDOWN_SECONDS', 900) or 900)
         last_grab = user_data.get('last_grab_at', 0)
         remaining = _GRAB_COOLDOWN - (time.time() - last_grab)
         if remaining > 0:
@@ -1633,9 +1686,11 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         user_data['last_grab_at'] = int(time.time())
         save_account(username, user_data)
 
+        buyer = job_record.get('buyer_username')
         _emit('job.grabbed', username=username, job_id=job_id,
               actor=public_actor(username),
               payload={'bid_id': best_bid['bid_id'], 'price': best_bid['price']},
+              related_usernames=[buyer] if buyer and buyer != username else None,
               idempotency_key=f"job.grabbed:{job_id}")
 
         ensure_job_channel(
@@ -1731,9 +1786,11 @@ def reject_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             system_body=f"Job rejected by provider: {reason}",
             system_payload={'reason': reason},
         )
+        buyer = job.get('buyer_username')
         _emit('job.rejected', username=username, job_id=job_id,
               actor=public_actor(username),
               payload={'reason': reason},
+              related_usernames=[buyer] if buyer and buyer != username else None,
               idempotency_key=f"job.rejected:{job_id}")
 
         logger.info(f"Job rejected: {job_id}")
@@ -1830,9 +1887,11 @@ def sign_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                 system_body="Job completed — both parties signed",
                 system_payload={},
             )
+            related = [u for u in _channel_members_from_job(job) if u != username]
             _emit('job.completed', username=username, job_id=job_id,
                   actor=public_actor(username),
                   payload={},
+                  related_usernames=related,
                   idempotency_key=f"job.completed:{job_id}")
 
         logger.info(f"Job signed: {job_id}")
@@ -2814,9 +2873,15 @@ def invite_job_party(data):
             job['party'] = party
         save_job(job_id, job)
 
+        related = [member_username]
+        if job.get('buyer_username') and job['buyer_username'] != username:
+            related.append(job['buyer_username'])
+        if job.get('provider_username') and job['provider_username'] != username:
+            related.append(job['provider_username'])
         _emit('party.invited', username=username, job_id=job_id,
               actor=public_actor(username),
               payload={'member_username': member_username, 'side': side, 'share': share},
+              related_usernames=related,
               idempotency_key=f"party.invited:{job_id}:{side}:{member_username}")
 
         # System note on channel for members; invitee gets a DM (pending invitees are not channel members)
@@ -2896,9 +2961,11 @@ def respond_job_party(data):
             job['party'] = party
         save_job(job_id, job)
 
+        related = [u for u in (job.get('buyer_username'), job.get('provider_username')) if u and u != username]
         _emit(f'party.{invite["status"]}', username=username, job_id=job_id,
               actor=public_actor(username),
               payload={'side': side, 'share': invite.get('share')},
+              related_usernames=related,
               idempotency_key=f"party.{invite['status']}:{job_id}:{username}")
 
         if invite['status'] == 'accepted':
@@ -2979,7 +3046,7 @@ def create_agent(data):
         if bad:
             return {"error": f"Invalid scopes: {bad}"}, 400
 
-        user_data = get_account(username)
+        user_data = get_account(username, force_refresh=True)
         if not user_data:
             return {"error": "User not found"}, 404
 
@@ -2997,6 +3064,11 @@ def create_agent(data):
         secret = secrets.token_urlsafe(32)
         token_hash = hashlib.sha256(secret.encode()).hexdigest()
         now = int(time.time())
+        # Default expiry when not provided (security: no infinite agent tokens)
+        if expires_at is None:
+            default_days = int(getattr(config, 'AGENT_TOKEN_DEFAULT_EXPIRY_DAYS', 90) or 0)
+            if default_days > 0:
+                expires_at = now + default_days * 86400
         record = {
             'agent_id': agent_id,
             'username': username,
@@ -3043,7 +3115,8 @@ def create_agent(data):
 def list_agents(data):
     try:
         username = data.get('username')
-        user_data = get_account(username)
+        # force_refresh: multi-worker cache otherwise returns stale empty agents_meta
+        user_data = get_account(username, force_refresh=True)
         if not user_data:
             return {"error": "User not found"}, 404
         agents = []
@@ -3067,7 +3140,7 @@ def revoke_agent(data):
     try:
         username = data.get('username')
         agent_id = data.get('agent_id')
-        user_data = get_account(username)
+        user_data = get_account(username, force_refresh=True)
         if not user_data:
             return {"error": "User not found"}, 404
         meta = user_data.get('agents_meta') or []
@@ -3092,7 +3165,7 @@ def rotate_agent(data):
     try:
         username = data.get('username')
         agent_id = data.get('agent_id')
-        user_data = get_account(username)
+        user_data = get_account(username, force_refresh=True)
         if not user_data:
             return {"error": "User not found"}, 404
         meta = user_data.get('agents_meta') or []
@@ -3372,6 +3445,7 @@ def respond_campaign_commitment(campaign_id: str, commitment_id: str, data: Dict
             'demand_party': [],
             'provider_seat_token_id': (provider_data or {}).get('seat_token_id'),
         }
+        _copy_sponsors_to_demand_party(job_record, campaign)
         save_job(job_id, job_record)
         ensure_job_channel(
             job_record,
@@ -3522,22 +3596,39 @@ def get_leaderboard() -> Tuple[Dict[str, Any], int]:
             for u, n in sorted(campaign_units.items(), key=lambda kv: kv[1], reverse=True)
         ]
 
-        collaborator_counts: Dict[str, int] = {}
+        supply_collab: Dict[str, int] = {}
+        demand_collab: Dict[str, int] = {}
         for j in completed_jobs:
-            accepted_members = [p for p in j.get('party', []) if p.get('status') == 'accepted']
-            for member in accepted_members:
-                collaborator_counts[member['member_username']] = collaborator_counts.get(member['member_username'], 0) + 1
-            if accepted_members:
-                collaborator_counts[j['provider_username']] = collaborator_counts.get(j['provider_username'], 0) + 1
+            supply_members = [p for p in (j.get('party') or j.get('supply_party') or []) if p.get('status') == 'accepted']
+            demand_members = [p for p in (j.get('demand_party') or []) if p.get('status') == 'accepted']
+            for member in supply_members:
+                u = member.get('member_username')
+                if u:
+                    supply_collab[u] = supply_collab.get(u, 0) + 1
+            if supply_members and j.get('provider_username'):
+                pu = j['provider_username']
+                supply_collab[pu] = supply_collab.get(pu, 0) + 1
+            for member in demand_members:
+                u = member.get('member_username')
+                if u:
+                    demand_collab[u] = demand_collab.get(u, 0) + 1
+            if demand_members and j.get('buyer_username'):
+                bu = j['buyer_username']
+                demand_collab[bu] = demand_collab.get(bu, 0) + 1
         top_collaborators = [
             {'username': u, 'party_jobs_completed': n}
-            for u, n in sorted(collaborator_counts.items(), key=lambda kv: kv[1], reverse=True)
+            for u, n in sorted(supply_collab.items(), key=lambda kv: kv[1], reverse=True)
+        ]
+        top_demand_collaborators = [
+            {'username': u, 'demand_party_jobs_completed': n}
+            for u, n in sorted(demand_collab.items(), key=lambda kv: kv[1], reverse=True)
         ]
 
         return {
             "top_reputation": rep_ranked[:10],
             "top_campaign_fulfillers": top_campaign_fulfillers[:10],
             "top_collaborators": top_collaborators[:10],
+            "top_demand_collaborators": top_demand_collaborators[:10],
         }, 200
     except Exception as e:
         logger.error(f"Get leaderboard error: {str(e)}")
@@ -3550,31 +3641,18 @@ def get_leaderboard() -> Tuple[Dict[str, Any], int]:
 # -----------------------------------------------------------------------------
 
 def get_activity_me(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
-    """Authenticated activity feed for the caller (best-effort index)."""
+    """Authenticated activity feed (index with canonical scan fallback)."""
     try:
-        from utils import _s3_list, _s3_get, ACTIVITY_USER_INDEX_PREFIX, ACTIVITY_PREFIX
         username = data.get('username')
         limit = min(int(data.get('limit') or 50), 100)
         since = data.get('since')
-        prefix = f"{ACTIVITY_USER_INDEX_PREFIX}/{username}/"
-        keys = sorted(_s3_list(prefix), reverse=True)[: limit * 2]
-        events = []
-        for key in keys:
-            if not key.endswith('.json'):
-                continue
-            idx = _s3_get(key)
-            if not idx:
-                continue
-            path = idx.get('path')
-            ev = _s3_get(path) if path else None
-            if not ev:
-                continue
-            if since and int(ev.get('created_at') or 0) < int(since):
-                continue
-            events.append(ev)
-            if len(events) >= limit:
-                break
-        return {'events': events, 'count': len(events)}, 200
+        since_i = int(since) if since not in (None, '') else None
+        events = list_activity_for_user(username, limit=limit, since=since_i)
+        return {
+            'events': events,
+            'count': len(events),
+            'note': 'Activity is append-only telemetry; marketplace job/bid records remain source of truth.',
+        }, 200
     except Exception as e:
         logger.error(f"get_activity_me error: {e}")
         return {"error": "Internal server error"}, 500
@@ -3614,7 +3692,7 @@ def get_activity_for_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 
 
 def _public_completion_cards(username: str, limit: int = 20) -> List[Dict[str, Any]]:
-    jobs = get_user_jobs(username)
+    jobs = get_user_jobs(username, include_party=True)
     cards = []
     for job in jobs:
         if job.get('status') != 'completed':
@@ -3622,11 +3700,18 @@ def _public_completion_cards(username: str, limit: int = 20) -> List[Dict[str, A
         if username == job.get('buyer_username'):
             counter = job.get('provider_username')
             role = 'buyer'
+            rating = job.get('provider_rating')  # rating they received from provider
         elif username == job.get('provider_username'):
             counter = job.get('buyer_username')
             role = 'provider'
+            rating = job.get('buyer_rating')
         else:
-            continue
+            side = _user_on_job_party(username, job, accepted_only=True)
+            if not side:
+                continue
+            role = 'co_buyer' if side == 'demand' else 'co_provider'
+            counter = job.get('provider_username') if side == 'demand' else job.get('buyer_username')
+            rating = None  # attribution-only for demand; supply co-providers may have stars on account
         counter_actor = public_actor(counter) if counter else {}
         cards.append({
             'job_id': job.get('job_id'),
@@ -3637,9 +3722,10 @@ def _public_completion_cards(username: str, limit: int = 20) -> List[Dict[str, A
             'role': role,
             'counterparty_public_id': counter_actor.get('public_id'),
             'counterparty_username': counter,
-            'supply_party_size': len([p for p in (job.get('party') or []) if p.get('status') == 'accepted']),
+            'supply_party_size': len([p for p in (job.get('party') or job.get('supply_party') or []) if p.get('status') == 'accepted']),
             'demand_party_size': len([p for p in (job.get('demand_party') or []) if p.get('status') == 'accepted']),
-            'rating_received': job.get('provider_rating') if role == 'provider' else job.get('buyer_rating'),
+            'rating_received': rating,
+            'attribution_only': role == 'co_buyer',
         })
     cards.sort(key=lambda c: c.get('completed_at') or 0, reverse=True)
     return cards[:limit]
@@ -3801,6 +3887,139 @@ def export_job_proof(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     except Exception as e:
         logger.error(f"export_job_proof error: {e}")
         return {"error": "Internal server error"}, 500
+
+
+
+# -----------------------------------------------------------------------------
+# Campaign sponsors (multi-buyer demand on campaigns → demand_party on jobs)
+# -----------------------------------------------------------------------------
+
+def invite_campaign_sponsor(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Campaign owner invites another demand account as co-sponsor."""
+    try:
+        if not getattr(config, 'CAMPAIGN_SPONSORS_ENABLED', True):
+            return {"error": "Campaign sponsors are disabled"}, 403
+        username = data.get('username')
+        campaign_id = data.get('campaign_id')
+        member_username = (data.get('member_username') or '').strip()
+        if not campaign_id or not member_username:
+            return {"error": "campaign_id and member_username required"}, 400
+        if member_username == username:
+            return {"error": "Cannot invite yourself"}, 400
+        campaign = get_campaign(campaign_id)
+        if not campaign:
+            return {"error": "Campaign not found"}, 404
+        if campaign.get('owner_username') != username:
+            return {"error": "Only the campaign owner can invite sponsors"}, 403
+        member = get_account(member_username)
+        if not member or member.get('user_type') != 'demand':
+            return {"error": "Sponsors must be demand-type accounts"}, 400
+        sponsors = campaign.setdefault('sponsors', [])
+        if any(s.get('member_username') == member_username for s in sponsors):
+            return {"error": "Already invited"}, 400
+        if len(sponsors) >= 20:
+            return {"error": "Max 20 sponsor invites"}, 400
+        row = {
+            'member_username': member_username,
+            'status': 'invited',
+            'invited_at': int(time.time()),
+            'responded_at': None,
+            'share': None,
+        }
+        sponsors.append(row)
+        save_campaign(campaign_id, campaign)
+        _emit('campaign.sponsor_invited', username=username,
+              actor=public_actor(username),
+              payload={'campaign_id': campaign_id, 'member_username': member_username},
+              related_usernames=[member_username],
+              idempotency_key=f"campaign.sponsor_invited:{campaign_id}:{member_username}")
+        try:
+            send_chat_message({
+                'username': username,
+                'recipient': member_username,
+                'message': f"You were invited as co-sponsor on campaign {campaign_id} ({campaign.get('title')}). Respond via POST /campaigns/{campaign_id}/sponsors/respond.",
+            })
+        except Exception:
+            pass
+        return {'campaign_id': campaign_id, 'sponsors': sponsors}, 201
+    except Exception as e:
+        logger.error(f"invite_campaign_sponsor: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def respond_campaign_sponsor(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Accept or decline a campaign co-sponsor invite."""
+    try:
+        if not getattr(config, 'CAMPAIGN_SPONSORS_ENABLED', True):
+            return {"error": "Campaign sponsors are disabled"}, 403
+        username = data.get('username')
+        campaign_id = data.get('campaign_id')
+        action = (data.get('action') or '').strip().lower()
+        if action not in ('accept', 'decline'):
+            return {"error": "action must be accept or decline"}, 400
+        campaign = get_campaign(campaign_id)
+        if not campaign:
+            return {"error": "Campaign not found"}, 404
+        sponsors = campaign.setdefault('sponsors', [])
+        row = next((s for s in sponsors if s.get('member_username') == username), None)
+        if not row:
+            return {"error": "No sponsor invitation found"}, 404
+        if row.get('status') != 'invited':
+            return {"error": f"Invitation already {row.get('status')}"}, 400
+        row['status'] = 'accepted' if action == 'accept' else 'declined'
+        row['responded_at'] = int(time.time())
+        save_campaign(campaign_id, campaign)
+        _emit(f'campaign.sponsor_{row["status"]}', username=username,
+              actor=public_actor(username),
+              payload={'campaign_id': campaign_id},
+              related_usernames=[campaign.get('owner_username')],
+              idempotency_key=f"campaign.sponsor_{row['status']}:{campaign_id}:{username}")
+        return {'campaign_id': campaign_id, 'status': row['status']}, 200
+    except Exception as e:
+        logger.error(f"respond_campaign_sponsor: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_campaign_sponsors(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """List sponsors for a campaign (public on open campaigns; owner always)."""
+    try:
+        campaign_id = data.get('campaign_id')
+        campaign = get_campaign(campaign_id)
+        if not campaign:
+            return {"error": "Campaign not found"}, 404
+        return {
+            'campaign_id': campaign_id,
+            'owner_username': campaign.get('owner_username'),
+            'sponsors': campaign.get('sponsors') or [],
+        }, 200
+    except Exception as e:
+        logger.error(f"get_campaign_sponsors: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def _copy_sponsors_to_demand_party(job_record: Dict[str, Any], campaign: Dict[str, Any]) -> None:
+    """KD-7: copy up to 5 accepted sponsors onto job demand_party with share=null."""
+    sponsors = [s for s in (campaign.get('sponsors') or []) if s.get('status') == 'accepted']
+    sponsors.sort(key=lambda s: (s.get('responded_at') or 0, s.get('member_username') or ''))
+    chosen = sponsors[:5]
+    if len(sponsors) > 5:
+        logger.info(f"campaign_sponsor_job_copy_truncated count={len(sponsors)-5}")
+    demand = job_record.setdefault('demand_party', [])
+    now = int(time.time())
+    for s in chosen:
+        uname = s.get('member_username')
+        if not uname or any(p.get('member_username') == uname for p in demand):
+            continue
+        demand.append({
+            'member_username': uname,
+            'share': None,
+            'status': 'accepted',
+            'side': 'demand',
+            'source': 'campaign_sponsor',
+            'invited_at': s.get('invited_at') or now,
+            'responded_at': s.get('responded_at') or now,
+        })
+    job_record['demand_party'] = demand
 
 
 # -----------------------------------------------------------------------------

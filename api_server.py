@@ -93,6 +93,9 @@ from handlers import (
     get_portfolio_by_seat,
     export_history,
     export_job_proof,
+    invite_campaign_sponsor,
+    respond_campaign_sponsor,
+    get_campaign_sponsors,
 )
 from utils import get_token_username, get_agent_token_record
 
@@ -249,15 +252,15 @@ def token_required(f):
     return decorated
 
 # -----------------------------------------------------------------------------
-# Site Gate (password landing page)
+# Site Gate (password landing page) — secrets from config (never hardcode in new deploys)
 # -----------------------------------------------------------------------------
 
-_SITE_PASSWORD = "12345678"
-_COOKIE_SECRET = "tse-gate-8f3a9c2d"
-_COOKIE_NAME = "tse_auth"
+_SITE_PASSWORD = getattr(config, 'SITE_ACCESS_PASSWORD', None) or '12345678'
+_COOKIE_SECRET = getattr(config, 'SITE_COOKIE_SECRET', None) or 'tse-gate-8f3a9c2d'
+_COOKIE_NAME = 'tse_auth'
 
 # Stopgap shared-secret admin gate (no admin-role system exists yet)
-_ADMIN_KEY = "tse-admin-9f1c7b2e"
+_ADMIN_KEY = getattr(config, 'ADMIN_API_KEY', None) or 'tse-admin-9f1c7b2e'
 
 def _make_auth_token():
     return hmac.new(_COOKIE_SECRET.encode(), _SITE_PASSWORD.encode(), hashlib.sha256).hexdigest()
@@ -662,6 +665,29 @@ def handle_commit_to_campaign(current_user, campaign_id):
     data['username'] = current_user
     data['campaign_id'] = campaign_id
     response, status = commit_to_campaign(data)
+    return flask.jsonify(response), status
+
+@app.route('/campaigns/<campaign_id>/sponsors', methods=['GET'])
+def handle_get_campaign_sponsors(campaign_id):
+    response, status = get_campaign_sponsors({'campaign_id': campaign_id})
+    return flask.jsonify(response), status
+
+@app.route('/campaigns/<campaign_id>/sponsors/invite', methods=['POST'])
+@token_required
+def handle_invite_campaign_sponsor(current_user, campaign_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['campaign_id'] = campaign_id
+    response, status = invite_campaign_sponsor(data)
+    return flask.jsonify(response), status
+
+@app.route('/campaigns/<campaign_id>/sponsors/respond', methods=['POST'])
+@token_required
+def handle_respond_campaign_sponsor(current_user, campaign_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['campaign_id'] = campaign_id
+    response, status = respond_campaign_sponsor(data)
     return flask.jsonify(response), status
 
 @app.route('/campaigns/<campaign_id>/commitments/<commitment_id>/accept', methods=['POST'])
