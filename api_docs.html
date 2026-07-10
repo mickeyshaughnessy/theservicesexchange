@@ -39,6 +39,19 @@
             border-bottom: 1px solid rgba(0,255,255,0.25);
             font-family: 'Press Start 2P', monospace;
             font-size: 0.8rem;
+            color: var(--text-bright) !important;
+        }
+        /* Tag descriptions (e.g. System blurb) — Swagger default is dark gray #3b4151 */
+        #swagger-ui .swagger-ui .opblock-tag small,
+        #swagger-ui .swagger-ui .opblock-tag small *,
+        #swagger-ui .swagger-ui .opblock-tag > div {
+            color: var(--text) !important;
+            text-shadow: none !important;
+            font-family: 'Share Tech Mono', monospace !important;
+            font-weight: 400;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
         }
         #swagger-ui .swagger-ui .opblock {
             background: var(--bg-panel);
