@@ -1,38 +1,28 @@
 #!/usr/bin/env python3
 """
-Supply-side taxi integration — The Services Exchange
-=====================================================
-This reference app shows how a taxi company or autonomous-vehicle fleet
-(Waymo, Tesla, a traditional cab company, etc.) connects to the exchange as a
-supply-side partner and monetises spare vehicle capacity.
+Supply-side taxi agent — The Services Exchange (D5 reference)
+=============================================================
+Fleet operator account + scoped agent token for the vehicle process.
 
-Concept
--------
-Your fleet has vehicles that are idle or between jobs.  Instead of waiting
-for rides to come in through your own app, you broadcast availability to the
-exchange and let its matching engine find passengers who need a ride right now.
+Flow
+----
+  operator login → set_wallet (optional) → create/reuse agent token
+  → poll /grab_job as agent → job channel status posts → sign_job
 
-From the exchange's point of view your vehicle is a "service provider" whose
-capabilities happen to describe a taxi or rideshare operation.  You call
-/grab_job on a polling loop; when a matching passenger bid exists the exchange
-atomically assigns it to you and returns the full job record, including the
-pickup address and fare.
+Agent scopes used
+-----------------
+  history:read  jobs:grab  jobs:write  chat:write  chat:read
 
-No taxi-specific schema is required on either side — the LLM matching engine
-reads plain-English capability descriptions and decides whether your vehicle
-can fulfill each passenger's request.
-
-Quick-start
------------
-1.  pip install requests
-2.  Set RSE_USERNAME / RSE_PASSWORD env vars (or edit CREDENTIALS below).
-3.  Edit VEHICLE_CAPABILITIES and CURRENT_LOCATION for your fleet.
-4.  python driver_app.py
-
-Full lifecycle demonstrated here:
-    register (first run only) → login → poll for rides → job accepted →
-    optionally reject → sign & rate passenger
+Env
+---
+  RSE_USERNAME / RSE_PASSWORD     fleet operator credentials
+  RSE_WALLET_ADDRESS             optional seat NFT wallet
+  RSE_AGENT_TOKEN                optional: reuse an existing agent token
+  RSE_AGENT_LABEL                default "taxi-vehicle-1"
+  RSE_API                        default https://rse-api.com:5003
 """
+
+from __future__ import annotations
 
 import os
 import re
@@ -42,34 +32,19 @@ import requests
 
 
 class RateLimited(Exception):
-    """Raised by grab_next_ride when the exchange returns 429."""
     def __init__(self, wait_secs: int):
         self.wait_secs = wait_secs
         super().__init__(f"rate-limited — retry in {wait_secs}s")
 
-# ── Configuration ─────────────────────────────────────────────────────────────
 
-RSE_API     = "https://rse-api.com:5003"   # swap to http://localhost:5003 for local dev
-VERIFY_SSL  = True                          # set False if using a self-signed cert locally
+RSE_API = os.environ.get("RSE_API", "https://rse-api.com:5003")
+VERIFY_SSL = os.environ.get("RSE_VERIFY_SSL", "1") != "0"
 
-# Credentials for the driver / fleet account on the exchange.
 CREDENTIALS = {
     "username": os.environ.get("RSE_USERNAME", "acme_taxi_fleet"),
     "password": os.environ.get("RSE_PASSWORD", "ChangeMe123!"),
 }
 
-# ── What your vehicle(s) can do ───────────────────────────────────────────────
-#
-# Write a plain-English description of your vehicle capabilities.  This string
-# is sent to the exchange's LLM matching engine, which compares it against
-# every open passenger bid to decide whether you're a fit.
-#
-# Tips:
-#   • Include vehicle type, licensing, and any special capabilities.
-#   • Mention service areas if you only cover certain zones.
-#   • Be honest about capacity (passengers, luggage).
-#   • You can update this dynamically per vehicle if you have a mixed fleet.
-#
 VEHICLE_CAPABILITIES = (
     "Licensed taxi and rideshare driver.  Insured, background-checked. "
     "Comfortable 4-door sedan, up to 4 passengers, trunk space for 3 large bags. "
@@ -77,34 +52,32 @@ VEHICLE_CAPABILITIES = (
     "point-to-point trips, and hourly hire."
 )
 
-# Current GPS position of the vehicle (or dispatch hub for a fleet).
-# The exchange uses this to filter bids by distance before running LLM matching,
-# so only nearby passengers are considered.
 CURRENT_LOCATION = {
-    "address":      "Market Street & 4th Street, San Francisco, CA 94103",
-    "max_distance": 20,   # miles — only consider passengers within this radius
+    "address": "Market Street & 4th Street, San Francisco, CA 94103",
+    "max_distance": 20,
 }
 
-# Seconds between /grab_job polls.
-# The exchange enforces a hard rate limit of 1 call per 15 minutes per account
-# (900 s).  Any faster and you will receive 429s on every call after the first.
-# After completing a ride the vehicle has likely already consumed its slot, so
-# dispatch_loop tracks last_grab_time and sleeps only the remaining window.
-POLL_INTERVAL = 900
+POLL_INTERVAL = 900  # /grab_job cooldown per account
+
+AGENT_SCOPES = [
+    "history:read",
+    "jobs:grab",
+    "jobs:write",
+    "chat:write",
+    "chat:read",
+]
 
 
-# ── Step 0: Account setup (run once per driver / fleet account) ───────────────
+def _auth(token: str) -> dict:
+    return {"Authorization": f"Bearer {token}"}
+
 
 def register(username: str, password: str) -> bool:
-    """
-    Create a supply-side account on the exchange.
-    Only needed once.  Returns True on success, False if the account exists.
-    """
-    r = requests.post(f"{RSE_API}/register", verify=VERIFY_SSL, json={
-        "username": username,
-        "password": password,
-        "user_type": "supply",   # drivers/fleets are on the supply side
-    })
+    r = requests.post(
+        f"{RSE_API}/register",
+        verify=VERIFY_SSL,
+        json={"username": username, "password": password, "user_type": "supply"},
+    )
     if r.status_code == 201:
         print(f"[RSE] Account created: {username}")
         return True
@@ -112,126 +85,140 @@ def register(username: str, password: str) -> bool:
         print(f"[RSE] Account already exists: {username}")
         return False
     r.raise_for_status()
+    return False
 
 
 def login(username: str, password: str) -> str:
-    """
-    Authenticate and return a bearer token.
-    Tokens are valid for 24 hours.  Cache and reuse; refresh on 401.
-    """
-    r = requests.post(f"{RSE_API}/login", verify=VERIFY_SSL, json={
-        "username": username,
-        "password": password,
-    })
+    r = requests.post(
+        f"{RSE_API}/login",
+        verify=VERIFY_SSL,
+        json={"username": username, "password": password},
+    )
     r.raise_for_status()
     token = r.json()["access_token"]
-    print(f"[RSE] Logged in as {username}")
+    print(f"[RSE] Operator logged in as {username} (type={r.json().get('user_type')})")
     return token
 
 
-def set_wallet(token: str, wallet_address: str) -> None:
-    """
-    Link an Ethereum wallet address to the account.
-
-    The exchange uses ERC-721 RSE Seat NFTs (on Base L2) to gate supply-side
-    access.  Partners are issued a seat NFT; link the holding wallet once with
-    this call.  If seat verification is currently disabled on the exchange this
-    call is a no-op but it is still good practice — it ensures your integration
-    keeps working when verification is turned on.
-
-    Contract: 0x151fEB62F0D3085617a086130cc67f7f18Ce33CE (Base mainnet)
-    """
+def set_wallet(operator_token: str, wallet_address: str) -> None:
     r = requests.post(
         f"{RSE_API}/set_wallet",
-        headers={"Authorization": f"Bearer {token}"},
+        headers=_auth(operator_token),
         json={"wallet_address": wallet_address},
         verify=VERIFY_SSL,
     )
     if r.status_code == 200:
-        print(f"[RSE] Wallet linked: {wallet_address[:10]}…")
+        body = r.json()
+        print(
+            f"[RSE] Wallet linked: {wallet_address[:10]}… "
+            f"seat_status={body.get('seat_status')} "
+            f"public_id={(body.get('identity') or {}).get('public_id')}"
+        )
     else:
         print(f"[RSE] set_wallet returned {r.status_code}: {r.text} (non-fatal)")
 
 
-# ── Step 1: Poll the exchange for matching rides ───────────────────────────────
+def ensure_agent_token(operator_token: str) -> str:
+    """
+    Return a bearer token for the vehicle process.
+    Prefer RSE_AGENT_TOKEN if set; otherwise create a new agent (token shown once).
+    """
+    existing = os.environ.get("RSE_AGENT_TOKEN", "").strip()
+    if existing:
+        print("[RSE] Using RSE_AGENT_TOKEN from environment")
+        return existing
+
+    label = os.environ.get("RSE_AGENT_LABEL", "taxi-vehicle-1")
+    r = requests.post(
+        f"{RSE_API}/agents",
+        headers=_auth(operator_token),
+        json={"label": label, "scopes": AGENT_SCOPES},
+        verify=VERIFY_SSL,
+    )
+    if r.status_code == 403:
+        print(f"[RSE] Agent create forbidden: {r.text}")
+        print("[RSE] Falling back to operator token (human session).")
+        return operator_token
+    r.raise_for_status()
+    data = r.json()
+    agent_token = data["agent_token"]
+    print(f"[RSE] Agent created: id={data['agent_id'][:8]}… label={label}")
+    print(f"[RSE] SAVE agent_token (shown once): {agent_token}")
+    print("[RSE] Tip: export RSE_AGENT_TOKEN=… for subsequent runs")
+    return agent_token
+
 
 def grab_next_ride(token: str) -> dict | None:
-    """
-    Ask the exchange for the best available passenger bid that matches this
-    vehicle's capabilities and location.
-
-    The exchange runs a four-step selection algorithm:
-      1. Location filter  — bids within max_distance of the vehicle
-      2. Capability match — LLM decides whether the vehicle fits the trip
-      3. Reputation sort  — prefer passengers whose reputation matches yours
-      4. Price sort       — within a reputation tier, highest fare first
-
-    Returns the job dict (200 OK) or None if there are no matching bids (204).
-    Raises RateLimited (429), PermissionError (403), or requests.HTTPError on
-    other failures.
-
-    Important: when this call returns a job, the bid is atomically removed
-    from the exchange.  No other driver will see it.  You must either complete
-    the job (sign_job) or reject it (reject_job) — don't just discard it.
-    """
     payload = {
         "capabilities": VEHICLE_CAPABILITIES,
         "location_type": "physical",
-        "address":       CURRENT_LOCATION["address"],
-        "max_distance":  CURRENT_LOCATION["max_distance"],
+        "address": CURRENT_LOCATION["address"],
+        "max_distance": CURRENT_LOCATION["max_distance"],
     }
-
     r = requests.post(
         f"{RSE_API}/grab_job",
-        headers={"Authorization": f"Bearer {token}"},
+        headers=_auth(token),
         json=payload,
         verify=VERIFY_SSL,
     )
-
     if r.status_code == 200:
-        return r.json()          # job assigned
+        return r.json()
     if r.status_code == 204:
-        return None              # no matching rides right now
+        return None
     if r.status_code == 403:
-        # Seat verification failed (wallet not linked or NFT missing).
-        # See set_wallet() above.
-        raise PermissionError(f"Seat verification failed: {r.json().get('error')}")
+        raise PermissionError(f"Grab forbidden: {r.json().get('error')}")
     if r.status_code == 429:
-        # Rate limit hit.  The server tells us exactly how long to wait:
-        # {"error": "Rate limit: wait Ns before next /grab_job"}
         err = r.json().get("error", "")
-        m = re.search(r'wait (\d+)s', err)
+        m = re.search(r"wait (\d+)s", err)
         wait = int(m.group(1)) if m else POLL_INTERVAL
         raise RateLimited(wait)
-
     r.raise_for_status()
+    return None
 
 
-# ── Step 2: Inspect the job and decide whether to take it ─────────────────────
+def post_channel(
+    token: str,
+    job_id: str,
+    body: str,
+    *,
+    message_type: str = "agent_structured",
+    payload: dict | None = None,
+    client_message_id: str | None = None,
+) -> dict | None:
+    """Post ride status to the job channel (passenger sees this in Job chat)."""
+    r = requests.post(
+        f"{RSE_API}/jobs/{job_id}/messages",
+        headers=_auth(token),
+        json={
+            "body": body,
+            "message_type": message_type,
+            "payload": payload or {},
+            "client_message_id": client_message_id,
+        },
+        verify=VERIFY_SSL,
+    )
+    if r.status_code in (200, 201):
+        print(f"[channel] → {body}")
+        return r.json()
+    print(f"[channel] post {r.status_code}: {r.text}")
+    return None
+
+
+def poll_channel(token: str, job_id: str, since_ts: int = 0) -> list:
+    r = requests.get(
+        f"{RSE_API}/jobs/{job_id}/messages",
+        headers=_auth(token),
+        params={"since_ts": since_ts, "limit": 50},
+        verify=VERIFY_SSL,
+    )
+    if r.status_code != 200:
+        return []
+    return r.json().get("messages") or []
+
 
 def should_accept(job: dict) -> bool:
-    """
-    Implement your accept/reject logic here.
-
-    The job dict contains everything you need:
-      job["service"]             — passenger's full ride description
-      job["price"]               — offered fare in job["currency"]
-      job["start_address"]       — pickup address (may be in 'address' for older bids)
-      job["end_address"]         — dropoff address
-      job["buyer_reputation"]    — passenger reputation score (0.0–5.0; 2.5 = new user)
-      job["location_type"]       — "physical" for in-person rides
-      job["payment_method"]      — "cash", "xmoney", "paypal", etc.
-
-    Examples of reasons to reject:
-      • Pickup is too far from current position after all
-      • Fare is below your minimum acceptable
-      • Passenger reputation is below your threshold
-      • Dropoff is in a zone you don't serve
-    """
-    # Example policy: minimum $10 fare, passenger reputation ≥ 1.5
     fare = job.get("price", 0)
     passenger_rep = job.get("buyer_reputation", 2.5)
-
     if fare < 10.00:
         print(f"  [policy] Fare ${fare:.2f} below minimum — rejecting.")
         return False
@@ -241,17 +228,10 @@ def should_accept(job: dict) -> bool:
     return True
 
 
-# ── Step 3: Reject a job (puts it back on the exchange) ───────────────────────
-
 def reject_ride(token: str, job_id: str, reason: str = "Vehicle unavailable") -> None:
-    """
-    Reject a job.  The exchange restores it as a new bid so another driver
-    can pick it up.  Use this if your vehicle becomes unavailable after
-    grabbing the job (breakdown, driver change of shift, etc.).
-    """
     r = requests.post(
         f"{RSE_API}/reject_job",
-        headers={"Authorization": f"Bearer {token}"},
+        headers=_auth(token),
         json={"job_id": job_id, "reason": reason},
         verify=VERIFY_SSL,
     )
@@ -261,23 +241,11 @@ def reject_ride(token: str, job_id: str, reason: str = "Vehicle unavailable") ->
         print(f"[RSE] reject_job returned {r.status_code}: {r.text}")
 
 
-# ── Step 4: Complete the ride and rate the passenger ──────────────────────────
-
 def complete_ride(token: str, job_id: str, passenger_rating: int) -> None:
-    """
-    Sign the completed job and rate the passenger (1–5 stars).
-
-    The job is marked fully complete once BOTH sides have signed.  The
-    exchange uses ratings to build reputation scores used in future matching.
-
-    Call this after you have dropped the passenger off and collected payment.
-    In a fleet integration you would call this automatically when the driver
-    taps "End ride" in your in-vehicle UI.
-    """
-    assert 1 <= passenger_rating <= 5, "Rating must be 1–5"
+    assert 1 <= passenger_rating <= 5
     r = requests.post(
         f"{RSE_API}/sign_job",
-        headers={"Authorization": f"Bearer {token}"},
+        headers=_auth(token),
         json={"job_id": job_id, "rating": passenger_rating},
         verify=VERIFY_SSL,
     )
@@ -285,32 +253,63 @@ def complete_ride(token: str, job_id: str, passenger_rating: int) -> None:
     print(f"[RSE] Ride signed.  Passenger rated {passenger_rating}/5.")
 
 
-# ── Demo: polling dispatch loop ───────────────────────────────────────────────
-#
-# In production this loop runs in the background for each available vehicle.
-# When a job is returned you hand it off to your dispatch / navigation system.
-# The loop exits after handling one ride for clarity; remove the `break` to
-# run continuously.
-
-def dispatch_loop(token: str, max_rides: int = 1) -> None:
+def execute_ride(token: str, job: dict) -> None:
     """
-    Poll the exchange for rides and handle them one by one.
-
-    max_rides: stop after this many completed rides (set to None for ∞).
+    Simulate navigation + drop-off while streaming structured status on the job channel.
     """
+    job_id = job["job_id"]
+    pickup = job.get("start_address") or job.get("address") or "pickup"
+    dropoff = job.get("end_address") or "dropoff"
+
+    # Confirm channel membership (lazy-create on first system message from grab)
+    r = requests.get(
+        f"{RSE_API}/jobs/{job_id}/channel",
+        headers=_auth(token),
+        verify=VERIFY_SSL,
+    )
+    if r.status_code == 200:
+        meta = r.json()
+        print(f"[channel] state={meta.get('state')} members={meta.get('members')}")
+    else:
+        print(f"[channel] meta {r.status_code}: {r.text}")
+
+    last_ts = 0
+    steps = [
+        ("en_route", f"En route to pickup: {pickup}", {"status": "en_route", "eta_min": 8}),
+        ("arrived", f"Arrived at pickup: {pickup}", {"status": "arrived"}),
+        ("onboard", "Passenger onboard — departing for dropoff", {"status": "in_trip"}),
+        ("complete", f"Arrived at dropoff: {dropoff}", {"status": "completed"}),
+    ]
+    for i, (cid, body, payload) in enumerate(steps):
+        post_channel(
+            token,
+            job_id,
+            body,
+            message_type="agent_structured",
+            payload=payload,
+            client_message_id=f"taxi-{job_id[:8]}-{cid}",
+        )
+        # Drain any passenger messages
+        msgs = poll_channel(token, job_id, since_ts=last_ts)
+        for m in msgs:
+            if m.get("sender") not in (None, "system") and m.get("message_type") != "system":
+                print(f"[channel] ← {m.get('sender')}: {m.get('body')}")
+            last_ts = max(last_ts, int(m.get("sent_at") or 0))
+        time.sleep(1 if i < len(steps) - 1 else 0)
+
+    complete_ride(token, job_id, passenger_rating=5)
+
+
+def dispatch_loop(token: str, max_rides: int | None = 1) -> None:
     rides_completed = 0
-    last_grab_time = 0.0   # monotonic time of the last /grab_job call
-    print(f"[RSE] Starting dispatch loop (rate limit: 1 grab per {POLL_INTERVAL}s) …")
-    print(f"[RSE] Ctrl-C to stop.")
+    last_grab_time = 0.0
+    print(f"[RSE] Agent dispatch loop (grab cooldown {POLL_INTERVAL}s) …")
 
     while True:
         try:
-            # ── Rate-limit gate ───────────────────────────────────────────────
-            # /grab_job is limited to one call per 15 minutes per account.
-            # Sleep only as long as needed to respect that window.
             elapsed = time.monotonic() - last_grab_time
             remaining = POLL_INTERVAL - elapsed
-            if remaining > 0:
+            if remaining > 0 and last_grab_time > 0:
                 print(f"[RSE] Waiting {remaining:.0f}s for rate-limit window …")
                 time.sleep(remaining)
 
@@ -319,45 +318,28 @@ def dispatch_loop(token: str, max_rides: int = 1) -> None:
 
             if job is None:
                 print("[RSE] No matching rides right now.")
+                # First call also starts the cooldown window on the server;
+                # keep local last_grab_time so we don't hammer after 204.
                 continue
 
-            # ── A ride has been assigned ──────────────────────────────────────
             print(f"\n[RSE] Ride assigned!  job_id={job['job_id'][:8]}…")
-            print(f"  Passenger  : {job['buyer_username']}  "
-                  f"(reputation {job['buyer_reputation']:.1f}/5.0)")
+            print(f"  Passenger  : {job['buyer_username']}  (rep {job.get('buyer_reputation', 0):.1f})")
             print(f"  Pickup     : {job.get('start_address', job.get('address', 'N/A'))}")
             print(f"  Drop-off   : {job.get('end_address', 'N/A')}")
-            print(f"  Service    : {job['service']}")
-            print(f"  Fare       : {job['currency']} {job['price']:.2f}  "
-                  f"via {job['payment_method']}")
+            print(f"  Fare       : {job.get('currency', 'USD')} {job.get('price')}")
             print()
 
-            # ── Accept or reject based on policy ──────────────────────────────
             if not should_accept(job):
                 reject_ride(token, job["job_id"], reason="Policy rejection")
                 continue
 
-            print(f"[dispatch] Accepted.  Navigate to: "
-                  f"{job.get('start_address', job.get('address'))}")
-
-            # ── Execute the ride ──────────────────────────────────────────────
-            # In production: push pickup/dropoff to your in-vehicle nav system
-            # and block here until the driver taps "End ride".
-            # If anything goes wrong, reject_ride() returns the job to the
-            # exchange so another driver can pick it up.
             try:
-                print("[dispatch] Simulating ride …")
-                time.sleep(3)
-                complete_ride(token, job["job_id"], passenger_rating=5)
+                execute_ride(token, job)
             except Exception as work_err:
-                print(f"[dispatch] Ride execution failed: {work_err}")
-                print("[dispatch] Returning job to exchange …")
+                print(f"[dispatch] Ride failed: {work_err}")
                 reject_ride(token, job["job_id"], reason=f"Execution error: {work_err}")
                 continue
 
-            # ── Update vehicle location to the drop-off point ─────────────────
-            # The next /grab_job call will use this address for distance
-            # filtering, so passengers near the current position get priority.
             end_addr = job.get("end_address") or job.get("address")
             if end_addr and end_addr != "N/A":
                 CURRENT_LOCATION["address"] = end_addr
@@ -365,52 +347,47 @@ def dispatch_loop(token: str, max_rides: int = 1) -> None:
 
             rides_completed += 1
             print(f"[RSE] Rides completed this session: {rides_completed}")
-
             if max_rides is not None and rides_completed >= max_rides:
-                print("[RSE] Reached max_rides limit.  Stopping.")
+                print("[RSE] Reached max_rides. Stopping.")
                 break
 
         except RateLimited as e:
-            # Server told us exactly how long to wait — honour it precisely.
-            print(f"[RSE] Rate limited — server says wait {e.wait_secs}s.")
-            last_grab_time = time.monotonic()   # treat as if a grab just happened
-            time.sleep(e.wait_secs + 2)         # +2 s buffer against clock skew
+            print(f"[RSE] Rate limited — wait {e.wait_secs}s.")
+            last_grab_time = time.monotonic()
+            time.sleep(e.wait_secs + 2)
         except PermissionError as e:
-            print(f"[RSE] Access denied — check seat NFT setup: {e}")
+            print(f"[RSE] Access denied: {e}")
             sys.exit(1)
         except KeyboardInterrupt:
-            print("\n[RSE] Dispatch loop stopped by operator.")
+            print("\n[RSE] Stopped.")
             break
         except requests.HTTPError as e:
-            print(f"[RSE] HTTP error: {e} — retrying in 30s …")
+            print(f"[RSE] HTTP error: {e} — retry in 30s")
             time.sleep(30)
         except Exception as e:
-            print(f"[RSE] Unexpected error: {e} — retrying in 30s …")
+            print(f"[RSE] Unexpected: {e} — retry in 30s")
             time.sleep(30)
 
 
-def main():
+def main() -> None:
     username = CREDENTIALS["username"]
     password = CREDENTIALS["password"]
 
-    # ── Account setup (idempotent — safe to call every run) ───────────────────
-    register(username, password)   # no-op if account already exists
-    token = login(username, password)
+    register(username, password)
+    operator_token = login(username, password)
 
-    # ── Link your RSE Seat NFT wallet (do this once per account) ─────────────
-    # Replace with the wallet address that holds your seat NFT.
-    # Contact mickey@theservicesexchange.com to receive a seat allocation.
-    # Comment this out after the first run if you prefer.
-    SEAT_WALLET = os.environ.get("RSE_WALLET_ADDRESS", "")
-    if SEAT_WALLET:
-        set_wallet(token, SEAT_WALLET)
+    seat_wallet = os.environ.get("RSE_WALLET_ADDRESS", "")
+    if seat_wallet:
+        set_wallet(operator_token, seat_wallet)
     else:
-        print("[RSE] No RSE_WALLET_ADDRESS set — seat NFT not linked.  "
-              "This is fine while SEAT_VERIFICATION_ENABLED=False.")
+        print(
+            "[RSE] No RSE_WALLET_ADDRESS — seat not linked "
+            "(OK while SEAT_VERIFICATION_ENABLED=False)."
+        )
 
-    # ── Start polling for rides ───────────────────────────────────────────────
-    # max_rides=1 for this demo; remove the argument (or set None) to run forever.
-    dispatch_loop(token, max_rides=1)
+    # Vehicle process uses agent token for grab + channel + sign
+    agent_token = ensure_agent_token(operator_token)
+    dispatch_loop(agent_token, max_rides=1)
 
 
 if __name__ == "__main__":

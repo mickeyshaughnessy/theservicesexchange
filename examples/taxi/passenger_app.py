@@ -1,60 +1,42 @@
 #!/usr/bin/env python3
 """
-Demand-side taxi integration — The Services Exchange
-=====================================================
-This reference app shows how a passenger-facing app (or a mobility platform
-acting on a passenger's behalf) publishes a ride request to the exchange and
-waits for a driver to accept it.
+Demand-side taxi passenger — The Services Exchange (D5 reference)
+=================================================================
+Posts a ride bid, waits for a driver/agent grab, watches the job channel
+for agent_structured status updates, then signs the job.
 
-The exchange is a general-purpose service marketplace.  From the exchange's
-point of view a "ride request" is just a bid whose 'service' field happens to
-describe a taxi trip.  No taxi-specific schema is required — the LLM matching
-engine on the supply side reads the natural-language description and decides
-whether each driver can fulfill it.
-
-Quick-start
------------
-1.  pip install requests
-2.  Set RSE_USERNAME / RSE_PASSWORD env vars (or edit CREDENTIALS below).
-3.  python passenger_app.py
-
-Full lifecycle demonstrated here:
-    register (first run only) → login → post bid → poll for driver →
-    job accepted → sign & rate driver
+Env
+---
+  RSE_USERNAME / RSE_PASSWORD
+  RSE_API  (default https://rse-api.com:5003)
 """
+
+from __future__ import annotations
 
 import os
 import sys
 import time
 import requests
 
-# ── Configuration ─────────────────────────────────────────────────────────────
+RSE_API = os.environ.get("RSE_API", "https://rse-api.com:5003")
+VERIFY_SSL = os.environ.get("RSE_VERIFY_SSL", "1") != "0"
 
-RSE_API     = "https://rse-api.com:5003"   # swap to http://localhost:5003 for local dev
-VERIFY_SSL  = True                          # set False if using a self-signed cert locally
-
-# Credentials for the passenger account.  In production these come from your
-# user-auth system; here we read from env vars or fall back to hardcoded values
-# for the demo.
 CREDENTIALS = {
     "username": os.environ.get("RSE_USERNAME", "demo_passenger"),
     "password": os.environ.get("RSE_PASSWORD", "ChangeMe123!"),
 }
 
 
-# ── Step 0: Account setup (run once per user) ─────────────────────────────────
+def _auth(token: str) -> dict:
+    return {"Authorization": f"Bearer {token}"}
+
 
 def register(username: str, password: str) -> bool:
-    """
-    Create a demand-side account on the exchange.
-    Only needed once.  Returns True on success, False if the username is taken
-    (in which case just call login() instead).
-    """
-    r = requests.post(f"{RSE_API}/register", verify=VERIFY_SSL, json={
-        "username": username,
-        "password": password,
-        "user_type": "demand",   # passengers are on the demand side
-    })
+    r = requests.post(
+        f"{RSE_API}/register",
+        verify=VERIFY_SSL,
+        json={"username": username, "password": password, "user_type": "demand"},
+    )
     if r.status_code == 201:
         print(f"[RSE] Account created: {username}")
         return True
@@ -62,24 +44,20 @@ def register(username: str, password: str) -> bool:
         print(f"[RSE] Account already exists: {username}")
         return False
     r.raise_for_status()
+    return False
 
 
 def login(username: str, password: str) -> str:
-    """
-    Authenticate and return a bearer token.
-    Tokens are valid for 24 hours.  Cache and reuse; refresh on 401.
-    """
-    r = requests.post(f"{RSE_API}/login", verify=VERIFY_SSL, json={
-        "username": username,
-        "password": password,
-    })
+    r = requests.post(
+        f"{RSE_API}/login",
+        verify=VERIFY_SSL,
+        json={"username": username, "password": password},
+    )
     r.raise_for_status()
-    token = r.json()["access_token"]
-    print(f"[RSE] Logged in as {username}")
-    return token
+    data = r.json()
+    print(f"[RSE] Logged in as {username} (type={data.get('user_type')})")
+    return data["access_token"]
 
-
-# ── Step 1: Post a ride request as a bid ──────────────────────────────────────
 
 def post_ride_request(
     token: str,
@@ -88,101 +66,57 @@ def post_ride_request(
     passengers: int,
     fare_usd: float,
     notes: str = "",
-    expiry_seconds: int = 300,   # how long the request stays open (5 min default)
+    expiry_seconds: int = 300,
 ) -> str:
-    """
-    Translate a passenger's ride request into an exchange bid and return the bid_id.
-
-    Key design decisions
-    --------------------
-    service
-        A plain-English description of the trip.  The exchange's LLM matching
-        engine reads this and compares it against each driver's stated
-        capabilities.  You don't need to conform to any schema — write whatever
-        a driver would need to know to decide whether to take the job.
-
-    price
-        The fare the passenger is offering.  Drivers on the exchange will see
-        this when deciding whether to grab the job.  Set it to the fare your
-        pricing engine computes; the exchange sorts available drivers by
-        reputation alignment and then price.
-
-    location_type = "physical"
-        Tells the exchange this is an in-person service so it can filter
-        drivers by proximity.
-
-    start_address / end_address
-        Optional structured fields the exchange stores alongside the bid so
-        the matched driver can navigate without parsing the service string.
-    """
     service_description = (
         f"Taxi ride: {pickup} → {dropoff}.  "
         f"{passengers} passenger{'s' if passengers != 1 else ''}.  "
         + (f"Notes: {notes}  " if notes else "")
         + "Licensed taxi or rideshare vehicle required."
     )
-
     payload = {
-        "service":        service_description,
-        "price":          fare_usd,
-        "currency":       "USD",
-        "payment_method": "cash",            # or "xmoney", "paypal", etc.
-        "location_type":  "physical",
-        "start_address":  pickup,            # pickup coordinates (stored for driver)
-        "end_address":    dropoff,           # dropoff coordinates
-        "end_time":       int(time.time()) + expiry_seconds,
+        "service": service_description,
+        "price": fare_usd,
+        "currency": "USD",
+        "payment_method": "cash",
+        "location_type": "physical",
+        "start_address": pickup,
+        "end_address": dropoff,
+        "address": pickup,
+        "end_time": int(time.time()) + expiry_seconds,
     }
-
     r = requests.post(
         f"{RSE_API}/submit_bid",
-        headers={"Authorization": f"Bearer {token}"},
+        headers=_auth(token),
         json=payload,
         verify=VERIFY_SSL,
     )
     r.raise_for_status()
     bid_id = r.json()["bid_id"]
-    print(f"[RSE] Ride request posted (bid_id={bid_id[:8]}…)  "
-          f"${fare_usd:.2f} | {pickup} → {dropoff}")
+    print(
+        f"[RSE] Ride request posted (bid_id={bid_id[:8]}…)  "
+        f"${fare_usd:.2f} | {pickup} → {dropoff}"
+    )
     return bid_id
 
 
-# ── Step 2: Poll until a driver accepts ───────────────────────────────────────
-
 def wait_for_driver(token: str, bid_id: str, timeout_seconds: int = 270) -> dict | None:
-    """
-    Polls the exchange until a driver grabs the bid.
-
-    When a driver calls /grab_job the exchange atomically:
-      • removes the bid  →  it disappears from /my_bids
-      • creates a job record  →  it appears in /my_jobs
-
-    So we watch for the bid to vanish from /my_bids and then fetch the job
-    from /my_jobs.  Returns the job dict on success, None on timeout.
-    """
     print(f"[RSE] Waiting for a driver (timeout={timeout_seconds}s) …")
     deadline = time.time() + timeout_seconds
-    poll_interval = 5   # seconds between polls — be polite to the API
+    poll_interval = 5
 
     while time.time() < deadline:
-        # Check whether the bid still exists
-        r = requests.get(
-            f"{RSE_API}/my_bids",
-            headers={"Authorization": f"Bearer {token}"},
-            verify=VERIFY_SSL,
-        )
+        r = requests.get(f"{RSE_API}/my_bids", headers=_auth(token), verify=VERIFY_SSL)
         r.raise_for_status()
-        active_bids = r.json().get("bids", [])
-        still_open = any(b["bid_id"] == bid_id for b in active_bids)
-
+        still_open = any(b["bid_id"] == bid_id for b in r.json().get("bids", []))
         if not still_open:
-            # Bid was consumed — a driver grabbed it.  Find the resulting job.
             job = _find_job_for_bid(token, bid_id)
             if job:
-                print(f"[RSE] Driver accepted!  job_id={job['job_id'][:8]}…  "
-                      f"driver={job['provider_username']}")
+                print(
+                    f"[RSE] Driver accepted!  job_id={job['job_id'][:8]}…  "
+                    f"driver={job['provider_username']}"
+                )
                 return job
-            # Edge case: bid cancelled or expired between polls.  Keep waiting briefly.
-
         time.sleep(poll_interval)
 
     print("[RSE] Timed out waiting for a driver.")
@@ -190,28 +124,19 @@ def wait_for_driver(token: str, bid_id: str, timeout_seconds: int = 270) -> dict
 
 
 def _find_job_for_bid(token: str, bid_id: str) -> dict | None:
-    """Return the job that was created from this bid, if it exists."""
-    r = requests.get(
-        f"{RSE_API}/my_jobs",
-        headers={"Authorization": f"Bearer {token}"},
-        verify=VERIFY_SSL,
-    )
+    r = requests.get(f"{RSE_API}/my_jobs", headers=_auth(token), verify=VERIFY_SSL)
     if r.status_code != 200:
         return None
-    data = r.json()
-    for job in data.get("active_jobs", []):
+    for job in r.json().get("active_jobs", []):
         if job.get("bid_id") == bid_id:
             return job
     return None
 
 
-# ── Step 3: Cancel if no driver found ─────────────────────────────────────────
-
 def cancel_ride_request(token: str, bid_id: str) -> None:
-    """Cancel an open bid (e.g. passenger changed their mind or no driver found)."""
     r = requests.post(
         f"{RSE_API}/cancel_bid",
-        headers={"Authorization": f"Bearer {token}"},
+        headers=_auth(token),
         json={"bid_id": bid_id},
         verify=VERIFY_SSL,
     )
@@ -221,21 +146,86 @@ def cancel_ride_request(token: str, bid_id: str) -> None:
         print(f"[RSE] Cancel returned {r.status_code}: {r.text}")
 
 
-# ── Step 4: Rate the driver after the ride ────────────────────────────────────
+def watch_ride_channel(token: str, job_id: str, timeout_seconds: int = 120) -> None:
+    """
+    Poll the job channel for driver/agent status (agent_structured) and
+    post a short passenger note once the channel is open.
+    """
+    print(f"[channel] Watching job {job_id[:8]}… for vehicle updates")
+    # Join/read meta
+    r = requests.get(
+        f"{RSE_API}/jobs/{job_id}/channel",
+        headers=_auth(token),
+        verify=VERIFY_SSL,
+    )
+    if r.status_code != 200:
+        print(f"[channel] cannot open: {r.status_code} {r.text}")
+        return
+    meta = r.json()
+    print(f"[channel] state={meta.get('state')} members={meta.get('members')}")
+
+    # Passenger message to the vehicle
+    requests.post(
+        f"{RSE_API}/jobs/{job_id}/messages",
+        headers=_auth(token),
+        json={
+            "body": "I'm at the curb with two bags — blue jacket.",
+            "message_type": "user",
+            "client_message_id": f"pax-hello-{job_id[:8]}",
+        },
+        verify=VERIFY_SSL,
+    )
+
+    last_ts = 0
+    deadline = time.time() + timeout_seconds
+    seen = set()
+    while time.time() < deadline:
+        r = requests.get(
+            f"{RSE_API}/jobs/{job_id}/messages",
+            headers=_auth(token),
+            params={"since_ts": last_ts, "limit": 50},
+            verify=VERIFY_SSL,
+        )
+        if r.status_code != 200:
+            time.sleep(2)
+            continue
+        data = r.json()
+        for m in data.get("messages") or []:
+            mid = m.get("message_id")
+            if mid in seen:
+                continue
+            seen.add(mid)
+            last_ts = max(last_ts, int(m.get("sent_at") or 0))
+            mtype = m.get("message_type") or "user"
+            sender = m.get("sender")
+            body = m.get("body")
+            payload = m.get("payload") or {}
+            if mtype == "system":
+                print(f"[channel] [system] {body}")
+            elif mtype == "agent_structured":
+                status = payload.get("status") or mtype
+                print(f"[channel] [vehicle:{status}] {body}")
+                if status in ("completed", "arrived_dropoff"):
+                    # mark read and return — ride simulation finished on supply side
+                    requests.post(
+                        f"{RSE_API}/jobs/{job_id}/messages/read",
+                        headers=_auth(token),
+                        json={"last_read_ts": last_ts},
+                        verify=VERIFY_SSL,
+                    )
+                    return
+            else:
+                print(f"[channel] [{sender}] {body}")
+        time.sleep(2)
+
+    print("[channel] Watch timeout — continuing to sign.")
+
 
 def complete_ride(token: str, job_id: str, driver_rating: int) -> None:
-    """
-    Passenger signs the job and rates the driver (1–5 stars).
-
-    The job is marked completed once BOTH the passenger and driver have signed.
-    The exchange uses ratings to build reputation scores that influence future
-    matching (higher-reputation drivers are prioritised for higher-reputation
-    passengers).
-    """
-    assert 1 <= driver_rating <= 5, "Rating must be 1–5"
+    assert 1 <= driver_rating <= 5
     r = requests.post(
         f"{RSE_API}/sign_job",
-        headers={"Authorization": f"Bearer {token}"},
+        headers=_auth(token),
         json={"job_id": job_id, "rating": driver_rating},
         verify=VERIFY_SSL,
     )
@@ -243,55 +233,43 @@ def complete_ride(token: str, job_id: str, driver_rating: int) -> None:
     print(f"[RSE] Ride signed.  Driver rated {driver_rating}/5.")
 
 
-# ── Demo: end-to-end passenger flow ───────────────────────────────────────────
-
-def main():
+def main() -> None:
     username = CREDENTIALS["username"]
     password = CREDENTIALS["password"]
 
-    # ── Account setup (idempotent — safe to call every run) ───────────────────
-    register(username, password)   # no-op if account already exists
+    register(username, password)
     token = login(username, password)
 
-    # ── Book a ride ───────────────────────────────────────────────────────────
-    # In a real app these values come from the passenger's UI / GPS.
     bid_id = post_ride_request(
-        token      = token,
-        pickup     = "355 Main Street, San Francisco, CA 94105",
-        dropoff    = "SFO International Terminal, San Francisco, CA 94128",
-        passengers = 2,
-        fare_usd   = 45.00,
-        notes      = "Two large bags.  Quiet ride preferred.",
-        expiry_seconds = 300,   # cancel automatically after 5 min if no driver
+        token=token,
+        pickup="355 Main Street, San Francisco, CA 94105",
+        dropoff="SFO International Terminal, San Francisco, CA 94128",
+        passengers=2,
+        fare_usd=45.00,
+        notes="Two large bags.  Quiet ride preferred.",
+        expiry_seconds=300,
     )
 
-    # ── Wait for a driver ─────────────────────────────────────────────────────
     job = wait_for_driver(token, bid_id, timeout_seconds=270)
-
     if job is None:
-        # Nobody accepted in time — cancel and retry / surge-price / etc.
         cancel_ride_request(token, bid_id)
         print("No driver found.  Consider raising the fare or retrying.")
         sys.exit(1)
 
-    # ── Ride is happening ─────────────────────────────────────────────────────
-    print(f"\nDriver details:")
+    print("\nDriver details:")
     print(f"  Username    : {job['provider_username']}")
-    print(f"  Reputation  : {job['provider_reputation']:.1f}/5.0")
-    print(f"  Pickup at   : {job.get('start_address', job.get('address', 'see job record'))}")
-    print(f"  Drop-off at : {job.get('end_address', 'N/A')}")
-    print(f"  Fare        : {job['currency']} {job['price']:.2f}")
-    print(f"  Payment     : {job['payment_method']}")
+    print(f"  Reputation  : {job.get('provider_reputation', 0):.1f}/5.0")
+    print(f"  Seat stamp  : {job.get('provider_seat_token_id')}")
+    print(f"  Pickup      : {job.get('start_address', job.get('address'))}")
+    print(f"  Drop-off    : {job.get('end_address')}")
+    print(f"  Fare        : {job.get('currency')} {job.get('price')}")
     print()
 
-    # In production: push job details to the passenger's phone, track ETA, etc.
-    # Here we just simulate the ride completing.
-    print("(Simulating ride…)")
-    time.sleep(3)
+    # Live vehicle updates via job channel (agent_structured from driver agent)
+    watch_ride_channel(token, job["job_id"], timeout_seconds=90)
 
-    # ── Rate the driver ───────────────────────────────────────────────────────
     complete_ride(token, job["job_id"], driver_rating=5)
-    print("Ride complete.")
+    print("Ride complete.  Check portfolio.html for history.")
 
 
 if __name__ == "__main__":
