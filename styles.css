@@ -189,11 +189,54 @@ a:hover {
 }
 
 .navbar-toggler {
-    border-color: var(--primary);
+    border: 1px solid rgba(176, 220, 255, 0.85);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.45rem 0.6rem;
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
 }
 
+.navbar-toggler:hover,
+.navbar-toggler:focus,
+.navbar-toggler:focus-visible {
+    border-color: #e8f7ff;
+    background: rgba(0, 255, 255, 0.15);
+    box-shadow: 0 0 14px rgba(0, 255, 255, 0.4);
+}
+
+/* Explicit light bars — do not rely on Bootstrap's dark SVG + filter */
 .navbar-toggler-icon {
-    filter: invert(1) sepia(1) saturate(5) hue-rotate(155deg);
+    width: 1.45rem;
+    height: 1.15rem;
+    background-image: none !important;
+    filter: none !important;
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.navbar-toggler-icon::before,
+.navbar-toggler-icon::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2.5px;
+    border-radius: 1px;
+    background: #e8f7ff;
+    box-shadow: 0 0 6px rgba(0, 255, 255, 0.7);
+}
+
+.navbar-toggler-icon::before {
+    top: 0;
+    box-shadow:
+        0 0 6px rgba(0, 255, 255, 0.7),
+        0 7px 0 #e8f7ff,
+        0 7px 6px rgba(0, 255, 255, 0.45);
+}
+
+.navbar-toggler-icon::after {
+    bottom: 0;
 }
 
 /* =====================
@@ -257,6 +300,185 @@ a:hover {
     color: var(--text-bright);
     text-align: left;
     border-bottom: 2px solid var(--primary);
+}
+
+.hero-bid-first {
+    padding: 72px 0 56px;
+    text-align: left;
+}
+
+.hero-subtitle-bid {
+    max-width: 640px;
+    margin-left: 0;
+    margin-right: auto;
+    margin-bottom: 1.75rem;
+}
+
+.home-bid-panel {
+    background: var(--bg-panel);
+    border: 1px solid rgba(0, 255, 255, 0.4);
+    box-shadow: 0 0 40px rgba(0, 255, 255, 0.12);
+    padding: 1.5rem 1.5rem 1.35rem;
+    position: relative;
+    z-index: 5;
+}
+
+.home-bid-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.home-bid-kicker {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--accent);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-shadow: 0 0 6px var(--accent);
+}
+
+.home-bid-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.home-bid-foot {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.home-bid-panel .form-control-lg {
+    font-size: 1.05rem;
+    padding: 0.85rem 1rem;
+}
+
+.service-browse-section .service-grid-bottom {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+/* =====================
+   SERVICE AUTOCOMPLETE
+   ===================== */
+.service-ac-wrap {
+    position: relative;
+}
+
+.service-ac-list {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 1080;
+    max-height: min(340px, 55vh);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--bg-deep);
+    border: 1px solid rgba(0, 255, 255, 0.45);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), 0 0 24px rgba(0, 255, 255, 0.15);
+    margin: 0;
+    padding: 0.35rem 0;
+}
+
+.service-ac-list[hidden] {
+    display: none !important;
+}
+
+.service-ac-group {
+    padding: 0.45rem 0.9rem 0.2rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border-top: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.service-ac-group:first-child {
+    border-top: none;
+}
+
+.service-ac-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-left: 2px solid transparent;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.92rem;
+    padding: 0.65rem 1rem;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+}
+
+.service-ac-option:hover,
+.service-ac-option[aria-selected="true"] {
+    background: rgba(0, 255, 255, 0.1);
+    border-left-color: var(--accent);
+    color: var(--text-bright);
+}
+
+.service-ac-option .ac-label {
+    display: block;
+    color: var(--primary);
+    text-shadow: 0 0 6px rgba(0, 255, 255, 0.25);
+}
+
+.service-ac-option .ac-meta {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 0.15rem;
+}
+
+.service-ac-option .ac-match {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.service-ac-option .ac-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid rgba(0, 255, 255, 0.35);
+    color: var(--primary);
+    padding: 1px 6px;
+    margin-left: 0.4rem;
+    vertical-align: middle;
+}
+
+.service-ac-option .ac-badge.live {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.service-ac-option .ac-badge.recent {
+    border-color: var(--yellow);
+    color: var(--yellow);
+}
+
+.service-ac-empty {
+    padding: 0.85rem 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.service-ac-footer {
+    padding: 0.5rem 1rem 0.35rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    border-top: 1px solid rgba(0, 255, 255, 0.12);
 }
 
 .hero-eyebrow {
@@ -2180,6 +2402,27 @@ section[style*="background:#f"],
 
     .hero-light {
         padding: 56px 0 40px;
+    }
+
+    .hero-bid-first {
+        padding: 48px 0 36px;
+    }
+
+    .home-bid-panel {
+        padding: 1.15rem 1rem 1.1rem;
+    }
+
+    .home-bid-panel .form-control-lg {
+        font-size: 16px !important;
+    }
+
+    .service-ac-list {
+        max-height: min(280px, 45vh);
+    }
+
+    .service-ac-option {
+        min-height: 48px;
+        padding: 0.75rem 1rem;
     }
 
     .hero-eyebrow {
