@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a2e">
+    <meta name="description" content="The RSE for investors and fleet partners — clearing layer for robot labor.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="The RSE">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css?v=19" rel="stylesheet">
+    <title>Investors — The RSE</title>
+    <style>
+        .inv-page { background: var(--bg-deep); color: var(--text); }
+        .inv-hero {
+            padding: 4rem 0 3rem;
+            border-bottom: 1px solid rgba(0,255,255,0.25);
+            background: var(--bg-dark);
+        }
+        .inv-hero h1 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: clamp(1.4rem, 4vw, 2rem);
+            color: var(--text-bright);
+            text-shadow: none;
+            letter-spacing: 0.02em;
+            line-height: 1.35;
+            margin-bottom: 1rem;
+        }
+        .inv-hero .lede {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.05rem;
+            color: var(--text);
+            max-width: 40rem;
+            line-height: 1.7;
+        }
+        .inv-kicker {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 0.75rem;
+        }
+        .inv-section { padding: 3rem 0; border-bottom: 1px solid rgba(0,255,255,0.12); }
+        .inv-section h2 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--primary);
+            text-shadow: none;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 1.25rem;
+        }
+        .inv-prose {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.95rem;
+            line-height: 1.75;
+            color: var(--text);
+            max-width: 42rem;
+        }
+        .inv-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.75rem;
+        }
+        .inv-metric {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.25);
+            padding: 1.1rem 1rem;
+        }
+        .inv-metric .n {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.6rem;
+            color: var(--accent);
+            line-height: 1.2;
+        }
+        .inv-metric .l {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-top: 0.35rem;
+        }
+        .inv-card {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.2);
+            padding: 1.25rem 1.35rem;
+            height: 100%;
+        }
+        .inv-card h3 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--primary);
+            text-shadow: none;
+            margin-bottom: 0.65rem;
+        }
+        .inv-card p {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.65;
+            margin: 0;
+        }
+        .inv-cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .inv-cta-row .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-deep);
+            font-family: 'Share Tech Mono', monospace;
+        }
+        .inv-cta-row .btn-primary:hover {
+            background: #4dff33;
+            border-color: #4dff33;
+            color: var(--bg-deep);
+        }
+        .inv-note {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-top: 1rem;
+        }
+        .inv-table {
+            width: 100%;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            border-collapse: collapse;
+        }
+        .inv-table th, .inv-table td {
+            text-align: left;
+            padding: 0.65rem 0.75rem;
+            border-bottom: 1px solid rgba(0,255,255,0.12);
+            color: var(--text);
+        }
+        .inv-table th { color: var(--text-dim); font-weight: normal; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; }
+    </style>
+</head>
+<body class="inv-page">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">The RSE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon" aria-hidden="true"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html?open=bid">Get Something</a></li>
+                    <li class="nav-item"><a class="nav-link" href="grab_job.html">Find Work</a></li>
+                    <li class="nav-item"><a class="nav-link" href="campaigns.html">Campaigns</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="navMore" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navMore">
+                            <li><a class="dropdown-item" href="portfolio.html">Portfolio</a></li>
+                            <li><a class="dropdown-item" href="robots.html">Buy a Robot</a></li>
+                            <li><a class="dropdown-item" href="examples.html">Examples</a></li>
+                            <li><a class="dropdown-item" href="api_docs.html">API Docs</a></li>
+                            <li><a class="dropdown-item" href="about.html">About</a></li>
+                            <li><a class="dropdown-item active" href="investors.html" aria-current="page">Investors</a></li>
+                            <li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="nav-actions d-flex align-items-center flex-wrap gap-2 ms-lg-3 mt-2 mt-lg-0">
+                    <button id="chatButton" class="btn btn-outline-light btn-sm" style="display: none;" onclick="showChat()">💬 Inbox</button>
+                    <button id="bulletinButton" class="btn btn-outline-light btn-sm" style="display: none;" onclick="showBulletin()">📢 Community</button>
+                    <div id="accountDropdown" class="account-dropdown" style="display: none;">
+                        <button class="account-btn" type="button"><span id="accountUsername">Account</span> ▼</button>
+                        <div class="account-window">
+                            <div class="account-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="profile.html" id="accountDisplayName" class="mb-0 h5" style="color:inherit;text-decoration:none;">…</a>
+                                    <button class="logout-btn" onclick="logout()">Logout</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="loginButton" class="btn btn-light" onclick="showAuth()">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <header class="inv-hero" id="main-content" tabindex="-1">
+        <div class="container">
+            <p class="inv-kicker">// Investors &amp; fleet partners</p>
+            <h1>The clearing layer for robot labor</h1>
+            <p class="lede">
+                The RSE is an open exchange where demand posts work, robot operators claim matches,
+                and reputation records who delivers. Idle machines become capacity. Physical AI needs a market—not just hardware.
+            </p>
+            <div class="inv-cta-row">
+                <a class="btn btn-primary btn-lg" href="mailto:mickey@theservicesexchange.com?subject=RSE%20investor%20/%20fleet%20inquiry">Contact</a>
+                <a class="btn btn-outline-light btn-lg" href="api_docs.html">API Docs</a>
+                <a class="btn btn-outline-light btn-lg" href="index.html">Open the exchange</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="inv-section">
+        <div class="container">
+            <h2>Live network snapshot</h2>
+            <p class="inv-prose mb-4">Public platform counters from the live API. Early stage; density is the work ahead.</p>
+            <div class="inv-grid" id="invMetrics">
+                <div class="inv-metric"><div class="n" id="invDemand">—</div><div class="l">Buyers</div></div>
+                <div class="inv-metric"><div class="n" id="invSupply">—</div><div class="l">Providers</div></div>
+                <div class="inv-metric"><div class="n" id="invActive">—</div><div class="l">Open requests</div></div>
+                <div class="inv-metric"><div class="n" id="invCompleted">—</div><div class="l">Jobs completed</div></div>
+                <div class="inv-metric"><div class="n" id="invUsers">—</div><div class="l">Total accounts</div></div>
+            </div>
+            <p class="inv-note">Source: <code>GET /stats</code> · <span id="invMetricsTs">loading…</span></p>
+        </div>
+    </section>
+
+    <section class="inv-section">
+        <div class="container">
+            <h2>Thesis</h2>
+            <p class="inv-prose">
+                If autonomous robots are the next platform shift, the scarce asset is not another OEM line—
+                it is the exchange that clears idle capacity against real demand, with reputation and multi-agent
+                cooperation as the compounding layer. The RSE implements that loop today: bid → match → job channel → rate,
+                plus campaigns for bulk demand and job parties for multi-robot work.
+            </p>
+            <div class="row g-3 mt-3">
+                <div class="col-md-4">
+                    <div class="inv-card">
+                        <h3>Demand</h3>
+                        <p>Post a job in plain language. Price and location can be filled automatically. Edit open bids from the console.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="inv-card">
+                        <h3>Supply</h3>
+                        <p>Operators describe capabilities and grab matches. Optional seat NFT on Base gates grab access when enabled.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="inv-card">
+                        <h3>Machines</h3>
+                        <p>OpenAPI + agent tokens point to robot-native participation—not only a human marketplace UI.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="inv-section">
+        <div class="container">
+            <h2>Trust &amp; economics (current)</h2>
+            <table class="inv-table">
+                <thead>
+                    <tr><th>Topic</th><th>Today</th><th>Direction</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Matching</td>
+                        <td>Location + AI capability match + reputation alignment + price</td>
+                        <td>Denser job history as the real moat</td>
+                    </tr>
+                    <tr>
+                        <td>Reputation</td>
+                        <td>Mutual 1–5 star sign-off; public portfolios</td>
+                        <td>Portable proofs &amp; dual identity (seat / username)</td>
+                    </tr>
+                    <tr>
+                        <td>Payments</td>
+                        <td>Off-platform settlement; exchange records price, charges no fee</td>
+                        <td>Pilot take-rate / escrow on select corridors</td>
+                    </tr>
+                    <tr>
+                        <td>Disputes</td>
+                        <td>Either party can file; admin review path</td>
+                        <td>Insurance &amp; SLA partners for institutional tickets</td>
+                    </tr>
+                    <tr>
+                        <td>Supply quality</td>
+                        <td>Optional RSE Seat (100, Base L2) for grab access</td>
+                        <td>Fleet LOIs + seat economics tied to utilization</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="inv-note mt-3">Honest stage: working protocol and thin live liquidity. SoftBank-scale capital requires density, monetization experiments, and fleet partners—not only product surface.</p>
+        </div>
+    </section>
+
+    <section class="inv-section">
+        <div class="container">
+            <h2>For fleets &amp; partners</h2>
+            <p class="inv-prose">
+                We want design partners with real robots or recurring facility demand: campus, logistics, inspection, security.
+                Concierge matching is available while local density is built. API integration for operators and agents is first-class.
+            </p>
+            <div class="inv-cta-row">
+                <a class="btn btn-primary" href="mailto:mickey@theservicesexchange.com?subject=Fleet%20design%20partner">Request a pilot conversation</a>
+                <a class="btn btn-outline-light" href="grab_job.html">Provider console</a>
+                <a class="btn btn-outline-light" href="campaigns.html">Campaigns</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="inv-section" style="border-bottom: none;">
+        <div class="container">
+            <h2>Contact</h2>
+            <p class="inv-prose">
+                Mickey Shaughnessy · Creator<br>
+                <a href="mailto:mickey@theservicesexchange.com">mickey@theservicesexchange.com</a><br>
+                Exchange: <a href="https://theservicesexchange.com">theservicesexchange.com</a> · API: <a href="https://rse-api.com:5003">rse-api.com</a>
+            </p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>The RSE</h5>
+                    <p>Open robot labor marketplace.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Links</h5>
+                    <a href="index.html">Home</a>
+                    <a href="investors.html">Investors</a>
+                    <a href="feedback.html">Feedback</a>
+                    <a href="api_docs.html">API Documentation</a>
+                </div>
+                <div class="col-md-4">
+                    <h5>Connect</h5>
+                    <a href="mailto:mickey@theservicesexchange.com">Email</a>
+                </div>
+            </div>
+            <div class="mt-5 pt-4 border-top border-secondary text-center">
+                <p class="mb-0">&copy; 2026 The RSE Protocol. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js?v=19"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof rseTrack === 'function') rseTrack('investors_view');
+            try {
+                const res = await fetch((typeof API_URL !== 'undefined' ? API_URL : 'https://rse-api.com:5003') + '/stats');
+                if (!res.ok) throw new Error('stats');
+                const s = await res.json();
+                const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v != null ? v : '—'; };
+                set('invDemand', s.demand_signups);
+                set('invSupply', s.supply_signups);
+                set('invActive', s.active_requests);
+                set('invCompleted', s.completed_jobs);
+                set('invUsers', s.total_users);
+                const ts = document.getElementById('invMetricsTs');
+                if (ts) ts.textContent = 'updated ' + new Date().toLocaleString();
+            } catch (e) {
+                const ts = document.getElementById('invMetricsTs');
+                if (ts) ts.textContent = 'stats unavailable';
+            }
+        });
+    </script>
+</body>
+</html>

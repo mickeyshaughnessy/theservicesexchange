@@ -115,6 +115,22 @@ function registerServiceWorker() {
     });
 }
 
+/** Lightweight funnel analytics (local + optional dataLayer). */
+function rseTrack(event, props) {
+    try {
+        const payload = Object.assign({ event, t: Date.now(), path: location.pathname }, props || {});
+        const key = 'rse_analytics_events';
+        const prev = JSON.parse(localStorage.getItem(key) || '[]');
+        prev.push(payload);
+        localStorage.setItem(key, JSON.stringify(prev.slice(-200)));
+        if (window.dataLayer && Array.isArray(window.dataLayer)) {
+            window.dataLayer.push(payload);
+        }
+        if (window.console && console.debug) console.debug('[rseTrack]', payload);
+    } catch (e) { /* ignore */ }
+}
+window.rseTrack = rseTrack;
+
 // Load platform statistics
 async function loadPlatformStats() {
     try {
@@ -1662,6 +1678,7 @@ async function handleBidSubmission(e) {
         if (response.ok) {
             showToast(editingId ? 'Bid updated' : 'Bid live — providers can grab it', 'success');
             pushRecentService(description);
+            rseTrack(editingId ? 'bid_updated' : 'bid_submitted', { editing: !!editingId });
 
             const bidModal = document.getElementById('bidModal');
             if (bidModal && fields.formId === 'bidForm') {
@@ -2679,6 +2696,7 @@ function ensureJobActionModals() {
             const data = await response.json().catch(() => ({}));
             if (response.ok) {
                 showToast('Job completed and rated', 'success');
+                rseTrack('job_completed');
                 bootstrap.Modal.getInstance(document.getElementById('jobRateModal'))?.hide();
                 await loadCompletedJobs();
             } else {
@@ -2864,6 +2882,7 @@ async function handleGrabJobSubmission(e) {
         const data = await response.json().catch(() => ({}));
         if (response.ok) {
             setGrabJobResult(renderGrabJobSuccess(data, payload.capabilities), false);
+            rseTrack('job_grabbed', { job_id: data.job_id });
             await loadCompletedJobs();
             showToast('Job matched — open job chat to coordinate', 'success');
         } else {
