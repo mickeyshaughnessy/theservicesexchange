@@ -61,9 +61,8 @@ GRAB_JOB_COOLDOWN_SECONDS = 900
 # Agent tokens: default expiry days when expires_at omitted (0 = no default expiry)
 AGENT_TOKEN_DEFAULT_EXPIRY_DAYS = 90
 
-# Site gate + admin (CHANGE THESE IN PRODUCTION config.py — never commit real secrets)
-SITE_ACCESS_PASSWORD = 'change-me-site-gate'
-SITE_COOKIE_SECRET = 'change-me-cookie-hmac-secret'
+# Admin API key for privileged routes (CHANGE IN PRODUCTION config.py — never commit real secrets)
+# Site access-code gate removed — public website is open.
 ADMIN_API_KEY = 'change-me-admin-key'
 
 # Optional HMAC for job proofs (export/proof)

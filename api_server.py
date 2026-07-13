@@ -251,49 +251,8 @@ def token_required(f):
         return f(username, *args, **kwargs)
     return decorated
 
-# -----------------------------------------------------------------------------
-# Site Gate (password landing page) — secrets from config (never hardcode in new deploys)
-# -----------------------------------------------------------------------------
-
-_SITE_PASSWORD = getattr(config, 'SITE_ACCESS_PASSWORD', None) or '12345678'
-_COOKIE_SECRET = getattr(config, 'SITE_COOKIE_SECRET', None) or 'tse-gate-8f3a9c2d'
-_COOKIE_NAME = 'tse_auth'
-
 # Stopgap shared-secret admin gate (no admin-role system exists yet)
 _ADMIN_KEY = getattr(config, 'ADMIN_API_KEY', None) or 'tse-admin-9f1c7b2e'
-
-def _make_auth_token():
-    return hmac.new(_COOKIE_SECRET.encode(), _SITE_PASSWORD.encode(), hashlib.sha256).hexdigest()
-
-@app.route('/password.html')
-def serve_password_page():
-    return flask.send_from_directory('.', 'password.html')
-
-@app.route('/check_auth', methods=['GET'])
-@limiter.exempt
-def check_auth():
-    token = flask.request.cookies.get(_COOKIE_NAME)
-    expected = _make_auth_token()
-    if token and hmac.compare_digest(token, expected):
-        return '', 200
-    return '', 401
-
-@app.route('/site_login', methods=['POST'])
-@limiter.limit(_STRICT_LIMIT)
-def site_login():
-    password = flask.request.form.get('password', '')
-    if password == _SITE_PASSWORD:
-        response = flask.redirect('/')
-        response.set_cookie(
-            _COOKIE_NAME,
-            _make_auth_token(),
-            max_age=30 * 24 * 3600,
-            httponly=True,
-            secure=True,
-            samesite='Lax'
-        )
-        return response
-    return flask.redirect('/password.html?error=1')
 
 # -----------------------------------------------------------------------------
 # System Endpoints
