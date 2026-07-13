@@ -15,7 +15,7 @@
 
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=16" rel="stylesheet">
+    <link href="styles.css?v=17" rel="stylesheet">
 <title>The RSE — Robot Labor, On Demand</title>
 </head>
 <body>
@@ -133,80 +133,76 @@
                     <p class="hero-subtitle hero-subtitle-bid text-center text-lg-start">Post a service request. Robots and operators compete to match — transparent pricing, reputation-backed work.</p>
 
                     <div class="home-bid-panel">
-                        <div class="home-bid-panel-header">
-                            <span class="home-bid-kicker">// New request</span>
-                            <span class="home-bid-hint d-none d-md-inline">Type a service — suggestions appear as you type</span>
-                        </div>
                         <form id="homeBidForm" autocomplete="off">
-                            <div class="mb-3 service-ac-field">
-                                <label class="form-label" for="homeBidService">Service description</label>
-                                <div class="service-ac-wrap">
-                                    <input type="text"
-                                           class="form-control form-control-lg service-ac-input"
-                                           id="homeBidService"
-                                           name="service"
-                                           required
-                                           placeholder="e.g. Lawn mowing for a half-acre lot, weekly"
-                                           role="combobox"
-                                           aria-autocomplete="list"
-                                           aria-expanded="false"
-                                           aria-controls="homeServiceAcList"
-                                           aria-haspopup="listbox"
-                                           autocomplete="off">
-                                    <div id="homeServiceAcList"
-                                         class="service-ac-list"
-                                         role="listbox"
-                                         hidden></div>
+                            <div class="home-bid-panel-header">
+                                <div class="home-bid-header-left">
+                                    <span class="home-bid-kicker">// New request</span>
+                                    <span class="home-bid-hint d-none d-md-inline">Just describe the job — we fill the rest</span>
                                 </div>
-                                <small class="form-text text-muted">Start typing to search the catalog, live market, and recent requests.</small>
+                                <button type="submit" class="btn btn-submit-bid" id="homeBidSubmit">Submit request</button>
                             </div>
 
-                            <div class="row g-3">
-                                <div class="col-md-5">
-                                    <label class="form-label" for="homeBidPrice">Your price</label>
-                                    <div class="payment-method-group">
-                                        <select class="form-control" id="homePaymentMethod" name="currency" aria-label="Currency">
-                                            <option value="USD">USD ($)</option>
-                                            <option value="EUR">EUR (€)</option>
-                                            <option value="GBP">GBP (£)</option>
-                                        </select>
-                                        <input type="number" step="0.01" min="0" class="form-control" placeholder="Amount" id="homeBidPrice" name="price" required inputmode="decimal">
+                            <div class="mb-2 service-ac-field">
+                                <label class="form-label visually-hidden" for="homeBidService">Service description</label>
+                                <textarea class="form-control form-control-lg service-ac-input bid-composer"
+                                          id="homeBidService"
+                                          name="service"
+                                          required
+                                          rows="3"
+                                          placeholder="Describe what you need… e.g. Mow a half-acre lawn this weekend"
+                                          autocomplete="off"></textarea>
+                                <div id="homeServiceAcList" class="service-suggest-row" aria-label="Optional suggestions"></div>
+                            </div>
+
+                            <details class="bid-details" id="homeBidDetails">
+                                <summary>Details <span class="text-muted">(optional — price, location, duration)</span></summary>
+                                <div class="bid-details-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-5">
+                                            <label class="form-label" for="homeBidPrice">Price</label>
+                                            <div class="payment-method-group">
+                                                <select class="form-control" id="homePaymentMethod" name="currency" aria-label="Currency">
+                                                    <option value="USD">USD ($)</option>
+                                                    <option value="EUR">EUR (€)</option>
+                                                    <option value="GBP">GBP (£)</option>
+                                                </select>
+                                                <input type="number" step="0.01" min="0" class="form-control" placeholder="Auto" id="homeBidPrice" name="price" inputmode="decimal">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label" for="homeBidDuration">Valid for</label>
+                                            <div class="duration-input-group">
+                                                <input type="number" class="form-control" id="homeBidDuration" name="duration" value="24" min="1">
+                                                <select class="form-control" id="homeBidDurationUnit" name="duration_unit" aria-label="Duration unit">
+                                                    <option value="hours">Hours</option>
+                                                    <option value="days">Days</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label" for="homeBidLocationType">Location</label>
+                                            <select class="form-control" id="homeBidLocationType" name="location_type">
+                                                <option value="">Auto</option>
+                                                <option value="physical">Physical</option>
+                                                <option value="remote">Remote</option>
+                                                <option value="hybrid">Hybrid</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-0 mt-3" id="homeAddressField">
+                                        <label class="form-label" for="homeBidAddress">Address</label>
+                                        <input type="text" class="form-control" id="homeBidAddress" name="address" placeholder="Optional city or street">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label" for="homeBidDuration">Valid for</label>
-                                    <div class="duration-input-group">
-                                        <input type="number" class="form-control" id="homeBidDuration" name="duration" value="24" required min="1">
-                                        <select class="form-control" id="homeBidDurationUnit" name="duration_unit" aria-label="Duration unit">
-                                            <option value="hours">Hours</option>
-                                            <option value="days">Days</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label" for="homeBidLocationType">Location</label>
-                                    <select class="form-control" id="homeBidLocationType" name="location_type">
-                                        <option value="physical">Physical</option>
-                                        <option value="remote">Remote</option>
-                                        <option value="hybrid">Hybrid</option>
-                                    </select>
+                            </details>
+
+                            <div class="home-bid-footer-row">
+                                <p class="home-bid-foot mb-0">No account? We’ll create one when you submit.</p>
+                                <div class="home-bid-secondary-links">
+                                    <a href="grab_job.html">Find Work</a>
+                                    <a href="campaigns.html">Campaigns</a>
                                 </div>
                             </div>
-
-                            <div class="mb-3 mt-3" id="homeAddressField">
-                                <label class="form-label" for="homeBidAddress">Service address</label>
-                                <input type="text" class="form-control" id="homeBidAddress" name="address" placeholder="City or street address">
-                                <small class="text-muted">Optional if we can use your location for physical jobs</small>
-                            </div>
-
-                            <div class="d-flex flex-wrap gap-2 align-items-center mt-3">
-                                <button type="submit" class="btn btn-hero-primary btn-lg flex-grow-1 flex-md-grow-0" id="homeBidSubmit">
-                                    Submit request
-                                </button>
-                                <a href="grab_job.html" class="btn btn-hero-secondary">Find Work instead</a>
-                                <a href="campaigns.html" class="btn btn-hero-secondary">Campaigns</a>
-                            </div>
-                            <p class="home-bid-foot mb-0 mt-3">No account yet? We'll create one when you submit — free to post.</p>
                         </form>
                     </div>
                 </div>
@@ -451,65 +447,59 @@
     <div class="modal fade" id="bidModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bid-modal-header">
                     <h5 class="modal-title">Get Something</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="submit" form="bidForm" class="btn btn-submit-bid" id="bidModalSubmit">Submit</button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <p class="text-muted mb-2">Popular services:</p>
-                        <div id="popularServicesContainer">
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Security Patrol Bot'">Security Patrol</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Lawn Mowing Bot, 0.5 acre lot'">Lawn Mowing Bot</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Delivery Drone, 5 mile radius'">Delivery Drone</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Warehouse Pick and Pack'">Pick &amp; Pack</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Drone Photography, aerial survey'">Drone Photography</span>
-                            <span class="service-tag" onclick="document.getElementById('bidService').value='Industrial Inspection Bot'">Inspection Bot</span>
+                    <form id="bidForm" autocomplete="off">
+                        <div class="mb-2 service-ac-field">
+                            <label class="form-label" for="bidService">Service description</label>
+                            <textarea class="form-control service-ac-input bid-composer" rows="4" placeholder="Describe what you need…" id="bidService" required></textarea>
+                            <div id="bidServiceAcList" class="service-suggest-row" aria-label="Optional suggestions"></div>
                         </div>
-                    </div>
-                    <form id="bidForm">
-                        <div class="mb-3 service-ac-field">
-                            <label class="form-label" for="bidService">Task description</label>
-                            <div class="service-ac-wrap">
-                                <textarea class="form-control service-ac-input" rows="3" placeholder="Describe the robot task required" id="bidService" required role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="bidServiceAcList"></textarea>
-                                <div id="bidServiceAcList" class="service-ac-list" role="listbox" hidden></div>
+                        <details class="bid-details" id="bidModalDetails">
+                            <summary>Details <span class="text-muted">(optional)</span></summary>
+                            <div class="bid-details-body">
+                                <div class="mb-3">
+                                    <label class="form-label" for="bidPrice">Price</label>
+                                    <div class="payment-method-group">
+                                        <select class="form-control" id="paymentMethod" aria-label="Currency">
+                                            <option value="USD">USD ($)</option>
+                                            <option value="EUR">EUR (€)</option>
+                                            <option value="GBP">GBP (£)</option>
+                                        </select>
+                                        <input type="number" step="0.01" min="0" class="form-control" placeholder="Auto" id="bidPrice">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="bidDuration">Valid for</label>
+                                    <div class="duration-input-group">
+                                        <input type="number" class="form-control" id="bidDuration" value="24" min="1">
+                                        <select class="form-control" id="bidDurationUnit" aria-label="Duration unit">
+                                            <option value="hours">Hours</option>
+                                            <option value="days">Days</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="bidLocationType">Location</label>
+                                    <select class="form-control" id="bidLocationType">
+                                        <option value="">Auto</option>
+                                        <option value="physical">Physical</option>
+                                        <option value="remote">Remote</option>
+                                        <option value="hybrid">Hybrid</option>
+                                    </select>
+                                </div>
+                                <div class="mb-0" id="addressField">
+                                    <label class="form-label" for="bidAddress">Address</label>
+                                    <input type="text" class="form-control" placeholder="Optional" id="bidAddress">
+                                </div>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="bidPrice">Payment &amp; price</label>
-                            <div class="payment-method-group">
-                                <select class="form-control" id="paymentMethod" aria-label="Currency">
-                                    <option value="USD">USD ($)</option>
-                                    <option value="EUR">EUR (€)</option>
-                                    <option value="GBP">GBP (£)</option>
-                                </select>
-                                <input type="number" step="0.01" min="0" class="form-control" placeholder="Price amount" id="bidPrice" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="bidDuration">Request valid for</label>
-                            <div class="duration-input-group">
-                                <input type="number" class="form-control" placeholder="Duration" id="bidDuration" value="24" required min="1">
-                                <select class="form-control" id="bidDurationUnit" aria-label="Duration unit">
-                                    <option value="hours">Hours</option>
-                                    <option value="days">Days</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="bidLocationType">Location type</label>
-                            <select class="form-control" id="bidLocationType">
-                                <option value="physical">Physical (In-Person)</option>
-                                <option value="remote">Remote (Online)</option>
-                                <option value="hybrid">Hybrid</option>
-                            </select>
-                        </div>
-                        <div class="mb-3" id="addressField">
-                            <label class="form-label" for="bidAddress">Service address</label>
-                            <input type="text" class="form-control" placeholder="Service Address" id="bidAddress">
-                            <small class="text-muted">We'll use your current location if not specified</small>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Submit Request</button>
+                        </details>
                     </form>
                 </div>
             </div>
@@ -631,7 +621,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js?v=16"></script>
+    <script src="script.js?v=17"></script>
     <script>
         // Deep link from a profile page's "Message" button: index.html?dm=<username>
         document.addEventListener('DOMContentLoaded', () => {

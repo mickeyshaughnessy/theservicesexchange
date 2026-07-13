@@ -326,10 +326,18 @@ a:hover {
 .home-bid-panel-header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
-    gap: 1rem;
+    align-items: center;
+    gap: 0.75rem 1rem;
     margin-bottom: 1rem;
     flex-wrap: wrap;
+}
+
+.home-bid-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
 .home-bid-kicker {
@@ -353,9 +361,164 @@ a:hover {
     color: var(--text-dim);
 }
 
-.home-bid-panel .form-control-lg {
+.home-bid-footer-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin-top: 1rem;
+}
+
+.home-bid-secondary-links {
+    display: flex;
+    gap: 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+}
+
+.home-bid-secondary-links a {
+    color: var(--text-dim);
+}
+
+.home-bid-secondary-links a:hover {
+    color: var(--primary);
+}
+
+.home-bid-panel .form-control-lg,
+.bid-composer {
     font-size: 1.05rem;
     padding: 0.85rem 1rem;
+    min-height: 5.5rem;
+    resize: vertical;
+    line-height: 1.45;
+}
+
+/* Green primary submit — top-right of bid UIs */
+.btn-submit-bid {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--accent) !important;
+    color: var(--bg-deep) !important;
+    border: 1px solid var(--accent) !important;
+    box-shadow: 0 0 16px rgba(57, 255, 20, 0.35);
+    padding: 0.55rem 1.1rem;
+    min-height: 44px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btn-submit-bid:hover,
+.btn-submit-bid:focus {
+    background: #4dff33 !important;
+    color: var(--bg-deep) !important;
+    box-shadow: 0 0 22px rgba(57, 255, 20, 0.5);
+}
+
+.btn-submit-bid:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.bid-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.bid-modal-header .modal-title {
+    margin: 0;
+    flex: 1 1 auto;
+}
+
+.bid-details {
+    margin-top: 0.75rem;
+    border: 1px solid rgba(0, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.15);
+    padding: 0.35rem 0.75rem 0.5rem;
+}
+
+.bid-details > summary {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 0.45rem 0;
+    list-style: none;
+}
+
+.bid-details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.bid-details > summary::before {
+    content: '▸ ';
+    color: var(--primary);
+}
+
+.bid-details[open] > summary::before {
+    content: '▾ ';
+}
+
+.bid-details-body {
+    padding: 0.5rem 0 0.75rem;
+}
+
+/* Optional suggestion chips — never overlay the composer */
+.service-suggest-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    min-height: 0;
+    margin-top: 0.5rem;
+}
+
+.service-suggest-row:empty {
+    display: none;
+}
+
+.service-suggest-chip {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid rgba(0, 255, 255, 0.28);
+    padding: 0.35rem 0.65rem;
+    cursor: pointer;
+    max-width: 100%;
+    text-align: left;
+    line-height: 1.3;
+    transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+
+.service-suggest-chip:hover,
+.service-suggest-chip:focus {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(0, 255, 255, 0.06);
+    outline: none;
+}
+
+.service-suggest-chip .chip-meta {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 0.1rem;
+}
+
+.service-suggest-label {
+    width: 100%;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 0.15rem 0 0;
 }
 
 .service-browse-section .service-grid-bottom {
@@ -363,123 +526,7 @@ a:hover {
     margin: 0 auto;
 }
 
-/* =====================
-   SERVICE AUTOCOMPLETE
-   ===================== */
-.service-ac-wrap {
-    position: relative;
-}
-
-.service-ac-list {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: calc(100% + 4px);
-    z-index: 1080;
-    max-height: min(340px, 55vh);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    background: var(--bg-deep);
-    border: 1px solid rgba(0, 255, 255, 0.45);
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), 0 0 24px rgba(0, 255, 255, 0.15);
-    margin: 0;
-    padding: 0.35rem 0;
-}
-
-.service-ac-list[hidden] {
-    display: none !important;
-}
-
-.service-ac-group {
-    padding: 0.45rem 0.9rem 0.2rem;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    border-top: 1px solid rgba(0, 255, 255, 0.1);
-}
-
-.service-ac-group:first-child {
-    border-top: none;
-}
-
-.service-ac-option {
-    display: block;
-    width: 100%;
-    text-align: left;
-    background: transparent;
-    border: none;
-    border-left: 2px solid transparent;
-    color: var(--text);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.92rem;
-    padding: 0.65rem 1rem;
-    cursor: pointer;
-    transition: background 0.12s, border-color 0.12s;
-}
-
-.service-ac-option:hover,
-.service-ac-option[aria-selected="true"] {
-    background: rgba(0, 255, 255, 0.1);
-    border-left-color: var(--accent);
-    color: var(--text-bright);
-}
-
-.service-ac-option .ac-label {
-    display: block;
-    color: var(--primary);
-    text-shadow: 0 0 6px rgba(0, 255, 255, 0.25);
-}
-
-.service-ac-option .ac-meta {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    margin-top: 0.15rem;
-}
-
-.service-ac-option .ac-match {
-    color: var(--accent);
-    font-weight: 600;
-}
-
-.service-ac-option .ac-badge {
-    display: inline-block;
-    font-size: 0.65rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    border: 1px solid rgba(0, 255, 255, 0.35);
-    color: var(--primary);
-    padding: 1px 6px;
-    margin-left: 0.4rem;
-    vertical-align: middle;
-}
-
-.service-ac-option .ac-badge.live {
-    border-color: var(--accent);
-    color: var(--accent);
-}
-
-.service-ac-option .ac-badge.recent {
-    border-color: var(--yellow);
-    color: var(--yellow);
-}
-
-.service-ac-empty {
-    padding: 0.85rem 1rem;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.85rem;
-    color: var(--text-dim);
-}
-
-.service-ac-footer {
-    padding: 0.5rem 1rem 0.35rem;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    border-top: 1px solid rgba(0, 255, 255, 0.12);
-}
+/* legacy AC overlay removed — chips only */
 
 .hero-eyebrow {
     font-family: 'Share Tech Mono', monospace;

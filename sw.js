@@ -1,10 +1,10 @@
 /* The RSE — lightweight service worker (install shell + offline fallback) */
-const CACHE = 'rse-shell-v3';
+const CACHE = 'rse-shell-v4';
 const PRECACHE = [
   '/',
   '/index.html',
-  '/styles.css?v=16',
-  '/script.js?v=16',
+  '/styles.css?v=17',
+  '/script.js?v=17',
   '/manifest.webmanifest',
   '/icons/icon-192.png',
   '/icons/icon-512.png',

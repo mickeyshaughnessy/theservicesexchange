@@ -1055,34 +1055,27 @@ async function cancelBid(bidId) {
 }
 
 // ---------------------------------------------------------------------------
-// Service autocomplete (catalog + live market + recent)
+// Service suggestions (non-clobbering) + description-first bid submit
 // ---------------------------------------------------------------------------
 const SERVICE_CATALOG = [
-    { label: 'Lawn Mowing Bot', category: 'Outdoor', aliases: ['grass', 'yard', 'mow', 'lawn care', 'edging'], keywords: ['residential', 'acre', 'weekly'], hint: 'Residential & commercial lots', priceHint: 80, location: 'physical' },
-    { label: 'Security Patrol Bot', category: 'Security', aliases: ['guard', 'night watch', 'patrol', 'security robot'], keywords: ['perimeter', 'facility'], hint: 'Site patrol & monitoring', priceHint: 200, location: 'physical' },
-    { label: 'Delivery Drone', category: 'Logistics', aliases: ['drone delivery', 'package', 'last mile', 'courier'], keywords: ['radius', 'payload'], hint: 'Short-range aerial delivery', priceHint: 35, location: 'physical' },
-    { label: 'Warehouse Pick and Pack', category: 'Logistics', aliases: ['fulfillment', 'pick pack', 'picking', 'packing'], keywords: ['sku', 'inventory'], hint: 'Indoor fulfillment assist', priceHint: 150, location: 'physical' },
-    { label: 'Drone Photography', category: 'Media', aliases: ['aerial photo', 'survey', 'mapping', 'photogrammetry'], keywords: ['inspection', 'real estate'], hint: 'Aerial survey & imagery', priceHint: 120, location: 'physical' },
-    { label: 'Industrial Inspection Bot', category: 'Inspection', aliases: ['ndt', 'facility inspection', 'pipeline', 'infrastructure'], keywords: ['thermal', 'visual'], hint: 'Infrastructure inspection', priceHint: 300, location: 'physical' },
-    { label: 'Agricultural Drone', category: 'Outdoor', aliases: ['crop', 'spray', 'agri', 'field', 'farm'], keywords: ['multispectral', 'scouting'], hint: 'Crop scouting & spray support', priceHint: 250, location: 'physical' },
-    { label: 'Automated Food Prep', category: 'Hospitality', aliases: ['kitchen', 'cooking', 'chef bot', 'food prep'], keywords: ['restaurant', 'meal'], hint: 'Kitchen automation assist', priceHint: 180, location: 'physical' },
-    { label: 'Robotic Welding', category: 'Industrial', aliases: ['weld', 'fabrication', 'mig', 'tig'], keywords: ['shop', 'metal'], hint: 'Shop floor welding cell', priceHint: 400, location: 'physical' },
-    { label: 'Geriatric Care Robot', category: 'Care', aliases: ['elder care', 'companion', 'senior', 'care robot'], keywords: ['mobility', 'check-in'], hint: 'Companion & check-in support', priceHint: 220, location: 'physical' },
-    { label: 'Robotic Vacuum & Floor Clean', category: 'Facilities', aliases: ['clean', 'janitor', 'floor scrub', 'vacuum'], keywords: ['office', 'warehouse'], hint: 'Autonomous floor care', priceHint: 90, location: 'physical' },
-    { label: 'Snow Plow Robot', category: 'Outdoor', aliases: ['snow removal', 'plow', 'deice', 'winter'], keywords: ['driveway', 'lot'], hint: 'Seasonal snow clearing', priceHint: 140, location: 'physical' },
-    { label: 'Pool Cleaning Robot', category: 'Outdoor', aliases: ['pool', 'spa', 'water'], keywords: ['residential'], hint: 'In-pool autonomous clean', priceHint: 70, location: 'physical' },
-    { label: 'Inventory Audit Robot', category: 'Logistics', aliases: ['stock count', 'cycle count', 'rfid', 'warehouse audit'], keywords: ['sku'], hint: 'Automated stock counts', priceHint: 175, location: 'physical' },
-    { label: 'Window Cleaning Drone', category: 'Facilities', aliases: ['glass', 'facade', 'high rise'], keywords: ['building'], hint: 'Exterior glass assist', priceHint: 260, location: 'physical' },
-    { label: 'Parking Lot Patrol', category: 'Security', aliases: ['parking', 'lot security', 'anpr', 'lpr'], keywords: ['overnight'], hint: 'Lot monitoring patrol', priceHint: 160, location: 'physical' },
-    { label: 'Solar Panel Cleaning Bot', category: 'Energy', aliases: ['solar', 'pv', 'panel wash'], keywords: ['array'], hint: 'PV array cleaning', priceHint: 190, location: 'physical' },
-    { label: 'Construction Site Haul Bot', category: 'Construction', aliases: ['material haul', 'jobsite', 'wheelbarrow robot'], keywords: ['debris'], hint: 'Jobsite material moves', priceHint: 210, location: 'physical' },
-    { label: 'Remote Teleop Assistance', category: 'Remote', aliases: ['teleop', 'remote operator', 'remote assist'], keywords: ['supervision'], hint: 'Human-in-loop remote ops', priceHint: 95, location: 'remote' },
-    { label: 'Data Labeling Robot Fleet', category: 'Remote', aliases: ['labeling', 'annotation', 'ml data', 'dataset'], keywords: ['computer vision'], hint: 'Annotation workflow support', priceHint: 60, location: 'remote' },
-    { label: 'Server Room Thermal Scan', category: 'Inspection', aliases: ['datacenter', 'thermal', 'hotspot'], keywords: ['rack'], hint: 'Thermal anomaly scan', priceHint: 280, location: 'physical' },
-    { label: 'Hospital Supply Runner', category: 'Care', aliases: ['med supply', 'hospital logistics', 'pharmacy run'], keywords: ['indoor'], hint: 'Indoor supply transport', priceHint: 130, location: 'physical' },
-    { label: 'Event Security Presence', category: 'Security', aliases: ['venue', 'concert', 'crowd'], keywords: ['temporary'], hint: 'Temporary venue presence', priceHint: 240, location: 'physical' },
-    { label: 'Tree Canopy Survey Drone', category: 'Outdoor', aliases: ['arborist', 'tree survey', 'canopy'], keywords: ['lidar'], hint: 'Canopy & hazard survey', priceHint: 170, location: 'physical' },
-    { label: 'Autonomous Mowing Fleet', category: 'Outdoor', aliases: ['fleet mow', 'campus lawn', 'golf'], keywords: ['large area'], hint: 'Multi-unit large grounds', priceHint: 500, location: 'physical' }
+    { label: 'Lawn Mowing Bot', aliases: ['grass', 'yard', 'mow'], hint: 'Outdoor' },
+    { label: 'Security Patrol Bot', aliases: ['guard', 'patrol', 'security'], hint: 'Security' },
+    { label: 'Delivery Drone', aliases: ['deliver', 'package', 'courier'], hint: 'Logistics' },
+    { label: 'Warehouse Pick and Pack', aliases: ['fulfillment', 'picking', 'packing'], hint: 'Logistics' },
+    { label: 'Drone Photography', aliases: ['aerial', 'photo', 'survey'], hint: 'Media' },
+    { label: 'Industrial Inspection Bot', aliases: ['inspect', 'pipeline', 'facility'], hint: 'Inspection' },
+    { label: 'Agricultural Drone', aliases: ['crop', 'farm', 'spray'], hint: 'Outdoor' },
+    { label: 'Automated Food Prep', aliases: ['kitchen', 'cook', 'food'], hint: 'Hospitality' },
+    { label: 'Robotic Welding', aliases: ['weld', 'fabricat'], hint: 'Industrial' },
+    { label: 'Geriatric Care Robot', aliases: ['elder', 'care', 'senior'], hint: 'Care' },
+    { label: 'Robotic Vacuum & Floor Clean', aliases: ['clean', 'vacuum', 'janitor'], hint: 'Facilities' },
+    { label: 'Snow Plow Robot', aliases: ['snow', 'plow'], hint: 'Outdoor' },
+    { label: 'Remote Teleop Assistance', aliases: ['teleop', 'remote'], hint: 'Remote' },
+    { label: 'Data Labeling Robot Fleet', aliases: ['label', 'annotat', 'dataset'], hint: 'Remote' },
+    { label: 'Solar Panel Cleaning Bot', aliases: ['solar', 'panel'], hint: 'Energy' },
+    { label: 'Construction Site Haul Bot', aliases: ['haul', 'jobsite', 'construction'], hint: 'Construction' },
+    { label: 'Hospital Supply Runner', aliases: ['hospital', 'med supply'], hint: 'Care' },
+    { label: 'Event Security Presence', aliases: ['venue', 'event security'], hint: 'Security' }
 ];
 
 const RECENT_SERVICES_KEY = 'rse_recent_services';
@@ -1108,54 +1101,19 @@ function normalizeAcQuery(q) {
 }
 
 function scoreServiceMatch(item, query) {
-    if (!query) return item._boost || 1;
     const q = normalizeAcQuery(query);
+    if (!q || q.length < 2) return item.source === 'recent' ? 5 : 1;
     const label = normalizeAcQuery(item.label);
-    const hay = normalizeAcQuery([item.label, item.category, ...(item.aliases || []), ...(item.keywords || []), item.hint || ''].join(' '));
-    if (!q) return 0;
-
+    const hay = normalizeAcQuery([item.label, ...(item.aliases || []), item.hint || ''].join(' '));
     let score = 0;
-    if (label === q) score += 100;
-    else if (label.startsWith(q)) score += 70;
-    else if (label.includes(q)) score += 45;
-
-    const words = q.split(' ').filter(Boolean);
-    let wordHits = 0;
-    for (const w of words) {
-        if (hay.includes(w)) {
-            wordHits += 1;
-            score += 12;
-        } else {
-            // light fuzzy: prefix of any token
-            const tokens = hay.split(' ');
-            if (tokens.some((t) => t.startsWith(w) || (w.length > 3 && t.includes(w.slice(0, -1))))) {
-                wordHits += 0.5;
-                score += 6;
-            }
-        }
+    if (label.startsWith(q)) score += 50;
+    else if (label.includes(q)) score += 30;
+    for (const w of q.split(' ')) {
+        if (w.length > 1 && hay.includes(w)) score += 10;
     }
-    if (words.length && wordHits / words.length >= 0.75) score += 15;
-    if (item.source === 'live') score += 8;
-    if (item.source === 'recent') score += 5;
-    if (item._boost) score += item._boost;
+    if (item.source === 'live') score += 4;
+    if (item.source === 'recent') score += 3;
     return score;
-}
-
-function highlightMatch(text, query) {
-    const safe = escapeHtml(text);
-    const q = normalizeAcQuery(query);
-    if (!q || q.length < 2) return safe;
-    try {
-        const parts = q.split(' ').filter((w) => w.length > 1);
-        let out = safe;
-        for (const w of parts) {
-            const re = new RegExp(`(${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig');
-            out = out.replace(re, '<span class="ac-match">$1</span>');
-        }
-        return out;
-    } catch (e) {
-        return safe;
-    }
 }
 
 let _liveMarketServices = [];
@@ -1164,69 +1122,38 @@ let _liveMarketFetchedAt = 0;
 async function refreshLiveMarketServices() {
     if (Date.now() - _liveMarketFetchedAt < 60000 && _liveMarketServices.length) return _liveMarketServices;
     try {
-        const response = await fetch(`${API_URL}/exchange_data?limit=40`);
+        const response = await fetch(`${API_URL}/exchange_data?limit=30`);
         if (!response.ok) return _liveMarketServices;
         const data = await response.json();
-        const bids = data.active_bids || [];
         const seen = new Set();
         const items = [];
-        for (const bid of bids) {
+        for (const bid of data.active_bids || []) {
             const serviceName = typeof bid.service === 'object'
-                ? (bid.service.name || bid.service.description || JSON.stringify(bid.service))
+                ? (bid.service.name || bid.service.description || '')
                 : String(bid.service || '');
-            const label = serviceName.trim().slice(0, 80);
+            const label = serviceName.trim().slice(0, 60);
             if (label.length < 3) continue;
             const key = label.toLowerCase();
             if (seen.has(key)) continue;
             seen.add(key);
-            items.push({
-                label,
-                category: 'Live market',
-                aliases: [],
-                keywords: [],
-                hint: bid.price != null ? `Open request · ${bid.currency || 'USD'} ${bid.price}` : 'Active on exchange',
-                priceHint: bid.price,
-                location: bid.location_type || null,
-                source: 'live'
-            });
-            if (items.length >= 12) break;
+            items.push({ label, aliases: [], hint: 'Live market', source: 'live' });
+            if (items.length >= 8) break;
         }
         _liveMarketServices = items;
         _liveMarketFetchedAt = Date.now();
-    } catch (e) {
-        /* ignore */
-    }
+    } catch (e) { /* ignore */ }
     return _liveMarketServices;
 }
 
-function buildAutocompleteCandidates(query) {
+function buildSuggestionItems(query) {
     const q = normalizeAcQuery(query);
-    const recent = getRecentServices().map((label) => ({
-        label,
-        category: 'Recent',
-        aliases: [],
-        keywords: [],
-        hint: 'You used this recently',
-        source: 'recent'
-    }));
+    const recent = getRecentServices().map((label) => ({ label, aliases: [], hint: 'Recent', source: 'recent' }));
     const catalog = SERVICE_CATALOG.map((c) => ({ ...c, source: 'catalog' }));
-    const live = _liveMarketServices.map((c) => ({ ...c, source: 'live' }));
-
-    let pool;
-    if (!q) {
-        // Empty: recent → popular catalog → live
-        const popular = catalog.slice(0, 8);
-        pool = [...recent.slice(0, 4), ...popular, ...live.slice(0, 4)];
-    } else {
-        pool = [...catalog, ...live, ...recent];
-    }
-
+    const pool = [...recent, ...catalog, ..._liveMarketServices];
     const scored = pool
         .map((item) => ({ item, score: scoreServiceMatch(item, q) }))
-        .filter((row) => (q ? row.score >= 12 : true))
+        .filter((row) => (q.length < 2 ? row.item.source !== 'catalog' || true : row.score >= 12))
         .sort((a, b) => b.score - a.score);
-
-    // de-dupe by label
     const seen = new Set();
     const out = [];
     for (const row of scored) {
@@ -1234,206 +1161,91 @@ function buildAutocompleteCandidates(query) {
         if (seen.has(key)) continue;
         seen.add(key);
         out.push(row.item);
-        if (out.length >= 14) break;
+        if (out.length >= 5) break;
+    }
+    if (!q) {
+        return [...recent.slice(0, 2), ...catalog.slice(0, 3)].filter((item, i, arr) =>
+            arr.findIndex((x) => x.label === item.label) === i
+        ).slice(0, 5);
     }
     return out;
 }
 
-function groupAcItems(items) {
-    const order = ['Recent', 'Live market', 'Outdoor', 'Security', 'Logistics', 'Media', 'Inspection', 'Industrial', 'Facilities', 'Care', 'Energy', 'Construction', 'Hospitality', 'Remote'];
-    const map = new Map();
-    for (const item of items) {
-        const cat = item.category || 'Other';
-        if (!map.has(cat)) map.set(cat, []);
-        map.get(cat).push(item);
+/** Insert suggestion without clobbering existing user text. */
+function applySuggestionToField(inputEl, label) {
+    if (!inputEl || !label) return;
+    const current = inputEl.value || '';
+    const trimmed = current.trim();
+    if (!trimmed) {
+        inputEl.value = label;
+    } else if (trimmed.toLowerCase().includes(String(label).toLowerCase())) {
+        // already present — leave alone
+        return;
+    } else {
+        // Append as refinement, preserve user wording
+        const needsSpace = !/\s$/.test(current);
+        inputEl.value = current + (needsSpace ? ' — ' : '') + label;
     }
-    const keys = [...map.keys()].sort((a, b) => {
-        const ia = order.indexOf(a);
-        const ib = order.indexOf(b);
-        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-    });
-    return keys.map((k) => ({ category: k, items: map.get(k) }));
+    pushRecentService(label);
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    inputEl.focus();
+    try {
+        const len = inputEl.value.length;
+        inputEl.setSelectionRange(len, len);
+    } catch (e) { /* textarea ok */ }
 }
 
 /**
- * Attach rich autocomplete to an input/textarea + listbox element.
+ * Quiet suggestion chips under the field. Never steals Enter; never replaces text.
  */
-function attachServiceAutocomplete(inputEl, listEl, opts = {}) {
-    if (!inputEl || !listEl || inputEl.dataset.acBound === '1') return;
-    inputEl.dataset.acBound = '1';
+function attachServiceSuggestions(inputEl, listEl) {
+    if (!inputEl || !listEl || inputEl.dataset.suggestBound === '1') return;
+    inputEl.dataset.suggestBound = '1';
 
-    let activeIndex = -1;
-    let currentItems = [];
     let debounceTimer = null;
 
-    const setExpanded = (open) => {
-        inputEl.setAttribute('aria-expanded', open ? 'true' : 'false');
-        if (open) listEl.hidden = false;
-        else listEl.hidden = true;
-    };
-
-    const close = () => {
-        activeIndex = -1;
-        setExpanded(false);
-    };
-
-    const applyItem = (item) => {
-        if (!item) return;
-        inputEl.value = item.label;
-        pushRecentService(item.label);
-        if (typeof opts.onSelect === 'function') opts.onSelect(item);
-        close();
-        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-        inputEl.focus();
-    };
-
-    const render = (items, query) => {
-        currentItems = items;
-        activeIndex = items.length ? 0 : -1;
+    const render = () => {
+        const items = buildSuggestionItems(inputEl.value);
         if (!items.length) {
-            listEl.innerHTML = `<div class="service-ac-empty">No catalog matches — keep typing a free-form task description.</div>
-                <div class="service-ac-footer">Tip: include location, size, and constraints (e.g. “0.5 acre”, “after 6pm”).</div>`;
-            setExpanded(true);
+            listEl.innerHTML = '';
             return;
         }
-        const groups = groupAcItems(items);
-        let flatIndex = 0;
-        let html = '';
-        for (const g of groups) {
-            html += `<div class="service-ac-group">${escapeHtml(g.category)}</div>`;
-            for (const item of g.items) {
-                const idx = flatIndex++;
-                const badge = item.source === 'live'
-                    ? '<span class="ac-badge live">Live</span>'
-                    : item.source === 'recent'
-                        ? '<span class="ac-badge recent">Recent</span>'
-                        : '';
-                const price = item.priceHint != null
-                    ? ` · from ~$${Number(item.priceHint).toLocaleString()}`
-                    : '';
-                html += `<button type="button" class="service-ac-option" role="option" id="ac-opt-${inputEl.id}-${idx}" data-ac-index="${idx}" aria-selected="${idx === activeIndex ? 'true' : 'false'}">
-                    <span class="ac-label">${highlightMatch(item.label, query)}${badge}</span>
-                    <span class="ac-meta">${escapeHtml(item.hint || item.category || '')}${escapeHtml(price)}</span>
-                </button>`;
-            }
-        }
-        html += `<div class="service-ac-footer">↑↓ navigate · Enter select · Esc close · free text always allowed</div>`;
-        listEl.innerHTML = html;
-        setExpanded(true);
-        listEl.querySelectorAll('.service-ac-option').forEach((btn) => {
+        listEl.innerHTML =
+            `<span class="service-suggest-label">Suggestions (optional)</span>` +
+            items.map((item) =>
+                `<button type="button" class="service-suggest-chip" data-label="${escapeHtml(item.label)}">
+                    ${escapeHtml(item.label)}
+                    ${item.hint ? `<span class="chip-meta">${escapeHtml(item.hint)}</span>` : ''}
+                </button>`
+            ).join('');
+        listEl.querySelectorAll('.service-suggest-chip').forEach((btn) => {
             btn.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                const i = parseInt(btn.dataset.acIndex, 10);
-                applyItem(currentItems[i]);
+                e.preventDefault(); // keep focus in textarea
+                applySuggestionToField(inputEl, btn.dataset.label);
             });
         });
     };
 
-    const updateActive = () => {
-        listEl.querySelectorAll('.service-ac-option').forEach((btn) => {
-            const i = parseInt(btn.dataset.acIndex, 10);
-            btn.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
-            if (i === activeIndex) {
-                btn.scrollIntoView({ block: 'nearest' });
-                inputEl.setAttribute('aria-activedescendant', btn.id);
-            }
-        });
-    };
-
-    const refresh = async () => {
-        await refreshLiveMarketServices();
-        const q = inputEl.value;
-        render(buildAutocompleteCandidates(q), q);
-    };
-
-    inputEl.addEventListener('focus', () => {
-        refreshLiveMarketServices().then(() => {
-            render(buildAutocompleteCandidates(inputEl.value), inputEl.value);
-        });
-    });
-
     inputEl.addEventListener('input', () => {
         clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => refresh(), 80);
+        debounceTimer = setTimeout(render, 100);
     });
-
-    inputEl.addEventListener('keydown', (e) => {
-        if (listEl.hidden && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-            refresh();
-            e.preventDefault();
-            return;
-        }
-        if (listEl.hidden) return;
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (!currentItems.length) return;
-            activeIndex = (activeIndex + 1) % currentItems.length;
-            updateActive();
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (!currentItems.length) return;
-            activeIndex = (activeIndex - 1 + currentItems.length) % currentItems.length;
-            updateActive();
-        } else if (e.key === 'Enter' && activeIndex >= 0 && currentItems[activeIndex]) {
-            // Only capture Enter for selection when list open and an item active
-            if (!listEl.hidden) {
-                e.preventDefault();
-                applyItem(currentItems[activeIndex]);
-            }
-        } else if (e.key === 'Escape') {
-            e.preventDefault();
-            close();
-        } else if (e.key === 'Tab') {
-            close();
-        }
+    inputEl.addEventListener('focus', () => {
+        refreshLiveMarketServices().then(render);
     });
-
-    inputEl.addEventListener('blur', () => {
-        setTimeout(close, 150);
-    });
+    // Enter never selects a chip — form handles submit
+    render();
 }
 
 function initServiceAutocompletes() {
-    const homeInput = document.getElementById('homeBidService');
-    const homeList = document.getElementById('homeServiceAcList');
-    if (homeInput && homeList) {
-        attachServiceAutocomplete(homeInput, homeList, {
-            onSelect: (item) => {
-                if (item.priceHint != null) {
-                    const priceEl = document.getElementById('homeBidPrice');
-                    if (priceEl && !priceEl.value) priceEl.value = item.priceHint;
-                }
-                if (item.location) {
-                    const loc = document.getElementById('homeBidLocationType');
-                    if (loc) {
-                        loc.value = item.location;
-                        loc.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                }
-            }
-        });
-    }
-
-    const bidInput = document.getElementById('bidService');
-    const bidList = document.getElementById('bidServiceAcList');
-    if (bidInput && bidList) {
-        attachServiceAutocomplete(bidInput, bidList, {
-            onSelect: (item) => {
-                if (item.priceHint != null) {
-                    const priceEl = document.getElementById('bidPrice');
-                    if (priceEl && !priceEl.value) priceEl.value = item.priceHint;
-                }
-                if (item.location) {
-                    const loc = document.getElementById('bidLocationType');
-                    if (loc) {
-                        loc.value = item.location;
-                        loc.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                }
-            }
-        });
-    }
-
+    attachServiceSuggestions(
+        document.getElementById('homeBidService'),
+        document.getElementById('homeServiceAcList')
+    );
+    attachServiceSuggestions(
+        document.getElementById('bidService'),
+        document.getElementById('bidServiceAcList')
+    );
     refreshLiveMarketServices();
 }
 
@@ -1441,43 +1253,40 @@ function initHomeBidForm() {
     const form = document.getElementById('homeBidForm');
     if (!form || form.dataset.bound === '1') return;
     form.dataset.bound = '1';
-
-    const loc = document.getElementById('homeBidLocationType');
-    const addrField = document.getElementById('homeAddressField');
-    if (loc && addrField) {
-        const sync = () => {
-            addrField.style.display = loc.value === 'remote' ? 'none' : 'block';
-        };
-        loc.addEventListener('change', sync);
-        sync();
-    }
-
     form.addEventListener('submit', handleBidSubmission);
     requestUserLocation();
 }
 
 function readBidFieldsFromForm(form) {
     if (form && form.id === 'homeBidForm') {
+        const locEl = document.getElementById('homeBidLocationType');
+        const priceEl = document.getElementById('homeBidPrice');
         return {
             service: (document.getElementById('homeBidService') || {}).value || '',
-            price: parseFloat((document.getElementById('homeBidPrice') || {}).value),
+            priceRaw: priceEl ? priceEl.value : '',
+            price: priceEl && priceEl.value !== '' ? parseFloat(priceEl.value) : null,
             currency: (document.getElementById('homePaymentMethod') || {}).value || 'USD',
-            duration: parseInt((document.getElementById('homeBidDuration') || {}).value, 10),
+            duration: parseInt((document.getElementById('homeBidDuration') || {}).value, 10) || 24,
             durationUnit: (document.getElementById('homeBidDurationUnit') || {}).value || 'hours',
-            location_type: (document.getElementById('homeBidLocationType') || {}).value || 'physical',
+            location_type: locEl && locEl.value ? locEl.value : '',
             address: ((document.getElementById('homeBidAddress') || {}).value || '').trim(),
-            formId: 'homeBidForm'
+            formId: 'homeBidForm',
+            detailsOpen: !!(document.getElementById('homeBidDetails') || {}).open
         };
     }
+    const locEl = document.getElementById('bidLocationType');
+    const priceEl = document.getElementById('bidPrice');
     return {
         service: (document.getElementById('bidService') || {}).value || '',
-        price: parseFloat((document.getElementById('bidPrice') || {}).value),
+        priceRaw: priceEl ? priceEl.value : '',
+        price: priceEl && priceEl.value !== '' ? parseFloat(priceEl.value) : null,
         currency: (document.getElementById('paymentMethod') || {}).value || 'USD',
-        duration: parseInt((document.getElementById('bidDuration') || {}).value, 10),
+        duration: parseInt((document.getElementById('bidDuration') || {}).value, 10) || 24,
         durationUnit: (document.getElementById('bidDurationUnit') || {}).value || 'hours',
-        location_type: (document.getElementById('bidLocationType') || {}).value || 'physical',
+        location_type: locEl && locEl.value ? locEl.value : '',
         address: ((document.getElementById('bidAddress') || {}).value || '').trim(),
-        formId: 'bidForm'
+        formId: 'bidForm',
+        detailsOpen: !!(document.getElementById('bidModalDetails') || {}).open
     };
 }
 
@@ -1498,37 +1307,63 @@ function restoreHomeBidDraft() {
             if (el && v != null && v !== '') el.value = v;
         };
         set('homeBidService', f.service);
-        set('homeBidPrice', f.price);
+        if (f.price != null && !Number.isNaN(f.price)) set('homeBidPrice', f.price);
         set('homePaymentMethod', f.currency);
         set('homeBidDuration', f.duration);
         set('homeBidDurationUnit', f.durationUnit);
         set('homeBidLocationType', f.location_type);
         set('homeBidAddress', f.address);
-        const loc = document.getElementById('homeBidLocationType');
-        if (loc) loc.dispatchEvent(new Event('change', { bubbles: true }));
     } catch (e) { /* ignore */ }
+}
+
+function setBidSubmitLoading(form, loading, label) {
+    const ids = form && form.id === 'homeBidForm'
+        ? ['homeBidSubmit']
+        : ['bidModalSubmit'];
+    ids.forEach((id) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        if (loading) {
+            if (!btn.dataset.originalText) btn.dataset.originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = label || 'Submitting…';
+        } else {
+            btn.disabled = false;
+            btn.textContent = btn.dataset.originalText || (id === 'homeBidSubmit' ? 'Submit request' : 'Submit');
+        }
+    });
+}
+
+async function parseServiceDescription(description) {
+    try {
+        const response = await fetch(`${API_URL}/parse_service_request`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ description })
+        });
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (e) {
+        return null;
+    }
 }
 
 // Service Request Functions
 async function handleBidSubmission(e) {
     e.preventDefault();
-
-    const form = e.target;
+    const form = e.target.closest('form') || e.target;
     const fields = readBidFieldsFromForm(form);
+    const description = String(fields.service || '').trim();
 
-    if (!fields.service || !String(fields.service).trim()) {
+    if (!description) {
         showToast('Describe the service you need', 'error');
-        return;
-    }
-    if (!(fields.price > 0)) {
-        showToast('Enter a price greater than zero', 'error');
         return;
     }
 
     if (!AppState.authToken) {
         stashHomeBidDraft(fields);
         sessionStorage.setItem(STORAGE_KEYS.PENDING_INTENT, 'bid');
-        if (fields.service) sessionStorage.setItem(STORAGE_KEYS.PENDING_SERVICE, fields.service);
+        sessionStorage.setItem(STORAGE_KEYS.PENDING_SERVICE, description);
         showAuth({
             intent: 'bid',
             defaultTab: 'register',
@@ -1538,50 +1373,66 @@ async function handleBidSubmission(e) {
         return;
     }
 
-    const durationInSeconds = fields.durationUnit === 'hours'
-        ? fields.duration * 3600
-        : fields.duration * 86400;
+    setBidSubmitLoading(form, true, 'Preparing…');
+
+    // User overrides win; otherwise LLM/heuristics fill gaps
+    const userSetPrice = fields.price != null && !Number.isNaN(fields.price) && fields.price > 0;
+    const userSetLoc = !!fields.location_type;
+    let parsed = null;
+    if (!userSetPrice || !userSetLoc) {
+        parsed = await parseServiceDescription(description);
+    }
+
+    const serviceText = (parsed && parsed.service) ? parsed.service : description;
+    const price = userSetPrice ? fields.price : (parsed && parsed.price > 0 ? Number(parsed.price) : 100);
+    const currency = fields.currency || (parsed && parsed.currency) || 'USD';
+    const location_type = userSetLoc
+        ? fields.location_type
+        : ((parsed && parsed.location_type) || 'physical');
+
+    let durationHours = fields.durationUnit === 'days' ? fields.duration * 24 : fields.duration;
+    if ((!fields.detailsOpen || !fields.duration) && parsed && parsed.duration_hours) {
+        durationHours = parsed.duration_hours;
+    }
+    durationHours = Math.max(1, Math.min(168, durationHours || 24));
 
     const data = {
-        service: String(fields.service).trim(),
-        price: fields.price,
-        currency: fields.currency,
-        end_time: Math.floor(Date.now() / 1000) + durationInSeconds,
-        location_type: fields.location_type
+        service: serviceText,
+        price,
+        currency,
+        end_time: Math.floor(Date.now() / 1000) + durationHours * 3600,
+        location_type
     };
 
-    if (data.location_type !== 'remote') {
+    if (location_type !== 'remote') {
         if (fields.address) {
             data.address = fields.address;
+        } else if (parsed && parsed.address_hint) {
+            data.address = parsed.address_hint;
         } else if (AppState.userLocation) {
             data.address = `${AppState.userLocation.latitude}, ${AppState.userLocation.longitude}`;
         } else {
-            showToast('Please provide an address or allow location access for physical services.', 'error');
-            return;
+            // Soft default so description-only posts still work
+            data.address = 'To be arranged';
         }
     }
 
-    const submitBtn = form.querySelector('[type="submit"]');
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.dataset.originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Submitting…';
-    }
+    setBidSubmitLoading(form, true, 'Posting…');
 
     try {
         const response = await fetch(`${API_URL}/submit_bid`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${AppState.authToken}`
+                Authorization: `Bearer ${AppState.authToken}`
             },
             body: JSON.stringify(data)
         });
 
         if (response.ok) {
             const result = await response.json();
-            showToast(`Request submitted (${result.bid_id})`, 'success');
-            pushRecentService(data.service);
+            showToast('Request live — providers can grab it', 'success');
+            pushRecentService(description);
 
             const bidModal = document.getElementById('bidModal');
             if (bidModal && fields.formId === 'bidForm') {
@@ -1590,10 +1441,10 @@ async function handleBidSubmission(e) {
             }
 
             form.reset();
-            if (fields.formId === 'homeBidForm') {
-                const loc = document.getElementById('homeBidLocationType');
-                if (loc) loc.dispatchEvent(new Event('change', { bubbles: true }));
-            }
+            const homeList = document.getElementById('homeServiceAcList');
+            const bidList = document.getElementById('bidServiceAcList');
+            if (homeList) homeList.innerHTML = '';
+            if (bidList) bidList.innerHTML = '';
 
             if (AppState.authToken) {
                 loadOutstandingBids();
@@ -1606,10 +1457,7 @@ async function handleBidSubmission(e) {
     } catch (error) {
         showToast('Network error while submitting request', 'error');
     } finally {
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = submitBtn.dataset.originalText || 'Submit request';
-        }
+        setBidSubmitLoading(form, false);
     }
 }
 
@@ -1981,7 +1829,11 @@ function focusHomeBidForm(prefillService) {
     const homeService = document.getElementById('homeBidService');
     const panel = document.querySelector('.home-bid-panel');
     if (!homeService) return false;
-    if (prefillService) homeService.value = prefillService;
+    if (prefillService) {
+        // Only fill if empty — never clobber in-progress text from external CTAs
+        if (!homeService.value.trim()) homeService.value = prefillService;
+        else applySuggestionToField(homeService, prefillService);
+    }
     const target = panel || homeService;
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => {
@@ -2142,7 +1994,18 @@ async function showBulletin() {
 }
 
 function selectService(serviceName) {
-    if (focusHomeBidForm(serviceName)) return;
+    const home = document.getElementById('homeBidService');
+    if (home) {
+        applySuggestionToField(home, serviceName);
+        focusHomeBidForm();
+        return;
+    }
+    const bid = document.getElementById('bidService');
+    if (bid) {
+        applySuggestionToField(bid, serviceName);
+        showBuyerForm();
+        return;
+    }
     showBuyerForm(serviceName);
 }
 

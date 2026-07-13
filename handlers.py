@@ -288,7 +288,13 @@ def geocode_address(address: str) -> Tuple[Optional[float], Optional[float]]:
 def simple_geocode(address: str) -> Tuple[Optional[float], Optional[float]]:
     return geocode_address(address)
 
-def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 20, fallback_level: int = 0) -> Optional[str]:
+def call_openrouter_llm(
+    prompt: str,
+    temperature: float = 0,
+    max_tokens: int = 20,
+    fallback_level: int = 0,
+    timeout: float = 15,
+) -> Optional[str]:
     """
     Call OpenRouter API with 3-tier fallback on rate limiting:
       0 → OPENROUTER_MODEL            (best free model)
@@ -330,7 +336,7 @@ def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 2
             config.OPENROUTER_API_URL,
             headers=headers,
             json=data,
-            timeout=15
+            timeout=timeout
         )
 
         if response.status_code == 200:
@@ -351,7 +357,7 @@ def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 2
             next_model = _models[fallback_level + 1] if fallback_level + 1 < len(_models) else None
             logger.warning(f"OpenRouter rate-limited on {model} (tier {fallback_level})"
                            + (f", falling back to {next_model}" if next_model else ", all tiers exhausted"))
-            return call_openrouter_llm(prompt, temperature, max_tokens, fallback_level + 1)
+            return call_openrouter_llm(prompt, temperature, max_tokens, fallback_level + 1, timeout)
 
         logger.error(f"OpenRouter API error on {model}: {response.status_code} - {response.text[:200]}")
 
@@ -361,6 +367,147 @@ def call_openrouter_llm(prompt: str, temperature: float = 0, max_tokens: int = 2
         logger.error(f"Unexpected error calling OpenRouter (tier {fallback_level}): {str(e)}")
 
     return None
+
+def _heuristic_parse_service(description: str) -> Dict[str, Any]:
+    """Fast offline defaults when LLM is unavailable."""
+    text = (description or '').strip()
+    low = text.lower()
+    location_type = 'physical'
+    price = 100.0
+    duration_hours = 24
+
+    remote_keys = ('remote', 'online', 'label', 'annotat', 'data ', 'teleop', 'software', 'virtual')
+    lawn_keys = ('lawn', 'mow', 'grass', 'yard')
+    delivery_keys = ('deliver', 'drone delivery', 'package', 'courier')
+    security_keys = ('security', 'patrol', 'guard', 'watch')
+    clean_keys = ('clean', 'vacuum', 'scrub', 'janitor')
+    photo_keys = ('photo', 'aerial', 'survey', 'inspect')
+
+    if any(k in low for k in remote_keys):
+        location_type = 'remote'
+        price = 60.0
+    elif any(k in low for k in lawn_keys):
+        price = 85.0
+        duration_hours = 48
+    elif any(k in low for k in delivery_keys):
+        price = 35.0
+        duration_hours = 12
+    elif any(k in low for k in security_keys):
+        price = 200.0
+        duration_hours = 24
+    elif any(k in low for k in clean_keys):
+        price = 90.0
+    elif any(k in low for k in photo_keys):
+        price = 120.0
+
+    if 'weekend' in low or 'tomorrow' in low:
+        duration_hours = max(duration_hours, 48)
+    elif 'weekly' in low or low.startswith('week ') or ' week ' in low:
+        duration_hours = max(duration_hours, 168)
+
+    service = text if text else 'General robot service request'
+    return {
+        'service': service[:500],
+        'price': price,
+        'currency': 'USD',
+        'location_type': location_type,
+        'duration_hours': duration_hours,
+        'address_hint': None,
+        'confidence': 0.35,
+        'model': None,
+        'source': 'heuristic',
+    }
+
+
+def parse_service_request(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """
+    Turn a free-text service description into bid fields via OpenRouter (fast free → Haiku)
+    with heuristic fallback. Always returns 200 with best-effort defaults.
+    """
+    description = (data.get('description') or data.get('service') or '').strip()
+    if not description:
+        return {'error': 'description required'}, 400
+    if len(description) > 2000:
+        description = description[:2000]
+
+    base = _heuristic_parse_service(description)
+
+    prompt = f"""You extract structured fields for a robot labor marketplace bid.
+Return ONLY valid JSON (no markdown) with keys:
+service (string, clear concise task title/description),
+price (number, USD estimate for a typical completion),
+currency (string, usually USD),
+location_type (one of: physical, remote, hybrid),
+duration_hours (integer 1-168, how long the request stays open),
+address_hint (string or null).
+
+User request:
+\"\"\"{description}\"\"\"
+
+Rules:
+- Prefer the user's wording in service; lightly clean spelling.
+- If price is unclear, estimate a fair marketplace price.
+- If location unclear, use physical for real-world tasks else remote.
+- duration_hours default 24; weekend/tomorrow → 48; weekly → 168.
+JSON only:"""
+
+    try:
+        # Fast path: short timeout + low tokens; free model first, Haiku fallback
+        raw = call_openrouter_llm(prompt, temperature=0, max_tokens=220, timeout=8)
+        if not raw:
+            return base, 200
+
+        cleaned = raw.strip()
+        if cleaned.startswith('```'):
+            cleaned = cleaned.strip('`')
+            if cleaned.lower().startswith('json'):
+                cleaned = cleaned[4:].strip()
+        # extract first JSON object
+        start = cleaned.find('{')
+        end = cleaned.rfind('}')
+        if start >= 0 and end > start:
+            cleaned = cleaned[start:end + 1]
+        parsed = json.loads(cleaned)
+
+        service = str(parsed.get('service') or description).strip()[:500]
+        try:
+            price = float(parsed.get('price', base['price']))
+        except (TypeError, ValueError):
+            price = base['price']
+        if price <= 0 or price > 1_000_000:
+            price = base['price']
+
+        currency = str(parsed.get('currency') or 'USD').upper()[:8]
+        loc = str(parsed.get('location_type') or base['location_type']).lower()
+        if loc not in ('physical', 'remote', 'hybrid'):
+            loc = base['location_type']
+
+        try:
+            duration_hours = int(parsed.get('duration_hours', base['duration_hours']))
+        except (TypeError, ValueError):
+            duration_hours = base['duration_hours']
+        duration_hours = max(1, min(168, duration_hours))
+
+        address_hint = parsed.get('address_hint')
+        if address_hint is not None:
+            address_hint = str(address_hint).strip()[:200] or None
+
+        model_name = getattr(config, 'OPENROUTER_MODEL', None)
+        return {
+            'service': service,
+            'price': price,
+            'currency': currency,
+            'location_type': loc,
+            'duration_hours': duration_hours,
+            'address_hint': address_hint,
+            'confidence': 0.75,
+            'model': model_name,
+            'source': 'llm',
+        }, 200
+    except Exception as e:
+        logger.warning(f"parse_service_request LLM/parse failed: {e}")
+        return base, 200
+
 
 def match_service_with_capabilities(service_description: Union[str, Dict], provider_capabilities: str) -> bool:
     """

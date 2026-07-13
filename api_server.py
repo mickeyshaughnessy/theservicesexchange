@@ -23,6 +23,7 @@ from handlers import (
     register_user,
     login_user,
     submit_bid,
+    parse_service_request,
     cancel_bid,
     grab_job,
     reject_job,
@@ -421,6 +422,14 @@ def my_jobs(current_user):
 # -----------------------------------------------------------------------------
 # Marketplace Endpoints
 # -----------------------------------------------------------------------------
+
+@app.route('/parse_service_request', methods=['POST'])
+@limiter.limit(_STRICT_LIMIT)
+def handle_parse_service_request():
+    """Public (rate-limited): free-text description → bid field defaults via LLM/heuristics."""
+    data = flask.request.get_json() or {}
+    response, status = parse_service_request(data)
+    return flask.jsonify(response), status
 
 @app.route('/submit_bid', methods=['POST'])
 @token_required
