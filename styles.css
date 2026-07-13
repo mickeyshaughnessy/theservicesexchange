@@ -1736,6 +1736,40 @@ section[style*="background:#f"],
 /* =====================
    JOB CHANNEL MODAL
    ===================== */
+.star-picker {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.star-pick {
+    min-width: 48px;
+    min-height: 48px;
+    font-size: 1.6rem;
+    line-height: 1;
+    background: var(--bg-card);
+    border: 1px solid rgba(0,255,255,0.3);
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.star-pick.active,
+.star-pick:hover {
+    color: var(--gold);
+    border-color: var(--gold);
+    box-shadow: 0 0 12px rgba(255,215,0,0.35);
+}
+
+.job-channel-composer .job-channel-input-group {
+    flex-wrap: nowrap;
+}
+
+.job-channel-composer #jobChannelSendBtn {
+    min-width: 72px;
+}
+
 .job-channel-feed {
     height: 360px;
     overflow-y: auto;
@@ -2281,6 +2315,32 @@ section[style*="background:#f"],
 
     .user-home-tile-hint {
         white-space: normal;
+    }
+
+    /* Job channel: maximize message area above keyboard */
+    .job-channel-modal-content {
+        min-height: 100%;
+    }
+
+    .job-channel-feed {
+        max-height: none !important;
+        min-height: 40vh;
+        flex: 1 1 auto;
+    }
+
+    .job-channel-composer #jobChannelSendBtn,
+    .job-channel-composer #jobChannelInput {
+        min-height: 48px;
+        font-size: 16px !important;
+    }
+
+    .star-pick {
+        flex: 1 1 0;
+        min-width: 44px;
+    }
+
+    .modal-footer .btn {
+        min-height: 48px;
     }
 }
 

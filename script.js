@@ -982,9 +982,30 @@ async function respondToPartyInvite(jobId, action) {
     }
 }
 
-async function fileJobDispute(jobId) {
-    const reason = prompt('Describe the issue with this job:');
-    if (!reason) return;
+function fileJobDispute(jobId) {
+    if (!AppState.authToken) {
+        showAuth({ defaultTab: 'login' });
+        return;
+    }
+    ensureJobActionModals();
+    // Reuse reject modal chrome with dispute copy
+    const title = document.getElementById('jobRejectTitle');
+    const submit = document.getElementById('jobRejectSubmit');
+    const reasonEl = document.getElementById('jobRejectReason');
+    document.getElementById('jobRejectJobId').value = jobId;
+    if (title) title.textContent = 'File dispute';
+    if (submit) {
+        submit.textContent = 'Submit dispute';
+        submit.dataset.mode = 'dispute';
+    }
+    if (reasonEl) {
+        reasonEl.placeholder = 'Describe the issue with this job';
+        reasonEl.value = '';
+    }
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('jobRejectModal')).show();
+}
+
+async function _fileJobDisputeApi(jobId, reason) {
     try {
         const response = await fetch(`${API_URL}/jobs/${jobId}/dispute`, {
             method: 'POST',
@@ -1945,64 +1966,185 @@ function linkWalletFromProfile() {
     return linkWallet(input ? input.value : '', { inputEl: input, statusEl: status });
 }
 
-async function signJobPrompt(jobId) {
-    if (!AppState.authToken) {
-        showAuth({ defaultTab: 'login' });
-        return;
-    }
-    const raw = prompt('Rate the other party (1–5 stars):', '5');
-    if (raw === null) return;
-    const stars = parseInt(raw, 10);
-    if (!(stars >= 1 && stars <= 5)) {
-        showToast('Please enter a rating from 1 to 5', 'error');
-        return;
-    }
-    try {
-        const response = await fetch(`${API_URL}/sign_job`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${AppState.authToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ job_id: jobId, star_rating: stars })
+/** Mobile-friendly complete/rate and reject modals (no window.prompt). */
+function ensureJobActionModals() {
+    if (document.getElementById('jobRateModal')) return;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+<div class="modal fade" id="jobRateModal" tabindex="-1" aria-labelledby="jobRateTitle">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="jobRateTitle">Complete &amp; rate</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="jobRateJobId">
+        <p class="text-muted mb-3">Rate the other party, then mark your side complete.</p>
+        <label class="form-label" for="jobRateStars">Rating</label>
+        <div class="star-picker" id="jobRatePicker" role="group" aria-label="Star rating">
+          <button type="button" class="star-pick" data-stars="1" aria-label="1 star">★</button>
+          <button type="button" class="star-pick" data-stars="2" aria-label="2 stars">★</button>
+          <button type="button" class="star-pick" data-stars="3" aria-label="3 stars">★</button>
+          <button type="button" class="star-pick" data-stars="4" aria-label="4 stars">★</button>
+          <button type="button" class="star-pick" data-stars="5" aria-label="5 stars">★</button>
+        </div>
+        <input type="hidden" id="jobRateStars" value="5">
+        <p class="small-text mt-2 mb-0" id="jobRateHint">Selected: 5 stars</p>
+      </div>
+      <div class="modal-footer flex-column flex-sm-row gap-2">
+        <button type="button" class="btn btn-secondary w-100 w-sm-auto" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary w-100 w-sm-auto" id="jobRateSubmit">Submit rating</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="jobRejectModal" tabindex="-1" aria-labelledby="jobRejectTitle">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="jobRejectTitle">Reject job</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="jobRejectJobId">
+        <label class="form-label" for="jobRejectReason">Reason (optional)</label>
+        <textarea class="form-control" id="jobRejectReason" rows="3" placeholder="Why are you rejecting this job?"></textarea>
+      </div>
+      <div class="modal-footer flex-column flex-sm-row gap-2">
+        <button type="button" class="btn btn-secondary w-100 w-sm-auto" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-outline-danger w-100 w-sm-auto" id="jobRejectSubmit">Reject job</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+    document.body.appendChild(wrap);
+
+    const picker = document.getElementById('jobRatePicker');
+    const starsInput = document.getElementById('jobRateStars');
+    const hint = document.getElementById('jobRateHint');
+    const paint = (n) => {
+        starsInput.value = String(n);
+        hint.textContent = `Selected: ${n} star${n === 1 ? '' : 's'}`;
+        picker.querySelectorAll('.star-pick').forEach((btn) => {
+            const v = parseInt(btn.dataset.stars, 10);
+            btn.classList.toggle('active', v <= n);
+            btn.setAttribute('aria-pressed', v === n ? 'true' : 'false');
         });
-        const data = await response.json().catch(() => ({}));
-        if (response.ok) {
-            showToast('Job completed and rated', 'success');
-            await loadCompletedJobs();
-        } else {
-            showToast(data.error || 'Could not complete job', 'error');
+    };
+    paint(5);
+    picker.addEventListener('click', (e) => {
+        const btn = e.target.closest('.star-pick');
+        if (!btn) return;
+        paint(parseInt(btn.dataset.stars, 10));
+    });
+
+    document.getElementById('jobRateSubmit').addEventListener('click', async () => {
+        const jobId = document.getElementById('jobRateJobId').value;
+        const stars = parseInt(document.getElementById('jobRateStars').value, 10);
+        const submitBtn = document.getElementById('jobRateSubmit');
+        submitBtn.disabled = true;
+        try {
+            const response = await fetch(`${API_URL}/sign_job`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${AppState.authToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ job_id: jobId, star_rating: stars })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (response.ok) {
+                showToast('Job completed and rated', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('jobRateModal'))?.hide();
+                await loadCompletedJobs();
+            } else {
+                showToast(data.error || 'Could not complete job', 'error');
+            }
+        } catch (err) {
+            showToast('Network error while completing job', 'error');
+        } finally {
+            submitBtn.disabled = false;
         }
-    } catch (err) {
-        showToast('Network error while completing job', 'error');
-    }
+    });
+
+    document.getElementById('jobRejectSubmit').addEventListener('click', async () => {
+        const jobId = document.getElementById('jobRejectJobId').value;
+        const reason = (document.getElementById('jobRejectReason').value || '').trim();
+        const submitBtn = document.getElementById('jobRejectSubmit');
+        const mode = submitBtn.dataset.mode || 'reject';
+        submitBtn.disabled = true;
+        try {
+            if (mode === 'dispute') {
+                if (!reason) {
+                    showToast('Please describe the issue', 'error');
+                    return;
+                }
+                await _fileJobDisputeApi(jobId, reason);
+                bootstrap.Modal.getInstance(document.getElementById('jobRejectModal'))?.hide();
+                return;
+            }
+            const response = await fetch(`${API_URL}/reject_job`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${AppState.authToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ job_id: jobId, reason })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (response.ok) {
+                showToast('Job rejected', 'info');
+                bootstrap.Modal.getInstance(document.getElementById('jobRejectModal'))?.hide();
+                await loadCompletedJobs();
+            } else {
+                showToast(data.error || 'Could not reject job', 'error');
+            }
+        } catch (err) {
+            showToast('Network error while rejecting job', 'error');
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
 }
 
-async function rejectJobPrompt(jobId) {
+function signJobPrompt(jobId) {
     if (!AppState.authToken) {
         showAuth({ defaultTab: 'login' });
         return;
     }
-    const reason = prompt('Optional reason for rejecting this job:') || '';
-    try {
-        const response = await fetch(`${API_URL}/reject_job`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${AppState.authToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ job_id: jobId, reason })
+    ensureJobActionModals();
+    document.getElementById('jobRateJobId').value = jobId;
+    const picker = document.getElementById('jobRatePicker');
+    if (picker) {
+        picker.querySelectorAll('.star-pick').forEach((btn) => {
+            const v = parseInt(btn.dataset.stars, 10);
+            btn.classList.toggle('active', v <= 5);
         });
-        const data = await response.json().catch(() => ({}));
-        if (response.ok) {
-            showToast('Job rejected', 'info');
-            await loadCompletedJobs();
-        } else {
-            showToast(data.error || 'Could not reject job', 'error');
-        }
-    } catch (err) {
-        showToast('Network error while rejecting job', 'error');
+        document.getElementById('jobRateStars').value = '5';
+        document.getElementById('jobRateHint').textContent = 'Selected: 5 stars';
     }
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('jobRateModal')).show();
+}
+
+function rejectJobPrompt(jobId) {
+    if (!AppState.authToken) {
+        showAuth({ defaultTab: 'login' });
+        return;
+    }
+    ensureJobActionModals();
+    document.getElementById('jobRejectJobId').value = jobId;
+    document.getElementById('jobRejectReason').value = '';
+    const title = document.getElementById('jobRejectTitle');
+    const submit = document.getElementById('jobRejectSubmit');
+    const reasonEl = document.getElementById('jobRejectReason');
+    if (title) title.textContent = 'Reject job';
+    if (submit) {
+        submit.textContent = 'Reject job';
+        submit.dataset.mode = 'reject';
+    }
+    if (reasonEl) reasonEl.placeholder = 'Why are you rejecting this job?';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('jobRejectModal')).show();
 }
 
 async function handleGrabJobSubmission(e) {
@@ -2264,20 +2406,20 @@ function ensureCoopModals() {
     if (document.getElementById('jobChannelModal')) return;
     const html = `
 <div class="modal fade" id="jobChannelModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content job-channel-modal-content">
       <div class="modal-header">
         <div>
           <h5 class="modal-title">Job channel</h5>
           <small class="text-muted" id="jobChannelMeta"></small>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <div class="job-channel-feed" id="jobChannelFeed"></div>
-        <form id="jobChannelForm" class="mt-3">
-          <div class="input-group">
-            <input type="text" class="form-control" id="jobChannelInput" placeholder="Message the job team…" maxlength="4000" autocomplete="off">
+      <div class="modal-body d-flex flex-column">
+        <div class="job-channel-feed flex-grow-1" id="jobChannelFeed"></div>
+        <form id="jobChannelForm" class="mt-3 job-channel-composer">
+          <div class="input-group job-channel-input-group">
+            <input type="text" class="form-control" id="jobChannelInput" placeholder="Message the job team…" maxlength="4000" autocomplete="off" enterkeyhint="send">
             <button class="btn btn-primary" type="submit" id="jobChannelSendBtn">Send</button>
           </div>
           <small class="text-muted" id="jobChannelHint">Members only · poll every 8s</small>
@@ -2287,22 +2429,22 @@ function ensureCoopModals() {
   </div>
 </div>
 <div class="modal fade" id="partyInviteModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="partyInviteTitle">Invite to job party</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <input type="hidden" id="partyInviteJobId">
         <input type="hidden" id="partyInviteSide" value="supply">
         <div class="mb-3">
           <label class="form-label" for="partyInviteUsername">Username</label>
-          <input class="form-control" id="partyInviteUsername" required placeholder="co-worker username">
+          <input class="form-control" id="partyInviteUsername" required placeholder="co-worker username" autocomplete="username">
         </div>
         <div class="mb-3">
           <label class="form-label" for="partyInviteShare">Attribution share (0–1)</label>
-          <input type="number" class="form-control" id="partyInviteShare" min="0.01" max="0.95" step="0.01" value="0.4">
+          <input type="number" class="form-control" id="partyInviteShare" min="0.01" max="0.95" step="0.01" value="0.4" inputmode="decimal">
           <small class="text-muted">UX hint only — demand co-buyers do not earn matching reputation</small>
         </div>
         <button class="btn btn-primary w-100" id="partyInviteSubmit">Send invite</button>
