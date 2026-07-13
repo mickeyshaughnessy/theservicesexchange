@@ -1854,6 +1854,66 @@ function updateProviderDashboard() {
     }).join('');
 }
 
+/**
+ * Link Ethereum wallet via POST /set_wallet (profile + readiness flows).
+ * @param {string} [address]
+ * @param {{statusEl?: HTMLElement, inputEl?: HTMLElement}} [opts]
+ */
+async function linkWallet(address, opts = {}) {
+    if (!AppState.authToken) {
+        showAuth({ defaultTab: 'login', title: 'Log in to link wallet' });
+        return null;
+    }
+    const raw = (address || '').trim();
+    if (!raw) {
+        showToast('Enter a wallet address', 'error');
+        return null;
+    }
+    try {
+        const response = await fetch(`${API_URL}/set_wallet`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${AppState.authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ wallet_address: raw })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            showToast(data.error || 'Could not link wallet', 'error');
+            if (opts.statusEl) {
+                opts.statusEl.style.display = 'block';
+                opts.statusEl.style.color = 'var(--danger)';
+                opts.statusEl.textContent = data.error || 'Link failed';
+            }
+            return null;
+        }
+        showToast(`Wallet linked · seat: ${data.seat_status || 'checked'}`, 'success');
+        if (opts.statusEl) {
+            opts.statusEl.style.display = 'block';
+            opts.statusEl.style.color = 'var(--accent)';
+            opts.statusEl.textContent = `Linked ${data.wallet_address || raw} · seat ${data.seat_status || 'unknown'}`;
+        }
+        const text = document.getElementById('walletAddressText');
+        if (text) text.textContent = data.wallet_address || raw;
+        const seatEl = document.getElementById('seatStatusText');
+        if (seatEl) seatEl.textContent = data.seat_status || 'unknown';
+        if (opts.inputEl) opts.inputEl.value = data.wallet_address || raw;
+        await loadAccountData();
+        if (window.refreshProviderReadiness) window.refreshProviderReadiness();
+        return data;
+    } catch (e) {
+        showToast('Network error linking wallet', 'error');
+        return null;
+    }
+}
+
+function linkWalletFromProfile() {
+    const input = document.getElementById('walletAddressInput');
+    const status = document.getElementById('walletLinkStatus');
+    return linkWallet(input ? input.value : '', { inputEl: input, statusEl: status });
+}
+
 async function signJobPrompt(jobId) {
     if (!AppState.authToken) {
         showAuth({ defaultTab: 'login' });
@@ -2163,6 +2223,8 @@ window.signJobPrompt = signJobPrompt;
 window.rejectJobPrompt = rejectJobPrompt;
 window.updateReturningUserHome = updateReturningUserHome;
 window.refreshInboxBadge = refreshInboxBadge;
+window.linkWallet = linkWallet;
+window.linkWalletFromProfile = linkWalletFromProfile;
 
 
 AppState.jobChannel = { jobId: null, pollTimer: null, lastTs: 0, lastId: null, readOnly: false };
