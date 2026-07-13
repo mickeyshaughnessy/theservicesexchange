@@ -25,6 +25,7 @@ from handlers import (
     submit_bid,
     parse_service_request,
     cancel_bid,
+    update_bid,
     grab_job,
     reject_job,
     get_account_info,
@@ -445,6 +446,14 @@ def handle_cancel_bid(current_user):
     data = flask.request.get_json() or {}
     data['username'] = current_user
     response, status = cancel_bid(data)
+    return flask.jsonify(response), status
+
+@app.route('/update_bid', methods=['POST'])
+@token_required
+def handle_update_bid(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = update_bid(data)
     return flask.jsonify(response), status
 
 @app.route('/grab_job', methods=['POST'])

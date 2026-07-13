@@ -1679,6 +1679,92 @@ def cancel_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         logger.error(f"Cancel error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
+
+def update_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Update an open (not yet accepted) bid owned by the demand user."""
+    try:
+        username = data.get('username')
+        bid_id = data.get('bid_id')
+        if not bid_id:
+            return {"error": "Bid ID required"}, 400
+
+        bid = get_bid(bid_id)
+        if not bid:
+            return {"error": "Bid not found"}, 404
+        if bid.get('username') != username:
+            return {"error": "Not authorized"}, 403
+
+        # If already a job, cannot edit
+        active_job = next(
+            (j for j in get_user_jobs(username)
+             if j.get('bid_id') == bid_id and j.get('status') == 'accepted'),
+            None
+        )
+        if active_job:
+            return {
+                "error": "Bid has already been accepted by a provider",
+                "job_id": active_job['job_id'],
+            }, 409
+
+        service = data.get('service', bid.get('service'))
+        price = data.get('price', bid.get('price'))
+        currency = data.get('currency', bid.get('currency', 'USD'))
+        end_time = data.get('end_time', bid.get('end_time'))
+        location_type = data.get('location_type', bid.get('location_type', 'physical'))
+        payment_method = data.get('payment_method', bid.get('payment_method', 'cash'))
+
+        if not service or price is None or end_time is None:
+            return {"error": "Service, price, and end_time required"}, 400
+        if location_type not in ('physical', 'hybrid', 'remote'):
+            return {"error": "location_type must be 'physical', 'hybrid', or 'remote'"}, 400
+        try:
+            price = float(price)
+        except (TypeError, ValueError):
+            return {"error": "Invalid price"}, 400
+        if price <= 0:
+            return {"error": "Price must be positive"}, 400
+        if end_time <= time.time():
+            return {"error": "End time must be in the future"}, 400
+
+        lat, lon = bid.get('lat'), bid.get('lon')
+        address = bid.get('address')
+        if location_type in ('physical', 'hybrid'):
+            if 'lat' in data and 'lon' in data:
+                lat, lon = data['lat'], data['lon']
+            if 'address' in data:
+                address = data.get('address')
+                if address:
+                    glat, glon = simple_geocode(address)
+                    if glat is not None:
+                        lat, lon = glat, glon
+            if not address and lat is None:
+                address = 'To be arranged'
+        else:
+            lat, lon, address = None, None, None
+
+        bid.update({
+            'service': service,
+            'price': price,
+            'currency': currency,
+            'payment_method': payment_method,
+            'end_time': end_time,
+            'location_type': location_type,
+            'lat': lat,
+            'lon': lon,
+            'address': address,
+            'updated_at': int(time.time()),
+        })
+        save_bid(bid_id, bid)
+        _emit('bid.updated', username=username, actor=public_actor(username),
+              payload={'bid_id': bid_id, 'price': price, 'currency': currency},
+              idempotency_key=f"bid.updated:{bid_id}:{bid['updated_at']}")
+        logger.info(f"Bid updated: {bid_id}")
+        return {"bid_id": bid_id, "message": "Bid updated"}, 200
+    except Exception as e:
+        logger.error(f"Update bid error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
 def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     """
     Match provider with best job using prioritized matching algorithm:

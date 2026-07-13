@@ -361,6 +361,76 @@ a:hover {
     color: var(--text-dim);
 }
 
+.home-bid-actions-bottom {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.home-bid-panel.editing {
+    border-color: var(--accent);
+    box-shadow: 0 0 28px rgba(57, 255, 20, 0.18);
+}
+
+.user-home-bids {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 255, 255, 0.15);
+}
+
+.user-home-bids h3 {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0 0 0.75rem;
+}
+
+.console-bid-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--bg-card);
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    color: var(--text);
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.console-bid-item:hover,
+.console-bid-item:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(57, 255, 20, 0.2);
+    outline: none;
+    color: var(--text-bright);
+}
+
+.console-bid-item .cbi-service {
+    color: var(--primary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.console-bid-item .cbi-meta {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.bid-item {
+    cursor: pointer;
+}
+
+.bid-item:hover {
+    border-color: rgba(0, 255, 255, 0.45);
+}
+
 .home-bid-footer-row {
     display: flex;
     flex-wrap: wrap;

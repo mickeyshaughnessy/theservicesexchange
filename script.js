@@ -581,7 +581,7 @@ function updateReturningUserHome() {
             `;
         } else {
             actions.innerHTML = `
-                <button type="button" class="btn btn-hero-primary" onclick="showBuyerForm()">Post request</button>
+                <button type="button" class="btn btn-hero-primary" onclick="showBuyerForm()">Bid</button>
                 <button type="button" class="btn btn-hero-secondary" onclick="showChat()">Inbox</button>
                 <a class="btn btn-hero-secondary" href="campaigns.html">Campaigns</a>
             `;
@@ -595,7 +595,7 @@ function updateReturningUserHome() {
             tiles.push({ label: 'Seat', value: u.seat_status === 'valid' ? 'OK' : '—', hint: seatLabel });
         }
         if (isDemand || !isSupply) {
-            tiles.push({ label: 'Open requests', value: String(bids.length), hint: bids[0] ? 'Waiting for providers' : 'Post your first' });
+            tiles.push({ label: 'Open bids', value: String(bids.length), hint: bids[0] ? 'Click a bid below to edit' : 'Post your first' });
             tiles.push({ label: 'Active services', value: String(active.length), hint: invites.length ? `${invites.length} party invite(s)` : 'Matched work' });
         }
         tiles.push({ label: 'Completed', value: String(completed.length), hint: 'Reputation history' });
@@ -607,6 +607,8 @@ function updateReturningUserHome() {
             </div>
         `).join('');
     }
+
+    renderConsoleBidsList();
 
     // First-session checklist for users with little activity
     if (checklist) {
@@ -819,20 +821,24 @@ function updateBidsDisplay() {
     if (!container) return;
     
     if (AppState.outstandingBids.length === 0) {
-        container.innerHTML = '<p class="text-muted mb-0">No outstanding requests. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="showBuyerForm()">Post one</button></p>';
+        container.innerHTML = '<p class="text-muted mb-0">No outstanding bids. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="showBuyerForm()">Post one</button></p>';
         return;
     }
     
-    container.innerHTML = AppState.outstandingBids.map(bid => `
-        <div class="bid-item">
-            <h6>${typeof bid.service === 'object' ? escapeHtml(JSON.stringify(bid.service)) : escapeHtml(bid.service)}</h6>
+    container.innerHTML = AppState.outstandingBids.map(bid => {
+        const svc = typeof bid.service === 'object' ? JSON.stringify(bid.service) : String(bid.service || '');
+        return `
+        <div class="bid-item" role="button" tabindex="0" onclick="openBidForEdit('${bid.bid_id}')" onkeydown="if(event.key==='Enter')openBidForEdit('${bid.bid_id}')">
+            <h6>${escapeHtml(svc)}</h6>
             <p>Price: ${escapeHtml(bid.currency || 'USD')} ${bid.price} • Expires: ${new Date(bid.end_time * 1000).toLocaleString()}</p>
             ${bid.location_type !== 'remote' ? `<p class="text-muted">Location: ${escapeHtml(bid.address || 'Physical service')}</p>` : '<p class="text-muted">Remote service</p>'}
-            <div class="bid-actions mt-2">
+            <div class="bid-actions mt-2" onclick="event.stopPropagation()">
+                <button type="button" class="btn btn-sm btn-outline-light" onclick="openBidForEdit('${bid.bid_id}')">Edit</button>
                 <button type="button" class="btn btn-danger btn-sm" onclick="cancelBid('${bid.bid_id}')">Cancel</button>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
+    renderConsoleBidsList();
 }
 
 async function loadCompletedJobs() {
@@ -1255,6 +1261,37 @@ function initHomeBidForm() {
     form.dataset.bound = '1';
     form.addEventListener('submit', handleBidSubmission);
     requestUserLocation();
+
+    // Prefill details as user describes the job (empty fields only)
+    let enrichTimer = null;
+    const serviceEl = document.getElementById('homeBidService');
+    if (serviceEl) {
+        const scheduleEnrich = () => {
+            clearTimeout(enrichTimer);
+            enrichTimer = setTimeout(() => enrichBidDetailsFromDescription('homeBidForm'), 450);
+        };
+        serviceEl.addEventListener('blur', () => enrichBidDetailsFromDescription('homeBidForm'));
+        serviceEl.addEventListener('input', scheduleEnrich);
+    }
+    // Mark manual edits so enrich won't overwrite
+    ['homeBidPrice', 'homeBidDuration', 'homeBidLocationType'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', () => { el.dataset.userSet = '1'; });
+        el.addEventListener('input', () => { el.dataset.userSet = '1'; });
+    });
+
+    // Modal composer enrich
+    const bidService = document.getElementById('bidService');
+    if (bidService && !bidService.dataset.enrichBound) {
+        bidService.dataset.enrichBound = '1';
+        let t2 = null;
+        bidService.addEventListener('blur', () => enrichBidDetailsFromDescription('bidForm'));
+        bidService.addEventListener('input', () => {
+            clearTimeout(t2);
+            t2 = setTimeout(() => enrichBidDetailsFromDescription('bidForm'), 450);
+        });
+    }
 }
 
 function readBidFieldsFromForm(form) {
@@ -1318,20 +1355,198 @@ function restoreHomeBidDraft() {
 
 function setBidSubmitLoading(form, loading, label) {
     const ids = form && form.id === 'homeBidForm'
-        ? ['homeBidSubmit']
-        : ['bidModalSubmit'];
+        ? ['homeBidSubmit', 'homeBidSubmitBottom']
+        : ['bidModalSubmit', 'bidModalSubmitBottom'];
     ids.forEach((id) => {
         const btn = document.getElementById(id);
         if (!btn) return;
         if (loading) {
             if (!btn.dataset.originalText) btn.dataset.originalText = btn.textContent;
             btn.disabled = true;
-            btn.textContent = label || 'Submitting…';
+            btn.textContent = label || 'Bidding…';
         } else {
             btn.disabled = false;
-            btn.textContent = btn.dataset.originalText || (id === 'homeBidSubmit' ? 'Submit request' : 'Submit');
+            const editId = form && form.id === 'homeBidForm'
+                ? (document.getElementById('homeBidEditId') || {}).value
+                : (document.getElementById('bidEditId') || {}).value;
+            btn.textContent = btn.dataset.originalText || (editId ? 'Update bid' : 'Bid');
+            if (!btn.dataset.originalText || btn.dataset.originalText === 'Bid' || btn.dataset.originalText === 'Update bid') {
+                btn.textContent = editId ? 'Update bid' : 'Bid';
+            }
         }
     });
+}
+
+function renderConsoleBidsList() {
+    const wrap = document.getElementById('userHomeBids');
+    if (!wrap) return;
+    const bids = AppState.outstandingBids || [];
+    if (!AppState.authToken || !bids.length) {
+        wrap.style.display = 'none';
+        wrap.innerHTML = '';
+        return;
+    }
+    wrap.style.display = 'block';
+    wrap.innerHTML = `<h3>// Your open bids — click to edit</h3>` + bids.map((bid) => {
+        const svc = typeof bid.service === 'object' ? JSON.stringify(bid.service) : String(bid.service || '');
+        const short = svc.length > 72 ? svc.slice(0, 72) + '…' : svc;
+        return `<button type="button" class="console-bid-item" onclick="openBidForEdit('${bid.bid_id}')">
+            <div class="cbi-service">${escapeHtml(short)}</div>
+            <div class="cbi-meta">${escapeHtml(bid.currency || 'USD')} ${escapeHtml(String(bid.price))} · ${escapeHtml(bid.location_type || '')} · expires ${new Date(bid.end_time * 1000).toLocaleString()}</div>
+        </button>`;
+    }).join('');
+}
+
+function clearBidEditor() {
+    const editHome = document.getElementById('homeBidEditId');
+    const editModal = document.getElementById('bidEditId');
+    if (editHome) editHome.value = '';
+    if (editModal) editModal.value = '';
+    const form = document.getElementById('homeBidForm');
+    if (form) form.reset();
+    ['homeBidPrice', 'homeBidDuration', 'homeBidLocationType', 'bidPrice', 'bidDuration', 'bidLocationType'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) delete el.dataset.userSet;
+    });
+    const panel = document.getElementById('homeBidPanel');
+    if (panel) panel.classList.remove('editing');
+    const kicker = document.getElementById('homeBidKicker');
+    const hint = document.getElementById('homeBidHint');
+    const cancelBtn = document.getElementById('homeBidCancelEdit');
+    if (kicker) kicker.textContent = '// New bid';
+    if (hint) hint.textContent = 'Just describe the job — we fill the rest';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    ['homeBidSubmit', 'homeBidSubmitBottom', 'bidModalSubmit', 'bidModalSubmitBottom'].forEach((id) => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.textContent = 'Bid';
+            btn.dataset.originalText = 'Bid';
+        }
+    });
+    const details = document.getElementById('homeBidDetails');
+    if (details) details.open = true;
+}
+
+function openBidForEdit(bidId) {
+    const bid = (AppState.outstandingBids || []).find((b) => b.bid_id === bidId);
+    if (!bid) {
+        showToast('Bid not found', 'error');
+        return;
+    }
+    const service = typeof bid.service === 'object'
+        ? (bid.service.name || JSON.stringify(bid.service))
+        : String(bid.service || '');
+
+    // Prefer homepage editor
+    const homeService = document.getElementById('homeBidService');
+    if (homeService) {
+        document.getElementById('homeBidEditId').value = bid.bid_id;
+        homeService.value = service;
+        const priceEl = document.getElementById('homeBidPrice');
+        if (priceEl) priceEl.value = bid.price != null ? bid.price : '';
+        const cur = document.getElementById('homePaymentMethod');
+        if (cur && bid.currency) cur.value = bid.currency;
+        const loc = document.getElementById('homeBidLocationType');
+        if (loc) loc.value = bid.location_type || '';
+        const addr = document.getElementById('homeBidAddress');
+        if (addr) addr.value = bid.address || '';
+        // remaining validity
+        const remainingSec = Math.max(3600, (bid.end_time || 0) - Math.floor(Date.now() / 1000));
+        const hours = Math.max(1, Math.round(remainingSec / 3600));
+        const dur = document.getElementById('homeBidDuration');
+        const unit = document.getElementById('homeBidDurationUnit');
+        if (hours >= 48 && hours % 24 === 0) {
+            if (dur) dur.value = hours / 24;
+            if (unit) unit.value = 'days';
+        } else {
+            if (dur) dur.value = hours;
+            if (unit) unit.value = 'hours';
+        }
+        const details = document.getElementById('homeBidDetails');
+        if (details) details.open = true;
+        const panel = document.getElementById('homeBidPanel');
+        if (panel) panel.classList.add('editing');
+        const kicker = document.getElementById('homeBidKicker');
+        const hint = document.getElementById('homeBidHint');
+        const cancelBtn = document.getElementById('homeBidCancelEdit');
+        if (kicker) kicker.textContent = '// Edit bid';
+        if (hint) hint.textContent = `Editing ${bid.bid_id.slice(0, 8)}…`;
+        if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+        ['homeBidSubmit', 'homeBidSubmitBottom'].forEach((id) => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.textContent = 'Update bid';
+                btn.dataset.originalText = 'Update bid';
+            }
+        });
+        // Close account dropdown if open
+        document.querySelectorAll('.account-dropdown.open').forEach((d) => d.classList.remove('open'));
+        focusHomeBidForm();
+        showToast('Editing open bid — change fields and tap Bid', 'info');
+        return;
+    }
+
+    // Modal fallback
+    const bidEdit = document.getElementById('bidEditId');
+    if (bidEdit) bidEdit.value = bid.bid_id;
+    const bidService = document.getElementById('bidService');
+    if (bidService) bidService.value = service;
+    const bidPrice = document.getElementById('bidPrice');
+    if (bidPrice) bidPrice.value = bid.price != null ? bid.price : '';
+    const pay = document.getElementById('paymentMethod');
+    if (pay && bid.currency) pay.value = bid.currency;
+    const bloc = document.getElementById('bidLocationType');
+    if (bloc) bloc.value = bid.location_type || '';
+    const baddr = document.getElementById('bidAddress');
+    if (baddr) baddr.value = bid.address || '';
+    const details = document.getElementById('bidModalDetails');
+    if (details) details.open = true;
+    ['bidModalSubmit', 'bidModalSubmitBottom'].forEach((id) => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.textContent = 'Update bid';
+            btn.dataset.originalText = 'Update bid';
+        }
+    });
+    showBuyerForm();
+}
+
+/** Fill empty detail fields from parse_service_request (does not wipe user edits). */
+async function enrichBidDetailsFromDescription(formId) {
+    const isHome = formId === 'homeBidForm' || !formId;
+    const serviceEl = document.getElementById(isHome ? 'homeBidService' : 'bidService');
+    const priceEl = document.getElementById(isHome ? 'homeBidPrice' : 'bidPrice');
+    const locEl = document.getElementById(isHome ? 'homeBidLocationType' : 'bidLocationType');
+    const durEl = document.getElementById(isHome ? 'homeBidDuration' : 'bidDuration');
+    const unitEl = document.getElementById(isHome ? 'homeBidDurationUnit' : 'bidDurationUnit');
+    const curEl = document.getElementById(isHome ? 'homePaymentMethod' : 'paymentMethod');
+    const desc = (serviceEl && serviceEl.value || '').trim();
+    if (desc.length < 8) return;
+
+    const parsed = await parseServiceDescription(desc);
+    if (!parsed) return;
+
+    if (priceEl && priceEl.dataset.userSet !== '1' && (priceEl.value === '' || priceEl.value == null)) {
+        if (parsed.price > 0) priceEl.value = parsed.price;
+    }
+    if (locEl && locEl.dataset.userSet !== '1' && !locEl.value && parsed.location_type) {
+        locEl.value = parsed.location_type;
+    }
+    if (curEl && parsed.currency && (!priceEl || priceEl.dataset.userSet !== '1')) {
+        curEl.value = parsed.currency;
+    }
+    if (durEl && parsed.duration_hours && durEl.dataset.userSet !== '1') {
+        const h = parsed.duration_hours;
+        if (h >= 48 && h % 24 === 0 && unitEl) {
+            durEl.value = h / 24;
+            unitEl.value = 'days';
+        } else {
+            durEl.value = h;
+            if (unitEl) unitEl.value = 'hours';
+        }
+    }
+    const details = document.getElementById(isHome ? 'homeBidDetails' : 'bidModalDetails');
+    if (details) details.open = true;
 }
 
 async function parseServiceDescription(description) {
@@ -1354,6 +1569,10 @@ async function handleBidSubmission(e) {
     const form = e.target.closest('form') || e.target;
     const fields = readBidFieldsFromForm(form);
     const description = String(fields.service || '').trim();
+    const editIdEl = form.id === 'homeBidForm'
+        ? document.getElementById('homeBidEditId')
+        : document.getElementById('bidEditId');
+    const editingId = editIdEl && editIdEl.value ? editIdEl.value : '';
 
     if (!description) {
         showToast('Describe the service you need', 'error');
@@ -1368,33 +1587,43 @@ async function handleBidSubmission(e) {
             intent: 'bid',
             defaultTab: 'register',
             defaultType: 'demand',
-            title: 'Create an account to post this request'
+            title: 'Create an account to place a bid'
         });
         return;
     }
 
     setBidSubmitLoading(form, true, 'Preparing…');
 
-    // User overrides win; otherwise LLM/heuristics fill gaps
+    // Prefer form fields; parse only to fill gaps
     const userSetPrice = fields.price != null && !Number.isNaN(fields.price) && fields.price > 0;
     const userSetLoc = !!fields.location_type;
     let parsed = null;
     if (!userSetPrice || !userSetLoc) {
         parsed = await parseServiceDescription(description);
+        // Reflect into optional details UI
+        if (parsed) {
+            await enrichBidDetailsFromDescription(form.id);
+            // re-read after enrich
+            const refreshed = readBidFieldsFromForm(form);
+            if (!userSetPrice && refreshed.price > 0) fields.price = refreshed.price;
+            if (!userSetLoc && refreshed.location_type) fields.location_type = refreshed.location_type;
+        }
     }
 
-    const serviceText = (parsed && parsed.service) ? parsed.service : description;
-    const price = userSetPrice ? fields.price : (parsed && parsed.price > 0 ? Number(parsed.price) : 100);
+    const serviceText = description; // keep user's wording for edit fidelity
+    const price = (fields.price != null && !Number.isNaN(fields.price) && fields.price > 0)
+        ? fields.price
+        : (parsed && parsed.price > 0 ? Number(parsed.price) : 100);
     const currency = fields.currency || (parsed && parsed.currency) || 'USD';
-    const location_type = userSetLoc
-        ? fields.location_type
-        : ((parsed && parsed.location_type) || 'physical');
+    const location_type = fields.location_type
+        || (parsed && parsed.location_type)
+        || 'physical';
 
     let durationHours = fields.durationUnit === 'days' ? fields.duration * 24 : fields.duration;
-    if ((!fields.detailsOpen || !fields.duration) && parsed && parsed.duration_hours) {
-        durationHours = parsed.duration_hours;
+    if (parsed && parsed.duration_hours && !userSetPrice) {
+        // only use parse duration if user didn't heavily customize — keep form duration if set
     }
-    durationHours = Math.max(1, Math.min(168, durationHours || 24));
+    durationHours = Math.max(1, Math.min(168, durationHours || (parsed && parsed.duration_hours) || 24));
 
     const data = {
         service: serviceText,
@@ -1403,6 +1632,7 @@ async function handleBidSubmission(e) {
         end_time: Math.floor(Date.now() / 1000) + durationHours * 3600,
         location_type
     };
+    if (editingId) data.bid_id = editingId;
 
     if (location_type !== 'remote') {
         if (fields.address) {
@@ -1412,15 +1642,15 @@ async function handleBidSubmission(e) {
         } else if (AppState.userLocation) {
             data.address = `${AppState.userLocation.latitude}, ${AppState.userLocation.longitude}`;
         } else {
-            // Soft default so description-only posts still work
             data.address = 'To be arranged';
         }
     }
 
-    setBidSubmitLoading(form, true, 'Posting…');
+    setBidSubmitLoading(form, true, editingId ? 'Updating…' : 'Bidding…');
 
     try {
-        const response = await fetch(`${API_URL}/submit_bid`, {
+        const path = editingId ? '/update_bid' : '/submit_bid';
+        const response = await fetch(`${API_URL}${path}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1430,8 +1660,7 @@ async function handleBidSubmission(e) {
         });
 
         if (response.ok) {
-            const result = await response.json();
-            showToast('Request live — providers can grab it', 'success');
+            showToast(editingId ? 'Bid updated' : 'Bid live — providers can grab it', 'success');
             pushRecentService(description);
 
             const bidModal = document.getElementById('bidModal');
@@ -1440,22 +1669,22 @@ async function handleBidSubmission(e) {
                 if (inst) inst.hide();
             }
 
-            form.reset();
+            clearBidEditor();
             const homeList = document.getElementById('homeServiceAcList');
             const bidList = document.getElementById('bidServiceAcList');
             if (homeList) homeList.innerHTML = '';
             if (bidList) bidList.innerHTML = '';
 
             if (AppState.authToken) {
-                loadOutstandingBids();
+                await loadOutstandingBids();
                 updateReturningUserHome();
             }
         } else {
             const errorData = await response.json().catch(() => ({}));
-            showToast(`Failed to submit request: ${errorData.error || 'Unknown error'}`, 'error');
+            showToast(`Failed to ${editingId ? 'update' : 'place'} bid: ${errorData.error || 'Unknown error'}`, 'error');
         }
     } catch (error) {
-        showToast('Network error while submitting request', 'error');
+        showToast('Network error while bidding', 'error');
     } finally {
         setBidSubmitLoading(form, false);
     }
@@ -2792,6 +3021,8 @@ window.updateReturningUserHome = updateReturningUserHome;
 window.refreshInboxBadge = refreshInboxBadge;
 window.linkWallet = linkWallet;
 window.linkWalletFromProfile = linkWalletFromProfile;
+window.openBidForEdit = openBidForEdit;
+window.clearBidEditor = clearBidEditor;
 
 
 AppState.jobChannel = { jobId: null, pollTimer: null, lastTs: 0, lastId: null, readOnly: false };
