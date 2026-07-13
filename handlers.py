@@ -344,19 +344,22 @@ def call_openrouter_llm(
             if 'choices' in result and len(result['choices']) > 0:
                 return result['choices'][0]['message']['content'].strip()
 
-        # Rate-limited or quota — try next tier
-        is_rate_limited = response.status_code == 429
-        if not is_rate_limited:
-            try:
-                err_msg = response.json().get('error', {}).get('message', '').lower()
-                is_rate_limited = any(w in err_msg for w in ('rate', 'limit', 'quota'))
-            except Exception:
-                pass
+        # Rate-limit / quota / unavailable free model — try next tier
+        should_fallback = response.status_code in (401, 402, 403, 404, 408, 429, 502, 503)
+        err_msg = ''
+        try:
+            err_msg = response.json().get('error', {}).get('message', '').lower()
+        except Exception:
+            pass
+        if not should_fallback:
+            should_fallback = any(w in err_msg for w in ('rate', 'limit', 'quota', 'not found', 'unavailable'))
 
-        if is_rate_limited:
-            next_model = _models[fallback_level + 1] if fallback_level + 1 < len(_models) else None
-            logger.warning(f"OpenRouter rate-limited on {model} (tier {fallback_level})"
-                           + (f", falling back to {next_model}" if next_model else ", all tiers exhausted"))
+        if should_fallback and fallback_level + 1 < len(_models):
+            next_model = _models[fallback_level + 1]
+            logger.warning(
+                f"OpenRouter error on {model} (HTTP {response.status_code}, tier {fallback_level}); "
+                f"falling back to {next_model}"
+            )
             return call_openrouter_llm(prompt, temperature, max_tokens, fallback_level + 1, timeout)
 
         logger.error(f"OpenRouter API error on {model}: {response.status_code} - {response.text[:200]}")
