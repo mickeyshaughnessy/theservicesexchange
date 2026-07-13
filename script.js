@@ -9,7 +9,8 @@ const STORAGE_KEYS = {
     AUTH_TOKEN: 'auth_token',
     USERNAME: 'current_username',
     PROVIDER_PROFILE: 'provider_capabilities_profile',
-    PENDING_SERVICE: 'rse_pending_service'
+    PENDING_SERVICE: 'rse_pending_service',
+    PENDING_INTENT: 'rse_pending_intent'
 };
 
 // Global state
@@ -39,8 +40,31 @@ document.addEventListener('DOMContentLoaded', function() {
     window.currentUsername = AppState.currentUsername;
     
     if (AppState.authToken && AppState.currentUsername) {
-        loadAccountData();
+        loadAccountData().then(() => {
+            // Deep link: index.html?open=bid after auth
+            const open = new URLSearchParams(location.search).get('open');
+            if (open === 'bid') {
+                showBuyerForm();
+            } else {
+                resumePendingBuyerIntent();
+            }
+        });
         updateUIForLoggedInUser();
+    } else {
+        // Guest deep link: stash intent and open auth
+        const open = new URLSearchParams(location.search).get('open');
+        if (open === 'bid') {
+            sessionStorage.setItem(STORAGE_KEYS.PENDING_INTENT, 'bid');
+            // Defer until listeners exist
+            setTimeout(() => {
+                showAuth({
+                    intent: 'bid',
+                    defaultTab: 'register',
+                    defaultType: 'demand',
+                    title: 'Create an account to post a request'
+                });
+            }, 0);
+        }
     }
     
     // Set up form event listeners
@@ -109,6 +133,19 @@ function setupEventListeners() {
     if (forms.filter) forms.filter.addEventListener('submit', handleFilterApplication);
 
     setupAccountDropdown();
+
+    // Close account sheet when mobile nav collapses
+    const navCollapse = document.getElementById('navbarNav');
+    if (navCollapse && !navCollapse.dataset.accountCloseBound) {
+        navCollapse.dataset.accountCloseBound = '1';
+        navCollapse.addEventListener('hide.bs.collapse', () => {
+            document.querySelectorAll('.account-dropdown.open').forEach((d) => {
+                d.classList.remove('open');
+                const b = d.querySelector('.account-btn');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            });
+        });
+    }
 }
 
 // Utility Functions
@@ -389,7 +426,8 @@ async function handleRegister(e) {
     }
 }
 
-function logout() {
+function logout(opts = {}) {
+    const quiet = opts && opts.quiet;
     AppState.authToken = null;
     AppState.currentUser = null;
     AppState.currentUsername = null;
@@ -407,7 +445,7 @@ function logout() {
     AppState.activeJobs = [];
     
     updateProviderDashboard();
-    showToast('Logged out', 'info');
+    if (!quiet) showToast('Logged out', 'info');
 }
 
 // Account Management Functions
@@ -428,7 +466,8 @@ async function loadAccountData() {
             window.currentUser = AppState.currentUser; // Sync global
             updateAccountDisplay();
         } else if (accountResponse.status === 401) {
-            logout();
+            showToast('Session expired — please log in again', 'info');
+            logout({ quiet: true });
             return;
         }
         
@@ -476,6 +515,37 @@ function updateAccountDisplay() {
         els.starDisplay.textContent = starDisplayText;
         els.ratingText.textContent = `${(AppState.currentUser.reputation_score || 0).toFixed(1)} (${AppState.currentUser.total_ratings || 0} ratings)`;
     }
+
+    ensureAccountQuickLinks(typeLabel);
+}
+
+/** Quick nav inside account sheet for returning users */
+function ensureAccountQuickLinks(typeLabel) {
+    document.querySelectorAll('.account-window').forEach((win) => {
+        let row = win.querySelector('.account-quick-links');
+        if (!row) {
+            row = document.createElement('div');
+            row.className = 'account-section account-quick-links';
+            const header = win.querySelector('.account-header');
+            if (header && header.nextSibling) {
+                win.insertBefore(row, header.nextSibling);
+            } else {
+                win.prepend(row);
+            }
+        }
+        const isSupply = typeLabel === 'supply';
+        row.innerHTML = `
+            <h6>Quick links</h6>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-sm btn-outline-light" href="profile.html">Profile</a>
+                <a class="btn btn-sm btn-outline-light" href="portfolio.html">Portfolio</a>
+                ${isSupply
+                    ? '<a class="btn btn-sm btn-outline-light" href="grab_job.html">Find Work</a>'
+                    : '<button type="button" class="btn btn-sm btn-outline-light" onclick="showBuyerForm()">Post request</button>'}
+                <a class="btn btn-sm btn-outline-light" href="campaigns.html">Campaigns</a>
+            </div>
+        `;
+    });
 }
 
 async function loadOutstandingBids() {
@@ -510,7 +580,7 @@ function updateBidsDisplay() {
     if (!container) return;
     
     if (AppState.outstandingBids.length === 0) {
-        container.innerHTML = '<p class="text-muted mb-0">No outstanding requests</p>';
+        container.innerHTML = '<p class="text-muted mb-0">No outstanding requests. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="showBuyerForm()">Post one</button></p>';
         return;
     }
     
@@ -520,7 +590,7 @@ function updateBidsDisplay() {
             <p>Price: ${escapeHtml(bid.currency || 'USD')} ${bid.price} • Expires: ${new Date(bid.end_time * 1000).toLocaleString()}</p>
             ${bid.location_type !== 'remote' ? `<p class="text-muted">Location: ${escapeHtml(bid.address || 'Physical service')}</p>` : '<p class="text-muted">Remote service</p>'}
             <div class="bid-actions mt-2">
-                <button class="btn btn-danger btn-xs" onclick="cancelBid('${bid.bid_id}')">Cancel</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="cancelBid('${bid.bid_id}')">Cancel</button>
             </div>
         </div>
     `).join('');
@@ -575,7 +645,7 @@ function updateActiveJobsDisplay() {
     const coProviding = (AppState.partyInvites || []).filter(pi => pi.invite_status === 'accepted' && pi.job_status === 'accepted');
 
     if (AppState.activeJobs.length === 0 && invites.length === 0 && coProviding.length === 0) {
-        container.innerHTML = '<p class="text-muted mb-0">No active services</p>';
+        container.innerHTML = '<p class="text-muted mb-0">No active services yet. <a href="grab_job.html">Find work</a> or <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="showBuyerForm()">post a request</button>.</p>';
         return;
     }
 
@@ -587,10 +657,12 @@ function updateActiveJobsDisplay() {
             ${job.location_type !== 'remote' ? `<small class="text-muted">Location: ${escapeHtml(job.address || 'Physical service')}</small>` : '<small class="text-muted">Remote service</small>'}
             ${partyBadgesHtml(job.party)}
             <div class="mt-1 d-flex gap-2 flex-wrap">
-                <button class="btn btn-sm btn-outline-light" onclick="openJobChannel('${job.job_id}')">💬 Job chat</button>
-                ${job.role === 'provider' ? `<button class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}', 'supply')">+ Invite co-provider</button>` : ''}
-                ${job.role === 'buyer' ? `<button class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}', 'demand')">+ Invite co-buyer</button>` : ''}
-                ${(job.role === 'provider' || job.role === 'buyer') ? `<button class="btn btn-sm btn-link text-danger p-0" onclick="fileJobDispute('${job.job_id}')">File dispute</button>` : ''}
+                <button type="button" class="btn btn-sm btn-outline-light" onclick="openJobChannel('${job.job_id}')">💬 Job chat</button>
+                <button type="button" class="btn btn-sm btn-primary" onclick="signJobPrompt('${job.job_id}')">Complete &amp; rate</button>
+                ${job.role === 'provider' ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="rejectJobPrompt('${job.job_id}')">Reject</button>` : ''}
+                ${job.role === 'provider' ? `<button type="button" class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}', 'supply')">+ Co-provider</button>` : ''}
+                ${job.role === 'buyer' ? `<button type="button" class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}', 'demand')">+ Co-buyer</button>` : ''}
+                ${(job.role === 'provider' || job.role === 'buyer') ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="fileJobDispute('${job.job_id}')">Dispute</button>` : ''}
             </div>
         </div>
     `).join('');
@@ -1094,23 +1166,70 @@ function hideNewPostForm() {
 }
 
 // Modal Functions
-function showAuth() {
+/**
+ * Show auth modal with optional context.
+ * @param {object|string} [opts]
+ * @param {string} [opts.intent] - 'bid' | 'grab' | 'chat' etc — resumed after login
+ * @param {string} [opts.defaultTab] - 'login' | 'register'
+ * @param {string} [opts.defaultType] - 'demand' | 'supply'
+ * @param {string} [opts.title] - modal title override
+ */
+function showAuth(opts = {}) {
+    if (typeof opts === 'string') opts = { title: opts };
+    const {
+        intent = null,
+        defaultTab = null,
+        defaultType = null,
+        title = null
+    } = opts || {};
+
+    if (intent) {
+        sessionStorage.setItem(STORAGE_KEYS.PENDING_INTENT, intent);
+    }
+
     const authError = document.getElementById('authError');
     if (authError) authError.style.display = 'none';
-    
+
     const authModal = document.getElementById('authModal');
-    if (authModal) {
-        const modal = new bootstrap.Modal(authModal);
-        modal.show();
+    if (!authModal) return;
+
+    const titleEl = authModal.querySelector('.modal-title');
+    if (titleEl && title) titleEl.textContent = title;
+
+    // Prefer register when starting a first-value action
+    const preferRegister = defaultTab === 'register' || (!!intent && defaultTab !== 'login');
+    const loginTab = authModal.querySelector('a[href="#login"]');
+    const registerTab = authModal.querySelector('a[href="#register"]');
+    if (preferRegister && registerTab) {
+        const tab = new bootstrap.Tab(registerTab);
+        tab.show();
+    } else if (defaultTab === 'login' && loginTab) {
+        const tab = new bootstrap.Tab(loginTab);
+        tab.show();
     }
+
+    if (defaultType === 'demand' || defaultType === 'supply') {
+        const radio = document.getElementById(defaultType === 'demand' ? 'typeDemand' : 'typeSupply');
+        if (radio) radio.checked = true;
+    }
+
+    const modal = bootstrap.Modal.getOrCreateInstance(authModal);
+    modal.show();
 }
 
 async function showBuyerForm(prefillService) {
     if (!AppState.authToken) {
         if (prefillService) {
             sessionStorage.setItem(STORAGE_KEYS.PENDING_SERVICE, prefillService);
+        } else {
+            sessionStorage.setItem(STORAGE_KEYS.PENDING_INTENT, 'bid');
         }
-        showAuth();
+        showAuth({
+            intent: 'bid',
+            defaultTab: 'register',
+            defaultType: 'demand',
+            title: prefillService ? 'Create an account to post this request' : 'Create an account to post a request'
+        });
         return;
     }
 
@@ -1119,21 +1238,53 @@ async function showBuyerForm(prefillService) {
 
     const bidModal = document.getElementById('bidModal');
     if (bidModal) {
-        const modal = new bootstrap.Modal(bidModal);
+        const modal = bootstrap.Modal.getOrCreateInstance(bidModal);
         modal.show();
         loadPopularServices();
         if (prefillService) {
             const bidService = document.getElementById('bidService');
             if (bidService) bidService.value = prefillService;
         }
+        return;
+    }
+
+    // Bid modal only lives on index — deep-link home with intent
+    if (prefillService) {
+        sessionStorage.setItem(STORAGE_KEYS.PENDING_SERVICE, prefillService);
+    } else {
+        sessionStorage.setItem(STORAGE_KEYS.PENDING_INTENT, 'bid');
+    }
+    if (!/index\.html(?:$|\?)/.test(location.pathname) && !location.pathname.endsWith('/')) {
+        window.location.href = 'index.html?open=bid';
     }
 }
 
 async function resumePendingBuyerIntent() {
-    const pending = sessionStorage.getItem(STORAGE_KEYS.PENDING_SERVICE);
-    if (!pending || !AppState.authToken) return;
+    if (!AppState.authToken) return;
+
+    const pendingService = sessionStorage.getItem(STORAGE_KEYS.PENDING_SERVICE);
+    const pendingIntent = sessionStorage.getItem(STORAGE_KEYS.PENDING_INTENT);
     sessionStorage.removeItem(STORAGE_KEYS.PENDING_SERVICE);
-    await showBuyerForm(pending);
+    sessionStorage.removeItem(STORAGE_KEYS.PENDING_INTENT);
+
+    if (pendingService) {
+        await showBuyerForm(pendingService);
+        return;
+    }
+    if (pendingIntent === 'bid') {
+        await showBuyerForm();
+        return;
+    }
+    if (pendingIntent === 'grab') {
+        const form = document.getElementById('grabJobForm');
+        if (form) {
+            form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const ta = document.getElementById('capabilitiesText');
+            if (ta) ta.focus();
+        } else if (!location.pathname.includes('grab_job')) {
+            window.location.href = 'grab_job.html';
+        }
+    }
 }
 
 async function loadPopularServices() {
@@ -1363,11 +1514,207 @@ function prepareCapabilitiesPayload(raw) {
     }
 }
 
+/** Status line under capabilities editor (or toast fallback). */
+function setCapabilitiesStatus(message, isError = false) {
+    let el = document.getElementById('capabilitiesStatus');
+    if (!el) {
+        const ta = document.getElementById('capabilitiesText');
+        if (ta && ta.parentElement) {
+            el = document.createElement('div');
+            el.id = 'capabilitiesStatus';
+            el.className = 'small-text mt-2';
+            ta.parentElement.appendChild(el);
+        }
+    }
+    if (el) {
+        el.textContent = message;
+        el.style.color = isError ? 'var(--danger)' : 'var(--accent)';
+        return;
+    }
+    showToast(message, isError ? 'error' : 'info');
+}
+
+/**
+ * Display grab-job result in #grabJobResult (or toast).
+ * message may be plain text or HTML (when from renderGrabJobSuccess).
+ */
+function setGrabJobResult(message, isError = false) {
+    const result = document.getElementById('grabJobResult');
+    if (!result) {
+        showToast(typeof message === 'string' ? message.replace(/<[^>]+>/g, ' ').trim() : String(message), isError ? 'error' : 'info');
+        return;
+    }
+
+    result.style.display = 'block';
+    const plain = typeof message === 'string' ? message : String(message);
+    const looksHtml = /<[a-z][\s\S]*>/i.test(plain);
+
+    if (isError) {
+        result.className = 'grab-result error';
+        result.innerHTML = looksHtml ? plain : `<strong>Error</strong><br>${escapeHtml(plain)}`;
+    } else if (/no jobs matched|no match|no matching/i.test(plain) && !looksHtml) {
+        result.className = 'grab-result info';
+        result.innerHTML = `<strong>No Match</strong><br>${escapeHtml(plain)}`;
+    } else if (/Matched Job|job-matched|Job Matched/i.test(plain) || looksHtml) {
+        result.className = 'grab-result success';
+        if (looksHtml) {
+            result.innerHTML = plain;
+        } else {
+            result.innerHTML = `<div class="job-matched"><h4>Job Matched Successfully!</h4>${escapeHtml(plain)}</div>`;
+        }
+    } else {
+        result.className = 'grab-result info';
+        result.innerHTML = looksHtml ? plain : escapeHtml(plain);
+    }
+}
+
+/** Build success HTML for a grab_job response (includes "Matched Job" marker). */
+function renderGrabJobSuccess(data, capabilitiesUsed) {
+    const service = typeof data.service === 'object'
+        ? (data.service.name || JSON.stringify(data.service))
+        : String(data.service || 'Service');
+    const price = data.price != null ? data.price : '—';
+    const currency = data.currency || 'USD';
+    const buyer = data.buyer_username || 'buyer';
+    const jobId = data.job_id || '';
+    const location = data.location_type === 'remote'
+        ? 'Remote'
+        : (data.address || data.location_type || 'Physical');
+
+    return `
+        <div class="job-matched">
+            <h4>Matched Job</h4>
+            <p><strong>Service:</strong> ${escapeHtml(service)}</p>
+            <p><strong>Pay:</strong> ${escapeHtml(String(currency))} ${escapeHtml(String(price))}</p>
+            <p><strong>Buyer:</strong> ${escapeHtml(buyer)}</p>
+            <p><strong>Location:</strong> ${escapeHtml(location)}</p>
+            ${jobId ? `<p class="small-text mb-2"><strong>Job ID:</strong> ${escapeHtml(jobId)}</p>` : ''}
+            <div class="d-flex gap-2 flex-wrap mt-2">
+                ${jobId ? `<button type="button" class="btn btn-sm btn-primary" onclick="openJobChannel('${escapeHtml(jobId)}')">Open job chat</button>` : ''}
+                <button type="button" class="btn btn-sm btn-outline-light" onclick="showChat()">Inbox</button>
+            </div>
+            <p class="small-text mt-2 mb-0">Coordinate with the buyer in job chat, then complete and rate when done.</p>
+        </div>
+    `;
+}
+
+/** Render provider active jobs into #providerActiveJobs on grab_job page. */
+function updateProviderDashboard() {
+    const container = document.getElementById('providerActiveJobs');
+    const card = document.getElementById('activeJobsCard');
+    if (!container) return;
+
+    const providerJobs = (AppState.activeJobs || []).filter(
+        (j) => j.role === 'provider' || j.provider_username === AppState.currentUsername
+    );
+
+    if (card) {
+        card.style.display = AppState.authToken ? 'block' : 'none';
+    }
+
+    if (!AppState.authToken) {
+        container.innerHTML = '<p class="text-muted mb-0">Log in to see active jobs</p>';
+        return;
+    }
+
+    if (providerJobs.length === 0) {
+        container.innerHTML = '<p class="text-muted mb-0">No active jobs yet — grab one above when you are ready.</p>';
+        return;
+    }
+
+    container.innerHTML = providerJobs.map((job) => {
+        const service = typeof job.service === 'object'
+            ? escapeHtml(JSON.stringify(job.service))
+            : escapeHtml(job.service);
+        const accepted = job.accepted_at
+            ? new Date(job.accepted_at * 1000).toLocaleDateString()
+            : '';
+        return `
+            <div class="job-item mb-3">
+                <h6>${service}</h6>
+                <p class="mb-1">Pay: ${escapeHtml(job.currency || 'USD')} ${escapeHtml(String(job.price))}
+                    ${accepted ? ` · Accepted ${accepted}` : ''}</p>
+                <p class="text-muted small-text mb-2">Buyer: ${escapeHtml(job.counterparty || job.buyer_username || '—')}</p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-outline-light" onclick="openJobChannel('${job.job_id}')">Job chat</button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="signJobPrompt('${job.job_id}')">Complete &amp; rate</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="rejectJobPrompt('${job.job_id}')">Reject</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function signJobPrompt(jobId) {
+    if (!AppState.authToken) {
+        showAuth({ defaultTab: 'login' });
+        return;
+    }
+    const raw = prompt('Rate the other party (1–5 stars):', '5');
+    if (raw === null) return;
+    const stars = parseInt(raw, 10);
+    if (!(stars >= 1 && stars <= 5)) {
+        showToast('Please enter a rating from 1 to 5', 'error');
+        return;
+    }
+    try {
+        const response = await fetch(`${API_URL}/sign_job`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${AppState.authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ job_id: jobId, star_rating: stars })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok) {
+            showToast('Job completed and rated', 'success');
+            await loadCompletedJobs();
+        } else {
+            showToast(data.error || 'Could not complete job', 'error');
+        }
+    } catch (err) {
+        showToast('Network error while completing job', 'error');
+    }
+}
+
+async function rejectJobPrompt(jobId) {
+    if (!AppState.authToken) {
+        showAuth({ defaultTab: 'login' });
+        return;
+    }
+    const reason = prompt('Optional reason for rejecting this job:') || '';
+    try {
+        const response = await fetch(`${API_URL}/reject_job`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${AppState.authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ job_id: jobId, reason })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok) {
+            showToast('Job rejected', 'info');
+            await loadCompletedJobs();
+        } else {
+            showToast(data.error || 'Could not reject job', 'error');
+        }
+    } catch (err) {
+        showToast('Network error while rejecting job', 'error');
+    }
+}
+
 async function handleGrabJobSubmission(e) {
     e.preventDefault();
     
     if (!AppState.authToken) {
-        showAuth();
+        showAuth({
+            intent: 'grab',
+            defaultTab: 'register',
+            defaultType: 'supply',
+            title: 'Create a provider account to find work'
+        });
         return;
     }
 
@@ -1390,6 +1737,7 @@ async function handleGrabJobSubmission(e) {
     // Auto-save
     if (capabilitiesText) {
         localStorage.setItem(STORAGE_KEYS.PROVIDER_PROFILE, capabilitiesText);
+        AppState.providerProfile = capabilitiesText;
     }
 
     const payload = {
@@ -1422,7 +1770,9 @@ async function handleGrabJobSubmission(e) {
 
     if (elements.submitBtn) {
         elements.submitBtn.disabled = true;
-        elements.submitBtn.textContent = 'Grabbing...';
+        const btnText = document.getElementById('grabButtonText');
+        if (btnText) btnText.textContent = 'Grabbing...';
+        else elements.submitBtn.textContent = 'Grabbing...';
     }
 
     setGrabJobResult('Looking for the best job match...', false);
@@ -1438,7 +1788,10 @@ async function handleGrabJobSubmission(e) {
         });
 
         if (response.status === 204) {
-            setGrabJobResult('No jobs matched your capabilities. Try again soon.', true);
+            setGrabJobResult(
+                'No jobs matched your capabilities. Try widening max distance, refining capabilities, or check back when more buyers post requests.',
+                false
+            );
             return;
         }
 
@@ -1446,15 +1799,25 @@ async function handleGrabJobSubmission(e) {
         if (response.ok) {
             setGrabJobResult(renderGrabJobSuccess(data, payload.capabilities), false);
             await loadCompletedJobs();
+            showToast('Job matched — open job chat to coordinate', 'success');
         } else {
-            setGrabJobResult(data.error || 'Unable to grab a job right now.', true);
+            let errMsg = data.error || data.message || 'Unable to grab a job right now.';
+            if (/wallet|seat|NFT/i.test(errMsg)) {
+                errMsg += ' Link your wallet on Profile after you have a seat (email mickey@theservicesexchange.com).';
+            }
+            if (/supply-type|Only supply/i.test(errMsg)) {
+                errMsg = 'This account is not a provider account. Register a Provide Services account or use Find Work with a supply login.';
+            }
+            setGrabJobResult(errMsg, true);
         }
     } catch (error) {
         setGrabJobResult('Network error while grabbing a job.', true);
     } finally {
         if (elements.submitBtn) {
             elements.submitBtn.disabled = false;
-            elements.submitBtn.textContent = 'Grab Job';
+            const btnText = document.getElementById('grabButtonText');
+            if (btnText) btnText.textContent = 'Grab Job';
+            else elements.submitBtn.textContent = 'Grab Job';
         }
     }
 }
@@ -1582,6 +1945,12 @@ window.respondToPartyInvite = respondToPartyInvite;
 window.fileJobDispute = fileJobDispute;
 window.openJobChannel = openJobChannel;
 window.postJobChannelMessage = postJobChannelMessage;
+window.setGrabJobResult = setGrabJobResult;
+window.renderGrabJobSuccess = renderGrabJobSuccess;
+window.updateProviderDashboard = updateProviderDashboard;
+window.setCapabilitiesStatus = setCapabilitiesStatus;
+window.signJobPrompt = signJobPrompt;
+window.rejectJobPrompt = rejectJobPrompt;
 
 
 AppState.jobChannel = { jobId: null, pollTimer: null, lastTs: 0, lastId: null, readOnly: false };

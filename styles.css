@@ -1829,6 +1829,40 @@ section[style*="background:#f"],
 }
 
 /* =====================
+   NAV ACTIONS + MORE MENU
+   ===================== */
+.nav-actions {
+    flex-shrink: 0;
+}
+
+.navbar .dropdown-menu-dark {
+    background: var(--bg-panel);
+    border: 1px solid rgba(0,255,255,0.35);
+    border-radius: 0;
+    box-shadow: 0 0 20px rgba(0,255,255,0.2);
+}
+
+.navbar .dropdown-item {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.85rem;
+    padding: 0.65rem 1rem;
+}
+
+.navbar .dropdown-item:hover,
+.navbar .dropdown-item:focus {
+    background: rgba(0,255,255,0.12);
+    color: var(--primary);
+}
+
+.navbar .dropdown-item.active {
+    background: rgba(0,255,255,0.18);
+    color: var(--primary);
+}
+
+/* =====================
    MOBILE
    ===================== */
 @media (max-width: 768px) {
@@ -1836,8 +1870,50 @@ section[style*="background:#f"],
         opacity: 0.45;
     }
 
-    .hero h1 {
-        font-size: 1.6rem;
+    /* Prevent iOS input zoom */
+    .form-control,
+    .form-select,
+    select.form-control,
+    textarea.form-control,
+    input.form-control {
+        font-size: 16px !important;
+    }
+
+    /* Thumb-friendly targets */
+    .btn:not(.btn-xs),
+    .navbar-nav .nav-link,
+    .navbar-toggler,
+    .account-btn,
+    .service-tag,
+    .user-type-card,
+    .logout-btn {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .navbar-nav .nav-link {
+        padding: 0.75rem 1rem;
+    }
+
+    .service-tag {
+        padding: 10px 14px;
+    }
+
+    .logout-btn {
+        padding: 8px 14px;
+    }
+
+    /* Pixel font scale — keep brand, stay readable */
+    h1, .hero h1 {
+        font-size: clamp(0.95rem, 4.5vw, 1.35rem);
+        line-height: 1.7;
+    }
+
+    h2, h3 {
+        font-size: clamp(0.75rem, 3.5vw, 1rem);
+        line-height: 1.7;
     }
 
     .hero p {
@@ -1845,11 +1921,17 @@ section[style*="background:#f"],
     }
 
     .hero-title {
-        font-size: 1.2rem;
+        font-size: clamp(1rem, 5vw, 1.25rem);
+        line-height: 1.65;
     }
 
     .hero-light {
-        padding: 70px 0 50px;
+        padding: 56px 0 40px;
+    }
+
+    .hero-eyebrow {
+        font-size: 11px;
+        letter-spacing: 2px;
     }
 
     .service-grid {
@@ -1860,7 +1942,7 @@ section[style*="background:#f"],
     .service-grid-item {
         padding: 16px 10px;
         font-size: 0.72rem;
-        min-height: 44px;
+        min-height: 72px;
     }
 
     .sg-icon {
@@ -1871,12 +1953,34 @@ section[style*="background:#f"],
         padding: 50px 0;
     }
 
+    /* Account panel as bottom sheet */
     .account-window {
-        left: 12px;
-        right: 12px;
-        width: auto;
-        top: 64px;
-        max-height: 80vh;
+        left: 0;
+        right: 0;
+        top: auto;
+        bottom: 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: min(85vh, 640px);
+        border-radius: 12px 12px 0 0;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        transform: translateY(12px);
+        padding-bottom: env(safe-area-inset-bottom, 0);
+        box-shadow: 0 -8px 40px rgba(0,255,255,0.25);
+    }
+
+    .account-dropdown.open .account-window {
+        transform: translateY(0);
+    }
+
+    .account-section .btn-sm,
+    .account-section .btn-xs,
+    .job-item .btn-sm,
+    .bid-item .btn-sm {
+        min-height: 40px;
+        padding: 0.4rem 0.75rem;
     }
 
     .stat-badge {
@@ -1896,12 +2000,51 @@ section[style*="background:#f"],
         font-size: 0.7rem;
     }
 
+    .navbar-collapse {
+        padding-bottom: 0.75rem;
+        border-top: 1px solid rgba(0,255,255,0.15);
+        margin-top: 0.5rem;
+    }
+
+    .nav-actions {
+        width: 100%;
+        padding-top: 0.5rem;
+    }
+
+    .nav-actions .btn {
+        flex: 1 1 auto;
+    }
+
     .toast-container-rse {
         top: auto;
-        bottom: 16px;
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
         right: 12px;
         left: 12px;
         max-width: none;
+    }
+
+    /* Modals: room for keyboard */
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+
+    .modal-body {
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Rock easter egg clear of home indicator */
+    .rock-easter-egg {
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        left: calc(12px + env(safe-area-inset-left, 0px));
+    }
+
+    /* Tables: allow horizontal scroll */
+    .table-responsive,
+    .lb-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 }
 
