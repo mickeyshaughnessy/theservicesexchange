@@ -73,6 +73,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load platform stats for homepage
     loadPlatformStats();
+
+    // Light inbox badge poll for returning users
+    if (AppState.authToken && !window._rseInboxPoll) {
+        window._rseInboxPoll = setInterval(() => {
+            if (AppState.authToken) refreshInboxBadge();
+        }, 60000);
+    }
 });
 
 // Load platform statistics
@@ -270,6 +277,10 @@ function updateUIForLoggedOutUser() {
     if (elements.account) elements.account.style.display = 'none';
     if (elements.chat) elements.chat.style.display = 'none';
     if (elements.bulletin) elements.bulletin.style.display = 'none';
+
+    const strip = document.getElementById('userHomeStrip');
+    if (strip) strip.style.display = 'none';
+    clearInboxBadge();
 }
 
 function requestUserLocation() {
@@ -472,9 +483,204 @@ async function loadAccountData() {
         }
         
         await Promise.all([loadOutstandingBids(), loadCompletedJobs()]);
+        updateReturningUserHome();
+        refreshInboxBadge();
+        if (window.refreshProviderReadiness) window.refreshProviderReadiness();
         
     } catch (error) {
         console.error('Error loading account data:', error);
+    }
+}
+
+/**
+ * Role-aware home strip for returning + new logged-in users (index.html).
+ */
+function updateReturningUserHome() {
+    const strip = document.getElementById('userHomeStrip');
+    if (!strip) return;
+
+    if (!AppState.authToken || !AppState.currentUser) {
+        strip.style.display = 'none';
+        return;
+    }
+
+    strip.style.display = 'block';
+    const u = AppState.currentUser;
+    const type = u.user_type || (u.identity && u.identity.user_type) || '';
+    const isSupply = type === 'supply';
+    const isDemand = type === 'demand';
+    const name = u.username || AppState.currentUsername || 'operator';
+    const active = AppState.activeJobs || [];
+    const bids = AppState.outstandingBids || [];
+    const completed = AppState.completedJobs || [];
+    const invites = (AppState.partyInvites || []).filter((pi) => pi.invite_status === 'invited');
+
+    const titleEl = document.getElementById('userHomeTitle');
+    const subEl = document.getElementById('userHomeSub');
+    const eyebrow = document.getElementById('userHomeEyebrow');
+    const actions = document.getElementById('userHomeActions');
+    const grid = document.getElementById('userHomeGrid');
+    const checklist = document.getElementById('userHomeChecklist');
+
+    if (eyebrow) {
+        eyebrow.textContent = isSupply ? '// Provider console' : isDemand ? '// Buyer console' : '// Your console';
+    }
+    if (titleEl) titleEl.textContent = `Welcome back, ${name}`;
+
+    const seatLabel = u.seat_status === 'valid'
+        ? 'Seat active'
+        : (u.wallet_address ? `Seat: ${u.seat_status || 'pending'}` : 'No wallet linked');
+
+    if (subEl) {
+        if (isSupply) {
+            subEl.textContent = `${active.length} active job${active.length === 1 ? '' : 's'} · ${completed.length} completed · ${seatLabel}`;
+        } else {
+            subEl.textContent = `${bids.length} open request${bids.length === 1 ? '' : 's'} · ${active.length} active · ${completed.length} completed`;
+        }
+    }
+
+    if (actions) {
+        if (isSupply) {
+            actions.innerHTML = `
+                <a class="btn btn-hero-primary" href="grab_job.html">Find Work</a>
+                <button type="button" class="btn btn-hero-secondary" onclick="showChat()">Inbox</button>
+                <a class="btn btn-hero-secondary" href="profile.html">Profile</a>
+            `;
+        } else {
+            actions.innerHTML = `
+                <button type="button" class="btn btn-hero-primary" onclick="showBuyerForm()">Post request</button>
+                <button type="button" class="btn btn-hero-secondary" onclick="showChat()">Inbox</button>
+                <a class="btn btn-hero-secondary" href="campaigns.html">Campaigns</a>
+            `;
+        }
+    }
+
+    if (grid) {
+        const tiles = [];
+        if (isSupply || !isDemand) {
+            tiles.push({ label: 'Active jobs', value: String(active.length), hint: active[0] ? (typeof active[0].service === 'object' ? 'In progress' : String(active[0].service).slice(0, 40)) : 'Grab a match' });
+            tiles.push({ label: 'Seat', value: u.seat_status === 'valid' ? 'OK' : '—', hint: seatLabel });
+        }
+        if (isDemand || !isSupply) {
+            tiles.push({ label: 'Open requests', value: String(bids.length), hint: bids[0] ? 'Waiting for providers' : 'Post your first' });
+            tiles.push({ label: 'Active services', value: String(active.length), hint: invites.length ? `${invites.length} party invite(s)` : 'Matched work' });
+        }
+        tiles.push({ label: 'Completed', value: String(completed.length), hint: 'Reputation history' });
+        grid.innerHTML = tiles.map((t) => `
+            <div class="user-home-tile">
+                <div class="user-home-tile-value">${escapeHtml(t.value)}</div>
+                <div class="user-home-tile-label">${escapeHtml(t.label)}</div>
+                <div class="user-home-tile-hint">${escapeHtml(t.hint)}</div>
+            </div>
+        `).join('');
+    }
+
+    // First-session checklist for users with little activity
+    if (checklist) {
+        const isNew = bids.length === 0 && active.length === 0 && completed.length === 0;
+        if (isNew) {
+            checklist.style.display = 'block';
+            if (isSupply) {
+                checklist.innerHTML = `
+                    <h3 class="user-home-check-title">// Provider checklist</h3>
+                    <ol class="user-home-check-list">
+                        <li>Describe capabilities on <a href="grab_job.html">Find Work</a></li>
+                        <li>Link wallet + seat on <a href="profile.html">Profile</a> (email mickey@theservicesexchange.com for a seat)</li>
+                        <li>Tap <strong>Grab Job</strong> to get matched</li>
+                        <li>Complete &amp; rate when the job is done</li>
+                    </ol>
+                `;
+            } else {
+                checklist.innerHTML = `
+                    <h3 class="user-home-check-title">// Buyer checklist</h3>
+                    <ol class="user-home-check-list">
+                        <li><button type="button" class="btn btn-link p-0 align-baseline" onclick="showBuyerForm()">Post a service request</button></li>
+                        <li>Wait for a provider match (watch Account → Active Services)</li>
+                        <li>Coordinate in job chat, then complete &amp; rate</li>
+                    </ol>
+                `;
+            }
+        } else {
+            checklist.style.display = 'none';
+            checklist.innerHTML = '';
+        }
+    }
+}
+
+async function refreshInboxBadge() {
+    const btn = document.getElementById('chatButton');
+    if (!btn || !AppState.authToken) {
+        clearInboxBadge();
+        return;
+    }
+    try {
+        const response = await fetch(`${API_URL}/chat/conversations`, {
+            headers: { Authorization: `Bearer ${AppState.authToken}` }
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const convos = data.conversations || [];
+        AppState.conversations = convos;
+        const unread = convos.filter((c) => c.unread).length;
+        setInboxBadge(unread);
+    } catch (e) {
+        /* silent */
+    }
+}
+
+function setInboxBadge(count) {
+    const btn = document.getElementById('chatButton');
+    if (!btn) return;
+    let badge = document.getElementById('inboxBadge');
+    if (count > 0) {
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.id = 'inboxBadge';
+            badge.className = 'inbox-badge';
+            btn.style.position = 'relative';
+            btn.appendChild(badge);
+        }
+        badge.textContent = count > 9 ? '9+' : String(count);
+        badge.style.display = 'inline-flex';
+        btn.setAttribute('aria-label', `Inbox, ${count} unread`);
+    } else if (badge) {
+        badge.style.display = 'none';
+        btn.setAttribute('aria-label', 'Inbox');
+    }
+}
+
+function clearInboxBadge() {
+    const badge = document.getElementById('inboxBadge');
+    if (badge) badge.style.display = 'none';
+}
+
+/** After no-match on grab, show sample open market activity */
+async function showNoMatchMarketHints() {
+    const result = document.getElementById('grabJobResult');
+    if (!result) return;
+    try {
+        const response = await fetch(`${API_URL}/exchange_data?limit=12`);
+        if (!response.ok) return;
+        const data = await response.json();
+        const bids = data.active_bids || [];
+        if (!bids.length) {
+            result.innerHTML += `<p class="small-text mt-2 mb-0">Market is quiet right now — check <a href="campaigns.html">Campaigns</a> or try again later.</p>`;
+            return;
+        }
+        const samples = bids.slice(0, 4).map((b) => {
+            const svc = typeof b.service === 'object' ? (b.service.name || JSON.stringify(b.service)) : String(b.service || '');
+            const price = b.price != null ? `${b.currency || 'USD'} ${b.price}` : '';
+            return `<li><strong>${escapeHtml(svc.slice(0, 48))}</strong>${price ? ` · ${escapeHtml(price)}` : ''}</li>`;
+        }).join('');
+        result.innerHTML += `
+            <div class="mt-3 pt-2" style="border-top:1px solid rgba(0,255,255,0.2);">
+                <p class="small-text mb-1">Open requests on the exchange (tune capabilities to match):</p>
+                <ul class="small-text mb-2" style="padding-left:1.2rem;">${samples}</ul>
+                <p class="small-text mb-0">Tips: widen max distance, add sensor/payload keywords, or try remote location type.</p>
+            </div>
+        `;
+    } catch (e) {
+        /* ignore */
     }
 }
 
@@ -620,6 +826,7 @@ async function loadCompletedJobs() {
             updateJobsDisplay();
             updateActiveJobsDisplay();
             updateProviderDashboard();
+            updateReturningUserHome();
         }
     } catch (error) {
         console.error('Error loading jobs:', error);
@@ -871,6 +1078,8 @@ async function loadConversations() {
             const data = await response.json();
             AppState.conversations = data.conversations || [];
             updateConversationsDisplay();
+            const unread = AppState.conversations.filter((c) => c.unread).length;
+            setInboxBadge(unread);
         } else if (inboxContainer) {
             inboxContainer.innerHTML = '<p class="text-danger p-3">Error loading conversations</p>';
         }
@@ -1792,6 +2001,7 @@ async function handleGrabJobSubmission(e) {
                 'No jobs matched your capabilities. Try widening max distance, refining capabilities, or check back when more buyers post requests.',
                 false
             );
+            showNoMatchMarketHints();
             return;
         }
 
@@ -1951,6 +2161,8 @@ window.updateProviderDashboard = updateProviderDashboard;
 window.setCapabilitiesStatus = setCapabilitiesStatus;
 window.signJobPrompt = signJobPrompt;
 window.rejectJobPrompt = rejectJobPrompt;
+window.updateReturningUserHome = updateReturningUserHome;
+window.refreshInboxBadge = refreshInboxBadge;
 
 
 AppState.jobChannel = { jobId: null, pollTimer: null, lastTs: 0, lastId: null, readOnly: false };

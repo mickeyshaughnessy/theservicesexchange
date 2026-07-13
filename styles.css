@@ -1829,6 +1829,155 @@ section[style*="background:#f"],
 }
 
 /* =====================
+   RETURNING USER HOME
+   ===================== */
+.user-home-strip {
+    background: var(--bg-deep);
+    border-bottom: 2px solid var(--primary);
+    padding: 1.5rem 0;
+    position: relative;
+    z-index: 1;
+}
+
+.user-home-card {
+    background: var(--bg-panel);
+    border: 1px solid rgba(0,255,255,0.35);
+    box-shadow: 0 0 24px rgba(0,255,255,0.12);
+    padding: 1.25rem 1.5rem;
+}
+
+.user-home-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.user-home-eyebrow {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--accent);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0 0 0.35rem;
+    text-shadow: 0 0 6px var(--accent);
+}
+
+.user-home-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+    color: var(--primary);
+    margin: 0 0 0.4rem;
+    line-height: 1.7;
+    text-shadow: 0 0 8px rgba(0,255,255,0.5);
+}
+
+.user-home-sub {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.user-home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.user-home-actions .btn {
+    font-size: 0.85rem;
+}
+
+.user-home-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.user-home-tile {
+    background: var(--bg-card);
+    border: 1px solid rgba(0,255,255,0.2);
+    padding: 0.85rem 1rem;
+}
+
+.user-home-tile-value {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1rem;
+    color: var(--accent);
+    text-shadow: 0 0 8px rgba(57,255,20,0.4);
+    margin-bottom: 0.35rem;
+}
+
+.user-home-tile-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.user-home-tile-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text);
+    margin-top: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-home-checklist {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0,255,255,0.15);
+}
+
+.user-home-check-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--primary);
+    margin: 0 0 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.user-home-check-list {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--text);
+    margin: 0;
+    padding-left: 1.25rem;
+    line-height: 1.85;
+}
+
+.user-home-check-list a {
+    color: var(--primary);
+}
+
+.inbox-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 0;
+    background: var(--danger);
+    color: #fff;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    line-height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--danger);
+    box-shadow: 0 0 8px rgba(255,51,51,0.5);
+}
+
+/* =====================
    NAV ACTIONS + MORE MENU
    ===================== */
 .nav-actions {
@@ -2045,6 +2194,23 @@ section[style*="background:#f"],
     .lb-table-wrap {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+    }
+
+    .user-home-card {
+        padding: 1rem;
+    }
+
+    .user-home-actions {
+        width: 100%;
+    }
+
+    .user-home-actions .btn {
+        flex: 1 1 auto;
+        min-height: 44px;
+    }
+
+    .user-home-tile-hint {
+        white-space: normal;
     }
 }
 
