@@ -570,11 +570,34 @@
         el.scrollTop = el.scrollHeight;
     }
 
+    async function _itSleep(ms) {
+        return new Promise((r) => setTimeout(r, ms));
+    }
+
     async function _itRegisterLogin(username, userType, password) {
-        await _itPost('/register', { username, password, user_type: userType });
-        const r = await _itPost('/login', { username, password });
-        if (r.status !== 200) throw new Error(`Login failed for ${username}: ${r.status}`);
-        return r.data.access_token;
+        // Register/login are rate-limited (~20/min); retry with backoff for suite scale
+        let lastErr = 'unknown';
+        for (let attempt = 0; attempt < 8; attempt++) {
+            const reg = await _itPost('/register', { username, password, user_type: userType });
+            if (reg.status === 429) {
+                lastErr = 'register 429';
+                await _itSleep(4000 + attempt * 2000);
+                continue;
+            }
+            // 200/201 or already exists (400) — try login
+            const r = await _itPost('/login', { username, password });
+            if (r.status === 200 && r.data && r.data.access_token) {
+                return r.data.access_token;
+            }
+            if (r.status === 429) {
+                lastErr = 'login 429';
+                await _itSleep(4000 + attempt * 2000);
+                continue;
+            }
+            lastErr = `login ${r.status}` + (r.data && r.data.error ? ': ' + r.data.error : '');
+            await _itSleep(1000);
+        }
+        throw new Error(`Login failed for ${username}: ${lastErr}`);
     }
 
     async function _itGrabJob(token, caps, locationType, address) {
@@ -621,19 +644,16 @@
             _itLog(`Provider: ${provUsername}`, '#888');
             _itLog('', '');
 
-            statusEl.textContent = 'Setting up accounts…';
-            _itLog('[ SETUP ] Registering test accounts…', '#ffff00');
+            statusEl.textContent = 'Setting up buyer account…';
+            _itLog('[ SETUP ] Registering shared buyer account…', '#ffff00');
+            _itLog('  Note: each case uses a fresh provider (avoids 900s /grab_job cooldown).', '#888');
 
             buyerToken = await _itRegisterLogin(buyerUsername, 'demand', password);
-            provToken  = await _itRegisterLogin(provUsername,  'supply', password);
-
-            // Link test wallet (optional, non-fatal)
-            const walletR = await _itPost('/set_wallet', { wallet_address: INT_TEST_WALLET }, provToken);
-            _itLog(`[ SETUP ] Wallet linked: ${walletR.status === 200 ? 'OK' : 'non-fatal (' + walletR.status + ')'}`, '#888');
+            _itLog(`[ SETUP ] Buyer ready: ${buyerUsername}`, '#888');
             _itLog('', '');
 
-            // ── Run 31 matching test cases ────────────────────────────────────
-            _itLog('[ MATCHING ] Running 31 service-matching tests…', '#ffff00');
+            // ── Run matching test cases ────────────────────────────────────
+            _itLog(`[ MATCHING ] Running ${MATCHING_TEST_CASES.length} service-matching tests…`, '#ffff00');
             _itLog('  Format: [case] non-match attempt → match attempt', '#888');
             _itLog('', '');
 
@@ -642,11 +662,31 @@
                 const tc = MATCHING_TEST_CASES[i];
                 statusEl.textContent = `Test ${i+1}/${MATCHING_TEST_CASES.length}: ${tc.name}`;
 
-                // Post bid
-                const bidPayload = { end_time: Math.floor(Date.now()/1000) + 7200, ...tc.bid };
+                // Fresh provider per case — successful grab sets last_grab_at cooldown (default 900s)
+                const caseProvUser = `it_p${suffix}_${i}`;
+                let caseProvToken;
+                try {
+                    caseProvToken = await _itRegisterLogin(caseProvUser, 'supply', password);
+                    await _itPost('/set_wallet', { wallet_address: INT_TEST_WALLET }, caseProvToken);
+                } catch (setupErr) {
+                    _itLog(`  [${i+1}] ${tc.name} — SKIP (provider setup: ${setupErr.message})`, '#ff3333');
+                    results.push({ name: tc.name, nonMatchOk: null, matchOk: null, note: 'provider setup failed' });
+                    continue;
+                }
+                // Keep last provider token for cleanup path bookkeeping
+                provToken = caseProvToken;
+
+                // Post bid (always include end_time for API validation)
+                const bidPayload = {
+                    end_time: Math.floor(Date.now() / 1000) + 7200,
+                    ...tc.bid,
+                    // Unique service string so leftover market noise is less likely to collide
+                    service: (tc.bid.service || 'TEST service') + ` [${suffix}-${i}]`,
+                };
                 const bidR = await _itPost('/submit_bid', bidPayload, buyerToken);
                 if (bidR.status !== 200) {
-                    _itLog(`  [${i+1}] ${tc.name} — SKIP (submit_bid ${bidR.status})`, '#ff3333');
+                    const err = (bidR.data && bidR.data.error) || bidR.status;
+                    _itLog(`  [${i+1}] ${tc.name} — SKIP (submit_bid ${err})`, '#ff3333');
                     results.push({ name: tc.name, nonMatchOk: null, matchOk: null, note: 'submit_bid failed' });
                     continue;
                 }
@@ -657,8 +697,10 @@
                 const addr    = tc.bid.address || null;
 
                 // ── Non-matching grab (expect 204) ──
+                // 204 does not start cooldown; 200 (false positive / external) does — spin a new provider for match if needed
                 let nonMatchOk = null, nonMatchNote = '';
-                const nmR = await _itGrabJob(provToken, tc.non_matching_caps, locType, addr);
+                let matchOk = null, matchNote = '';
+                const nmR = await _itGrabJob(caseProvToken, tc.non_matching_caps, locType, addr);
                 if (nmR.status === 204) {
                     nonMatchOk = true;
                 } else if (nmR.status === 200 && nmR.data) {
@@ -667,40 +709,63 @@
                         // False positive: wrong caps grabbed our bid
                         nonMatchOk = false;
                         nonMatchNote = 'FP: wrong caps grabbed our bid';
-                        createdJobs.push({ job_id: job.job_id, buyerToken, provToken });
-                        // Re-post bid for the positive test
-                        const rebidR = await _itPost('/submit_bid', bidPayload, buyerToken);
+                        createdJobs.push({ job_id: job.job_id, buyerToken, provToken: caseProvToken });
+                        // Re-post bid + new provider for the positive test (cooldown after successful grab)
+                        const rebidR = await _itPost('/submit_bid', {
+                            ...bidPayload,
+                            service: bidPayload.service + ' rebid',
+                            end_time: Math.floor(Date.now() / 1000) + 7200,
+                        }, buyerToken);
                         if (rebidR.status === 200) {
                             bidId = rebidR.data.bid_id;
                             createdBidIds.push({ bidId, token: buyerToken });
                         }
+                        try {
+                            const fpProv = `it_p${suffix}_${i}m`;
+                            caseProvToken = await _itRegisterLogin(fpProv, 'supply', password);
+                            await _itPost('/set_wallet', { wallet_address: INT_TEST_WALLET }, caseProvToken);
+                            provToken = caseProvToken;
+                        } catch (e) {
+                            matchNote = 'provider re-setup failed after FP';
+                        }
                     } else {
-                        // External bid grabbed — return it
-                        await _itPost('/reject_job', { job_id: job.job_id, reason: 'Test: returning external bid' }, provToken);
-                        nonMatchOk = true;  // our bid was not consumed
+                        // External bid grabbed — return it (does not consume our bid)
+                        await _itPost('/reject_job', { job_id: job.job_id, reason: 'Test: returning external bid' }, caseProvToken);
+                        nonMatchOk = true;
+                        // Successful grab still starts cooldown — new provider for match leg
+                        try {
+                            const extProv = `it_p${suffix}_${i}x`;
+                            caseProvToken = await _itRegisterLogin(extProv, 'supply', password);
+                            await _itPost('/set_wallet', { wallet_address: INT_TEST_WALLET }, caseProvToken);
+                            provToken = caseProvToken;
+                        } catch (e) {
+                            nonMatchNote = (nonMatchNote ? nonMatchNote + ' | ' : '') + 'match provider re-setup failed';
+                        }
                     }
                 } else if (nmR.status === 403) {
                     nonMatchOk = null;
                     nonMatchNote = '403 forbidden';
+                } else if (nmR.status === 429) {
+                    nonMatchOk = null;
+                    nonMatchNote = '429 grab cooldown';
                 } else {
                     nonMatchOk = null;
-                    nonMatchNote = 'status ' + nmR.status;
+                    nonMatchNote = 'status ' + nmR.status + (nmR.data && nmR.data.error ? ': ' + nmR.data.error : '');
                 }
 
                 // ── Matching grab (expect 200) ──
-                let matchOk = null, matchNote = '';
-                const mR = await _itGrabJob(provToken, tc.matching_caps, locType, addr);
+                const mR = await _itGrabJob(caseProvToken, tc.matching_caps, locType, addr);
                 if (mR.status === 200 && mR.data) {
                     const job = mR.data;
                     if (job.buyer_username === buyerUsername) {
                         matchOk = true;
-                        createdJobs.push({ job_id: job.job_id, buyerToken, provToken });
+                        createdJobs.push({ job_id: job.job_id, buyerToken, provToken: caseProvToken });
                         // Remove from createdBidIds since it's now a job
                         const idx = createdBidIds.findIndex(b => b.bidId === bidId);
                         if (idx >= 0) createdBidIds.splice(idx, 1);
                     } else {
                         // Grabbed external bid — return it and mark as miss
-                        await _itPost('/reject_job', { job_id: job.job_id, reason: 'Test: returning external bid' }, provToken);
+                        await _itPost('/reject_job', { job_id: job.job_id, reason: 'Test: returning external bid' }, caseProvToken);
                         matchOk = false;
                         matchNote = 'FN: grabbed external, our bid still open';
                     }
@@ -710,9 +775,12 @@
                 } else if (mR.status === 403) {
                     matchOk = null;
                     matchNote = '403 forbidden';
+                } else if (mR.status === 429) {
+                    matchOk = null;
+                    matchNote = '429 grab cooldown';
                 } else {
                     matchOk = null;
-                    matchNote = 'status ' + mR.status;
+                    matchNote = 'status ' + mR.status + (mR.data && mR.data.error ? ': ' + mR.data.error : '');
                 }
 
                 results.push({ name: tc.name, nonMatchOk, matchOk, nonMatchNote, matchNote });
@@ -732,7 +800,8 @@
                     (extra ? ` <span style="color:#888">(${extra})</span>` : '')
                 );
 
-                await new Promise(r => setTimeout(r, 150));  // brief breathe
+                // Stay under Flask STRICT_LIMIT (~20/min) for register/login of fresh providers
+                await _itSleep(3500);
             }
 
         } catch (err) {
