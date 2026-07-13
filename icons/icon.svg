@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" fill="#0a0a2e"/>
+  <rect x="4" y="4" width="120" height="120" fill="none" stroke="#00ffff" stroke-width="4"/>
+  <rect x="22" y="22" width="84" height="84" fill="none" stroke="#39ff14" stroke-width="2"/>
+  <text x="64" y="78" text-anchor="middle" font-family="monospace" font-size="36" font-weight="700" fill="#00ffff">RSE</text>
+</svg>

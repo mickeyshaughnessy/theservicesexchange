@@ -363,6 +363,24 @@ def serve_css():
 def serve_js():
     return flask.send_from_directory('.', 'script.js')
 
+@app.route('/favicon.ico')
+def favicon():
+    return flask.send_from_directory('.', 'favicon.ico')
+
+@app.route('/manifest.webmanifest')
+def web_manifest():
+    return flask.send_from_directory('.', 'manifest.webmanifest', mimetype='application/manifest+json')
+
+@app.route('/sw.js')
+def service_worker():
+    resp = flask.send_from_directory('.', 'sw.js', mimetype='application/javascript')
+    resp.headers['Service-Worker-Allowed'] = '/'
+    return resp
+
+@app.route('/icons/<path:filename>')
+def icons(filename):
+    return flask.send_from_directory('icons', filename)
+
 # -----------------------------------------------------------------------------
 # Authentication Endpoints
 # -----------------------------------------------------------------------------

@@ -4,9 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a2e">
-    <title>The RSE — API Docs</title>
+    <meta name="description" content="The RSE — open robot labor marketplace. Post requests, grab jobs, build reputation.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="The RSE">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+<title>The RSE — API Docs</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=13" rel="stylesheet">
+    <link href="styles.css?v=14" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui.css" rel="stylesheet">
     <style>
         /* ── Dark theme overrides for Swagger UI, matching The RSE palette ── */
@@ -162,9 +171,107 @@
         .docs-links-strip a { color: var(--secondary); margin-right: 1.5rem; text-decoration: none; }
         .docs-links-strip a:hover { text-shadow: 0 0 6px rgba(255,0,255,0.6); }
         .docs-links-strip span.note { color: var(--text-dim); }
+        #int-test-terminal {
+            background: #050510;
+            border: 1px solid rgba(57,255,20,0.25);
+            padding: 1rem;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            line-height: 1.7;
+            color: #c0c0d0;
+            display: none;
+            -webkit-overflow-scrolling: touch;
+            word-break: break-word;
+        }
+        .swagger-shell .container {
+            max-width: 100%;
+        }
+        #swagger-ui {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        @media (max-width: 768px) {
+            .docs-links-strip .container {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+            .docs-links-strip a {
+                margin-right: 0;
+                min-height: 44px;
+                display: inline-flex;
+                align-items: center;
+            }
+            .docs-links-strip span.note {
+                font-size: 0.75rem;
+                line-height: 1.5;
+            }
+            #int-test-suite {
+                padding: 1rem !important;
+            }
+            #int-test-suite h2 {
+                font-size: 0.7rem !important;
+                line-height: 1.7;
+            }
+            #run-int-tests-btn,
+            #stop-int-tests-btn {
+                min-height: 44px;
+                font-size: 0.55rem !important;
+                flex: 1 1 auto;
+            }
+            #int-test-terminal {
+                height: min(280px, 50vh);
+                font-size: 0.7rem;
+                padding: 0.75rem;
+            }
+            #swagger-ui .swagger-ui .opblock-tag {
+                font-size: 0.6rem !important;
+                line-height: 1.7;
+                word-break: break-word;
+            }
+            #swagger-ui .swagger-ui .opblock .opblock-summary {
+                flex-wrap: wrap;
+                padding: 8px;
+            }
+            #swagger-ui .swagger-ui .opblock .opblock-summary-path {
+                font-size: 0.78rem;
+                word-break: break-all;
+                max-width: 100%;
+            }
+            #swagger-ui .swagger-ui .opblock .opblock-summary-description {
+                font-size: 0.75rem;
+            }
+            #swagger-ui .swagger-ui table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            #swagger-ui .swagger-ui .parameters-col_description,
+            #swagger-ui .swagger-ui .response-col_description {
+                min-width: 160px;
+            }
+            #swagger-ui .swagger-ui .scheme-container {
+                padding: 0.75rem;
+            }
+            #swagger-ui .swagger-ui .info .title {
+                font-size: 1.1rem !important;
+                line-height: 1.5;
+            }
+            #swagger-ui .swagger-ui .btn {
+                min-height: 40px;
+            }
+            .swagger-shell .container.py-4 {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+        }
     </style>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="index.html">The RSE</a>
@@ -264,7 +371,7 @@
     </div>
 
 
-    <div class="swagger-shell">
+    <main id="main-content" class="swagger-shell" tabindex="-1">
         <div class="container py-4">
 
             <!-- One-click Integration Test Suite -->
@@ -280,13 +387,13 @@
                     <button id="stop-int-tests-btn" style="display:none;background:rgba(255,51,51,0.15);border:1px solid #ff3333;color:#ff3333;font-family:'Press Start 2P',monospace;font-size:0.6rem;padding:10px 18px;cursor:pointer;" onclick="stopIntegrationTests()">■ Stop</button>
                     <span id="int-test-status" style="font-family:'Share Tech Mono',monospace;font-size:0.78rem;color:var(--text-dim);"></span>
                 </div>
-                <div id="int-test-terminal" style="background:#050510;border:1px solid rgba(57,255,20,0.25);padding:1rem;height:400px;overflow-y:auto;font-family:'Share Tech Mono',monospace;font-size:0.75rem;line-height:1.7;color:#c0c0d0;display:none;"></div>
+                <div id="int-test-terminal"></div>
                 <div id="int-test-summary" style="display:none;margin-top:1rem;"></div>
             </div>
 
             <div id="swagger-ui"></div>
         </div>
-    </div>
+    </main>
 
     <script>
     // ══════════════════════════════════════════════════════════════
@@ -788,6 +895,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=13"></script>
+    <script src="script.js?v=14"></script>
 </body>
 </html>

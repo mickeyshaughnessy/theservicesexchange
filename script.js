@@ -80,7 +80,38 @@ document.addEventListener('DOMContentLoaded', function() {
             if (AppState.authToken) refreshInboxBadge();
         }, 60000);
     }
+
+    enhanceKeyboardServiceTiles();
+    registerServiceWorker();
 });
+
+/** Make service tiles / tags keyboard-activatable */
+function enhanceKeyboardServiceTiles() {
+    document.querySelectorAll('.service-grid-item[onclick], .service-tag[onclick]').forEach((el) => {
+        if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+        if (!el.getAttribute('role')) el.setAttribute('role', 'button');
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                el.click();
+            }
+        });
+    });
+}
+
+function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    // Only on secure contexts / production-like hosts
+    const host = location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+        // still allow local testing
+    }
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.log('SW registration skipped:', err && err.message);
+        });
+    });
+}
 
 // Load platform statistics
 async function loadPlatformStats() {
