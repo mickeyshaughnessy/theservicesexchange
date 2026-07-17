@@ -77,6 +77,29 @@
             line-height: 1.9;
             margin-bottom: 0;
         }
+        .about-feature-image {
+            max-width: 900px;
+            margin: 0 auto 3rem;
+            border: 1px solid rgba(0,255,255,0.3);
+            box-shadow: 0 0 24px rgba(0,255,255,0.12);
+            overflow: hidden;
+        }
+        .about-feature-image img {
+            display: block;
+            width: 100%;
+            height: auto;
+            vertical-align: middle;
+        }
+        .about-feature-image figcaption {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--secondary);
+            text-align: center;
+            padding: 0.75rem 1rem;
+            background: var(--bg-panel);
+            border-top: 1px solid rgba(0,255,255,0.2);
+            margin: 0;
+        }
         @media (max-width: 768px) {
             .founder-header {
                 flex-direction: column;
@@ -196,6 +219,15 @@
                    monetize remnant robot labor: every idle hour your robot sits in the garage is an hour
                    it could be earning on the exchange.</p>
             </div>
+
+            <figure class="about-feature-image">
+                <img src="images/about-village.jpg"
+                     alt="Pixel-art marketplace village — a path to the exchange"
+                     width="1838"
+                     height="1026"
+                     loading="lazy">
+                <figcaption>The exchange: open bids, open work, open roads.</figcaption>
+            </figure>
 
             <h2 class="text-center mb-4" style="font-family:'Press Start 2P',monospace;font-size:1rem;color:var(--primary);text-shadow:0 0 12px rgba(0,255,255,0.5);">MULTI-ROBOT COOPERATION</h2>
             <div class="purpose-block" style="margin-bottom:2rem;">
