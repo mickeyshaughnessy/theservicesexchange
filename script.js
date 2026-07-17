@@ -26,7 +26,9 @@ const AppState = {
     currentConversation: null,
     bulletinPosts: [],
     userLocation: null,
-    providerProfile: null
+    providerProfile: null,
+    editingBidId: null,
+    cancelBidInFlight: false
 };
 
 // Initialize when DOM loads
@@ -85,6 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
     registerServiceWorker();
     initServiceAutocompletes();
     initHomeBidForm();
+    initBidEditorChrome();
 });
 
 /** Make service tiles / tags keyboard-activatable */
@@ -312,6 +315,12 @@ function updateUIForLoggedInUser() {
     if (elements.account) elements.account.style.display = 'inline-block';
     if (elements.chat) elements.chat.style.display = 'inline-block';
     if (elements.bulletin) elements.bulletin.style.display = 'inline-block';
+
+    const foot = document.getElementById('homeBidFoot');
+    if (foot && !getEditingBidId()) {
+        foot.textContent = 'Your bid goes live for providers to grab.';
+        delete foot.dataset.defaultText;
+    }
 }
 
 function updateUIForLoggedOutUser() {
@@ -330,6 +339,12 @@ function updateUIForLoggedOutUser() {
     const strip = document.getElementById('userHomeStrip');
     if (strip) strip.style.display = 'none';
     clearInboxBadge();
+
+    const foot = document.getElementById('homeBidFoot');
+    if (foot) {
+        foot.textContent = 'No account? We’ll create one when you bid.';
+        delete foot.dataset.defaultText;
+    }
 }
 
 function requestUserLocation() {
@@ -503,6 +518,9 @@ function logout(opts = {}) {
     AppState.outstandingBids = [];
     AppState.completedJobs = [];
     AppState.activeJobs = [];
+    AppState.editingBidId = null;
+    AppState.cancelBidInFlight = false;
+    try { clearBidEditor({ silent: true }); } catch (e) { /* form may not exist */ }
     
     updateProviderDashboard();
     if (!quiet) showToast('Logged out', 'info');
@@ -611,7 +629,7 @@ function updateReturningUserHome() {
             tiles.push({ label: 'Seat', value: u.seat_status === 'valid' ? 'OK' : '—', hint: seatLabel });
         }
         if (isDemand || !isSupply) {
-            tiles.push({ label: 'Open bids', value: String(bids.length), hint: bids[0] ? 'Click a bid below to edit' : 'Post your first' });
+            tiles.push({ label: 'Open bids', value: String(bids.length), hint: bids[0] ? 'Edit or cancel below' : 'Post your first' });
             tiles.push({ label: 'Active services', value: String(active.length), hint: invites.length ? `${invites.length} party invite(s)` : 'Matched work' });
         }
         tiles.push({ label: 'Completed', value: String(completed.length), hint: 'Reputation history' });
@@ -832,26 +850,52 @@ async function loadOutstandingBids() {
     }
 }
 
+function bidActionButtonsHtml(bidId, opts) {
+    const id = escapeHtml(bidId);
+    const editing = opts && opts.editing;
+    const compact = opts && opts.compact;
+    const editLabel = editing ? (compact ? 'Resume' : 'Resume edit') : 'Edit';
+    return `
+        <div class="bid-actions" role="group" aria-label="Bid actions">
+            <button type="button" class="btn btn-sm btn-outline-light bid-action-edit"
+                    data-action="edit-bid" data-bid-id="${id}">${editLabel}</button>
+            <button type="button" class="btn btn-sm bid-action-cancel"
+                    data-action="cancel-bid" data-bid-id="${id}"
+                    title="Withdraw this open bid">Cancel bid</button>
+        </div>`;
+}
+
 function updateBidsDisplay() {
     const container = document.getElementById('outstandingBids');
-    if (!container) return;
-    
-    if (AppState.outstandingBids.length === 0) {
-        container.innerHTML = '<p class="text-muted mb-0">No outstanding bids. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="showBuyerForm()">Post one</button></p>';
+    if (!container) {
+        renderConsoleBidsList();
         return;
     }
-    
+
+    if (AppState.outstandingBids.length === 0) {
+        container.innerHTML = '<p class="text-muted mb-0">No open bids. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="showBuyerForm()">Post one</button></p>';
+        renderConsoleBidsList();
+        return;
+    }
+
+    const editingId = getEditingBidId();
     container.innerHTML = AppState.outstandingBids.map(bid => {
-        const svc = typeof bid.service === 'object' ? JSON.stringify(bid.service) : String(bid.service || '');
+        const svc = bidServiceText(bid);
+        const id = escapeHtml(bid.bid_id);
+        const exp = formatBidExpiry(bid.end_time);
+        const isEditing = editingId && editingId === bid.bid_id;
         return `
-        <div class="bid-item" role="button" tabindex="0" onclick="openBidForEdit('${bid.bid_id}')" onkeydown="if(event.key==='Enter')openBidForEdit('${bid.bid_id}')">
-            <h6>${escapeHtml(svc)}</h6>
-            <p>Price: ${escapeHtml(bid.currency || 'USD')} ${bid.price} • Expires: ${new Date(bid.end_time * 1000).toLocaleString()}</p>
-            ${bid.location_type !== 'remote' ? `<p class="text-muted">Location: ${escapeHtml(bid.address || 'Physical service')}</p>` : '<p class="text-muted">Remote service</p>'}
-            <div class="bid-actions mt-2" onclick="event.stopPropagation()">
-                <button type="button" class="btn btn-sm btn-outline-light" onclick="openBidForEdit('${bid.bid_id}')">Edit</button>
-                <button type="button" class="btn btn-danger btn-sm" onclick="cancelBid('${bid.bid_id}')">Cancel</button>
+        <div class="bid-item${isEditing ? ' is-editing' : ''}${exp.expired ? ' is-expired' : ''}" data-bid-id="${id}">
+            <div class="bid-item-top">
+                <h6 class="bid-item-title">${escapeHtml(svc)}</h6>
+                ${isEditing ? '<span class="bid-editing-badge">Editing</span>' : ''}
             </div>
+            <div class="bid-item-meta">
+                <span class="bid-chip bid-chip-price">${escapeHtml(formatBidPrice(bid))}</span>
+                <span class="bid-chip${exp.expired ? ' bid-chip-warn' : ''}" title="${escapeHtml(exp.absolute)}">${escapeHtml(exp.relative)}</span>
+                <span class="bid-chip bid-chip-loc">${escapeHtml(formatBidLocation(bid))}</span>
+            </div>
+            ${bidActionButtonsHtml(bid.bid_id, { editing: isEditing })}
         </div>`;
     }).join('');
     renderConsoleBidsList();
@@ -1050,9 +1094,123 @@ async function _fileJobDisputeApi(jobId, reason) {
     }
 }
 
+function bidServiceText(bid) {
+    if (!bid) return '';
+    if (typeof bid.service === 'object' && bid.service) {
+        return bid.service.name || bid.service.description || JSON.stringify(bid.service);
+    }
+    return String(bid.service || '');
+}
+
+function formatBidPrice(bid) {
+    const currency = bid.currency || 'USD';
+    const price = bid.price;
+    if (price == null || price === '') return currency;
+    const n = Number(price);
+    if (Number.isFinite(n)) {
+        try {
+            return new Intl.NumberFormat(undefined, {
+                style: 'currency',
+                currency,
+                maximumFractionDigits: n % 1 === 0 ? 0 : 2
+            }).format(n);
+        } catch (e) {
+            return `${currency} ${n}`;
+        }
+    }
+    return `${currency} ${price}`;
+}
+
+function formatBidExpiry(endTime) {
+    if (!endTime) return { relative: 'no expiry', absolute: '', expired: false };
+    const endMs = endTime * 1000;
+    const absolute = new Date(endMs).toLocaleString(undefined, {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+    });
+    const diffSec = Math.floor((endMs - Date.now()) / 1000);
+    if (diffSec <= 0) return { relative: 'expired', absolute, expired: true };
+    const hours = Math.floor(diffSec / 3600);
+    const days = Math.floor(hours / 24);
+    let relative;
+    if (days >= 2) relative = `${days}d left`;
+    else if (hours >= 48) relative = `${Math.round(hours / 24)}d left`;
+    else if (hours >= 1) relative = `${hours}h left`;
+    else relative = `${Math.max(1, Math.floor(diffSec / 60))}m left`;
+    return { relative, absolute, expired: false };
+}
+
+function formatBidLocation(bid) {
+    const type = (bid.location_type || '').toLowerCase();
+    if (type === 'remote') return 'Remote';
+    if (type === 'hybrid') return bid.address ? `Hybrid · ${bid.address}` : 'Hybrid';
+    if (type === 'physical') return bid.address ? bid.address : 'Physical';
+    return bid.address || (type || 'Location TBD');
+}
+
+function getEditingBidId() {
+    return AppState.editingBidId
+        || (document.getElementById('homeBidEditId') || {}).value
+        || (document.getElementById('bidEditId') || {}).value
+        || '';
+}
+
+/** @param {boolean} visible @param {'home'|'modal'|'all'} [scope] */
+function setCancelBidButtonsVisible(visible, scope) {
+    const homeIds = ['homeBidCancelBid', 'homeBidCancelBidTop', 'homeBidCancelEdit'];
+    const modalIds = ['bidModalCancelBid', 'bidModalCancelBidBottom', 'bidModalExitEdit'];
+    let ids;
+    if (scope === 'home') ids = homeIds;
+    else if (scope === 'modal') ids = modalIds;
+    else ids = homeIds.concat(modalIds);
+
+    // Always hide the other surface's edit chrome when scoping
+    if (scope === 'home') {
+        modalIds.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+    } else if (scope === 'modal') {
+        homeIds.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+    }
+
+    ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (!visible) {
+            el.style.display = 'none';
+            return;
+        }
+        // Exit-edit is secondary; cancel/update share primary weight
+        if (id === 'homeBidCancelEdit' || id === 'bidModalExitEdit') {
+            el.style.display = 'inline-flex';
+        } else {
+            el.style.display = '';
+        }
+    });
+}
+
+function setCancelBidButtonsBusy(busy) {
+    document.querySelectorAll('.btn-cancel-bid, .bid-action-cancel, [data-action="cancel-bid"]').forEach((btn) => {
+        btn.disabled = !!busy;
+        if (busy) {
+            if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+            btn.textContent = 'Cancelling…';
+        } else if (btn.dataset.label) {
+            btn.textContent = btn.dataset.label;
+            delete btn.dataset.label;
+        }
+    });
+}
+
 async function cancelBid(bidId) {
-    if (!confirm('Are you sure you want to cancel this request?')) return;
-    
+    if (!bidId || AppState.cancelBidInFlight) return;
+    if (!confirm('Cancel this open bid?\n\nProviders will no longer see it. You can post a new one anytime.')) return;
+
+    AppState.cancelBidInFlight = true;
+    setCancelBidButtonsBusy(true);
     try {
         const response = await fetch(`${API_URL}/cancel_bid`, {
             method: 'POST',
@@ -1062,17 +1220,77 @@ async function cancelBid(bidId) {
             },
             body: JSON.stringify({ bid_id: bidId })
         });
-        
+
         if (response.ok) {
-            showToast('Request cancelled', 'success');
+            showToast('Bid cancelled', 'success');
             AppState.outstandingBids = AppState.outstandingBids.filter(bid => bid.bid_id !== bidId);
+            if (getEditingBidId() === bidId) {
+                clearBidEditor({ silent: true });
+                const bidModal = document.getElementById('bidModal');
+                if (bidModal) {
+                    const inst = bootstrap.Modal.getInstance(bidModal);
+                    if (inst) inst.hide();
+                }
+            }
             updateBidsDisplay();
+            if (typeof updateReturningUserHome === 'function') updateReturningUserHome();
+            rseTrack('bid_cancelled', { bid_id: bidId });
         } else {
-            const error = await response.json();
-            showToast(`Failed to cancel request: ${error.error || 'Unknown error'}`, 'error');
+            const error = await response.json().catch(() => ({}));
+            showToast(`Failed to cancel bid: ${error.error || 'Unknown error'}`, 'error');
         }
     } catch (error) {
-        showToast('Network error while cancelling request', 'error');
+        showToast('Network error while cancelling bid', 'error');
+    } finally {
+        AppState.cancelBidInFlight = false;
+        setCancelBidButtonsBusy(false);
+    }
+}
+
+/** Cancel the bid currently loaded in the editor (home form or modal). */
+function cancelBidBeingEdited() {
+    const bidId = getEditingBidId();
+    if (!bidId) {
+        showToast('No bid is open for edit', 'error');
+        return;
+    }
+    return cancelBid(bidId);
+}
+
+function initBidEditorChrome() {
+    if (document.body.dataset.bidEditorChrome === '1') return;
+    document.body.dataset.bidEditorChrome = '1';
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if (!getEditingBidId()) return;
+        // Don't steal Esc from open Bootstrap modals other than bid modal
+        const openModal = document.querySelector('.modal.show');
+        if (openModal && openModal.id !== 'bidModal') return;
+        e.preventDefault();
+        clearBidEditor();
+        showToast('Exited edit mode', 'info', 2000);
+    });
+    // Event delegation so Cancel/Edit always work (no fragile inline handlers)
+    document.addEventListener('click', (e) => {
+        const btn = e.target && e.target.closest && e.target.closest('[data-action="cancel-bid"], [data-action="edit-bid"]');
+        if (!btn) return;
+        const bidId = btn.getAttribute('data-bid-id');
+        if (!bidId) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (btn.getAttribute('data-action') === 'cancel-bid') {
+            cancelBid(bidId);
+        } else {
+            openBidForEdit(bidId);
+        }
+    });
+    const bidModal = document.getElementById('bidModal');
+    if (bidModal) {
+        bidModal.addEventListener('hidden.bs.modal', () => {
+            if (getEditingBidId() && !document.getElementById('homeBidService')) {
+                clearBidEditor({ silent: true });
+            }
+        });
     }
 }
 
@@ -1403,35 +1621,75 @@ function renderConsoleBidsList() {
         return;
     }
     wrap.style.display = 'block';
-    wrap.innerHTML = `<h3>// Your open bids — click to edit</h3>` + bids.map((bid) => {
-        const svc = typeof bid.service === 'object' ? JSON.stringify(bid.service) : String(bid.service || '');
-        const short = svc.length > 72 ? svc.slice(0, 72) + '…' : svc;
-        return `<button type="button" class="console-bid-item" onclick="openBidForEdit('${bid.bid_id}')">
-            <div class="cbi-service">${escapeHtml(short)}</div>
-            <div class="cbi-meta">${escapeHtml(bid.currency || 'USD')} ${escapeHtml(String(bid.price))} · ${escapeHtml(bid.location_type || '')} · expires ${new Date(bid.end_time * 1000).toLocaleString()}</div>
-        </button>`;
+    const editingId = getEditingBidId();
+    const count = bids.length;
+    wrap.innerHTML = `
+        <div class="user-home-bids-header">
+            <h3>// Open bids</h3>
+            <span class="user-home-bids-count">${count} open</span>
+        </div>
+        <p class="user-home-bids-hint">Use <strong>Cancel bid</strong> to withdraw, or <strong>Edit</strong> to change details.</p>
+    ` + bids.map((bid) => {
+        const svc = bidServiceText(bid);
+        const short = svc.length > 80 ? svc.slice(0, 80) + '…' : svc;
+        const id = escapeHtml(bid.bid_id);
+        const exp = formatBidExpiry(bid.end_time);
+        const isEditing = editingId && editingId === bid.bid_id;
+        return `<div class="console-bid-item${isEditing ? ' is-editing' : ''}${exp.expired ? ' is-expired' : ''}" data-bid-id="${id}">
+            <button type="button" class="cbi-main" data-action="edit-bid" data-bid-id="${id}" aria-label="Edit bid: ${escapeHtml(short)}">
+                <div class="cbi-service-row">
+                    <div class="cbi-service">${escapeHtml(short)}</div>
+                    ${isEditing ? '<span class="bid-editing-badge">Editing</span>' : ''}
+                </div>
+                <div class="cbi-meta">
+                    <span class="bid-chip bid-chip-price">${escapeHtml(formatBidPrice(bid))}</span>
+                    <span class="bid-chip${exp.expired ? ' bid-chip-warn' : ''}" title="${escapeHtml(exp.absolute)}">${escapeHtml(exp.relative)}</span>
+                    <span class="bid-chip bid-chip-loc">${escapeHtml(formatBidLocation(bid))}</span>
+                </div>
+            </button>
+            ${bidActionButtonsHtml(bid.bid_id, { editing: isEditing, compact: true })}
+        </div>`;
     }).join('');
 }
 
-function clearBidEditor() {
+function clearBidEditor(opts) {
+    const silent = opts && opts.silent;
+    AppState.editingBidId = null;
     const editHome = document.getElementById('homeBidEditId');
     const editModal = document.getElementById('bidEditId');
     if (editHome) editHome.value = '';
     if (editModal) editModal.value = '';
     const form = document.getElementById('homeBidForm');
     if (form) form.reset();
+    const modalForm = document.getElementById('bidForm');
+    if (modalForm) modalForm.reset();
     ['homeBidPrice', 'homeBidDuration', 'homeBidLocationType', 'bidPrice', 'bidDuration', 'bidLocationType'].forEach((id) => {
         const el = document.getElementById(id);
         if (el) delete el.dataset.userSet;
     });
     const panel = document.getElementById('homeBidPanel');
-    if (panel) panel.classList.remove('editing');
+    if (panel) {
+        panel.classList.remove('editing');
+        panel.removeAttribute('aria-label');
+    }
+    const banner = document.getElementById('homeBidEditBanner');
+    if (banner) banner.hidden = true;
     const kicker = document.getElementById('homeBidKicker');
     const hint = document.getElementById('homeBidHint');
-    const cancelBtn = document.getElementById('homeBidCancelEdit');
+    const foot = document.getElementById('homeBidFoot');
     if (kicker) kicker.textContent = '// New bid';
-    if (hint) hint.textContent = 'Just describe the job — we fill the rest';
-    if (cancelBtn) cancelBtn.style.display = 'none';
+    if (hint) {
+        hint.textContent = 'Just describe the job — we fill the rest';
+        hint.classList.remove('d-none');
+    }
+    if (foot && foot.dataset.defaultText) {
+        foot.textContent = foot.dataset.defaultText;
+    } else if (foot && !AppState.authToken) {
+        foot.textContent = 'No account? We’ll create one when you bid.';
+    } else if (foot && AppState.authToken) {
+        foot.textContent = 'Your bid goes live for providers to grab.';
+    }
+    setCancelBidButtonsVisible(false, 'all');
     ['homeBidSubmit', 'homeBidSubmitBottom', 'bidModalSubmit', 'bidModalSubmitBottom'].forEach((id) => {
         const btn = document.getElementById(id);
         if (btn) {
@@ -1439,55 +1697,89 @@ function clearBidEditor() {
             btn.dataset.originalText = 'Bid';
         }
     });
+    const modalTitle = document.getElementById('bidModalTitle');
+    if (modalTitle) modalTitle.textContent = 'New bid';
     const details = document.getElementById('homeBidDetails');
+    if (details) details.open = true;
+    // Refresh lists so “Editing” badges clear
+    if (document.getElementById('outstandingBids') && (AppState.outstandingBids || []).length) {
+        updateBidsDisplay();
+    } else {
+        renderConsoleBidsList();
+    }
+}
+
+function applyBidToFormFields(bid, prefix) {
+    const isHome = prefix === 'home';
+    const service = bidServiceText(bid);
+    const serviceEl = document.getElementById(isHome ? 'homeBidService' : 'bidService');
+    if (serviceEl) serviceEl.value = service;
+    const priceEl = document.getElementById(isHome ? 'homeBidPrice' : 'bidPrice');
+    if (priceEl) priceEl.value = bid.price != null ? bid.price : '';
+    const cur = document.getElementById(isHome ? 'homePaymentMethod' : 'paymentMethod');
+    if (cur && bid.currency) cur.value = bid.currency;
+    const loc = document.getElementById(isHome ? 'homeBidLocationType' : 'bidLocationType');
+    if (loc) loc.value = bid.location_type || '';
+    const addr = document.getElementById(isHome ? 'homeBidAddress' : 'bidAddress');
+    if (addr) addr.value = bid.address || '';
+    const remainingSec = Math.max(3600, (bid.end_time || 0) - Math.floor(Date.now() / 1000));
+    const hours = Math.max(1, Math.round(remainingSec / 3600));
+    const dur = document.getElementById(isHome ? 'homeBidDuration' : 'bidDuration');
+    const unit = document.getElementById(isHome ? 'homeBidDurationUnit' : 'bidDurationUnit');
+    if (hours >= 48 && hours % 24 === 0) {
+        if (dur) dur.value = hours / 24;
+        if (unit) unit.value = 'days';
+    } else {
+        if (dur) dur.value = hours;
+        if (unit) unit.value = 'hours';
+    }
+    const details = document.getElementById(isHome ? 'homeBidDetails' : 'bidModalDetails');
     if (details) details.open = true;
 }
 
 function openBidForEdit(bidId) {
     const bid = (AppState.outstandingBids || []).find((b) => b.bid_id === bidId);
     if (!bid) {
-        showToast('Bid not found', 'error');
+        showToast('Bid not found — it may have been grabbed or cancelled', 'error');
         return;
     }
-    const service = typeof bid.service === 'object'
-        ? (bid.service.name || JSON.stringify(bid.service))
-        : String(bid.service || '');
+    AppState.editingBidId = bid.bid_id;
+    const shortId = bid.bid_id.slice(0, 8);
+    const exp = formatBidExpiry(bid.end_time);
 
     // Prefer homepage editor
     const homeService = document.getElementById('homeBidService');
     if (homeService) {
         document.getElementById('homeBidEditId').value = bid.bid_id;
-        homeService.value = service;
-        const priceEl = document.getElementById('homeBidPrice');
-        if (priceEl) priceEl.value = bid.price != null ? bid.price : '';
-        const cur = document.getElementById('homePaymentMethod');
-        if (cur && bid.currency) cur.value = bid.currency;
-        const loc = document.getElementById('homeBidLocationType');
-        if (loc) loc.value = bid.location_type || '';
-        const addr = document.getElementById('homeBidAddress');
-        if (addr) addr.value = bid.address || '';
-        // remaining validity
-        const remainingSec = Math.max(3600, (bid.end_time || 0) - Math.floor(Date.now() / 1000));
-        const hours = Math.max(1, Math.round(remainingSec / 3600));
-        const dur = document.getElementById('homeBidDuration');
-        const unit = document.getElementById('homeBidDurationUnit');
-        if (hours >= 48 && hours % 24 === 0) {
-            if (dur) dur.value = hours / 24;
-            if (unit) unit.value = 'days';
-        } else {
-            if (dur) dur.value = hours;
-            if (unit) unit.value = 'hours';
-        }
-        const details = document.getElementById('homeBidDetails');
-        if (details) details.open = true;
+        applyBidToFormFields(bid, 'home');
         const panel = document.getElementById('homeBidPanel');
-        if (panel) panel.classList.add('editing');
+        if (panel) {
+            panel.classList.add('editing');
+            panel.setAttribute('aria-label', 'Editing open bid');
+        }
+        const banner = document.getElementById('homeBidEditBanner');
+        if (banner) {
+            banner.hidden = false;
+            const bannerText = document.getElementById('homeBidEditBannerText');
+            if (bannerText) {
+                bannerText.textContent = exp.expired
+                    ? `Editing expired bid ${shortId}… — update to re-list, or cancel`
+                    : `Editing bid ${shortId}… — update to save, or cancel to withdraw`;
+            }
+        }
         const kicker = document.getElementById('homeBidKicker');
         const hint = document.getElementById('homeBidHint');
-        const cancelBtn = document.getElementById('homeBidCancelEdit');
+        const foot = document.getElementById('homeBidFoot');
         if (kicker) kicker.textContent = '// Edit bid';
-        if (hint) hint.textContent = `Editing ${bid.bid_id.slice(0, 8)}…`;
-        if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+        if (hint) {
+            hint.textContent = `${formatBidPrice(bid)} · ${exp.relative}`;
+            hint.classList.remove('d-none');
+        }
+        if (foot) {
+            if (!foot.dataset.defaultText) foot.dataset.defaultText = foot.textContent;
+            foot.textContent = 'Update keeps it live. Cancel bid withdraws it. Esc exits edit.';
+        }
+        setCancelBidButtonsVisible(true, 'home');
         ['homeBidSubmit', 'homeBidSubmitBottom'].forEach((id) => {
             const btn = document.getElementById(id);
             if (btn) {
@@ -1495,28 +1787,37 @@ function openBidForEdit(bidId) {
                 btn.dataset.originalText = 'Update bid';
             }
         });
-        // Close account dropdown if open
         document.querySelectorAll('.account-dropdown.open').forEach((d) => d.classList.remove('open'));
+        renderConsoleBidsList();
+        // Mark account list if open
+        document.querySelectorAll('.bid-item.is-editing').forEach((el) => el.classList.remove('is-editing'));
+        // Re-render account list badges when present
+        if (document.getElementById('outstandingBids') && (AppState.outstandingBids || []).length) {
+            // Avoid recursive wipe of form: only update badges if not rebuilding from openBid
+            document.querySelectorAll('#outstandingBids .bid-item').forEach((el) => {
+                const on = el.getAttribute('data-bid-id') === bid.bid_id;
+                el.classList.toggle('is-editing', on);
+                const badge = el.querySelector('.bid-editing-badge');
+                if (on && !badge) {
+                    const top = el.querySelector('.bid-item-top');
+                    if (top) top.insertAdjacentHTML('beforeend', '<span class="bid-editing-badge">Editing</span>');
+                } else if (!on && badge) {
+                    badge.remove();
+                }
+            });
+        }
         focusHomeBidForm();
-        showToast('Editing open bid — change fields and tap Bid', 'info');
+        showToast('Editing bid — Update or Cancel', 'info', 2500);
         return;
     }
 
     // Modal fallback
     const bidEdit = document.getElementById('bidEditId');
     if (bidEdit) bidEdit.value = bid.bid_id;
-    const bidService = document.getElementById('bidService');
-    if (bidService) bidService.value = service;
-    const bidPrice = document.getElementById('bidPrice');
-    if (bidPrice) bidPrice.value = bid.price != null ? bid.price : '';
-    const pay = document.getElementById('paymentMethod');
-    if (pay && bid.currency) pay.value = bid.currency;
-    const bloc = document.getElementById('bidLocationType');
-    if (bloc) bloc.value = bid.location_type || '';
-    const baddr = document.getElementById('bidAddress');
-    if (baddr) baddr.value = bid.address || '';
-    const details = document.getElementById('bidModalDetails');
-    if (details) details.open = true;
+    applyBidToFormFields(bid, 'modal');
+    setCancelBidButtonsVisible(true, 'modal');
+    const modalTitle = document.getElementById('bidModalTitle');
+    if (modalTitle) modalTitle.textContent = 'Edit bid';
     ['bidModalSubmit', 'bidModalSubmitBottom'].forEach((id) => {
         const btn = document.getElementById(id);
         if (btn) {
@@ -1524,7 +1825,9 @@ function openBidForEdit(bidId) {
             btn.dataset.originalText = 'Update bid';
         }
     });
+    renderConsoleBidsList();
     showBuyerForm();
+    showToast('Editing bid — Update or Cancel', 'info', 2500);
 }
 
 /** Fill empty detail fields from parse_service_request (does not wipe user edits). */
@@ -3042,6 +3345,7 @@ window.linkWallet = linkWallet;
 window.linkWalletFromProfile = linkWalletFromProfile;
 window.openBidForEdit = openBidForEdit;
 window.clearBidEditor = clearBidEditor;
+window.cancelBidBeingEdited = cancelBidBeingEdited;
 
 
 AppState.jobChannel = { jobId: null, pollTimer: null, lastTs: 0, lastId: null, readOnly: false };

@@ -171,6 +171,41 @@ a:hover {
     letter-spacing: 0.05em;
 }
 
+/* Top-left demand Android APK download */
+.btn-download-app {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--bg-deep) !important;
+    background: var(--primary) !important;
+    border: 1px solid var(--primary) !important;
+    border-radius: 2px;
+    padding: 0.4rem 0.65rem;
+    white-space: nowrap;
+    box-shadow: 0 0 14px rgba(0, 255, 255, 0.35);
+    text-decoration: none !important;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+.btn-download-app:hover,
+.btn-download-app:focus {
+    color: var(--bg-deep) !important;
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 18px rgba(57, 255, 20, 0.4);
+    text-shadow: none;
+}
+@media (max-width: 576px) {
+    .btn-download-app {
+        font-size: 0.62rem;
+        padding: 0.35rem 0.45rem;
+        max-width: 42vw;
+        white-space: normal;
+        text-align: center;
+    }
+}
+
 .navbar-nav .nav-link {
     font-family: 'Share Tech Mono', monospace;
     color: var(--text) !important;
@@ -321,6 +356,40 @@ a:hover {
     padding: 1.5rem 1.5rem 1.35rem;
     position: relative;
     z-index: 5;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-bid-edit-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--accent);
+    background: rgba(57, 255, 20, 0.08);
+    border: 1px solid rgba(57, 255, 20, 0.35);
+    padding: 0.55rem 0.75rem;
+    margin: -0.25rem 0 1rem;
+    letter-spacing: 0.02em;
+}
+
+.home-bid-edit-banner[hidden] {
+    display: none !important;
+}
+
+.home-bid-edit-banner-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    flex-shrink: 0;
+    animation: bid-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes bid-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.85); }
 }
 
 .home-bid-panel-header {
@@ -349,6 +418,11 @@ a:hover {
     text-shadow: 0 0 6px var(--accent);
 }
 
+.home-bid-panel.editing .home-bid-kicker {
+    color: var(--yellow, #ffff00);
+    text-shadow: 0 0 8px rgba(255, 255, 0, 0.45);
+}
+
 .home-bid-hint {
     font-family: 'Share Tech Mono', monospace;
     font-size: 0.78rem;
@@ -370,9 +444,85 @@ a:hover {
     flex-wrap: wrap;
 }
 
+.home-bid-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 .home-bid-panel.editing {
     border-color: var(--accent);
-    box-shadow: 0 0 28px rgba(57, 255, 20, 0.18);
+    box-shadow: 0 0 28px rgba(57, 255, 20, 0.18), inset 3px 0 0 var(--accent);
+}
+
+/* Match Update bid weight so cancel is equally easy to hit */
+.btn-cancel-bid {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: transparent !important;
+    color: #ff6b6b !important;
+    border: 1px solid rgba(255, 107, 107, 0.75) !important;
+    box-shadow: 0 0 12px rgba(255, 80, 80, 0.15);
+    padding: 0.55rem 1.1rem;
+    min-height: 44px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btn-cancel-bid:hover,
+.btn-cancel-bid:focus {
+    background: rgba(255, 80, 80, 0.15) !important;
+    color: #ff8f8f !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 18px rgba(255, 80, 80, 0.3);
+}
+
+.btn-cancel-bid:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+/* List cancel — solid red so it never blends into the dark UI */
+.bid-action-cancel,
+.btn-cancel-bid-sm {
+    font-family: 'Share Tech Mono', monospace !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #fff !important;
+    background: #c62828 !important;
+    border: 1px solid #ff5252 !important;
+    box-shadow: 0 0 10px rgba(255, 60, 60, 0.25);
+    min-height: 40px;
+    padding: 0.35rem 0.85rem !important;
+    flex: 1 1 auto;
+}
+
+.bid-action-cancel:hover,
+.bid-action-cancel:focus,
+.btn-cancel-bid-sm:hover,
+.btn-cancel-bid-sm:focus {
+    background: #e53935 !important;
+    border-color: #ff8a80 !important;
+    color: #fff !important;
+    box-shadow: 0 0 16px rgba(255, 80, 80, 0.4);
+}
+
+.bid-action-cancel:disabled,
+.btn-cancel-bid-sm:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.bid-action-edit {
+    flex: 1 1 auto;
+    min-height: 40px;
 }
 
 .user-home-bids {
@@ -381,54 +531,259 @@ a:hover {
     border-top: 1px solid rgba(0, 255, 255, 0.15);
 }
 
-.user-home-bids h3 {
+.user-home-bids-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+}
+
+.user-home-bids h3,
+.user-home-bids-header h3 {
     font-family: 'Share Tech Mono', monospace;
     font-size: 0.75rem;
     color: var(--text-dim);
     letter-spacing: 0.1em;
     text-transform: uppercase;
+    margin: 0;
+}
+
+.user-home-bids-count {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--primary);
+    letter-spacing: 0.06em;
+}
+
+.user-home-bids-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
     margin: 0 0 0.75rem;
+    opacity: 0.9;
 }
 
 .console-bid-item {
-    display: block;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
     width: 100%;
     text-align: left;
     background: var(--bg-card);
     border: 1px solid rgba(0, 255, 255, 0.25);
     color: var(--text);
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
-    cursor: pointer;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.55rem;
     font-family: 'Share Tech Mono', monospace;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    flex-wrap: wrap;
 }
 
-.console-bid-item:hover,
-.console-bid-item:focus {
+.console-bid-item:hover {
+    border-color: rgba(0, 255, 255, 0.45);
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.12);
+}
+
+.console-bid-item.is-editing {
     border-color: var(--accent);
-    box-shadow: 0 0 12px rgba(57, 255, 20, 0.2);
-    outline: none;
-    color: var(--text-bright);
+    box-shadow: 0 0 16px rgba(57, 255, 20, 0.2);
+    background: rgba(57, 255, 20, 0.04);
+}
+
+.console-bid-item.is-expired {
+    border-color: rgba(255, 180, 50, 0.4);
+}
+
+.console-bid-item .cbi-main {
+    flex: 1 1 180px;
+    min-width: 0;
+    background: none;
+    border: none;
+    color: inherit;
+    text-align: left;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.console-bid-item .cbi-main:hover .cbi-service,
+.console-bid-item .cbi-main:focus .cbi-service {
+    color: var(--accent);
+    text-shadow: 0 0 8px rgba(57, 255, 20, 0.35);
+}
+
+.console-bid-item .cbi-main:focus {
+    outline: 1px solid rgba(0, 255, 255, 0.35);
+    outline-offset: 2px;
+}
+
+.console-bid-item .cbi-service-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.4rem;
 }
 
 .console-bid-item .cbi-service {
     color: var(--primary);
     font-size: 0.9rem;
-    margin-bottom: 0.25rem;
+    line-height: 1.45;
+    word-break: break-word;
 }
 
 .console-bid-item .cbi-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
     font-size: 0.78rem;
     color: var(--text-dim);
 }
 
-.bid-item {
-    cursor: pointer;
+.console-bid-item .cbi-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+    flex-shrink: 0;
 }
 
-.bid-item:hover {
+.console-bid-item .cbi-actions .btn {
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 36px;
+}
+
+/* Meta chips shared by console + account bid lists */
+.bid-chip {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text);
+    border: 1px solid rgba(0, 255, 255, 0.28);
+    background: rgba(0, 255, 255, 0.05);
+    padding: 0.15rem 0.45rem;
+    line-height: 1.4;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bid-chip-price {
+    color: var(--accent);
+    border-color: rgba(57, 255, 20, 0.4);
+    background: rgba(57, 255, 20, 0.06);
+}
+
+.bid-chip-warn {
+    color: #ffcc66;
+    border-color: rgba(255, 180, 50, 0.5);
+    background: rgba(255, 180, 50, 0.08);
+}
+
+.bid-chip-loc {
+    color: var(--text-dim);
+    max-width: 14rem;
+}
+
+.bid-editing-badge {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bg-deep);
+    background: var(--accent);
+    padding: 0.15rem 0.4rem;
+    box-shadow: 0 0 8px rgba(57, 255, 20, 0.4);
+    flex-shrink: 0;
+    line-height: 1.3;
+}
+
+/* Account dropdown bid cards */
+.bid-item,
+.job-item {
+    background: var(--bg-card);
+    border: 1px solid rgba(0, 255, 255, 0.22);
+    padding: 0.85rem 0.95rem;
+    margin-bottom: 0.55rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.bid-item:hover,
+.job-item:hover {
     border-color: rgba(0, 255, 255, 0.45);
+}
+
+.bid-item.is-editing {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(57, 255, 20, 0.18);
+}
+
+.bid-item.is-expired {
+    border-color: rgba(255, 180, 50, 0.4);
+}
+
+.bid-item-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+}
+
+.bid-item-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--primary);
+    margin: 0;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.bid-item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.65rem;
+}
+
+.bid-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+    align-items: stretch;
+    width: 100%;
+    margin-top: 0.15rem;
+}
+
+.console-bid-item .bid-actions {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 11.5rem;
+    margin-top: 0;
+}
+
+.account-section .bid-actions {
+    margin-top: 0.55rem;
+}
+
+.bid-item h6,
+.job-item h6 {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--primary);
+    margin-bottom: 0.35rem;
+}
+
+.bid-item p,
+.job-item p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text);
+    margin-bottom: 0.25rem;
 }
 
 .home-bid-footer-row {
@@ -2531,6 +2886,44 @@ section[style*="background:#f"],
 
     .home-bid-panel .form-control-lg {
         font-size: 16px !important;
+    }
+
+    .home-bid-header-actions,
+    .home-bid-actions-bottom {
+        width: 100%;
+    }
+
+    .home-bid-header-actions .btn-submit-bid,
+    .home-bid-header-actions .btn-cancel-bid,
+    .home-bid-actions-bottom .btn-submit-bid,
+    .home-bid-actions-bottom .btn-cancel-bid {
+        flex: 1 1 auto;
+        min-width: 0;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .home-bid-actions-bottom .home-bid-exit-edit {
+        width: 100%;
+        order: 3;
+    }
+
+    .console-bid-item .bid-actions,
+    .console-bid-item .cbi-actions {
+        width: 100%;
+        min-width: 0;
+        flex: 1 1 100%;
+    }
+
+    .console-bid-item .bid-actions .btn,
+    .console-bid-item .cbi-actions .btn,
+    .bid-actions .btn {
+        flex: 1 1 45%;
+        min-width: 0;
+    }
+
+    .bid-chip-loc {
+        max-width: 100%;
     }
 
     .service-ac-list {

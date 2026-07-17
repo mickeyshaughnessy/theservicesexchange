@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a2e">
+  <meta name="color-scheme" content="dark">
+  <title>The RSE</title>
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-only">
+  <header class="app-header" id="appHeader" hidden>
+    <img class="logo" src="icon-192.png" alt="">
+    <div class="brand">
+      <div class="brand-title">The RSE</div>
+      <div class="brand-sub" id="headerUser">Demand</div>
+    </div>
+  </header>
+
+  <!-- Auth -->
+  <section id="screen-auth" class="screen active" aria-label="Sign in">
+    <div class="auth-hero">
+      <img class="logo-lg" src="icon-512.png" alt="The RSE">
+      <h1>The RSE</h1>
+      <p>Request robot labor. Simple demand app — talks only to the public API.</p>
+    </div>
+
+    <div class="card">
+      <div class="tabs-auth" role="tablist">
+        <button type="button" id="tabLogin" class="active" role="tab" aria-selected="true">Log in</button>
+        <button type="button" id="tabRegister" role="tab" aria-selected="false">Register</button>
+      </div>
+
+      <div id="authError" class="error-box" role="alert"></div>
+
+      <form id="authForm" autocomplete="on">
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" required minlength="3" maxlength="20" placeholder="3–20 characters">
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8" placeholder="min 8 characters">
+
+        <p class="muted small" id="registerHint" hidden>
+          Creates a <strong>demand</strong> (buyer) account. Provider / robot operators should use the API or website supply tools.
+        </p>
+
+        <button type="submit" class="btn btn-primary" id="authSubmit">Log in</button>
+      </form>
+    </div>
+    <p class="footnote">
+      API: rse-api.com · Payment is settled directly with the provider · Not connected to the marketing website.
+    </p>
+  </section>
+
+  <!-- Request -->
+  <section id="screen-request" class="screen" aria-label="Post a request">
+    <h1>What do you need done?</h1>
+    <p class="muted">Post a priced request. Robot operators match via the exchange.</p>
+
+    <div id="requestSuccess" class="success-box"></div>
+    <div id="requestError" class="error-box" role="alert"></div>
+
+    <form id="bidForm" class="card">
+      <label for="service">Service</label>
+      <textarea id="service" name="service" required placeholder="e.g. Autonomous lawn mowing, 0.5 acre lot, edge trimming"></textarea>
+
+      <div class="row-2">
+        <div>
+          <label for="price">Price (USD)</label>
+          <input id="price" name="price" type="number" min="0.01" step="0.01" required placeholder="75">
+        </div>
+        <div>
+          <label for="hours">Expires in (hours)</label>
+          <input id="hours" name="hours" type="number" min="1" max="168" value="24" required>
+        </div>
+      </div>
+
+      <label for="locationType">Location type</label>
+      <select id="locationType" name="locationType">
+        <option value="physical">Physical</option>
+        <option value="remote">Remote</option>
+        <option value="hybrid">Hybrid</option>
+      </select>
+
+      <label for="address">Address / area</label>
+      <input id="address" name="address" placeholder="Street address or city" autocomplete="street-address">
+
+      <label for="payment">Payment method (off-platform)</label>
+      <input id="payment" name="payment" value="cash" placeholder="cash, crypto, etc.">
+
+      <button type="submit" class="btn btn-primary" id="bidSubmit">Post request</button>
+      <p class="footnote">The exchange does not escrow funds. You pay the provider directly.</p>
+    </form>
+
+    <div class="section-head">
+      <h2>Open requests</h2>
+      <button type="button" class="btn btn-sm" id="refreshBids">Refresh</button>
+    </div>
+    <div id="openBids">
+      <div class="loading">Loading…</div>
+    </div>
+  </section>
+
+  <!-- Jobs -->
+  <section id="screen-jobs" class="screen" aria-label="Jobs">
+    <div class="section-head">
+      <h1>Your jobs</h1>
+      <button type="button" class="btn btn-sm" id="refreshJobs">Refresh</button>
+    </div>
+    <p class="muted">When a provider grabs your request, it shows up here. Both sides rate when work is done.</p>
+
+    <div id="jobsError" class="error-box" role="alert"></div>
+
+    <h2>Active</h2>
+    <div id="activeJobs"><div class="loading">Loading…</div></div>
+
+    <h2 style="margin-top:1.25rem">Completed</h2>
+    <div id="completedJobs"><div class="loading">Loading…</div></div>
+  </section>
+
+  <!-- Account -->
+  <section id="screen-account" class="screen" aria-label="Account">
+    <h1>Account</h1>
+    <div id="accountError" class="error-box" role="alert"></div>
+    <div class="card">
+      <div class="card-title" id="acctName">—</div>
+      <div class="card-meta" id="acctType">demand</div>
+      <div class="stat-row">
+        <div class="stat">
+          <span class="val" id="acctRep">—</span>
+          <span class="lbl">Reputation</span>
+        </div>
+        <div class="stat">
+          <span class="val" id="acctJobs">—</span>
+          <span class="lbl">Completed</span>
+        </div>
+      </div>
+      <p class="muted small" id="acctStars"></p>
+      <button type="button" class="btn btn-danger" id="logoutBtn">Log out</button>
+    </div>
+    <p class="footnote">
+      Session tokens last 24 hours. This app only uses demand-side API routes on rse-api.com.
+    </p>
+  </section>
+
+  <nav class="bottom-nav" aria-label="Main">
+    <button type="button" data-screen="request" class="active">
+      <span class="ico">＋</span>
+      Request
+    </button>
+    <button type="button" data-screen="jobs">
+      <span class="ico">☰</span>
+      Jobs
+    </button>
+    <button type="button" data-screen="account">
+      <span class="ico">◎</span>
+      Account
+    </button>
+  </nav>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

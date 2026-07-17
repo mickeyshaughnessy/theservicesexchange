@@ -1,0 +1,19 @@
+{
+  "name": "rse-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Capacitor Android app for The RSE (demand-side only, talks to rse-api.com)",
+  "scripts": {
+    "sync": "npx cap sync android",
+    "open": "npx cap open android",
+    "assets": "npx capacitor-assets generate --android",
+    "bundle": "cd android && ./gradlew bundleRelease",
+    "assemble": "cd android && ./gradlew assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1"
+  }
+}

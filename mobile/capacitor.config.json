@@ -1,0 +1,9 @@
+{
+  "appId": "com.rse.app",
+  "appName": "The RSE",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#0a0a2e"
+  }
+}

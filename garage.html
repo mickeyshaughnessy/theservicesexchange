@@ -15,7 +15,7 @@
 
 <title>Stonewright's Garage - Robot Franchise Opportunity | The RSE</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=19" rel="stylesheet">
+    <link href="styles.css?v=22" rel="stylesheet">
     <style>
         /* Stonewright's Garage runs the same NES-pixel/mono font system as the
            rest of The RSE, but swaps the cyan cyberpunk palette for a torch-lit
@@ -253,13 +253,16 @@
         }
         .sw-buy-btn {
             display: block;
+            width: 100%;
             text-align: center;
             font-family: 'Press Start 2P', monospace;
             font-size: 0.75rem;
             color: var(--sw-bg-deep);
             background: var(--sw-gold);
+            border: none;
             padding: 16px;
             text-decoration: none;
+            cursor: pointer;
             transition: background 0.15s;
         }
         .sw-buy-btn:hover { background: var(--sw-gold-hover); color: var(--sw-bg-deep); }
@@ -269,6 +272,86 @@
             color: var(--sw-text-dim);
             text-align: center;
             margin-top: 0.75rem;
+        }
+
+        /* Configurator */
+        .sw-config {
+            background: var(--sw-bg-card);
+            border: 1px solid rgba(232,182,74,0.35);
+            padding: 1.25rem 1.35rem;
+            margin-bottom: 1.5rem;
+        }
+        .sw-config-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.65rem;
+            color: var(--sw-gold);
+            margin-bottom: 1rem;
+            letter-spacing: 0.04em;
+        }
+        .sw-config-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .sw-config-field { flex: 1 1 160px; min-width: 140px; }
+        .sw-config-field label {
+            display: block;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--sw-text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.4rem;
+        }
+        .sw-config-field select,
+        .sw-config-field input[type="text"],
+        .sw-config-field input[type="number"],
+        .sw-config-field textarea {
+            width: 100%;
+            background: var(--sw-bg-panel);
+            border: 1px solid rgba(232,182,74,0.4);
+            color: var(--sw-text-bright);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.88rem;
+            padding: 0.55rem 0.7rem;
+            outline: none;
+        }
+        .sw-config-field select:focus,
+        .sw-config-field input:focus,
+        .sw-config-field textarea:focus {
+            border-color: var(--sw-gold);
+            box-shadow: 0 0 10px rgba(232,182,74,0.2);
+        }
+        .sw-config-field textarea {
+            min-height: 140px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+        .sw-config-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--sw-text);
+            cursor: pointer;
+            padding: 0.65rem 0.8rem;
+            border: 1px solid rgba(232,182,74,0.3);
+            background: var(--sw-bg-panel);
+            margin-bottom: 0.6rem;
+        }
+        .sw-config-check:hover { border-color: var(--sw-gold); }
+        .sw-config-check input { margin-top: 0.2rem; accent-color: var(--sw-gold); }
+        .sw-config-check .opt-price {
+            color: var(--sw-ember);
+            font-size: 0.78rem;
+        }
+        .sw-config-hint {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--sw-text-dim);
+            margin: 0 0 0.5rem;
         }
 
         /* FAQ */
@@ -519,7 +602,65 @@
                             <div class="value">+$13K–$30K</div>
                         </div>
                     </div>
-                    <a class="sw-buy-btn" href="mailto:mickey@theservicesexchange.com?subject=Stonewright's%20Garage%20Franchise%20Inquiry" >BUY NOW →</a>
+
+                    <div class="sw-config" id="franchiseConfig">
+                        <div class="sw-config-title">// CONFIGURE YOUR FRANCHISE</div>
+                        <div class="sw-config-row">
+                            <div class="sw-config-field">
+                                <label for="cfgBays">Bay count</label>
+                                <select id="cfgBays">
+                                    <option value="4" selected>4 bays (Starter)</option>
+                                    <option value="6">6 bays</option>
+                                    <option value="8">8 bays</option>
+                                    <option value="10+">10+ bays (custom)</option>
+                                </select>
+                            </div>
+                            <div class="sw-config-field">
+                                <label for="cfgLocation">Target location / market</label>
+                                <input type="text" id="cfgLocation" maxlength="120" placeholder="e.g. Austin, TX or zip code">
+                            </div>
+                            <div class="sw-config-field">
+                                <label for="cfgName">Your name</label>
+                                <input type="text" id="cfgName" maxlength="80" placeholder="Optional">
+                            </div>
+                        </div>
+                        <p class="sw-config-hint">Optional add-ons</p>
+                        <label class="sw-config-check">
+                            <input type="checkbox" id="cfgGenModule">
+                            <span>
+                                Electricity generation module
+                                <span class="opt-price"> (+$25K–$45K)</span>
+                            </span>
+                        </label>
+                        <div class="sw-config-row">
+                            <div class="sw-config-field">
+                                <label for="cfgAttendants">Robot attendants</label>
+                                <select id="cfgAttendants">
+                                    <option value="0" selected>None</option>
+                                    <option value="1">1 attendant (+$13K–$30K)</option>
+                                    <option value="2">2 attendants</option>
+                                    <option value="3">3 attendants</option>
+                                    <option value="4">4 attendants</option>
+                                </select>
+                            </div>
+                            <div class="sw-config-field">
+                                <label for="cfgTimeline">Desired timeline</label>
+                                <select id="cfgTimeline">
+                                    <option value="Exploring / no rush">Exploring / no rush</option>
+                                    <option value="Within 3 months">Within 3 months</option>
+                                    <option value="Within 6 months" selected>Within 6 months</option>
+                                    <option value="Within 12 months">Within 12 months</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="sw-config-field" style="margin-top:0.5rem;">
+                            <label for="cfgEmailBody">Email message (edit before sending)</label>
+                            <textarea id="cfgEmailBody" maxlength="4000" aria-describedby="cfgEmailHint"></textarea>
+                            <p class="sw-config-hint" id="cfgEmailHint" style="margin-top:0.4rem;">Opens your email app to mickeyshaughnessy@gmail.com with this message. Edit freely before you send.</p>
+                        </div>
+                    </div>
+
+                    <button type="button" class="sw-buy-btn" id="franchiseBuyBtn">BUY NOW →</button>
                     <p class="sw-note">Revenue figures are illustrative estimates based on a 4-bay garage running charging,
                     service, and parts sales at typical local rates and utilization. Actual results vary by location,
                     demand, and operating costs, and are not guaranteed.</p>
@@ -643,7 +784,71 @@
         </div>
     </footer>
 
+    <script>
+    (function () {
+        const INQUIRY_EMAIL = 'mickeyshaughnessy@gmail.com';
+        const bodyEl = document.getElementById('cfgEmailBody');
+        const fields = ['cfgBays', 'cfgLocation', 'cfgName', 'cfgGenModule', 'cfgAttendants', 'cfgTimeline'];
+        let bodyDirty = false;
+
+        function buildEmailBody() {
+            const bays = document.getElementById('cfgBays').value;
+            const location = document.getElementById('cfgLocation').value.trim() || '[your target city / market]';
+            const name = document.getElementById('cfgName').value.trim() || '[your name]';
+            const gen = document.getElementById('cfgGenModule').checked;
+            const attendants = document.getElementById('cfgAttendants').value;
+            const timeline = document.getElementById('cfgTimeline').value;
+
+            const lines = [
+                'Hi,',
+                '',
+                "I'm interested in a Stonewright's Garage franchise. Here is the configuration I'm considering:",
+                '',
+                '— Configuration —',
+                'Bay count: ' + bays,
+                'Target location: ' + location,
+                'Electricity generation module: ' + (gen ? 'Yes (+$25K–$45K)' : 'No'),
+                'Robot attendants: ' + (attendants === '0' ? 'None' : attendants),
+                'Desired timeline: ' + timeline,
+                '',
+                '— Contact —',
+                'Name: ' + name,
+                '',
+                'Please follow up with site requirements, kit lead times, and financing options.',
+                '',
+                'Thanks,',
+                name === '[your name]' ? '' : name
+            ];
+            return lines.join('\n').replace(/\n+$/, '\n');
+        }
+
+        function refreshBody(force) {
+            if (!force && bodyDirty) return;
+            bodyEl.value = buildEmailBody();
+        }
+
+        fields.forEach(function (id) {
+            const el = document.getElementById(id);
+            el.addEventListener('change', function () { refreshBody(false); });
+            el.addEventListener('input', function () { refreshBody(false); });
+        });
+
+        bodyEl.addEventListener('input', function () { bodyDirty = true; });
+
+        document.getElementById('franchiseBuyBtn').addEventListener('click', function () {
+            const subject = "Stonewright's Garage Franchise Inquiry — " +
+                document.getElementById('cfgBays').value + ' bay';
+            const body = bodyEl.value.trim() || buildEmailBody();
+            const href = 'mailto:' + INQUIRY_EMAIL +
+                '?subject=' + encodeURIComponent(subject) +
+                '&body=' + encodeURIComponent(body);
+            window.location.href = href;
+        });
+
+        refreshBody(true);
+    })();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js?v=19"></script>
+    <script src="script.js?v=22"></script>
 </body>
 </html>

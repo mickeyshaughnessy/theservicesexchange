@@ -38,6 +38,18 @@ load_testing/results/
 load_testing/test_tokens.json
 load_testing/*.log
 
+# Mobile (Capacitor)
+mobile/node_modules/
+mobile/android/local.properties
+mobile/android/keystore.properties
+mobile/android/keystore/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/capacitor-cordova-android-plugins/build/
+mobile/dist/
+# Public sideload APK lives in /apk/ (committed)
+
 # IDE
 .vscode/
 .idea/
