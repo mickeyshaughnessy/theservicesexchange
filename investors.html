@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a2e">
-    <meta name="description" content="The RSE for investors and fleet partners — clearing layer for robot labor.">
+    <meta name="description" content="The RSE for investors and fleet partners — revenue model, 15-year projections, and multi-stream economics for the robot labor exchange.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="The RSE">
@@ -13,7 +13,7 @@
     <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=19" rel="stylesheet">
+    <link href="styles.css?v=23" rel="stylesheet">
     <title>Investors — The RSE</title>
     <style>
         .inv-page { background: var(--bg-deep); color: var(--text); }
@@ -35,7 +35,7 @@
             font-family: 'Share Tech Mono', monospace;
             font-size: 1.05rem;
             color: var(--text);
-            max-width: 40rem;
+            max-width: 44rem;
             line-height: 1.7;
         }
         .inv-kicker {
@@ -56,12 +56,20 @@
             text-transform: uppercase;
             margin-bottom: 1.25rem;
         }
+        .inv-section h3 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--accent);
+            text-shadow: none;
+            letter-spacing: 0.04em;
+            margin: 1.5rem 0 0.75rem;
+        }
         .inv-prose {
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.95rem;
             line-height: 1.75;
             color: var(--text);
-            max-width: 42rem;
+            max-width: 46rem;
         }
         .inv-grid {
             display: grid;
@@ -98,15 +106,24 @@
             font-size: 0.95rem;
             color: var(--primary);
             text-shadow: none;
-            margin-bottom: 0.65rem;
+            margin: 0 0 0.65rem;
         }
-        .inv-card p {
+        .inv-card p, .inv-card li {
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.88rem;
             color: var(--text);
             line-height: 1.65;
             margin: 0;
         }
+        .inv-card ul { margin: 0.5rem 0 0; padding-left: 1.1rem; }
+        .inv-card .cost-line {
+            margin-top: 0.85rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(0,255,255,0.12);
+            font-size: 0.82rem;
+            color: var(--text-dim);
+        }
+        .inv-card .cost-line strong { color: var(--yellow, #ff0); }
         .inv-cta-row {
             display: flex;
             flex-wrap: wrap;
@@ -129,6 +146,7 @@
             font-size: 0.8rem;
             color: var(--text-dim);
             margin-top: 1rem;
+            line-height: 1.6;
         }
         .inv-table {
             width: 100%;
@@ -142,7 +160,81 @@
             border-bottom: 1px solid rgba(0,255,255,0.12);
             color: var(--text);
         }
-        .inv-table th { color: var(--text-dim); font-weight: normal; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; }
+        .inv-table th {
+            color: var(--text-dim);
+            font-weight: normal;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-size: 0.72rem;
+        }
+        .inv-table td.num, .inv-table th.num { text-align: right; white-space: nowrap; }
+        .inv-table tbody tr:hover { background: rgba(0,255,255,0.04); }
+        .inv-table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid rgba(0,255,255,0.15);
+        }
+        .inv-chart-box {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.2);
+            padding: 1.25rem 1rem 1rem;
+            margin-bottom: 1.25rem;
+            position: relative;
+            height: 380px;
+        }
+        .inv-chart-box.tall { height: 420px; }
+        .inv-chart-box h3 {
+            position: absolute;
+            top: 0.85rem;
+            left: 1rem;
+            right: 1rem;
+            margin: 0;
+            z-index: 1;
+            font-size: 0.85rem;
+            color: var(--primary);
+            pointer-events: none;
+        }
+        .inv-chart-box canvas { margin-top: 1.75rem; }
+        .inv-toc {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 0.75rem;
+            margin-top: 1.25rem;
+        }
+        .inv-toc a {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--primary);
+            text-decoration: none;
+            border: 1px solid rgba(0,255,255,0.3);
+            padding: 0.35rem 0.65rem;
+        }
+        .inv-toc a:hover { background: rgba(0,255,255,0.08); color: var(--accent); }
+        .inv-pill {
+            display: inline-block;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--accent);
+            border: 1px solid rgba(57,255,20,0.4);
+            padding: 0.2rem 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .inv-assumptions {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.15);
+            padding: 1rem 1.25rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.7;
+            color: var(--text-dim);
+        }
+        .inv-assumptions strong { color: var(--text); }
+        @media (max-width: 768px) {
+            .inv-chart-box, .inv-chart-box.tall { height: 320px; }
+            .inv-table { font-size: 0.75rem; }
+        }
     </style>
 </head>
 <body class="inv-page">
@@ -164,6 +256,7 @@
                         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navMore">
                             <li><a class="dropdown-item" href="portfolio.html">Portfolio</a></li>
                             <li><a class="dropdown-item" href="robots.html">Buy a Robot</a></li>
+                            <li><a class="dropdown-item" href="garage.html">Stonewright's Garage</a></li>
                             <li><a class="dropdown-item" href="examples.html">Examples</a></li>
                             <li><a class="dropdown-item" href="api_docs.html">API Docs</a></li>
                             <li><a class="dropdown-item" href="about.html">About</a></li>
@@ -198,17 +291,31 @@
             <h1>The clearing layer for robot labor</h1>
             <p class="lede">
                 The RSE is an open exchange where demand posts work, robot operators claim matches,
-                and reputation records who delivers. Idle machines become capacity. Physical AI needs a market—not just hardware.
+                and reputation records who delivers. Revenue compounds across seven streams:
+                exchange take-rate on transaction volume, eternal supply seats, hardware affiliate &amp; financing,
+                attention products on <code>/nearby</code>, physical franchises, and the Hyperion Fund.
             </p>
             <div class="inv-cta-row">
                 <a class="btn btn-primary btn-lg" href="mailto:mickeyshaughnessy@gmail.com?subject=RSE%20investor%20/%20fleet%20inquiry">Contact</a>
+                <a class="btn btn-outline-light btn-lg" href="#projections">15-year projections</a>
                 <a class="btn btn-outline-light btn-lg" href="api_docs.html">API Docs</a>
-                <a class="btn btn-outline-light btn-lg" href="index.html">Open the exchange</a>
             </div>
+            <nav class="inv-toc" aria-label="Page sections">
+                <a href="#snapshot">Live snapshot</a>
+                <a href="#streams">Revenue streams</a>
+                <a href="#exchange-gmv">1. Exchange GMV</a>
+                <a href="#seats">2. Seats</a>
+                <a href="#hardware">3. Hardware</a>
+                <a href="#nearby-ads">4. Nearby / ads</a>
+                <a href="#franchising">5. Franchising</a>
+                <a href="#hyperion">6. Hyperion Fund</a>
+                <a href="#costs">7. Costs</a>
+                <a href="#projections">Charts &amp; P&amp;L</a>
+            </nav>
         </div>
     </header>
 
-    <section class="inv-section">
+    <section class="inv-section" id="snapshot">
         <div class="container">
             <h2>Live network snapshot</h2>
             <p class="inv-prose mb-4">Public platform counters from the live API. Early stage; density is the work ahead.</p>
@@ -242,7 +349,7 @@
                 <div class="col-md-4">
                     <div class="inv-card">
                         <h3>Supply</h3>
-                        <p>Operators describe capabilities and grab matches. Optional seat NFT on Base gates grab access when enabled.</p>
+                        <p>Operators describe capabilities and grab matches. Eternal RSE Seat NFTs on Base gate grab access when enabled.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -255,9 +362,359 @@
         </div>
     </section>
 
+    <!-- ========== REVENUE STREAMS ========== -->
+    <section class="inv-section" id="streams">
+        <div class="container">
+            <h2>Seven revenue streams</h2>
+            <p class="inv-prose mb-4">
+                Forward-looking model for 2026–2040. Figures are illustrative planning projections, not guarantees.
+                Seat primary issuance ramps to one billion eternal seats over ~five years, then plateaus;
+                recurring streams (exchange take-rate, ads, royalties, fund fees) carry long-run growth.
+            </p>
+            <div class="row g-3">
+                <div class="col-md-6 col-lg-4">
+                    <div class="inv-card">
+                        <span class="inv-pill">01 · Exchange</span>
+                        <h3>Transaction volume @ 5%</h3>
+                        <p>Gross merchandise value (GMV) of robot labor cleared on the exchange reaches <strong>$10T by 2035</strong>. Platform take-rate: <strong>5%</strong> → ~$500B exchange revenue in 2035.</p>
+                        <p class="cost-line"><strong>Cost:</strong> matching infra, support, disputes, insurance partners — ~35% of stream early → ~12% at scale.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="inv-card">
+                        <span class="inv-pill">02 · Seats</span>
+                        <h3>Supply-side seat sales</h3>
+                        <p>Eternal seats at ~<strong>$100k</strong>. Cumulative primary sales: <strong>1M → 10M → 100M → 1B</strong> over ~5 years. Once inventory is placed, primary revenue plateaus (secondary market off-platform / residual only).</p>
+                        <p class="cost-line"><strong>Cost:</strong> mint ops, compliance, channel — ~15% early → ~5% mature (high-margin issuance).</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="inv-card">
+                        <span class="inv-pill">03 · Hardware</span>
+                        <h3>Affiliate &amp; financing</h3>
+                        <p>From <a href="robots.html">Buy a Robot</a>: manufacturer affiliate commission (~3% ASP) plus financing-partner referral (~1.5% of financed principal, ~40% attach).</p>
+                        <p class="cost-line"><strong>Cost:</strong> catalog, partner ops, underwriting handoff — ~25% early → ~12% mature.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="inv-card">
+                        <span class="inv-pill">04 · Attention</span>
+                        <h3>/nearby &amp; ads</h3>
+                        <p>Premium placement, sponsored local results, and attention products on <code>/nearby</code> and related discovery surfaces—OEM, franchise, and fleet advertisers bid for robot and operator attention.</p>
+                        <p class="cost-line"><strong>Cost:</strong> ad product, sales, brand safety — ~45% early → ~28% mature.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="inv-card">
+                        <span class="inv-pill">05 · Franchises</span>
+                        <h3>Garage + Lighthouse</h3>
+                        <p><a href="garage.html">Stonewright's Garage</a> (robot MRO &amp; R&amp;R): $75k fee + 6% royalty. <strong>The Lighthouse</strong> (robot charging stations): $50k fee + 8% royalty on station gross.</p>
+                        <p class="cost-line"><strong>Cost:</strong> training, field support, brand — ~55% early → ~35% mature.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="inv-card">
+                        <span class="inv-pill">06 · Hyperion</span>
+                        <h3>The Hyperion Fund</h3>
+                        <p>Exclusive, profit-distributing automated algorithmic fund investing in stocks, equities, and emerging asset classes. Platform economics: ~1% AUM management + ~15% of gross performance (modeled ~2.8% effective on AUM in base case).</p>
+                        <p class="cost-line"><strong>Cost:</strong> compliance, risk, algo eng — ~50% early → ~30% mature.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 1. Exchange GMV -->
+    <section class="inv-section" id="exchange-gmv">
+        <div class="container">
+            <h2>1. Transaction volume &amp; exchange take-rate</h2>
+            <p class="inv-prose">
+                Physical AI labor is a multi-trillion addressable market: logistics, facility services, inspection,
+                security, agriculture, construction support, and household remnant hours. The RSE models
+                <strong>gross transaction volume of $10 trillion by 2035</strong>, with the exchange earning a
+                <strong>5% take-rate</strong> once payments / escrow corridors are fully on-platform
+                (today: protocol live, take-rate pilot path).
+            </p>
+            <div class="row g-3 mt-2">
+                <div class="col-md-3"><div class="inv-metric"><div class="n">$10T</div><div class="l">GMV target · 2035</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n">5%</div><div class="l">Platform take-rate</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n">$500B</div><div class="l">Exchange rev · 2035</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n">$1.6T</div><div class="l">Exchange rev · 2040</div></div>
+            </div>
+            <div class="inv-chart-box mt-4">
+                <h3>Gross transaction volume (GMV) by year</h3>
+                <canvas id="chartGmv" aria-label="Bar chart of GMV by year"></canvas>
+            </div>
+            <div class="inv-chart-box">
+                <h3>Exchange take-rate revenue (5% of GMV)</h3>
+                <canvas id="chartExchange" aria-label="Bar chart of exchange revenue by year"></canvas>
+            </div>
+            <p class="inv-note">2035 GMV is the planning anchor. Path is an S-curve from early liquidity (2026–2028) through densification (2029–2032) to global scale (2033–2040).</p>
+        </div>
+    </section>
+
+    <!-- 2. Seats -->
+    <section class="inv-section" id="seats">
+        <div class="container">
+            <h2>2. Supply-side seat sales</h2>
+            <p class="inv-prose">
+                RSE Seats are <strong>eternal</strong> access rights for supply-side participation (NFT on Base when verification is enabled).
+                Primary issuance is planned at approximately <strong>$100,000 per seat</strong>, with cumulative sales ramping
+                <strong>1M → 10M → 100M → 1B over roughly five years</strong>. Because seats are not consumed, primary inventory
+                saturates and <strong>seat-sale revenue plateaus</strong> after the billionth seat—ongoing value shifts to utilization
+                (jobs cleared through the exchange) rather than re-issuance.
+            </p>
+            <div class="row g-3 mt-2">
+                <div class="col-md-3"><div class="inv-metric"><div class="n">~$100k</div><div class="l">Price / seat</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n">1B</div><div class="l">Primary seats · ~5 yrs</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n">Eternal</div><div class="l">No expiry / re-mint</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n">Plateau</div><div class="l">Post-issuance revenue</div></div>
+            </div>
+            <div class="inv-chart-box mt-4">
+                <h3>New seats sold (primary) by year</h3>
+                <canvas id="chartSeatsUnits" aria-label="Bar chart of seats sold by year"></canvas>
+            </div>
+            <div class="inv-chart-box">
+                <h3>Seat sales revenue by year</h3>
+                <canvas id="chartSeatsRev" aria-label="Bar chart of seat revenue by year"></canvas>
+            </div>
+            <p class="inv-note">Model: 1M (2026), +9M (2027), +90M (2028), +400M (2029), +500M (2030) = 1B cumulative, then residual taper to near-zero primary sales.</p>
+        </div>
+    </section>
+
+    <!-- 3. Hardware -->
+    <section class="inv-section" id="hardware">
+        <div class="container">
+            <h2>3. Affiliate &amp; financing (Buy a Robot)</h2>
+            <p class="inv-prose">
+                The <a href="robots.html">Buy a Robot</a> catalog routes buyers to manufacturers and financing partners.
+                Economics: <strong>~3% affiliate</strong> on average selling price (~$25k ASP in the model) plus
+                <strong>financing referral</strong> of ~1.5% of principal on an assumed ~40% finance attach rate.
+                Combined ~$900 revenue per robot referred at those assumptions—before scale discounts or exclusive OEM deals.
+            </p>
+            <div class="row g-3 mt-2">
+                <div class="col-md-4"><div class="inv-metric"><div class="n">~3%</div><div class="l">Affiliate of ASP</div></div>
+                <div class="col-md-4"><div class="inv-metric"><div class="n">~1.5%</div><div class="l">Financing referral</div></div>
+                <div class="col-md-4"><div class="inv-metric"><div class="n">40%</div><div class="l">Finance attach rate</div></div>
+            </div>
+            <div class="inv-chart-box mt-4">
+                <h3>Hardware affiliate + financing revenue</h3>
+                <canvas id="chartHardware" aria-label="Bar chart of hardware revenue by year"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Nearby ads -->
+    <section class="inv-section" id="nearby-ads">
+        <div class="container">
+            <h2>4. /nearby &amp; attention products</h2>
+            <p class="inv-prose">
+                Robots and operators continuously query the physical world for charge, repair, parts, and next jobs.
+                <code>/nearby</code> and related discovery surfaces monetize that attention with premium placement,
+                sponsored categories, franchise badges (see Stonewright's Garage), and campaign-style boosts—
+                an ad network for machine attention, not only human eyeballs.
+            </p>
+            <div class="inv-chart-box mt-4">
+                <h3>Nearby / attention revenue</h3>
+                <canvas id="chartAds" aria-label="Bar chart of ads revenue by year"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Franchising -->
+    <section class="inv-section" id="franchising">
+        <div class="container">
+            <h2>5. Franchising — Garage &amp; Lighthouse</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="inv-card">
+                        <h3>Stonewright's Garage</h3>
+                        <p>Robot maintenance, repair &amp; replace (R&amp;R), parts, and bay services. Physical outposts of the exchange with premium <code>/nearby</code> placement.</p>
+                        <ul>
+                            <li>Franchise fee: <strong>$75,000</strong></li>
+                            <li>Kit &amp; buildout: ~$140k–$180k (franchisee capex)</li>
+                            <li>Royalty: <strong>6% of gross</strong></li>
+                            <li>Model garage gross: ~$280k/yr → ~$17k royalty</li>
+                        </ul>
+                        <p class="cost-line"><a href="garage.html">garage.html →</a></p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="inv-card">
+                        <h3>The Lighthouse</h3>
+                        <p>Robot charging stations—grid, solar, and fuel-cell capable nodes along high-utilization corridors. Complements garages: charge here, MRO next door.</p>
+                        <ul>
+                            <li>Franchise fee: <strong>$50,000</strong></li>
+                            <li>Station buildout: franchisee capex (site-dependent)</li>
+                            <li>Royalty: <strong>8% of station gross</strong></li>
+                            <li>Model station gross: ~$180k/yr → ~$14k royalty</li>
+                        </ul>
+                        <p class="cost-line">Charging density compounds exchange liquidity.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="inv-chart-box mt-4">
+                <h3>Franchise fees + royalties (Garage + Lighthouse)</h3>
+                <canvas id="chartFranchise" aria-label="Bar chart of franchise revenue by year"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. Hyperion -->
+    <section class="inv-section" id="hyperion">
+        <div class="container">
+            <h2>6. The Hyperion Fund</h2>
+            <p class="inv-prose">
+                <strong>The Hyperion Fund</strong> is an exclusive, profit-distributing automated algorithmic vehicle
+                for seat holders and qualified participants. It allocates across equities, broader public markets,
+                and emerging asset classes with systematic strategies. Investors receive distributed profits;
+                the exchange earns management and performance economics modeled as roughly <strong>2.8% of AUM</strong>
+                in a base case (1% management + 15% of ~12% gross performance).
+            </p>
+            <div class="row g-3 mt-2">
+                <div class="col-md-3"><div class="inv-metric"><div class="n">Algo</div><div class="l">Automated strategies</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n">~1% + 15%</div><div class="l">Mgmt + performance</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n">$1T</div><div class="l">AUM target · 2035</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n">Distribute</div><div class="l">Profits to LPs</div></div>
+            </div>
+            <div class="inv-chart-box mt-4">
+                <h3>Hyperion Fund platform revenue</h3>
+                <canvas id="chartHyperion" aria-label="Bar chart of Hyperion revenue by year"></canvas>
+            </div>
+            <p class="inv-note">Not an offer to sell securities. Structure, eligibility, and registrations would follow applicable law; figures are product-vision economics only.</p>
+        </div>
+    </section>
+
+    <!-- 7. Costs -->
+    <section class="inv-section" id="costs">
+        <div class="container">
+            <h2>7. Cost structure by stream</h2>
+            <p class="inv-prose mb-4">
+                Each stream carries different operating intensity. Cost ratios improve with scale as fixed platform
+                spend is amortized. Profit in the charts below is stream revenue minus stream cost (before corporate tax).
+            </p>
+            <div class="inv-table-wrap">
+                <table class="inv-table">
+                    <thead>
+                        <tr>
+                            <th>Stream</th>
+                            <th>Primary cost drivers</th>
+                            <th class="num">Early (2026)</th>
+                            <th class="num">Mature (2035+)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Exchange take-rate</td>
+                            <td>Cloud matching, support, disputes, insurance partners, compliance</td>
+                            <td class="num">35% of rev</td>
+                            <td class="num">12% of rev</td>
+                        </tr>
+                        <tr>
+                            <td>Seat sales</td>
+                            <td>Issuance ops, KYC/channel, legal, chain ops</td>
+                            <td class="num">15%</td>
+                            <td class="num">5%</td>
+                        </tr>
+                        <tr>
+                            <td>Hardware aff + fin</td>
+                            <td>Catalog, partner management, financing handoff</td>
+                            <td class="num">25%</td>
+                            <td class="num">12%</td>
+                        </tr>
+                        <tr>
+                            <td>/nearby &amp; ads</td>
+                            <td>Ad product eng, sales, moderation, brand safety</td>
+                            <td class="num">45%</td>
+                            <td class="num">28%</td>
+                        </tr>
+                        <tr>
+                            <td>Franchising</td>
+                            <td>Training, field support, supply co-op, brand marketing</td>
+                            <td class="num">55%</td>
+                            <td class="num">35%</td>
+                        </tr>
+                        <tr>
+                            <td>Hyperion Fund</td>
+                            <td>Compliance, risk, execution, research eng</td>
+                            <td class="num">50%</td>
+                            <td class="num">30%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="inv-note mt-3">Cost ratios interpolate linearly from 2026 early rates to 2035 mature rates, then hold.</p>
+        </div>
+    </section>
+
+    <!-- Projections -->
+    <section class="inv-section" id="projections">
+        <div class="container">
+            <h2>15-year revenue &amp; profit projections</h2>
+            <p class="inv-prose mb-4">
+                Years <strong>2026–2040</strong>. Seat primary issuance dominates mid-ramp totals, then plateaus;
+                exchange take-rate becomes the largest <em>recurring</em> line by the mid-2030s.
+            </p>
+
+            <div class="inv-chart-box tall">
+                <h3>Total revenue by stream (stacked)</h3>
+                <canvas id="chartRevenueStacked" aria-label="Stacked bar chart of total revenue by stream"></canvas>
+            </div>
+            <div class="inv-chart-box tall">
+                <h3>Recurring revenue excluding primary seat sales</h3>
+                <canvas id="chartRevenueExSeats" aria-label="Stacked bar chart of revenue excluding seats"></canvas>
+            </div>
+            <div class="inv-chart-box tall">
+                <h3>Total revenue vs cost vs profit</h3>
+                <canvas id="chartProfit" aria-label="Grouped bar chart of revenue cost and profit"></canvas>
+            </div>
+            <div class="inv-chart-box tall">
+                <h3>Profit by stream (stacked)</h3>
+                <canvas id="chartProfitStacked" aria-label="Stacked bar chart of profit by stream"></canvas>
+            </div>
+
+            <h3>Annual summary (USD)</h3>
+            <div class="inv-table-wrap mt-2">
+                <table class="inv-table" id="pnlTable">
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th class="num">GMV</th>
+                            <th class="num">Exchange</th>
+                            <th class="num">Seats</th>
+                            <th class="num">Hardware</th>
+                            <th class="num">Ads</th>
+                            <th class="num">Franchise</th>
+                            <th class="num">Hyperion</th>
+                            <th class="num">Revenue</th>
+                            <th class="num">Cost</th>
+                            <th class="num">Profit</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="inv-assumptions mt-4">
+                <strong>// Model assumptions (base case)</strong><br>
+                GMV path anchors $10T in 2035 at 5% take-rate.
+                Seats: $100k primary, 1B cumulative by 2030, then residual taper.
+                Hardware: $25k ASP, 3% affiliate, 40% finance attach × 1.5% referral.
+                Ads: attention network scaling with query density.
+                Garage $75k fee + 6% of ~$280k gross; Lighthouse $50k fee + 8% of ~$180k gross; 95% of opened sites remain active.
+                Hyperion: effective ~2.8% of year-end AUM ($50M → $1T by 2035 → $3.3T by 2040).
+                Costs: per-stream ratios above, linear improvement 2026→2035.
+                <br><br>
+                <strong>Disclaimer:</strong> Illustrative forward-looking estimates for planning discussion only.
+                Not financial advice, not a securities offering, and not a guarantee of results.
+                Actual outcomes depend on adoption, regulation, competition, and execution.
+            </div>
+        </div>
+    </section>
+
     <section class="inv-section">
         <div class="container">
-            <h2>Trust &amp; economics (current)</h2>
+            <h2>Trust &amp; economics (current product)</h2>
             <table class="inv-table">
                 <thead>
                     <tr><th>Topic</th><th>Today</th><th>Direction</th></tr>
@@ -276,7 +733,7 @@
                     <tr>
                         <td>Payments</td>
                         <td>Off-platform settlement; exchange records price, charges no fee</td>
-                        <td>Pilot take-rate / escrow on select corridors</td>
+                        <td>Pilot take-rate / escrow → 5% model corridor</td>
                     </tr>
                     <tr>
                         <td>Disputes</td>
@@ -285,12 +742,11 @@
                     </tr>
                     <tr>
                         <td>Supply quality</td>
-                        <td>Optional RSE Seat (100, Base L2) for grab access</td>
-                        <td>Fleet LOIs + seat economics tied to utilization</td>
+                        <td>Optional RSE Seat (Base L2) for grab access</td>
+                        <td>Eternal seat economics + fleet LOIs</td>
                     </tr>
                 </tbody>
             </table>
-            <p class="inv-note mt-3">Honest stage: working protocol and thin live liquidity. SoftBank-scale capital requires density, monetization experiments, and fleet partners—not only product surface.</p>
         </div>
     </section>
 
@@ -304,7 +760,8 @@
             <div class="inv-cta-row">
                 <a class="btn btn-primary" href="mailto:mickeyshaughnessy@gmail.com?subject=Fleet%20design%20partner">Request a pilot conversation</a>
                 <a class="btn btn-outline-light" href="grab_job.html">Provider console</a>
-                <a class="btn btn-outline-light" href="campaigns.html">Campaigns</a>
+                <a class="btn btn-outline-light" href="garage.html">Stonewright's Garage</a>
+                <a class="btn btn-outline-light" href="robots.html">Buy a Robot</a>
             </div>
         </div>
     </section>
@@ -331,6 +788,8 @@
                     <h5>Links</h5>
                     <a href="index.html">Home</a>
                     <a href="investors.html">Investors</a>
+                    <a href="garage.html">Garage</a>
+                    <a href="robots.html">Buy a Robot</a>
                     <a href="feedback.html">Feedback</a>
                     <a href="api_docs.html">API Documentation</a>
                 </div>
@@ -346,8 +805,396 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js?v=19"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="script.js?v=23"></script>
     <script>
+    (function () {
+        'use strict';
+
+        const YEARS = [];
+        for (let y = 2026; y <= 2040; y++) YEARS.push(y);
+
+        // --- Projection model (USD) ---
+        const GMV = {
+            2026: 1e9, 2027: 8e9, 2028: 40e9, 2029: 150e9, 2030: 450e9,
+            2031: 1.1e12, 2032: 2.4e12, 2033: 4.5e12, 2034: 7.0e12, 2035: 10e12,
+            2036: 13.5e12, 2037: 17.5e12, 2038: 22e12, 2039: 27e12, 2040: 32e12
+        };
+        const TAKE_RATE = 0.05;
+
+        const SEAT_NEW = {
+            2026: 1e6, 2027: 9e6, 2028: 90e6, 2029: 400e6, 2030: 500e6,
+            2031: 1e7, 2032: 2e6, 2033: 5e5, 2034: 2e5, 2035: 1e5,
+            2036: 5e4, 2037: 5e4, 2038: 5e4, 2039: 5e4, 2040: 5e4
+        };
+        const SEAT_PRICE = 1e5;
+
+        const ROBOTS = {
+            2026: 5e4, 2027: 4e5, 2028: 2e6, 2029: 8e6, 2030: 25e6,
+            2031: 60e6, 2032: 110e6, 2033: 170e6, 2034: 230e6, 2035: 300e6,
+            2036: 360e6, 2037: 420e6, 2038: 480e6, 2039: 540e6, 2040: 600e6
+        };
+        const ASP = 25000, AFF = 0.03, FIN_ATTACH = 0.40, FIN_FEE = 0.015;
+
+        const ADS = {
+            2026: 5e6, 2027: 40e6, 2028: 200e6, 2029: 800e6, 2030: 2.5e9,
+            2031: 6e9, 2032: 12e9, 2033: 20e9, 2034: 30e9, 2035: 45e9,
+            2036: 60e9, 2037: 75e9, 2038: 90e9, 2039: 105e9, 2040: 120e9
+        };
+
+        const G_NEW = {
+            2026: 20, 2027: 80, 2028: 250, 2029: 600, 2030: 1200,
+            2031: 2000, 2032: 2800, 2033: 3200, 2034: 3500, 2035: 3600,
+            2036: 3400, 2037: 3000, 2038: 2600, 2039: 2200, 2040: 1800
+        };
+        const L_NEW = {
+            2026: 50, 2027: 200, 2028: 700, 2029: 1800, 2030: 4000,
+            2031: 7000, 2032: 10000, 2033: 12000, 2034: 13000, 2035: 14000,
+            2036: 13000, 2037: 12000, 2038: 10000, 2039: 9000, 2040: 8000
+        };
+
+        const AUM = {
+            2026: 50e6, 2027: 400e6, 2028: 2.5e9, 2029: 12e9, 2030: 40e9,
+            2031: 100e9, 2032: 220e9, 2033: 400e9, 2034: 650e9, 2035: 1e12,
+            2036: 1.4e12, 2037: 1.85e12, 2038: 2.3e12, 2039: 2.8e12, 2040: 3.3e12
+        };
+        const HYP_RATE = 0.028;
+
+        const COST = {
+            exchange:  [0.35, 0.12],
+            seats:     [0.15, 0.05],
+            hardware:  [0.25, 0.12],
+            ads:       [0.45, 0.28],
+            franchise: [0.55, 0.35],
+            hyperion:  [0.50, 0.30]
+        };
+
+        function costRatio(y, early, late) {
+            const t = Math.min(1, Math.max(0, (y - 2026) / (2035 - 2026)));
+            return early + (late - early) * t;
+        }
+
+        // Build series
+        let gCum = 0, lCum = 0;
+        const series = {
+            gmv: [], exchange: [], seats: [], seatUnits: [], hardware: [],
+            ads: [], franchise: [], hyperion: [],
+            revenue: [], cost: [], profit: [],
+            pExchange: [], pSeats: [], pHardware: [], pAds: [], pFranchise: [], pHyperion: []
+        };
+
+        YEARS.forEach(y => {
+            const exchange = GMV[y] * TAKE_RATE;
+            const seatUnits = SEAT_NEW[y];
+            const seats = seatUnits * SEAT_PRICE;
+            const hardware = ROBOTS[y] * ASP * AFF + ROBOTS[y] * FIN_ATTACH * ASP * FIN_FEE;
+            const ads = ADS[y];
+
+            gCum += G_NEW[y];
+            lCum += L_NEW[y];
+            const gActive = Math.floor(gCum * 0.95);
+            const lActive = Math.floor(lCum * 0.95);
+            const franchise = G_NEW[y] * 75000 + L_NEW[y] * 50000
+                + gActive * 280000 * 0.06 + lActive * 180000 * 0.08;
+            const hyperion = AUM[y] * HYP_RATE;
+
+            const revs = { exchange, seats, hardware, ads, franchise, hyperion };
+            const costs = {
+                exchange: exchange * costRatio(y, ...COST.exchange),
+                seats: seats * costRatio(y, ...COST.seats),
+                hardware: hardware * costRatio(y, ...COST.hardware),
+                ads: ads * costRatio(y, ...COST.ads),
+                franchise: franchise * costRatio(y, ...COST.franchise),
+                hyperion: hyperion * costRatio(y, ...COST.hyperion)
+            };
+
+            const rev = exchange + seats + hardware + ads + franchise + hyperion;
+            const cost = costs.exchange + costs.seats + costs.hardware + costs.ads + costs.franchise + costs.hyperion;
+
+            series.gmv.push(GMV[y]);
+            series.exchange.push(exchange);
+            series.seats.push(seats);
+            series.seatUnits.push(seatUnits);
+            series.hardware.push(hardware);
+            series.ads.push(ads);
+            series.franchise.push(franchise);
+            series.hyperion.push(hyperion);
+            series.revenue.push(rev);
+            series.cost.push(cost);
+            series.profit.push(rev - cost);
+            series.pExchange.push(exchange - costs.exchange);
+            series.pSeats.push(seats - costs.seats);
+            series.pHardware.push(hardware - costs.hardware);
+            series.pAds.push(ads - costs.ads);
+            series.pFranchise.push(franchise - costs.franchise);
+            series.pHyperion.push(hyperion - costs.hyperion);
+        });
+
+        function fmtMoney(x) {
+            const ax = Math.abs(x);
+            const sign = x < 0 ? '-' : '';
+            if (ax >= 1e12) return sign + '$' + (ax / 1e12).toFixed(2) + 'T';
+            if (ax >= 1e9) return sign + '$' + (ax / 1e9).toFixed(2) + 'B';
+            if (ax >= 1e6) return sign + '$' + (ax / 1e6).toFixed(1) + 'M';
+            if (ax >= 1e3) return sign + '$' + (ax / 1e3).toFixed(0) + 'K';
+            return sign + '$' + ax.toFixed(0);
+        }
+
+        function fmtUnits(x) {
+            if (x >= 1e9) return (x / 1e9).toFixed(2) + 'B';
+            if (x >= 1e6) return (x / 1e6).toFixed(1) + 'M';
+            if (x >= 1e3) return (x / 1e3).toFixed(0) + 'K';
+            return String(x);
+        }
+
+        // Chart theme
+        const gridColor = 'rgba(0,255,255,0.08)';
+        const tickColor = 'rgba(170,190,220,0.85)';
+        const legendColor = 'rgba(200,220,240,0.9)';
+
+        Chart.defaults.color = legendColor;
+        Chart.defaults.borderColor = gridColor;
+        Chart.defaults.font.family = "'Share Tech Mono', monospace";
+        Chart.defaults.font.size = 11;
+
+        const COLORS = {
+            exchange:  '#00e5ff',
+            seats:     '#39ff14',
+            hardware:  '#ff00aa',
+            ads:       '#ffd166',
+            franchise: '#c97c3d',
+            hyperion:  '#a78bfa',
+            revenue:   '#00e5ff',
+            cost:      '#ff6a6a',
+            profit:    '#39ff14',
+            gmv:       '#00bcd4'
+        };
+
+        function moneyAxis() {
+            return {
+                ticks: {
+                    color: tickColor,
+                    callback: function (v) { return fmtMoney(v); }
+                },
+                grid: { color: gridColor }
+            };
+        }
+
+        function xAxis() {
+            return {
+                ticks: { color: tickColor, maxRotation: 45, minRotation: 0 },
+                grid: { display: false }
+            };
+        }
+
+        function barOpts(stacked, title) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        display: stacked || title === 'rpc',
+                        position: 'bottom',
+                        labels: { boxWidth: 12, padding: 12, color: legendColor }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (ctx) {
+                                const v = ctx.parsed.y;
+                                const label = ctx.dataset.label || '';
+                                if (label.indexOf('seats sold') !== -1) return label + ': ' + fmtUnits(v);
+                                return label + ': ' + fmtMoney(v);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: Object.assign({ stacked: !!stacked }, xAxis()),
+                    y: Object.assign({ stacked: !!stacked, beginAtZero: true }, moneyAxis())
+                }
+            };
+        }
+
+        function makeBar(id, datasets, stacked) {
+            const el = document.getElementById(id);
+            if (!el || typeof Chart === 'undefined') return;
+            const showLegend = datasets.length > 1 || stacked;
+            const opts = barOpts(stacked);
+            opts.plugins.legend.display = showLegend;
+            new Chart(el, {
+                type: 'bar',
+                data: { labels: YEARS.map(String), datasets: datasets },
+                options: opts
+            });
+        }
+
+        function makeUnitsBar(id, data, label, color) {
+            const el = document.getElementById(id);
+            if (!el || typeof Chart === 'undefined') return;
+            new Chart(el, {
+                type: 'bar',
+                data: {
+                    labels: YEARS.map(String),
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: color,
+                        borderColor: color,
+                        borderWidth: 0,
+                        borderRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (ctx) {
+                                    return label + ': ' + fmtUnits(ctx.parsed.y);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: xAxis(),
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: tickColor,
+                                callback: function (v) { return fmtUnits(v); }
+                            },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Individual stream charts
+        makeBar('chartGmv', [{
+            label: 'GMV',
+            data: series.gmv,
+            backgroundColor: COLORS.gmv,
+            borderRadius: 2
+        }], false);
+
+        makeBar('chartExchange', [{
+            label: 'Exchange revenue (5%)',
+            data: series.exchange,
+            backgroundColor: COLORS.exchange,
+            borderRadius: 2
+        }], false);
+
+        makeUnitsBar('chartSeatsUnits', series.seatUnits, 'New seats sold', COLORS.seats);
+
+        makeBar('chartSeatsRev', [{
+            label: 'Seat sales revenue',
+            data: series.seats,
+            backgroundColor: COLORS.seats,
+            borderRadius: 2
+        }], false);
+
+        makeBar('chartHardware', [{
+            label: 'Affiliate + financing',
+            data: series.hardware,
+            backgroundColor: COLORS.hardware,
+            borderRadius: 2
+        }], false);
+
+        makeBar('chartAds', [{
+            label: 'Nearby / attention',
+            data: series.ads,
+            backgroundColor: COLORS.ads,
+            borderRadius: 2
+        }], false);
+
+        makeBar('chartFranchise', [{
+            label: 'Franchise fees + royalties',
+            data: series.franchise,
+            backgroundColor: COLORS.franchise,
+            borderRadius: 2
+        }], false);
+
+        makeBar('chartHyperion', [{
+            label: 'Hyperion Fund fees',
+            data: series.hyperion,
+            backgroundColor: COLORS.hyperion,
+            borderRadius: 2
+        }], false);
+
+        // Stacked total revenue
+        makeBar('chartRevenueStacked', [
+            { label: 'Exchange', data: series.exchange, backgroundColor: COLORS.exchange, borderRadius: 0 },
+            { label: 'Seats', data: series.seats, backgroundColor: COLORS.seats, borderRadius: 0 },
+            { label: 'Hardware', data: series.hardware, backgroundColor: COLORS.hardware, borderRadius: 0 },
+            { label: 'Ads', data: series.ads, backgroundColor: COLORS.ads, borderRadius: 0 },
+            { label: 'Franchise', data: series.franchise, backgroundColor: COLORS.franchise, borderRadius: 0 },
+            { label: 'Hyperion', data: series.hyperion, backgroundColor: COLORS.hyperion, borderRadius: 0 }
+        ], true);
+
+        // Ex-seats recurring
+        makeBar('chartRevenueExSeats', [
+            { label: 'Exchange', data: series.exchange, backgroundColor: COLORS.exchange, borderRadius: 0 },
+            { label: 'Hardware', data: series.hardware, backgroundColor: COLORS.hardware, borderRadius: 0 },
+            { label: 'Ads', data: series.ads, backgroundColor: COLORS.ads, borderRadius: 0 },
+            { label: 'Franchise', data: series.franchise, backgroundColor: COLORS.franchise, borderRadius: 0 },
+            { label: 'Hyperion', data: series.hyperion, backgroundColor: COLORS.hyperion, borderRadius: 0 }
+        ], true);
+
+        // Revenue / cost / profit grouped
+        makeBar('chartProfit', [
+            { label: 'Revenue', data: series.revenue, backgroundColor: COLORS.revenue, borderRadius: 2 },
+            { label: 'Cost', data: series.cost, backgroundColor: COLORS.cost, borderRadius: 2 },
+            { label: 'Profit', data: series.profit, backgroundColor: COLORS.profit, borderRadius: 2 }
+        ], false);
+
+        // Profit stacked by stream
+        makeBar('chartProfitStacked', [
+            { label: 'Exchange', data: series.pExchange, backgroundColor: COLORS.exchange, borderRadius: 0 },
+            { label: 'Seats', data: series.pSeats, backgroundColor: COLORS.seats, borderRadius: 0 },
+            { label: 'Hardware', data: series.pHardware, backgroundColor: COLORS.hardware, borderRadius: 0 },
+            { label: 'Ads', data: series.pAds, backgroundColor: COLORS.ads, borderRadius: 0 },
+            { label: 'Franchise', data: series.pFranchise, backgroundColor: COLORS.franchise, borderRadius: 0 },
+            { label: 'Hyperion', data: series.pHyperion, backgroundColor: COLORS.hyperion, borderRadius: 0 }
+        ], true);
+
+        // P&L table
+        const tbody = document.querySelector('#pnlTable tbody');
+        if (tbody) {
+            YEARS.forEach((y, i) => {
+                const tr = document.createElement('tr');
+                const cells = [
+                    y,
+                    fmtMoney(series.gmv[i]),
+                    fmtMoney(series.exchange[i]),
+                    fmtMoney(series.seats[i]),
+                    fmtMoney(series.hardware[i]),
+                    fmtMoney(series.ads[i]),
+                    fmtMoney(series.franchise[i]),
+                    fmtMoney(series.hyperion[i]),
+                    fmtMoney(series.revenue[i]),
+                    fmtMoney(series.cost[i]),
+                    fmtMoney(series.profit[i])
+                ];
+                cells.forEach((c, j) => {
+                    const td = document.createElement(j === 0 ? 'th' : 'td');
+                    if (j === 0) {
+                        td.scope = 'row';
+                        td.textContent = c;
+                    } else {
+                        td.className = 'num';
+                        td.textContent = c;
+                    }
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Live stats
         document.addEventListener('DOMContentLoaded', async () => {
             if (typeof rseTrack === 'function') rseTrack('investors_view');
             try {
@@ -367,6 +1214,7 @@
                 if (ts) ts.textContent = 'stats unavailable';
             }
         });
+    })();
     </script>
 </body>
 </html>
