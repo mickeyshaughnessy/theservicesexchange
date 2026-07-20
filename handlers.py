@@ -19,6 +19,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 import config
 import seat_verification
+import privacy as privacy_mod
 from utils import (
     get_account, save_account, account_exists, get_signup_stats,
     save_token,
@@ -796,6 +797,10 @@ def _profile_defaults(user_data: Dict[str, Any]) -> Dict[str, Any]:
     user_data.setdefault('avatar_url', None)
     user_data.setdefault('robots_owned', [])
     user_data.setdefault('subscriptions', [])
+    user_data.setdefault('auto_bids', [])
+    user_data.setdefault('privacy_level', privacy_mod.DEFAULT_PUBLIC_PRIVACY)
+    user_data.setdefault('privacy_profile_level', privacy_mod.DEFAULT_PUBLIC_PRIVACY)
+    user_data.setdefault('privacy_nearby_default', privacy_mod.DEFAULT_PUBLIC_PRIVACY)
     user_data.setdefault('credits', 0)
     user_data.setdefault('cosmetics_owned', {'frames': [], 'backgrounds': [], 'fonts': [], 'text_colors': []})
     user_data.setdefault('cosmetics_equipped', {'frame': None, 'background': None, 'font': None, 'text_color': None})
@@ -889,6 +894,16 @@ def get_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'profile_slug': user_data.get('profile_slug'),
             'reputation_breakdown': _reputation_breakdown(username),
             'endorsements': _endorsement_summary(username),
+            'privacy_level': privacy_mod.normalize_privacy_level(
+                user_data.get('privacy_level')
+            ),
+            'privacy_profile_level': privacy_mod.normalize_privacy_level(
+                user_data.get('privacy_profile_level') or user_data.get('privacy_level')
+            ),
+            'privacy_nearby_default': privacy_mod.normalize_privacy_level(
+                user_data.get('privacy_nearby_default') or user_data.get('privacy_level')
+            ),
+            'auto_bids': user_data.get('auto_bids') or [],
         }, 200
     except Exception as e:
         logger.error(f"Get profile error: {str(e)}")
@@ -913,6 +928,18 @@ def update_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             user_data['location'] = (data.get('location') or '').strip()[:120] or None
         if 'contact_info' in data:
             user_data['contact_info'] = (data.get('contact_info') or '').strip()[:300] or None
+        if 'privacy_level' in data:
+            user_data['privacy_level'] = privacy_mod.normalize_privacy_level(
+                data.get('privacy_level')
+            )
+        if 'privacy_profile_level' in data:
+            user_data['privacy_profile_level'] = privacy_mod.normalize_privacy_level(
+                data.get('privacy_profile_level')
+            )
+        if 'privacy_nearby_default' in data:
+            user_data['privacy_nearby_default'] = privacy_mod.normalize_privacy_level(
+                data.get('privacy_nearby_default')
+            )
 
         save_account(username, user_data)
         return {"message": "Profile updated"}, 200
@@ -957,12 +984,19 @@ def get_public_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         _profile_defaults(user_data)
         follows = get_follows(username)
 
+        plvl = privacy_mod.normalize_privacy_level(
+            user_data.get('privacy_profile_level') or user_data.get('privacy_level')
+        )
+        about = privacy_mod.redact_public_text(user_data.get('about'), plvl)
+        location = privacy_mod.project_public_location_field(
+            user_data.get('location'), plvl
+        )
         return {
             'username': username,
             'display_name': user_data['display_name'],
             'avatar_url': user_data['avatar_url'],
-            'location': user_data['location'],
-            'about': user_data['about'],
+            'location': location,
+            'about': about,
             'reputation_score': round(calculate_reputation_score(user_data), 2),
             'stars': user_data.get('stars', 0),
             'total_ratings': user_data.get('total_ratings', 0),
@@ -972,6 +1006,7 @@ def get_public_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'following_count': len(follows['following']),
             'reputation_breakdown': _reputation_breakdown(username),
             'endorsements': _endorsement_summary(username),
+            'privacy_level': plvl,
         }, 200
     except Exception as e:
         logger.error(f"Get public profile error: {str(e)}")
@@ -1215,6 +1250,273 @@ def cancel_subscription(username: str, subscription_id: str) -> Tuple[Dict[str, 
     except Exception as e:
         logger.error(f"Cancel subscription error: {str(e)}")
         return {"error": "Internal server error"}, 500
+
+
+# -----------------------------------------------------------------------------
+# Auto-bids (recurring demand templates that re-post open requests)
+# -----------------------------------------------------------------------------
+
+_AUTO_BID_CADENCES = ("daily", "weekly", "biweekly", "monthly")
+_AUTO_BID_MAX_ACTIVE = 5
+_CADENCE_SECONDS = {
+    "daily": 86400,
+    "weekly": 7 * 86400,
+    "biweekly": 14 * 86400,
+    "monthly": 30 * 86400,
+}
+
+
+def _next_run_at(from_ts: int, cadence: str, preferred_local_hour: int = 8) -> int:
+    """Simple cadence advance; preferred hour is a soft UX hint only."""
+    step = _CADENCE_SECONDS.get(cadence, 7 * 86400)
+    nxt = int(from_ts) + step
+    # Snap toward preferred hour UTC as a lightweight default (no tz db required)
+    # Users can still re-post sooner via process when due.
+    hour = max(0, min(23, int(preferred_local_hour or 8)))
+    day = nxt // 86400
+    return day * 86400 + hour * 3600
+
+
+def list_auto_bids(username: str) -> Tuple[Dict[str, Any], int]:
+    try:
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+        _profile_defaults(user_data)
+        return {
+            "auto_bids": user_data.get("auto_bids") or [],
+            "limits": {"max_active": _AUTO_BID_MAX_ACTIVE, "cadences": list(_AUTO_BID_CADENCES)},
+        }, 200
+    except Exception as e:
+        logger.error(f"List auto_bids error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def create_auto_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Create a recurring auto-request template (max 5 active)."""
+    try:
+        username = data.get("username")
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+        if user_data.get("user_type") != "demand":
+            return {"error": "Only demand accounts can create auto-bids"}, 403
+        _profile_defaults(user_data)
+
+        auto_bids = user_data.setdefault("auto_bids", [])
+        active = [a for a in auto_bids if a.get("status") == "active"]
+        if len(active) >= _AUTO_BID_MAX_ACTIVE:
+            return {
+                "error": f"At most {_AUTO_BID_MAX_ACTIVE} active auto-requests",
+            }, 400
+
+        name = (data.get("name") or "").strip()[:80]
+        cadence = (data.get("cadence") or "weekly").strip().lower()
+        if cadence not in _AUTO_BID_CADENCES:
+            return {"error": f"cadence must be one of {_AUTO_BID_CADENCES}"}, 400
+
+        template_in = data.get("template") or {}
+        service = (template_in.get("service") or data.get("service") or "").strip()
+        if not service:
+            return {"error": "template.service required"}, 400
+        try:
+            price = float(template_in.get("price") if "price" in template_in else data.get("price"))
+        except (TypeError, ValueError):
+            return {"error": "template.price must be a number"}, 400
+        if price <= 0:
+            return {"error": "template.price must be positive"}, 400
+
+        location_type = (
+            template_in.get("location_type")
+            or data.get("location_type")
+            or "physical"
+        )
+        if location_type not in ("physical", "hybrid", "remote"):
+            return {"error": "invalid location_type"}, 400
+        address = (template_in.get("address") or data.get("address") or "").strip() or None
+        if location_type in ("physical", "hybrid") and not address:
+            return {"error": "address required for physical/hybrid auto-bids"}, 400
+
+        expires_in_hours = int(
+            template_in.get("expires_in_hours")
+            or data.get("expires_in_hours")
+            or 24
+        )
+        expires_in_hours = max(1, min(168, expires_in_hours))
+        preferred_hour = int(data.get("preferred_local_hour") or 8)
+        preferred_hour = max(0, min(23, preferred_hour))
+        now = int(time.time())
+        privacy_level = privacy_mod.normalize_privacy_level(
+            template_in.get("privacy_level")
+            or data.get("privacy_level")
+            or user_data.get("privacy_nearby_default")
+        )
+
+        if not name:
+            name = service[:40] or "Auto request"
+
+        item = {
+            "id": str(uuid.uuid4()),
+            "name": name,
+            "status": "active",
+            "cadence": cadence,
+            "template": {
+                "service": service[:2000],
+                "price": price,
+                "currency": (template_in.get("currency") or "USD")[:8],
+                "payment_method": (
+                    template_in.get("payment_method")
+                    or data.get("payment_method")
+                    or "cash"
+                )[:80],
+                "location_type": location_type,
+                "address": address,
+                "expires_in_hours": expires_in_hours,
+                "privacy_level": privacy_level,
+            },
+            "schedule": {
+                "preferred_local_hour": preferred_hour,
+                "next_run_at": now,  # due immediately so first process posts soon
+                "last_run_at": None,
+                "last_bid_id": None,
+            },
+            "limits": {"max_open_from_this": 1},
+            "created_on": now,
+        }
+        auto_bids.append(item)
+        save_account(username, user_data)
+        return {"auto_bid": item}, 201
+    except Exception as e:
+        logger.error(f"Create auto_bid error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def update_auto_bid(username: str, auto_bid_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    try:
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+        _profile_defaults(user_data)
+        auto_bids = user_data.setdefault("auto_bids", [])
+        target = next((a for a in auto_bids if a.get("id") == auto_bid_id), None)
+        if not target:
+            return {"error": "Auto-bid not found"}, 404
+
+        if "status" in data:
+            st = str(data.get("status") or "").lower()
+            if st not in ("active", "paused", "cancelled"):
+                return {"error": "status must be active|paused|cancelled"}, 400
+            if st == "active":
+                active = [a for a in auto_bids if a.get("status") == "active" and a.get("id") != auto_bid_id]
+                if len(active) >= _AUTO_BID_MAX_ACTIVE:
+                    return {"error": f"At most {_AUTO_BID_MAX_ACTIVE} active auto-requests"}, 400
+            target["status"] = st
+        if "name" in data:
+            target["name"] = (data.get("name") or target.get("name") or "")[:80]
+        if "cadence" in data:
+            cad = str(data.get("cadence") or "").lower()
+            if cad not in _AUTO_BID_CADENCES:
+                return {"error": f"cadence must be one of {_AUTO_BID_CADENCES}"}, 400
+            target["cadence"] = cad
+        if "template" in data and isinstance(data["template"], dict):
+            tpl = target.setdefault("template", {})
+            tin = data["template"]
+            for key in (
+                "service", "price", "currency", "payment_method",
+                "location_type", "address", "expires_in_hours", "privacy_level",
+            ):
+                if key in tin:
+                    tpl[key] = tin[key]
+            if "privacy_level" in tpl:
+                tpl["privacy_level"] = privacy_mod.normalize_privacy_level(tpl["privacy_level"])
+        save_account(username, user_data)
+        return {"auto_bid": target}, 200
+    except Exception as e:
+        logger.error(f"Update auto_bid error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def process_auto_bids_for_user(username: str) -> Tuple[Dict[str, Any], int]:
+    """
+    Process due auto-bid templates for one user.
+    Skips if a prior open bid from the same template is still live.
+    """
+    try:
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+        _profile_defaults(user_data)
+        auto_bids = user_data.setdefault("auto_bids", [])
+        now = int(time.time())
+        posted = []
+        skipped = []
+
+        for item in auto_bids:
+            if item.get("status") != "active":
+                continue
+            sched = item.setdefault("schedule", {})
+            next_run = int(sched.get("next_run_at") or 0)
+            if next_run > now:
+                skipped.append({"id": item["id"], "reason": "not_due"})
+                continue
+
+            last_bid_id = sched.get("last_bid_id")
+            if last_bid_id:
+                prev = get_bid(last_bid_id)
+                if prev and prev.get("end_time", 0) > now:
+                    # Still open — push next run without stacking
+                    sched["next_run_at"] = _next_run_at(
+                        now, item.get("cadence") or "weekly",
+                        sched.get("preferred_local_hour", 8),
+                    )
+                    skipped.append({"id": item["id"], "reason": "open_bid_exists", "bid_id": last_bid_id})
+                    continue
+
+            tpl = item.get("template") or {}
+            hours = int(tpl.get("expires_in_hours") or 24)
+            end_time = now + max(1, min(168, hours)) * 3600
+            bid_payload = {
+                "username": username,
+                "service": tpl.get("service"),
+                "price": tpl.get("price"),
+                "currency": tpl.get("currency") or "USD",
+                "payment_method": tpl.get("payment_method") or "cash",
+                "end_time": end_time,
+                "location_type": tpl.get("location_type") or "physical",
+                "privacy_level": tpl.get("privacy_level"),
+            }
+            if tpl.get("address"):
+                bid_payload["address"] = tpl["address"]
+
+            result, status = submit_bid(bid_payload)
+            if status >= 400:
+                skipped.append({
+                    "id": item["id"],
+                    "reason": "submit_failed",
+                    "error": result.get("error"),
+                })
+                # Still advance so a bad template does not tight-loop
+                sched["next_run_at"] = _next_run_at(
+                    now, item.get("cadence") or "weekly",
+                    sched.get("preferred_local_hour", 8),
+                )
+                continue
+
+            bid_id = result.get("bid_id")
+            sched["last_run_at"] = now
+            sched["last_bid_id"] = bid_id
+            sched["next_run_at"] = _next_run_at(
+                now, item.get("cadence") or "weekly",
+                sched.get("preferred_local_hour", 8),
+            )
+            posted.append({"id": item["id"], "bid_id": bid_id})
+
+        save_account(username, user_data)
+        return {"posted": posted, "skipped": skipped, "auto_bids": auto_bids}, 200
+    except Exception as e:
+        logger.error(f"Process auto_bids error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
 
 # -----------------------------------------------------------------------------
 # Cosmetics Shop (frames, backgrounds, fonts, text colors)
@@ -1602,6 +1904,12 @@ def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             return {"error": "Only demand-type accounts can submit bids"}, 403
 
         reputation = calculate_reputation_score(user_data)
+        _profile_defaults(user_data)
+        privacy_level = privacy_mod.normalize_privacy_level(
+            data.get('privacy_level')
+            or user_data.get('privacy_nearby_default')
+            or user_data.get('privacy_level')
+        )
 
         bid_id = str(uuid.uuid4())
         bid = {
@@ -1619,6 +1927,7 @@ def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'address': address,
             'created_at': int(time.time()),
             'buyer_reputation': reputation,
+            'privacy_level': privacy_level,
             # Ridesharing-specific fields (None for non-ridesharing)
             'start_address': start_address,
             'end_address': end_address,
@@ -2140,7 +2449,7 @@ def sign_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         return {"error": "Internal server error"}, 500
 
 def nearby_services(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
-    """Find nearby services."""
+    """Find nearby services. Public projections apply per-bid privacy levels."""
     try:
         if 'lat' in data and 'lon' in data:
             user_lat = data['lat']
@@ -2158,31 +2467,32 @@ def nearby_services(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         all_bids = get_all_bids()
         
         for bid in all_bids:
-            if bid['location_type'] == 'remote':
+            if bid.get('location_type') == 'remote':
                 continue
-            if bid['end_time'] <= time.time():
+            if bid.get('end_time', 0) <= time.time():
                 continue
             
-            if bid.get('lat') and bid.get('lon'):
+            if bid.get('lat') is not None and bid.get('lon') is not None:
                 distance = calculate_distance(
                     user_lat, user_lon,
                     bid['lat'], bid['lon']
                 )
                 
                 if distance <= radius:
-                    nearby_bids.append({
-                        'bid_id': bid['bid_id'],
-                        'service': bid['service'],
-                        'price': bid['price'],
-                        'currency': bid.get('currency', 'USD'),
-                        'distance': round(distance, 2),
-                        'address': bid.get('address'),
-                        'buyer_reputation': bid.get('buyer_reputation', 2.5)
-                    })
+                    # Match on true coords; publish privacy-projected fields only
+                    nearby_bids.append(
+                        privacy_mod.project_nearby_service(bid, distance)
+                    )
         
         nearby_bids.sort(key=lambda x: x['distance'])
         
-        return {"services": nearby_bids}, 200
+        return {
+            "services": nearby_bids,
+            "privacy_note": (
+                "Addresses and coordinates are privacy-projected per the "
+                "poster's privacy level (Gaussian geo noise + address coarsening)."
+            ),
+        }, 200
         
     except Exception as e:
         logger.error(f"Nearby error: {str(e)}")

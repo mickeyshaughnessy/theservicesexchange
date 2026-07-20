@@ -8,6 +8,7 @@
   <title>The RSE</title>
   <link rel="icon" href="robot-avatar.png">
   <link rel="apple-touch-icon" href="robot-avatar.png">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="auth-only">
@@ -92,9 +93,29 @@
       <label for="payment">Payment method (off-platform)</label>
       <input id="payment" name="payment" value="cash" placeholder="cash, crypto, etc.">
 
+      <label for="bidPrivacy">Public privacy for this request</label>
+      <select id="bidPrivacy" name="bidPrivacy">
+        <option value="neighborhood" selected>Neighborhood (recommended)</option>
+        <option value="city">City only</option>
+        <option value="precise">Precise (exact address on public feed)</option>
+        <option value="hidden">Hidden (no public address/coords)</option>
+      </select>
+      <p class="muted small">Controls what strangers see on Nearby. You and a matched provider still get full details to fulfill the job.</p>
+
       <button type="submit" class="btn btn-primary" id="bidSubmit">Post request</button>
       <p class="footnote">The exchange does not escrow funds. You pay the provider directly.</p>
     </form>
+  </section>
+
+  <!-- Jobs (open requests + matched jobs) -->
+  <section id="screen-jobs" class="screen" aria-label="Jobs">
+    <div class="section-head">
+      <h1>Jobs</h1>
+      <button type="button" class="btn btn-sm" id="refreshJobs">Refresh</button>
+    </div>
+    <p class="muted">Open requests waiting for a provider, then active and completed work.</p>
+
+    <div id="jobsError" class="error-box" role="alert"></div>
 
     <div class="section-head">
       <h2>Open requests</h2>
@@ -103,19 +124,8 @@
     <div id="openBids">
       <div class="loading">Loading…</div>
     </div>
-  </section>
 
-  <!-- Jobs -->
-  <section id="screen-jobs" class="screen" aria-label="Jobs">
-    <div class="section-head">
-      <h1>Your jobs</h1>
-      <button type="button" class="btn btn-sm" id="refreshJobs">Refresh</button>
-    </div>
-    <p class="muted">When a provider grabs your request, it shows up here. Both sides rate when work is done.</p>
-
-    <div id="jobsError" class="error-box" role="alert"></div>
-
-    <h2>Active</h2>
+    <h2 style="margin-top:1.25rem">Active</h2>
     <div id="activeJobs"><div class="loading">Loading…</div></div>
 
     <h2 style="margin-top:1.25rem">Completed</h2>
@@ -186,9 +196,77 @@
       <button type="submit" class="btn btn-primary" id="profileSaveBtn">Save profile</button>
     </form>
 
-    <div class="card privacy-stub">
+    <form id="privacyForm" class="card">
       <div class="card-title">Privacy dials</div>
-      <p class="muted small">Coming soon: location precision and public redaction for Nearby and profile fields. Exact bidding details stay private to you (and matched providers).</p>
+      <p class="muted small">
+        You control how much strangers can learn from public surfaces (Nearby, public profile).
+        Exact address, payment details, and full service text stay private to you — and are shared
+        with a matched provider so the job can be done. Gaussian noise is applied to public map pins.
+      </p>
+
+      <label for="privacyNearby">Default for new requests (Nearby public view)</label>
+      <select id="privacyNearby" name="privacyNearby">
+        <option value="neighborhood" selected>Neighborhood — ~150m pin noise, area-level address</option>
+        <option value="city">City — large pin noise, city/region only</option>
+        <option value="precise">Precise — exact public pin &amp; address (not recommended)</option>
+        <option value="hidden">Hidden — no public address or pin</option>
+      </select>
+
+      <label for="privacyProfile">Public profile location &amp; about</label>
+      <select id="privacyProfile" name="privacyProfile">
+        <option value="neighborhood" selected>Neighborhood / soft redaction</option>
+        <option value="city">City-level only</option>
+        <option value="precise">Show as entered</option>
+        <option value="hidden">Hide location; trim about text</option>
+      </select>
+
+      <ul class="privacy-bullets muted small">
+        <li><strong>Contact info</strong> is always private (never on public profile).</li>
+        <li><strong>Matched jobs</strong> use full private details for fulfillment.</li>
+        <li><strong>Auto-requests</strong> inherit the request privacy default unless overridden.</li>
+      </ul>
+
+      <button type="submit" class="btn btn-primary" id="privacySaveBtn">Save privacy</button>
+    </form>
+
+    <div class="card">
+      <div class="card-title">Auto-requests</div>
+      <p class="muted small">
+        Schedule a few trusted recurring requests (yardcare, cleaning, scheduled delivery).
+        Max 5 active. Skips posting if a prior open request from that template is still live.
+      </p>
+      <form id="autoBidForm">
+        <label for="autoBidName">Name</label>
+        <input id="autoBidName" maxlength="80" placeholder="Yardcare" list="autoBidPresets">
+        <datalist id="autoBidPresets">
+          <option value="Yardcare"></option>
+          <option value="Cleaning"></option>
+          <option value="Scheduled food delivery"></option>
+        </datalist>
+        <label for="autoBidService">Service text</label>
+        <textarea id="autoBidService" rows="2" maxlength="2000" placeholder="Weekly lawn care, edge trim"></textarea>
+        <div class="row-2">
+          <div>
+            <label for="autoBidPrice">Price (USD)</label>
+            <input id="autoBidPrice" type="number" min="0.01" step="0.01" placeholder="75">
+          </div>
+          <div>
+            <label for="autoBidCadence">Cadence</label>
+            <select id="autoBidCadence">
+              <option value="weekly" selected>Weekly</option>
+              <option value="biweekly">Biweekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="daily">Daily</option>
+            </select>
+          </div>
+        </div>
+        <label for="autoBidAddress">Address / area</label>
+        <input id="autoBidAddress" placeholder="Same as your usual service location">
+        <button type="submit" class="btn btn-primary" id="autoBidSubmit">Add auto-request</button>
+      </form>
+      <div id="autoBidList" class="auto-bid-list">
+        <div class="empty">No auto-requests yet.</div>
+      </div>
     </div>
 
     <div class="card">
@@ -210,7 +288,7 @@
       <h1>Nearby</h1>
       <button type="button" class="btn btn-sm" id="refreshNearby">Refresh</button>
     </div>
-    <p class="muted">Open physical and hybrid requests near you. Location stays on device for the query; privacy dials come later.</p>
+    <p class="muted">Open physical and hybrid requests near you. Pins use each poster’s privacy level (noisy coordinates). Your GPS is only used for the query.</p>
 
     <div id="nearbyError" class="error-box" role="alert"></div>
 
@@ -231,6 +309,9 @@
       <button type="button" class="btn btn-primary" id="nearbySearchBtn">Search nearby</button>
       <p class="muted small" id="nearbyStatus">Set a location to discover open requests.</p>
     </div>
+
+    <div id="nearbyMap" class="nearby-map" aria-label="Nearby map"></div>
+    <p class="muted small" id="nearbyMapHint">Map loads after a search. Privacy-projected pins only.</p>
 
     <h2 style="margin-top:1rem">Open nearby</h2>
     <div id="nearbyList">
@@ -303,6 +384,7 @@
     </div>
   </div>
 
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

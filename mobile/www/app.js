@@ -10,14 +10,17 @@
   const PUBLIC_PROFILE_BASE =
     'https://theservicesexchange.com/profile.html?pid=';
   /**
-   * Hosted next to release APKs. Bump versionCode + apkUrl when shipping a build.
-   * Must be HTTPS and publicly readable.
+   * Update manifest: prefer API (CORS + same host as marketplace).
+   * Fallbacks: static site paths.
    */
-  const UPDATE_MANIFEST_URL =
-    'https://theservicesexchange.com/apk/version.json';
-  const UPDATE_MANIFEST_FALLBACKS = [
+  const UPDATE_MANIFEST_URLS = [
+    // filled at runtime: API_URL + '/app/version'
+    'https://theservicesexchange.com/apk/version.json',
     'https://www.theservicesexchange.com/apk/version.json',
   ];
+  /** Public Mapbox token (same as website demos) */
+  const MAPBOX_TOKEN =
+    'pk.eyJ1IjoibWlja2V5c2hhdWdobmVzc3kiLCJhIjoiY2x6NGxyNG93MnptaDJxb2dhOGloenZqeiJ9.ANY7UIu7VTPFwqTD8cEAKQ';
   const STORAGE = {
     token: 'rse_app_token',
     username: 'rse_app_username',
@@ -78,7 +81,20 @@
     nearbyStatus: $('nearbyStatus'),
     nearbyError: $('nearbyError'),
     nearbyList: $('nearbyList'),
+    nearbyMap: $('nearbyMap'),
     refreshNearby: $('refreshNearby'),
+    privacyForm: $('privacyForm'),
+    privacyNearby: $('privacyNearby'),
+    privacyProfile: $('privacyProfile'),
+    privacySaveBtn: $('privacySaveBtn'),
+    autoBidForm: $('autoBidForm'),
+    autoBidName: $('autoBidName'),
+    autoBidService: $('autoBidService'),
+    autoBidPrice: $('autoBidPrice'),
+    autoBidCadence: $('autoBidCadence'),
+    autoBidAddress: $('autoBidAddress'),
+    autoBidSubmit: $('autoBidSubmit'),
+    autoBidList: $('autoBidList'),
     tabLogin: $('tabLogin'),
     tabRegister: $('tabRegister'),
     authForm: $('authForm'),
@@ -97,6 +113,7 @@
     locationType: $('locationType'),
     address: $('address'),
     payment: $('payment'),
+    bidPrivacy: $('bidPrivacy'),
     openBids: $('openBids'),
     refreshBids: $('refreshBids'),
     activeJobs: $('activeJobs'),
@@ -147,6 +164,8 @@
   let pendingManifest = null;
   let updateInFlight = false;
   let updateProgressListenerReady = false;
+  let nearbyMap = null;
+  let nearbyMapMarkers = [];
 
   // ── Helpers ──────────────────────────────────────────────────────
   function toast(msg, type) {
@@ -418,10 +437,18 @@
     document.querySelectorAll('.bottom-nav button').forEach((btn) => {
       btn.classList.toggle('active', btn.dataset.screen === name);
     });
-    if (name === 'request') loadOpenBids();
-    if (name === 'jobs') loadJobs();
+    if (name === 'request') {
+      /* open requests live on Jobs */
+    }
+    if (name === 'jobs') {
+      loadOpenBids();
+      loadJobs();
+    }
     if (name === 'nearby') initNearbyScreen();
-    if (name === 'account') loadAccount();
+    if (name === 'account') {
+      loadAccount();
+      loadAutoBids();
+    }
     if (name === 'feedback') loadFeedback();
   }
 
@@ -496,6 +523,8 @@
     const location_type = els.locationType.value || 'physical';
     const address = els.address.value.trim();
     const payment_method = (els.payment.value || 'cash').trim() || 'cash';
+    const privacy_level =
+      (els.bidPrivacy && els.bidPrivacy.value) || 'neighborhood';
 
     if (!service) {
       showError(els.requestError, 'Describe the service you need.');
@@ -518,6 +547,7 @@
       payment_method,
       end_time,
       location_type,
+      privacy_level,
     };
     if (address) body.address = address;
 
@@ -529,11 +559,12 @@
       });
       showSuccess(
         els.requestSuccess,
-        `Request posted${data.bid_id ? ` (${String(data.bid_id).slice(0, 8)}…)` : ''}. Waiting for a provider.`
+        `Request posted${data.bid_id ? ` (${String(data.bid_id).slice(0, 8)}…)` : ''}. See Jobs → Open requests.`
       );
       els.service.value = '';
-      toast('Request posted', 'ok');
-      await loadOpenBids();
+      toast('Request posted — open Jobs to track it', 'ok');
+      // Open requests live under Jobs
+      navigate('jobs');
     } catch (err) {
       showError(els.requestError, err.message || 'Could not post request');
     } finally {
@@ -811,11 +842,12 @@
         .map((s) => {
           const dist =
             s.distance != null ? Number(s.distance).toFixed(1) + ' mi' : '';
-          const area = coarsenAddress(s.address);
+          const area = s.address || '';
           const rep =
             s.buyer_reputation != null
               ? Number(s.buyer_reputation).toFixed(1)
               : '—';
+          const pl = s.privacy_level ? ' · privacy ' + s.privacy_level : '';
           return `
           <div class="card">
             <div class="card-title">${escapeHtml(
@@ -831,11 +863,13 @@
               }
               ${escapeHtml(formatMoney(s.price, s.currency))}
               · buyer rep ${escapeHtml(rep)}
+              ${escapeHtml(pl)}
               ${area ? '<br>' + escapeHtml(area) : ''}
             </div>
           </div>`;
         })
         .join('');
+      renderNearbyMap(services, body);
     } catch (err) {
       els.nearbyList.innerHTML = `<div class="empty">${escapeHtml(
         err.message || 'Nearby search failed'
@@ -844,6 +878,109 @@
     } finally {
       setLoading(els.nearbySearchBtn, false, 'Search nearby');
     }
+  }
+
+  function clearNearbyMarkers() {
+    nearbyMapMarkers.forEach((m) => {
+      try {
+        m.remove();
+      } catch {
+        /* ignore */
+      }
+    });
+    nearbyMapMarkers = [];
+  }
+
+  function ensureNearbyMap(center) {
+    if (!els.nearbyMap || typeof mapboxgl === 'undefined') return null;
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+    if (!nearbyMap) {
+      nearbyMap = new mapboxgl.Map({
+        container: els.nearbyMap,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: center || [-104.99, 39.74],
+        zoom: 10,
+        attributionControl: true,
+      });
+      nearbyMap.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+    }
+    return nearbyMap;
+  }
+
+  function renderNearbyMap(services, queryBody) {
+    if (!els.nearbyMap) return;
+    if (typeof mapboxgl === 'undefined') {
+      els.nearbyMap.innerHTML =
+        '<div class="empty" style="padding:40px 12px">Map unavailable offline</div>';
+      return;
+    }
+    const center =
+      queryBody.lat != null && queryBody.lon != null
+        ? [Number(queryBody.lon), Number(queryBody.lat)]
+        : null;
+    // If query used address only, center on first service with coords
+    let mapCenter = center;
+    if (!mapCenter) {
+      const first = (services || []).find((s) => s.lat != null && s.lon != null);
+      if (first) mapCenter = [Number(first.lon), Number(first.lat)];
+    }
+    if (!mapCenter) {
+      mapCenter = [-104.99, 39.74];
+    }
+
+    const map = ensureNearbyMap(mapCenter);
+    if (!map) return;
+
+    const paint = () => {
+      clearNearbyMarkers();
+      map.setCenter(mapCenter);
+      if (center) {
+        const you = new mapboxgl.Marker({ color: '#39ff14' })
+          .setLngLat(center)
+          .setPopup(new mapboxgl.Popup().setText('You'))
+          .addTo(map);
+        nearbyMapMarkers.push(you);
+      }
+      const bounds = new mapboxgl.LngLatBounds();
+      if (center) bounds.extend(center);
+      let n = 0;
+      (services || []).forEach((s) => {
+        if (s.lat == null || s.lon == null) return;
+        const lngLat = [Number(s.lon), Number(s.lat)];
+        bounds.extend(lngLat);
+        n += 1;
+        const title =
+          typeof s.service === 'string' ? s.service : JSON.stringify(s.service);
+        const marker = new mapboxgl.Marker({ color: '#00ffff' })
+          .setLngLat(lngLat)
+          .setPopup(
+            new mapboxgl.Popup({ offset: 16 }).setHTML(
+              `<strong>${escapeHtml(title).slice(0, 120)}</strong><br>` +
+                `${escapeHtml(formatMoney(s.price, s.currency))}` +
+                (s.distance != null
+                  ? ` · ${escapeHtml(String(s.distance))} mi`
+                  : '') +
+                (s.address ? `<br>${escapeHtml(s.address)}` : '') +
+                (s.privacy_level
+                  ? `<br><em>privacy: ${escapeHtml(s.privacy_level)}</em>`
+                  : '')
+            )
+          )
+          .addTo(map);
+        nearbyMapMarkers.push(marker);
+      });
+      if (n > 0 || center) {
+        try {
+          map.fitBounds(bounds, { padding: 40, maxZoom: 13 });
+        } catch {
+          /* ignore */
+        }
+      }
+      map.resize();
+    };
+
+    if (map.loaded()) paint();
+    else map.once('load', paint);
   }
 
   // ── Feedback ─────────────────────────────────────────────────────
@@ -1051,9 +1188,165 @@
         els.profileLocation.value = profile.location || '';
         els.profileContact.value = profile.contact_info || '';
       }
+      if (els.privacyNearby) {
+        els.privacyNearby.value =
+          profile.privacy_nearby_default ||
+          profile.privacy_level ||
+          'neighborhood';
+      }
+      if (els.privacyProfile) {
+        els.privacyProfile.value =
+          profile.privacy_profile_level ||
+          profile.privacy_level ||
+          'neighborhood';
+      }
+      if (els.bidPrivacy) {
+        els.bidPrivacy.value =
+          profile.privacy_nearby_default ||
+          profile.privacy_level ||
+          'neighborhood';
+      }
       refreshAppVersionLabel();
+      // Fire-and-forget: process due auto-requests for this account
+      api('/auto_bids/process', { method: 'POST', body: '{}' })
+        .then(() => loadAutoBids())
+        .catch(() => {});
     } catch (err) {
       showError(els.accountError, err.message);
+    }
+  }
+
+  async function handlePrivacySave(e) {
+    e.preventDefault();
+    showError(els.accountError, null);
+    showSuccess(els.accountSuccess, null);
+    setLoading(els.privacySaveBtn, true, 'Save privacy');
+    try {
+      const privacy_nearby_default =
+        (els.privacyNearby && els.privacyNearby.value) || 'neighborhood';
+      const privacy_profile_level =
+        (els.privacyProfile && els.privacyProfile.value) || 'neighborhood';
+      await api('/profile', {
+        method: 'POST',
+        body: JSON.stringify({
+          privacy_nearby_default,
+          privacy_profile_level,
+          privacy_level: privacy_nearby_default,
+        }),
+      });
+      if (els.bidPrivacy) els.bidPrivacy.value = privacy_nearby_default;
+      showSuccess(els.accountSuccess, 'Privacy settings saved.');
+      toast('Privacy saved', 'ok');
+    } catch (err) {
+      showError(els.accountError, err.message || 'Could not save privacy');
+    } finally {
+      setLoading(els.privacySaveBtn, false, 'Save privacy');
+    }
+  }
+
+  async function loadAutoBids() {
+    if (!state.token || !els.autoBidList) return;
+    try {
+      const data = await api('/auto_bids');
+      const items = data.auto_bids || [];
+      if (!items.length) {
+        els.autoBidList.innerHTML =
+          '<div class="empty">No auto-requests yet.</div>';
+        return;
+      }
+      els.autoBidList.innerHTML = items
+        .map((a) => {
+          const id = escapeHtml(a.id);
+          const status = escapeHtml(a.status || '');
+          const next = a.schedule && a.schedule.next_run_at
+            ? formatWhen(a.schedule.next_run_at)
+            : '—';
+          const price = a.template
+            ? formatMoney(a.template.price, a.template.currency)
+            : '';
+          return `
+          <div class="card">
+            <div class="card-title">${escapeHtml(a.name || 'Auto')}</div>
+            <div class="card-meta">
+              <span class="badge ${a.status === 'active' ? 'active' : 'done'}">${status}</span>
+              · ${escapeHtml(a.cadence || '')}
+              · ${escapeHtml(price)}
+              <br>Next run ${escapeHtml(next)}
+            </div>
+            <div class="btn-row">
+              ${
+                a.status === 'active'
+                  ? `<button type="button" class="btn btn-sm" data-auto-pause="${id}">Pause</button>`
+                  : a.status === 'paused'
+                    ? `<button type="button" class="btn btn-sm btn-primary" data-auto-resume="${id}">Resume</button>`
+                    : ''
+              }
+              <button type="button" class="btn btn-sm btn-danger" data-auto-cancel="${id}">Remove</button>
+            </div>
+          </div>`;
+        })
+        .join('');
+    } catch (err) {
+      els.autoBidList.innerHTML = `<div class="empty">${escapeHtml(
+        err.message || 'Could not load auto-requests'
+      )}</div>`;
+    }
+  }
+
+  async function handleAutoBidCreate(e) {
+    e.preventDefault();
+    const name = (els.autoBidName.value || '').trim();
+    const service = (els.autoBidService.value || '').trim();
+    const price = parseFloat(els.autoBidPrice.value);
+    const cadence = els.autoBidCadence.value || 'weekly';
+    const address = (els.autoBidAddress.value || '').trim();
+    if (!service || !(price > 0)) {
+      toast('Service and price required', 'error');
+      return;
+    }
+    setLoading(els.autoBidSubmit, true, 'Add auto-request');
+    try {
+      await api('/auto_bids', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: name || service.slice(0, 40),
+          cadence,
+          template: {
+            service,
+            price,
+            currency: 'USD',
+            payment_method: 'cash',
+            location_type: address ? 'physical' : 'remote',
+            address: address || null,
+            expires_in_hours: 24,
+            privacy_level:
+              (els.privacyNearby && els.privacyNearby.value) || 'neighborhood',
+          },
+        }),
+      });
+      els.autoBidService.value = '';
+      toast('Auto-request created', 'ok');
+      await api('/auto_bids/process', { method: 'POST', body: '{}' }).catch(
+        () => {}
+      );
+      await loadAutoBids();
+    } catch (err) {
+      toast(err.message || 'Could not create auto-request', 'error');
+    } finally {
+      setLoading(els.autoBidSubmit, false, 'Add auto-request');
+    }
+  }
+
+  async function setAutoBidStatus(id, status) {
+    try {
+      await api('/auto_bids/' + encodeURIComponent(id), {
+        method: 'POST',
+        body: JSON.stringify({ status }),
+      });
+      toast(status === 'cancelled' ? 'Removed' : 'Updated', 'ok');
+      await loadAutoBids();
+    } catch (err) {
+      toast(err.message || 'Update failed', 'error');
     }
   }
 
@@ -1191,6 +1484,12 @@
         checkForAppUpdate({ force: true });
       });
     }
+    if (els.privacyForm) {
+      els.privacyForm.addEventListener('submit', handlePrivacySave);
+    }
+    if (els.autoBidForm) {
+      els.autoBidForm.addEventListener('submit', handleAutoBidCreate);
+    }
     els.logoutBtn.addEventListener('click', () => {
       clearSession();
       showAuth();
@@ -1232,6 +1531,26 @@
       const replySend = e.target.closest('[data-fb-reply-send]');
       if (replySend) {
         sendFeedbackReply(replySend.getAttribute('data-fb-reply-send'));
+        return;
+      }
+      const autoPause = e.target.closest('[data-auto-pause]');
+      if (autoPause) {
+        setAutoBidStatus(autoPause.getAttribute('data-auto-pause'), 'paused');
+        return;
+      }
+      const autoResume = e.target.closest('[data-auto-resume]');
+      if (autoResume) {
+        setAutoBidStatus(autoResume.getAttribute('data-auto-resume'), 'active');
+        return;
+      }
+      const autoCancel = e.target.closest('[data-auto-cancel]');
+      if (autoCancel) {
+        if (confirm('Remove this auto-request?')) {
+          setAutoBidStatus(
+            autoCancel.getAttribute('data-auto-cancel'),
+            'cancelled'
+          );
+        }
       }
     });
 
@@ -1301,13 +1620,18 @@
   }
 
   async function fetchUpdateManifest() {
-    const urls = [UPDATE_MANIFEST_URL, ...UPDATE_MANIFEST_FALLBACKS];
+    // Prefer marketplace API (CORS enabled) — fixes Capacitor WebView "Failed to fetch"
+    const urls = [
+      API_URL + '/app/version',
+      ...UPDATE_MANIFEST_URLS,
+    ];
     let lastErr = null;
     for (const url of urls) {
       try {
-        const res = await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), {
-          cache: 'no-store',
-        });
+        const res = await fetch(
+          url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(),
+          { cache: 'no-store', mode: 'cors' }
+        );
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         if (data && (data.versionCode != null || data.versionName)) {
@@ -1318,7 +1642,13 @@
         lastErr = e;
       }
     }
-    throw lastErr || new Error('Could not fetch update manifest');
+    const msg =
+      (lastErr && lastErr.message) || 'Could not fetch update manifest';
+    throw new Error(
+      msg === 'Failed to fetch'
+        ? 'Could not reach update server. Check network and try again.'
+        : msg
+    );
   }
 
   async function applyApkUpdate(manifest) {

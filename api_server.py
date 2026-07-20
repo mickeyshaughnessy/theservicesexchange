@@ -60,6 +60,10 @@ from handlers import (
     remove_robot_owned,
     create_subscription,
     cancel_subscription,
+    list_auto_bids,
+    create_auto_bid,
+    update_auto_bid,
+    process_auto_bids_for_user,
     handle_get_cosmetics_catalog,
     handle_purchase_cosmetic,
     equip_cosmetic,
@@ -967,6 +971,67 @@ def handle_create_subscription(current_user):
 def handle_cancel_subscription(current_user, subscription_id):
     response, status = cancel_subscription(current_user, subscription_id)
     return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# Auto-bids (recurring demand templates)
+# -----------------------------------------------------------------------------
+
+@app.route('/auto_bids', methods=['GET'])
+@token_required
+def handle_list_auto_bids(current_user):
+    response, status = list_auto_bids(current_user)
+    return flask.jsonify(response), status
+
+@app.route('/auto_bids', methods=['POST'])
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_create_auto_bid(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = create_auto_bid(data)
+    return flask.jsonify(response), status
+
+@app.route('/auto_bids/<auto_bid_id>', methods=['POST'])
+@token_required
+def handle_update_auto_bid(current_user, auto_bid_id):
+    data = flask.request.get_json() or {}
+    response, status = update_auto_bid(current_user, auto_bid_id, data)
+    return flask.jsonify(response), status
+
+@app.route('/auto_bids/process', methods=['POST'])
+@token_required
+def handle_process_auto_bids(current_user):
+    """Process due auto-bid templates for the authenticated user."""
+    response, status = process_auto_bids_for_user(current_user)
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# App update manifest (CORS-friendly for Capacitor WebView)
+# -----------------------------------------------------------------------------
+
+@app.route('/app/version', methods=['GET'])
+def app_version_manifest():
+    """
+    Public app update manifest for The RSE Android sideload APK.
+    Served from the API so mobile WebViews can fetch with CORS (unlike some static hosts).
+    """
+    import os
+    candidates = [
+        os.path.join(os.path.dirname(__file__), 'apk', 'version.json'),
+        os.path.join(os.getcwd(), 'apk', 'version.json'),
+        '/var/www/theservicesexchange/apk/version.json',
+    ]
+    for path in candidates:
+        try:
+            if os.path.isfile(path):
+                with open(path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                resp = flask.jsonify(data)
+                resp.headers['Cache-Control'] = 'no-store'
+                return resp, 200
+        except Exception as e:
+            logger.warning(f"app/version read failed for {path}: {e}")
+    return flask.jsonify({"error": "version manifest not found"}), 404
 
 # -----------------------------------------------------------------------------
 # Cosmetics Shop Endpoints (payments stubbed; Phantom Wallet / XMoney pending)

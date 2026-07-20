@@ -1,10 +1,10 @@
 {
-  "versionCode": 2,
-  "versionName": "1.1.0",
-  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.1.0.apk",
-  "apkFile": "The-RSE-1.1.0.apk",
+  "versionCode": 3,
+  "versionName": "1.2.0",
+  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.2.0.apk",
+  "apkFile": "The-RSE-1.2.0.apk",
   "mandatory": false,
   "minSupportedVersionCode": 1,
-  "releaseNotes": "Feedback tab, fuller Account + public share URL, Nearby discovery, open-request Delete, Android auto-update.",
-  "sha256": "a698346da8386af7e825c0caa528e61e137a362a32095f4aa8872f75c96dd9c5"
+  "releaseNotes": "Jobs tab includes open requests; privacy dials; Nearby Mapbox map + differential privacy; auto-requests; fixed update check via API.",
+  "sha256": "8d29cc194be9a3ce1f9bc74c46c7cf8fcf01f23a4228134f078269e8f924569e"
 }

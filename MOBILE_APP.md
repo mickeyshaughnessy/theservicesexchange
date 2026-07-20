@@ -1,6 +1,6 @@
 # The RSE Mobile App
 
-Status: **v1.1.0 demand-side Android app shipped** (API-only Capacitor shell + auto-update).
+Status: **v1.2.0 demand-side Android app shipped** (privacy dials, Nearby map, auto-requests).
 
 ## What it is
 
@@ -42,8 +42,8 @@ Robot mascot art ships **only** in the mobile app (not the website):
 
 ## Download
 
-- Homepage top-left: **Download The RSE App** → `apk/The-RSE-1.1.0.apk`
-- Update manifest: `apk/version.json`
+- Homepage top-left: **Download The RSE App** → `apk/The-RSE-1.2.0.apk`
+- Update manifest: `apk/version.json` and `GET /app/version` on the API
 - Build docs: `mobile/README.md`
 
 ## Out of scope (v1)
