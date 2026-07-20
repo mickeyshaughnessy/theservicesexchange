@@ -679,7 +679,7 @@
                     <div class="inv-card">
                         <span class="inv-pill">03 · Hardware</span>
                         <h3>Affiliate + financing</h3>
-                        <p class="formula-mini">~3% ASP + ~1.5% of financed principal</p>
+                        <p class="formula-mini">3% ASP + 40% attach × 1.5% principal</p>
                         <div class="live-num" id="cardHw2035">—</div>
                         <div class="live-label">Hardware revenue · 2035</div>
                         <p class="cost-line"><strong>Cost load:</strong> 25% → 12% · <a href="robots.html">Buy a Robot</a></p>
@@ -779,7 +779,7 @@
                 <h3>New seats sold (units / year)</h3>
                 <canvas id="chartSeatsUnits" aria-label="Bar chart of seats sold by year"></canvas>
             </div>
-            <p class="inv-chart-caption">Base shape: 1M → 10M → 100M → 1B cumulative over ~5 years, then taper. Scaled by network dial.</p>
+            <p class="inv-chart-caption">Base shape: 1M → 10M → 100M → 500M → 1B cumulative over 5 years (2026–2030), then taper. Scaled by network dial.</p>
         </div>
     </section>
 
@@ -787,8 +787,8 @@
     <section class="inv-section" id="hardware">
         <div class="container">
             <h2>3. Hardware affiliate &amp; financing</h2>
-            <p class="inv-formula">Revenue ≈ robots referred × ($25k ASP × 3% + finance fees)
-                <br><span style="color:var(--text-dim);font-size:0.85rem;">Finance fee = 40% of buyers finance × 1.5% of principal · from <a href="robots.html">Buy a Robot</a></span>
+            <p class="inv-formula">Revenue ≈ robots referred × ($25k ASP × 3% + expected finance fee)
+                <br><span style="color:var(--text-dim);font-size:0.85rem;">Expected finance fee / robot = 40% attach × 1.5% × $25k ASP · from <a href="robots.html">Buy a Robot</a></span>
             </p>
             <p class="inv-stream-lede">
                 Commission when buyers purchase robots through the catalog, plus referral fees when they take financing. Scales with network density.
@@ -847,7 +847,7 @@
             <div class="inv-fact-row">
                 <div class="inv-fact">
                     <strong>Stonewright's Garage</strong>
-                    MRO / R&amp;R bays · fee <strong>$75k</strong> · royalty <strong>6%</strong> of ~$280k site gross
+                    MRO / R&amp;R bays · fee <strong>$75k</strong> · royalty <strong>6%</strong> of ~$320k site gross
                     · <a href="garage.html">page →</a>
                 </div>
                 <div class="inv-fact">
@@ -865,7 +865,7 @@
                 <h3>Franchise fees + royalties ($ / year)</h3>
                 <canvas id="chartFranchise" aria-label="Bar chart of franchise revenue by year"></canvas>
             </div>
-            <p class="inv-chart-caption">Each bar = fees from new openings that year + royalties from the cumulative active base (95% stay open). Network scale multiplies openings.</p>
+            <p class="inv-chart-caption">Each bar = fees from new openings that year + royalties from sites still open (new sites open fully; 95% of the prior active base remains each year). Network scale multiplies openings.</p>
         </div>
     </section>
 
@@ -1256,16 +1256,17 @@
         function fmtMoney(x) {
             const ax = Math.abs(x);
             const sign = x < 0 ? '-' : '';
-            if (ax >= 1e12) return sign + '$' + (ax / 1e12).toFixed(2) + 'T';
-            if (ax >= 1e9) return sign + '$' + (ax / 1e9).toFixed(2) + 'B';
-            if (ax >= 1e6) return sign + '$' + (ax / 1e6).toFixed(1) + 'M';
+            // Roll up just before toFixed would print "1000" of a lower unit
+            if (ax >= 999.995e9) return sign + '$' + (ax / 1e12).toFixed(2) + 'T';
+            if (ax >= 999.95e6) return sign + '$' + (ax / 1e9).toFixed(2) + 'B';
+            if (ax >= 999.5e3) return sign + '$' + (ax / 1e6).toFixed(1) + 'M';
             if (ax >= 1e3) return sign + '$' + (ax / 1e3).toFixed(0) + 'K';
             return sign + '$' + ax.toFixed(0);
         }
 
         function fmtUnits(x) {
-            if (x >= 1e9) return (x / 1e9).toFixed(2) + 'B';
-            if (x >= 1e6) return (x / 1e6).toFixed(1) + 'M';
+            if (x >= 999.995e6) return (x / 1e9).toFixed(2) + 'B';
+            if (x >= 999.5e3) return (x / 1e6).toFixed(1) + 'M';
             if (x >= 1e3) return (x / 1e3).toFixed(0) + 'K';
             return String(Math.round(x));
         }
@@ -1290,7 +1291,14 @@
                 revenue: [], cost: [], profit: [],
                 pExchange: [], pSeats: [], pHardware: [], pAds: [], pFranchise: [], pHyperion: []
             };
-            let gCum = 0, lCum = 0;
+            // Active franchise sites: new openings fully open; 95% of prior active base retained each year
+            let gActive = 0, lActive = 0;
+            // Garage site gross ~midpoint of garage.html Est. Annual Revenue ($216k–$420k)
+            const GARAGE_GROSS = 320000;
+            const LIGHTHOUSE_GROSS = 180000;
+            const GARAGE_FEE = 75000, LIGHTHOUSE_FEE = 50000;
+            const GARAGE_ROYALTY = 0.06, LIGHTHOUSE_ROYALTY = 0.08;
+            const FRANCHISE_RETAIN = 0.95;
 
             YEARS.forEach(y => {
                 const gmv = BASE_GMV[y] * gmvScale;
@@ -1298,17 +1306,17 @@
                 const seatUnits = BASE_SEAT_NEW[y] * n;
                 const seats = seatUnits * p.seatPrice;
                 const robots = BASE_ROBOTS[y] * n;
+                // Affiliate on all referred robots + finance referral only on attach share
                 const hardware = robots * ASP * AFF + robots * FIN_ATTACH * ASP * FIN_FEE;
                 const ads = BASE_ADS[y] * n;
 
                 const gNew = Math.max(0, Math.round(BASE_G_NEW[y] * n));
                 const lNew = Math.max(0, Math.round(BASE_L_NEW[y] * n));
-                gCum += gNew;
-                lCum += lNew;
-                const gActive = Math.floor(gCum * 0.95);
-                const lActive = Math.floor(lCum * 0.95);
-                const franchise = gNew * 75000 + lNew * 50000
-                    + gActive * 280000 * 0.06 + lActive * 180000 * 0.08;
+                gActive = Math.floor(gActive * FRANCHISE_RETAIN) + gNew;
+                lActive = Math.floor(lActive * FRANCHISE_RETAIN) + lNew;
+                const franchise = gNew * GARAGE_FEE + lNew * LIGHTHOUSE_FEE
+                    + gActive * GARAGE_GROSS * GARAGE_ROYALTY
+                    + lActive * LIGHTHOUSE_GROSS * LIGHTHOUSE_ROYALTY;
                 const hyperion = BASE_AUM[y] * n * HYP_RATE;
 
                 const costs = {
