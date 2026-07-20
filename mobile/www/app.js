@@ -92,9 +92,14 @@
     autoBidService: $('autoBidService'),
     autoBidPrice: $('autoBidPrice'),
     autoBidCadence: $('autoBidCadence'),
+    autoBidPay: $('autoBidPay'),
     autoBidAddress: $('autoBidAddress'),
     autoBidSubmit: $('autoBidSubmit'),
     autoBidList: $('autoBidList'),
+    phantomStatus: $('phantomStatus'),
+    phantomAddressInput: $('phantomAddressInput'),
+    phantomSaveBtn: $('phantomSaveBtn'),
+    phantomClearBtn: $('phantomClearBtn'),
     discoveryStatus: $('discoveryStatus'),
     discoveryPhone: $('discoveryPhone'),
     discoveryEmail: $('discoveryEmail'),
@@ -456,6 +461,7 @@
       loadAccount();
       loadAutoBids();
       loadDiscoveryStatus();
+      loadPhantomStatus();
     }
     if (name === 'feedback') loadFeedback();
   }
@@ -1301,6 +1307,61 @@
     }
   }
 
+  async function loadPhantomStatus() {
+    if (!state.token || !els.phantomStatus) return;
+    try {
+      const data = await api('/account');
+      const addr = data.phantom_wallet_address;
+      els.phantomStatus.textContent = addr
+        ? 'Phantom: ' + addr.slice(0, 6) + '…' + addr.slice(-4)
+        : 'Phantom: not linked';
+      if (els.phantomAddressInput && addr) {
+        els.phantomAddressInput.value = addr;
+      }
+    } catch {
+      els.phantomStatus.textContent = 'Phantom: —';
+    }
+  }
+
+  async function savePhantomAddress() {
+    const address = (els.phantomAddressInput && els.phantomAddressInput.value.trim()) || '';
+    if (!address) {
+      toast('Paste a Solana address from Phantom', 'error');
+      return;
+    }
+    setLoading(els.phantomSaveBtn, true, 'Save Phantom');
+    try {
+      const res = await api('/set_phantom_wallet', {
+        method: 'POST',
+        body: JSON.stringify({ phantom_wallet_address: address }),
+      });
+      toast('Phantom linked', 'ok');
+      if (els.phantomStatus) {
+        const a = res.phantom_wallet_address || address;
+        els.phantomStatus.textContent =
+          'Phantom: ' + a.slice(0, 6) + '…' + a.slice(-4);
+      }
+    } catch (err) {
+      toast(err.message || 'Could not link Phantom', 'error');
+    } finally {
+      setLoading(els.phantomSaveBtn, false, 'Save Phantom');
+    }
+  }
+
+  async function clearPhantomAddress() {
+    setLoading(els.phantomClearBtn, true, 'Unlink');
+    try {
+      await api('/set_phantom_wallet', { method: 'DELETE' });
+      if (els.phantomAddressInput) els.phantomAddressInput.value = '';
+      if (els.phantomStatus) els.phantomStatus.textContent = 'Phantom: not linked';
+      toast('Phantom unlinked', 'ok');
+    } catch (err) {
+      toast(err.message || 'Unlink failed', 'error');
+    } finally {
+      setLoading(els.phantomClearBtn, false, 'Unlink');
+    }
+  }
+
   async function handleAutoBidCreate(e) {
     e.preventDefault();
     const name = (els.autoBidName.value || '').trim();
@@ -1308,6 +1369,8 @@
     const price = parseFloat(els.autoBidPrice.value);
     const cadence = els.autoBidCadence.value || 'weekly';
     const address = (els.autoBidAddress.value || '').trim();
+    const payment_method =
+      (els.autoBidPay && els.autoBidPay.value) || 'cash';
     if (!service || !(price > 0)) {
       toast('Service and price required', 'error');
       return;
@@ -1319,11 +1382,12 @@
         body: JSON.stringify({
           name: name || service.slice(0, 40),
           cadence,
+          payment_method,
           template: {
             service,
             price,
-            currency: 'USD',
-            payment_method: 'cash',
+            currency: payment_method === 'phantom' ? 'USDC' : 'USD',
+            payment_method,
             location_type: address ? 'physical' : 'remote',
             address: address || null,
             expires_in_hours: 24,
@@ -1713,6 +1777,12 @@
     }
     if (els.autoBidForm) {
       els.autoBidForm.addEventListener('submit', handleAutoBidCreate);
+    }
+    if (els.phantomSaveBtn) {
+      els.phantomSaveBtn.addEventListener('click', savePhantomAddress);
+    }
+    if (els.phantomClearBtn) {
+      els.phantomClearBtn.addEventListener('click', clearPhantomAddress);
     }
     if (els.discoveryEnableBtn) {
       els.discoveryEnableBtn.addEventListener('click', enableDiscovery);

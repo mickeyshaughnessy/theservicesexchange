@@ -717,6 +717,7 @@ def get_account_info(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'completed_jobs': user_data.get('completed_jobs', 0),
             'reputation_score': round(calculate_reputation_score(user_data), 2),
             'wallet_address': wallet_address,
+            'phantom_wallet_address': user_data.get('phantom_wallet_address'),
             'seat_status': seat_status,
             'seat_token_id': seat_token_id,
             'identity': identity,
@@ -725,6 +726,79 @@ def get_account_info(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 
     except Exception as e:
         logger.error(f"Account error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+_SOLANA_ADDR_RE = re.compile(r'^[1-9A-HJ-NP-Za-km-z]{32,44}$')
+
+
+def normalize_solana_address(raw: str) -> Optional[str]:
+    """Basic base58 Solana address check (length + charset)."""
+    if not raw:
+        return None
+    addr = str(raw).strip()
+    if not _SOLANA_ADDR_RE.match(addr):
+        return None
+    return addr
+
+
+def set_phantom_wallet(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """
+    Link a Solana (Phantom) wallet for demand payments / auto-bidding.
+    Separate from ETH wallet_address used for Base seat NFTs.
+    """
+    try:
+        username = data.get('username')
+        raw = (data.get('phantom_wallet_address') or data.get('wallet_address') or '').strip()
+        if not raw:
+            return {"error": "phantom_wallet_address required"}, 400
+        address = normalize_solana_address(raw)
+        if not address:
+            return {"error": "Invalid Solana address"}, 400
+
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+
+        user_data['phantom_wallet_address'] = address
+        user_data['phantom_wallet_linked_at'] = int(time.time())
+        # Optional client-reported proof metadata (not cryptographically verified yet)
+        if data.get('signature'):
+            user_data['phantom_wallet_signature'] = str(data.get('signature'))[:256]
+        if data.get('signed_message'):
+            user_data['phantom_wallet_signed_message'] = str(data.get('signed_message'))[:500]
+        save_account(username, user_data)
+
+        _emit(
+            'phantom.linked',
+            username=username,
+            actor=public_actor(username),
+            payload={'phantom_wallet_address': address},
+            idempotency_key=f"phantom.linked:{username}:{address}",
+        )
+        logger.info(f"Phantom wallet linked for {username}: {address}")
+        return {
+            "message": "Phantom wallet linked",
+            "phantom_wallet_address": address,
+        }, 200
+    except Exception as e:
+        logger.error(f"set_phantom_wallet error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def clear_phantom_wallet(username: str) -> Tuple[Dict[str, Any], int]:
+    try:
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+        user_data.pop('phantom_wallet_address', None)
+        user_data.pop('phantom_wallet_linked_at', None)
+        user_data.pop('phantom_wallet_signature', None)
+        user_data.pop('phantom_wallet_signed_message', None)
+        save_account(username, user_data)
+        return {"message": "Phantom wallet unlinked"}, 200
+    except Exception as e:
+        logger.error(f"clear_phantom_wallet error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
 
@@ -889,6 +963,7 @@ def get_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'stars': user_data.get('stars', 0),
             'total_ratings': user_data.get('total_ratings', 0),
             'wallet_address': user_data.get('wallet_address'),
+            'phantom_wallet_address': user_data.get('phantom_wallet_address'),
             'credits': user_data['credits'],
             'robots_owned': user_data['robots_owned'],
             'subscriptions': user_data['subscriptions'],
@@ -1362,6 +1437,20 @@ def create_auto_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         if not name:
             name = service[:40] or "Auto request"
 
+        payment_method = (
+            template_in.get("payment_method")
+            or data.get("payment_method")
+            or "cash"
+        )
+        payment_method = str(payment_method).strip().lower()[:80] or "cash"
+        phantom_addr = user_data.get("phantom_wallet_address")
+        if payment_method in ("phantom", "phantom_wallet", "solana", "usdc_sol"):
+            payment_method = "phantom"
+            if not phantom_addr:
+                return {
+                    "error": "Link a Phantom wallet before creating auto-bids that pay with Phantom",
+                }, 400
+
         item = {
             "id": str(uuid.uuid4()),
             "name": name,
@@ -1370,12 +1459,12 @@ def create_auto_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             "template": {
                 "service": service[:2000],
                 "price": price,
-                "currency": (template_in.get("currency") or "USD")[:8],
-                "payment_method": (
-                    template_in.get("payment_method")
-                    or data.get("payment_method")
-                    or "cash"
-                )[:80],
+                "currency": (
+                    "USDC" if payment_method == "phantom"
+                    else (template_in.get("currency") or data.get("currency") or "USD")
+                )[:8],
+                "payment_method": payment_method,
+                "phantom_wallet_address": phantom_addr if payment_method == "phantom" else None,
                 "location_type": location_type,
                 "address": address,
                 "expires_in_hours": expires_in_hours,
@@ -1482,16 +1571,39 @@ def process_auto_bids_for_user(username: str) -> Tuple[Dict[str, Any], int]:
             tpl = item.get("template") or {}
             hours = int(tpl.get("expires_in_hours") or 24)
             end_time = now + max(1, min(168, hours)) * 3600
+            # Refresh Phantom address from account at post time
+            acc_now = get_account(username) or {}
+            pay_method = (tpl.get("payment_method") or "cash")
+            if str(pay_method).lower() in ("phantom", "phantom_wallet", "solana", "usdc_sol"):
+                pay_method = "phantom"
+                if not acc_now.get("phantom_wallet_address"):
+                    skipped.append({
+                        "id": item["id"],
+                        "reason": "phantom_wallet_missing",
+                    })
+                    sched["next_run_at"] = _next_run_at(
+                        now, item.get("cadence") or "weekly",
+                        sched.get("preferred_local_hour", 8),
+                    )
+                    continue
+
             bid_payload = {
                 "username": username,
                 "service": tpl.get("service"),
                 "price": tpl.get("price"),
-                "currency": tpl.get("currency") or "USD",
-                "payment_method": tpl.get("payment_method") or "cash",
+                "currency": (
+                    "USDC" if pay_method == "phantom"
+                    else (tpl.get("currency") or "USD")
+                ),
+                "payment_method": pay_method,
                 "end_time": end_time,
                 "location_type": tpl.get("location_type") or "physical",
                 "privacy_level": tpl.get("privacy_level"),
             }
+            if pay_method == "phantom":
+                bid_payload["phantom_wallet_address"] = acc_now.get(
+                    "phantom_wallet_address"
+                )
             if tpl.get("address"):
                 bid_payload["address"] = tpl["address"]
 
@@ -2119,8 +2231,16 @@ def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'start_lat': start_lat,
             'start_lon': start_lon,
             'end_lat': end_lat,
-            'end_lon': end_lon
+            'end_lon': end_lon,
         }
+        # Phantom / Solana settlement hint for providers (off-platform)
+        pm = str(payment_method or '').lower()
+        if pm in ('phantom', 'phantom_wallet', 'solana', 'usdc_sol'):
+            bid['payment_method'] = 'phantom'
+            bid['currency'] = currency if currency and currency != 'USD' else 'USDC'
+            p_addr = data.get('phantom_wallet_address') or user_data.get('phantom_wallet_address')
+            if p_addr and normalize_solana_address(str(p_addr)):
+                bid['phantom_wallet_address'] = normalize_solana_address(str(p_addr))
         
         save_bid(bid_id, bid)
         _emit('bid.posted', username=username, actor=public_actor(username),

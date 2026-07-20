@@ -230,10 +230,25 @@
     </form>
 
     <div class="card">
+      <div class="card-title">Phantom wallet</div>
+      <p class="muted small">
+        Link a Solana address for auto-request payments (USDC/SOL off-platform).
+        Full Phantom browser connect is on the website Profile page; paste your address here on mobile.
+      </p>
+      <p class="muted small" id="phantomStatus">Phantom: —</p>
+      <label for="phantomAddressInput">Solana address</label>
+      <input id="phantomAddressInput" maxlength="64" placeholder="Base58 address from Phantom" autocomplete="off" spellcheck="false">
+      <div class="btn-row">
+        <button type="button" class="btn btn-sm btn-primary" id="phantomSaveBtn">Save Phantom</button>
+        <button type="button" class="btn btn-sm" id="phantomClearBtn">Unlink</button>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-title">Auto-requests</div>
       <p class="muted small">
         Schedule a few trusted recurring requests (yardcare, cleaning, scheduled delivery).
-        Max 5 active. Skips posting if a prior open request from that template is still live.
+        Max 5 active. Choose Phantom after linking a wallet so bids show your Solana pay address.
       </p>
       <form id="autoBidForm">
         <label for="autoBidName">Name</label>
@@ -247,7 +262,7 @@
         <textarea id="autoBidService" rows="2" maxlength="2000" placeholder="Weekly lawn care, edge trim"></textarea>
         <div class="row-2">
           <div>
-            <label for="autoBidPrice">Price (USD)</label>
+            <label for="autoBidPrice">Price</label>
             <input id="autoBidPrice" type="number" min="0.01" step="0.01" placeholder="75">
           </div>
           <div>
@@ -260,6 +275,11 @@
             </select>
           </div>
         </div>
+        <label for="autoBidPay">Payment method</label>
+        <select id="autoBidPay">
+          <option value="phantom">Phantom (USDC)</option>
+          <option value="cash">Cash / other off-platform</option>
+        </select>
         <label for="autoBidAddress">Address / area</label>
         <input id="autoBidAddress" placeholder="Same as your usual service location">
         <button type="submit" class="btn btn-primary" id="autoBidSubmit">Add auto-request</button>

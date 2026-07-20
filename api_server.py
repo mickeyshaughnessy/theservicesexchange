@@ -30,6 +30,8 @@ from handlers import (
     reject_job,
     get_account_info,
     set_wallet,
+    set_phantom_wallet,
+    clear_phantom_wallet,
     nearby_services,
     sign_job,
     get_my_bids,
@@ -377,6 +379,21 @@ def handle_set_wallet(current_user):
     data = flask.request.get_json() or {}
     data['username'] = current_user
     response, status = set_wallet(data)
+    return flask.jsonify(response), status
+
+@app.route('/set_phantom_wallet', methods=['POST'])
+@token_required
+def handle_set_phantom_wallet(current_user):
+    """Link Solana (Phantom) wallet for demand payments / auto-bidding."""
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = set_phantom_wallet(data)
+    return flask.jsonify(response), status
+
+@app.route('/set_phantom_wallet', methods=['DELETE'])
+@token_required
+def handle_clear_phantom_wallet(current_user):
+    response, status = clear_phantom_wallet(current_user)
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
