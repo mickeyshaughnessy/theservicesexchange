@@ -231,9 +231,130 @@
             color: var(--text-dim);
         }
         .inv-assumptions strong { color: var(--text); }
+        .inv-dials {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.3);
+            box-shadow: 0 0 28px rgba(0,255,255,0.06);
+            padding: 1.25rem 1.35rem 1.1rem;
+            margin-bottom: 1.5rem;
+            position: sticky;
+            top: 0.5rem;
+            z-index: 20;
+        }
+        .inv-dials-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .inv-dials-head h3 {
+            margin: 0;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--primary);
+            letter-spacing: 0.04em;
+        }
+        .inv-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .inv-presets button {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text);
+            background: transparent;
+            border: 1px solid rgba(0,255,255,0.3);
+            padding: 0.3rem 0.55rem;
+            cursor: pointer;
+        }
+        .inv-presets button:hover,
+        .inv-presets button.active {
+            color: var(--bg-deep);
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .inv-dial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem 1.25rem;
+        }
+        .inv-dial label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 0.5rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 0.35rem;
+        }
+        .inv-dial label .val {
+            color: var(--accent);
+            font-size: 0.9rem;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        .inv-dial input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .inv-dial .hint {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 0.25rem;
+            line-height: 1.4;
+        }
+        .inv-capital-strip {
+            margin-top: 1.1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0,255,255,0.15);
+        }
+        .inv-capital-strip .title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+        }
+        .inv-kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.6rem;
+            margin-top: 0.85rem;
+        }
+        .inv-kpi {
+            background: var(--bg-card, var(--bg-deep));
+            border: 1px solid rgba(0,255,255,0.18);
+            padding: 0.7rem 0.75rem;
+        }
+        .inv-kpi .n {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.05rem;
+            color: var(--accent);
+            line-height: 1.2;
+        }
+        .inv-kpi .l {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-top: 0.3rem;
+        }
         @media (max-width: 768px) {
             .inv-chart-box, .inv-chart-box.tall { height: 320px; }
             .inv-table { font-size: 0.75rem; }
+            .inv-dials { position: static; }
         }
     </style>
 </head>
@@ -310,7 +431,7 @@
                 <a href="#franchising">5. Franchising</a>
                 <a href="#hyperion">6. Hyperion Fund</a>
                 <a href="#costs">7. Costs</a>
-                <a href="#projections">Charts &amp; P&amp;L</a>
+                <a href="#projections">Scenario dials &amp; charts</a>
             </nav>
         </div>
     </header>
@@ -436,10 +557,10 @@
                 (today: protocol live, take-rate pilot path).
             </p>
             <div class="row g-3 mt-2">
-                <div class="col-md-3"><div class="inv-metric"><div class="n">$10T</div><div class="l">GMV target · 2035</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n">5%</div><div class="l">Platform take-rate</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n">$500B</div><div class="l">Exchange rev · 2035</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n">$1.6T</div><div class="l">Exchange rev · 2040</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n" id="metricGmv2035">$10T</div><div class="l">GMV target · 2035</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n" id="metricTakeRate">5%</div><div class="l">Platform take-rate</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n" id="metricExch2035">$500B</div><div class="l">Exchange rev · 2035</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n" id="metricExch2040">$1.6T</div><div class="l">Exchange rev · 2040</div></div>
             </div>
             <div class="inv-chart-box mt-4">
                 <h3>Gross transaction volume (GMV) by year</h3>
@@ -465,8 +586,8 @@
                 (jobs cleared through the exchange) rather than re-issuance.
             </p>
             <div class="row g-3 mt-2">
-                <div class="col-md-3"><div class="inv-metric"><div class="n">~$100k</div><div class="l">Price / seat</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n">1B</div><div class="l">Primary seats · ~5 yrs</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n" id="metricSeatPrice">~$100k</div><div class="l">Price / seat</div></div>
+                <div class="col-md-3"><div class="inv-metric"><div class="n" id="metricSeatTarget">1B</div><div class="l">Primary seats · ~5 yrs</div></div>
                 <div class="col-md-3"><div class="inv-metric"><div class="n">Eternal</div><div class="l">No expiry / re-mint</div></div>
                 <div class="col-md-3"><div class="inv-metric"><div class="n">Plateau</div><div class="l">Post-issuance revenue</div></div>
             </div>
@@ -652,9 +773,72 @@
         <div class="container">
             <h2>15-year revenue &amp; profit projections</h2>
             <p class="inv-prose mb-4">
-                Years <strong>2026–2040</strong>. Seat primary issuance dominates mid-ramp totals, then plateaus;
+                Years <strong>2026–2040</strong>. Use the scenario dials to re-tune the model—charts, the P&amp;L table,
+                and equity-raise KPIs update live. Seat primary issuance dominates mid-ramp totals, then plateaus;
                 exchange take-rate becomes the largest <em>recurring</em> line by the mid-2030s.
             </p>
+
+            <div class="inv-dials" id="scenarioDials" aria-label="Scenario tuning dials">
+                <div class="inv-dials-head">
+                    <h3>// Scenario dials</h3>
+                    <div class="inv-presets" role="group" aria-label="Scenario presets">
+                        <button type="button" data-preset="conservative">Conservative</button>
+                        <button type="button" data-preset="base" class="active">Base</button>
+                        <button type="button" data-preset="aggressive">Aggressive</button>
+                        <button type="button" data-preset="capital">$1.5T raise</button>
+                    </div>
+                </div>
+                <div class="inv-dial-grid">
+                    <div class="inv-dial">
+                        <label for="dialGmv">2035 GMV <span class="val" id="dialGmvVal">$10.0T</span></label>
+                        <input type="range" id="dialGmv" min="5" max="500" step="5" value="100" aria-valuetext="$10.0T">
+                        <div class="hint">Scales the full GMV path. Base = $10T in 2035 (slider 100 = $10.0T).</div>
+                    </div>
+                    <div class="inv-dial">
+                        <label for="dialTake">Take-rate <span class="val" id="dialTakeVal">5.0%</span></label>
+                        <input type="range" id="dialTake" min="10" max="150" step="5" value="50">
+                        <div class="hint">Platform share of GMV. Base 5%. Range 1.0%–15.0%.</div>
+                    </div>
+                    <div class="inv-dial">
+                        <label for="dialSeatPrice">Seat price <span class="val" id="dialSeatPriceVal">$100k</span></label>
+                        <input type="range" id="dialSeatPrice" min="10" max="250" step="5" value="100">
+                        <div class="hint">Primary issuance price per eternal seat. Base $100k.</div>
+                    </div>
+                    <div class="inv-dial">
+                        <label for="dialNetwork">Network scale <span class="val" id="dialNetworkVal">1.00×</span></label>
+                        <input type="range" id="dialNetwork" min="25" max="300" step="5" value="100">
+                        <div class="hint">Multiplies seat volume, hardware, ads, franchises, and Hyperion AUM vs base.</div>
+                    </div>
+                </div>
+
+                <div class="inv-capital-strip">
+                    <div class="title">// Equity raise scenario · ~6–7 partners</div>
+                    <div class="inv-dial-grid">
+                        <div class="inv-dial">
+                            <label for="dialCapital">Equity capital <span class="val" id="dialCapitalVal">$1.50T</span></label>
+                            <input type="range" id="dialCapital" min="10" max="300" step="5" value="150">
+                            <div class="hint">Contemplated raise size. Default $1.5T from institutional equity partners.</div>
+                        </div>
+                        <div class="inv-dial">
+                            <label for="dialPartners">Equity partners <span class="val" id="dialPartnersVal">7</span></label>
+                            <input type="range" id="dialPartners" min="3" max="12" step="1" value="7">
+                            <div class="hint">Number of equity partners sharing the round (equal-split check size shown below).</div>
+                        </div>
+                    </div>
+                    <div class="inv-kpi-row" id="capitalKpis">
+                        <div class="inv-kpi"><div class="n" id="kpiCheck">—</div><div class="l">Avg check / partner</div></div>
+                        <div class="inv-kpi"><div class="n" id="kpiProfit15">—</div><div class="l">15-yr cum. profit</div></div>
+                        <div class="inv-kpi"><div class="n" id="kpiMoic">—</div><div class="l">Illustrative profit / capital</div></div>
+                        <div class="inv-kpi"><div class="n" id="kpiPayback">—</div><div class="l">Years until cum. profit ≥ capital</div></div>
+                        <div class="inv-kpi"><div class="n" id="kpiRev2035">—</div><div class="l">Total revenue · 2035</div></div>
+                        <div class="inv-kpi"><div class="n" id="kpiProfit2035">—</div><div class="l">Profit · 2035</div></div>
+                    </div>
+                    <p class="inv-note" style="margin-top:0.75rem;margin-bottom:0;">
+                        Profit / capital is an <em>illustrative</em> ratio of cumulative modeled operating profit to raised equity—
+                        not ownership MOIC, not diluted returns, and not a forecast of LP distributions.
+                    </p>
+                </div>
+            </div>
 
             <div class="inv-chart-box tall">
                 <h3>Total revenue by stream (stacked)</h3>
@@ -695,19 +879,9 @@
                 </table>
             </div>
 
-            <div class="inv-assumptions mt-4">
-                <strong>// Model assumptions (base case)</strong><br>
-                GMV path anchors $10T in 2035 at 5% take-rate.
-                Seats: $100k primary, 1B cumulative by 2030, then residual taper.
-                Hardware: $25k ASP, 3% affiliate, 40% finance attach × 1.5% referral.
-                Ads: attention network scaling with query density.
-                Garage $75k fee + 6% of ~$280k gross; Lighthouse $50k fee + 8% of ~$180k gross; 95% of opened sites remain active.
-                Hyperion: effective ~2.8% of year-end AUM ($50M → $1T by 2035 → $3.3T by 2040).
-                Costs: per-stream ratios above, linear improvement 2026→2035.
-                <br><br>
-                <strong>Disclaimer:</strong> Illustrative forward-looking estimates for planning discussion only.
-                Not financial advice, not a securities offering, and not a guarantee of results.
-                Actual outcomes depend on adoption, regulation, competition, and execution.
+            <div class="inv-assumptions mt-4" id="assumptionsLive">
+                <strong>// Live model assumptions</strong><br>
+                Loading scenario…
             </div>
         </div>
     </section>
@@ -806,60 +980,55 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <script src="script.js?v=23"></script>
+    <script src="script.js?v=24"></script>
     <script>
     (function () {
         'use strict';
 
         const YEARS = [];
         for (let y = 2026; y <= 2040; y++) YEARS.push(y);
+        const YEAR_LABELS = YEARS.map(String);
 
-        // --- Projection model (USD) ---
-        const GMV = {
+        // Base-case shape curves (absolute units at network scale = 1.0)
+        const BASE_GMV = {
             2026: 1e9, 2027: 8e9, 2028: 40e9, 2029: 150e9, 2030: 450e9,
             2031: 1.1e12, 2032: 2.4e12, 2033: 4.5e12, 2034: 7.0e12, 2035: 10e12,
             2036: 13.5e12, 2037: 17.5e12, 2038: 22e12, 2039: 27e12, 2040: 32e12
         };
-        const TAKE_RATE = 0.05;
-
-        const SEAT_NEW = {
+        const BASE_SEAT_NEW = {
             2026: 1e6, 2027: 9e6, 2028: 90e6, 2029: 400e6, 2030: 500e6,
             2031: 1e7, 2032: 2e6, 2033: 5e5, 2034: 2e5, 2035: 1e5,
             2036: 5e4, 2037: 5e4, 2038: 5e4, 2039: 5e4, 2040: 5e4
         };
-        const SEAT_PRICE = 1e5;
-
-        const ROBOTS = {
+        const BASE_ROBOTS = {
             2026: 5e4, 2027: 4e5, 2028: 2e6, 2029: 8e6, 2030: 25e6,
             2031: 60e6, 2032: 110e6, 2033: 170e6, 2034: 230e6, 2035: 300e6,
             2036: 360e6, 2037: 420e6, 2038: 480e6, 2039: 540e6, 2040: 600e6
         };
-        const ASP = 25000, AFF = 0.03, FIN_ATTACH = 0.40, FIN_FEE = 0.015;
-
-        const ADS = {
+        const BASE_ADS = {
             2026: 5e6, 2027: 40e6, 2028: 200e6, 2029: 800e6, 2030: 2.5e9,
             2031: 6e9, 2032: 12e9, 2033: 20e9, 2034: 30e9, 2035: 45e9,
             2036: 60e9, 2037: 75e9, 2038: 90e9, 2039: 105e9, 2040: 120e9
         };
-
-        const G_NEW = {
+        const BASE_G_NEW = {
             2026: 20, 2027: 80, 2028: 250, 2029: 600, 2030: 1200,
             2031: 2000, 2032: 2800, 2033: 3200, 2034: 3500, 2035: 3600,
             2036: 3400, 2037: 3000, 2038: 2600, 2039: 2200, 2040: 1800
         };
-        const L_NEW = {
+        const BASE_L_NEW = {
             2026: 50, 2027: 200, 2028: 700, 2029: 1800, 2030: 4000,
             2031: 7000, 2032: 10000, 2033: 12000, 2034: 13000, 2035: 14000,
             2036: 13000, 2037: 12000, 2038: 10000, 2039: 9000, 2040: 8000
         };
-
-        const AUM = {
+        const BASE_AUM = {
             2026: 50e6, 2027: 400e6, 2028: 2.5e9, 2029: 12e9, 2030: 40e9,
             2031: 100e9, 2032: 220e9, 2033: 400e9, 2034: 650e9, 2035: 1e12,
             2036: 1.4e12, 2037: 1.85e12, 2038: 2.3e12, 2039: 2.8e12, 2040: 3.3e12
         };
-        const HYP_RATE = 0.028;
 
+        const ASP = 25000, AFF = 0.03, FIN_ATTACH = 0.40, FIN_FEE = 0.015;
+        const HYP_RATE = 0.028;
+        const BASE_GMV_2035 = 10e12;
         const COST = {
             exchange:  [0.35, 0.12],
             seats:     [0.15, 0.05],
@@ -869,66 +1038,17 @@
             hyperion:  [0.50, 0.30]
         };
 
+        const PRESETS = {
+            conservative: { gmv: 25, take: 30, seatPrice: 50, network: 40, capital: 50, partners: 5 },
+            base:         { gmv: 100, take: 50, seatPrice: 100, network: 100, capital: 150, partners: 7 },
+            aggressive:   { gmv: 250, take: 70, seatPrice: 120, network: 180, capital: 200, partners: 6 },
+            capital:      { gmv: 100, take: 50, seatPrice: 100, network: 100, capital: 150, partners: 7 }
+        };
+
         function costRatio(y, early, late) {
             const t = Math.min(1, Math.max(0, (y - 2026) / (2035 - 2026)));
             return early + (late - early) * t;
         }
-
-        // Build series
-        let gCum = 0, lCum = 0;
-        const series = {
-            gmv: [], exchange: [], seats: [], seatUnits: [], hardware: [],
-            ads: [], franchise: [], hyperion: [],
-            revenue: [], cost: [], profit: [],
-            pExchange: [], pSeats: [], pHardware: [], pAds: [], pFranchise: [], pHyperion: []
-        };
-
-        YEARS.forEach(y => {
-            const exchange = GMV[y] * TAKE_RATE;
-            const seatUnits = SEAT_NEW[y];
-            const seats = seatUnits * SEAT_PRICE;
-            const hardware = ROBOTS[y] * ASP * AFF + ROBOTS[y] * FIN_ATTACH * ASP * FIN_FEE;
-            const ads = ADS[y];
-
-            gCum += G_NEW[y];
-            lCum += L_NEW[y];
-            const gActive = Math.floor(gCum * 0.95);
-            const lActive = Math.floor(lCum * 0.95);
-            const franchise = G_NEW[y] * 75000 + L_NEW[y] * 50000
-                + gActive * 280000 * 0.06 + lActive * 180000 * 0.08;
-            const hyperion = AUM[y] * HYP_RATE;
-
-            const revs = { exchange, seats, hardware, ads, franchise, hyperion };
-            const costs = {
-                exchange: exchange * costRatio(y, ...COST.exchange),
-                seats: seats * costRatio(y, ...COST.seats),
-                hardware: hardware * costRatio(y, ...COST.hardware),
-                ads: ads * costRatio(y, ...COST.ads),
-                franchise: franchise * costRatio(y, ...COST.franchise),
-                hyperion: hyperion * costRatio(y, ...COST.hyperion)
-            };
-
-            const rev = exchange + seats + hardware + ads + franchise + hyperion;
-            const cost = costs.exchange + costs.seats + costs.hardware + costs.ads + costs.franchise + costs.hyperion;
-
-            series.gmv.push(GMV[y]);
-            series.exchange.push(exchange);
-            series.seats.push(seats);
-            series.seatUnits.push(seatUnits);
-            series.hardware.push(hardware);
-            series.ads.push(ads);
-            series.franchise.push(franchise);
-            series.hyperion.push(hyperion);
-            series.revenue.push(rev);
-            series.cost.push(cost);
-            series.profit.push(rev - cost);
-            series.pExchange.push(exchange - costs.exchange);
-            series.pSeats.push(seats - costs.seats);
-            series.pHardware.push(hardware - costs.hardware);
-            series.pAds.push(ads - costs.ads);
-            series.pFranchise.push(franchise - costs.franchise);
-            series.pHyperion.push(hyperion - costs.hyperion);
-        });
 
         function fmtMoney(x) {
             const ax = Math.abs(x);
@@ -944,7 +1064,80 @@
             if (x >= 1e9) return (x / 1e9).toFixed(2) + 'B';
             if (x >= 1e6) return (x / 1e6).toFixed(1) + 'M';
             if (x >= 1e3) return (x / 1e3).toFixed(0) + 'K';
-            return String(x);
+            return String(Math.round(x));
+        }
+
+        function readParams() {
+            return {
+                gmv2035: (Number(document.getElementById('dialGmv').value) / 10) * 1e12, // 100 → $10T
+                takeRate: Number(document.getElementById('dialTake').value) / 1000,       // 50 → 5%
+                seatPrice: Number(document.getElementById('dialSeatPrice').value) * 1000, // 100 → $100k
+                network: Number(document.getElementById('dialNetwork').value) / 100,      // 100 → 1.0×
+                capital: (Number(document.getElementById('dialCapital').value) / 100) * 1e12, // 150 → $1.5T
+                partners: Number(document.getElementById('dialPartners').value)
+            };
+        }
+
+        function buildSeries(p) {
+            const gmvScale = p.gmv2035 / BASE_GMV_2035;
+            const n = p.network;
+            const series = {
+                gmv: [], exchange: [], seats: [], seatUnits: [], hardware: [],
+                ads: [], franchise: [], hyperion: [],
+                revenue: [], cost: [], profit: [],
+                pExchange: [], pSeats: [], pHardware: [], pAds: [], pFranchise: [], pHyperion: []
+            };
+            let gCum = 0, lCum = 0;
+
+            YEARS.forEach(y => {
+                const gmv = BASE_GMV[y] * gmvScale;
+                const exchange = gmv * p.takeRate;
+                const seatUnits = BASE_SEAT_NEW[y] * n;
+                const seats = seatUnits * p.seatPrice;
+                const robots = BASE_ROBOTS[y] * n;
+                const hardware = robots * ASP * AFF + robots * FIN_ATTACH * ASP * FIN_FEE;
+                const ads = BASE_ADS[y] * n;
+
+                const gNew = Math.max(0, Math.round(BASE_G_NEW[y] * n));
+                const lNew = Math.max(0, Math.round(BASE_L_NEW[y] * n));
+                gCum += gNew;
+                lCum += lNew;
+                const gActive = Math.floor(gCum * 0.95);
+                const lActive = Math.floor(lCum * 0.95);
+                const franchise = gNew * 75000 + lNew * 50000
+                    + gActive * 280000 * 0.06 + lActive * 180000 * 0.08;
+                const hyperion = BASE_AUM[y] * n * HYP_RATE;
+
+                const costs = {
+                    exchange: exchange * costRatio(y, ...COST.exchange),
+                    seats: seats * costRatio(y, ...COST.seats),
+                    hardware: hardware * costRatio(y, ...COST.hardware),
+                    ads: ads * costRatio(y, ...COST.ads),
+                    franchise: franchise * costRatio(y, ...COST.franchise),
+                    hyperion: hyperion * costRatio(y, ...COST.hyperion)
+                };
+                const rev = exchange + seats + hardware + ads + franchise + hyperion;
+                const cost = costs.exchange + costs.seats + costs.hardware + costs.ads + costs.franchise + costs.hyperion;
+
+                series.gmv.push(gmv);
+                series.exchange.push(exchange);
+                series.seats.push(seats);
+                series.seatUnits.push(seatUnits);
+                series.hardware.push(hardware);
+                series.ads.push(ads);
+                series.franchise.push(franchise);
+                series.hyperion.push(hyperion);
+                series.revenue.push(rev);
+                series.cost.push(cost);
+                series.profit.push(rev - cost);
+                series.pExchange.push(exchange - costs.exchange);
+                series.pSeats.push(seats - costs.seats);
+                series.pHardware.push(hardware - costs.hardware);
+                series.pAds.push(ads - costs.ads);
+                series.pFranchise.push(franchise - costs.franchise);
+                series.pHyperion.push(hyperion - costs.hyperion);
+            });
+            return series;
         }
 
         // Chart theme
@@ -952,10 +1145,12 @@
         const tickColor = 'rgba(170,190,220,0.85)';
         const legendColor = 'rgba(200,220,240,0.9)';
 
-        Chart.defaults.color = legendColor;
-        Chart.defaults.borderColor = gridColor;
-        Chart.defaults.font.family = "'Share Tech Mono', monospace";
-        Chart.defaults.font.size = 11;
+        if (typeof Chart !== 'undefined') {
+            Chart.defaults.color = legendColor;
+            Chart.defaults.borderColor = gridColor;
+            Chart.defaults.font.family = "'Share Tech Mono', monospace";
+            Chart.defaults.font.size = 11;
+        }
 
         const COLORS = {
             exchange:  '#00e5ff',
@@ -972,29 +1167,25 @@
 
         function moneyAxis() {
             return {
-                ticks: {
-                    color: tickColor,
-                    callback: function (v) { return fmtMoney(v); }
-                },
+                ticks: { color: tickColor, callback: function (v) { return fmtMoney(v); } },
                 grid: { color: gridColor }
             };
         }
-
         function xAxis() {
             return {
                 ticks: { color: tickColor, maxRotation: 45, minRotation: 0 },
                 grid: { display: false }
             };
         }
-
-        function barOpts(stacked, title) {
+        function barOpts(stacked, units) {
             return {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: { duration: 280 },
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
                     legend: {
-                        display: stacked || title === 'rpc',
+                        display: stacked,
                         position: 'bottom',
                         labels: { boxWidth: 12, padding: 12, color: legendColor }
                     },
@@ -1003,7 +1194,7 @@
                             label: function (ctx) {
                                 const v = ctx.parsed.y;
                                 const label = ctx.dataset.label || '';
-                                if (label.indexOf('seats sold') !== -1) return label + ': ' + fmtUnits(v);
+                                if (units) return label + ': ' + fmtUnits(v);
                                 return label + ': ' + fmtMoney(v);
                             }
                         }
@@ -1011,159 +1202,139 @@
                 },
                 scales: {
                     x: Object.assign({ stacked: !!stacked }, xAxis()),
-                    y: Object.assign({ stacked: !!stacked, beginAtZero: true }, moneyAxis())
+                    y: Object.assign({
+                        stacked: !!stacked,
+                        beginAtZero: true,
+                        ticks: {
+                            color: tickColor,
+                            callback: function (v) { return units ? fmtUnits(v) : fmtMoney(v); }
+                        },
+                        grid: { color: gridColor }
+                    }, {})
                 }
             };
         }
 
-        function makeBar(id, datasets, stacked) {
+        const charts = {};
+
+        function makeBar(id, datasets, stacked, units) {
             const el = document.getElementById(id);
-            if (!el || typeof Chart === 'undefined') return;
-            const showLegend = datasets.length > 1 || stacked;
-            const opts = barOpts(stacked);
-            opts.plugins.legend.display = showLegend;
-            new Chart(el, {
+            if (!el || typeof Chart === 'undefined') return null;
+            const opts = barOpts(stacked, units);
+            opts.plugins.legend.display = datasets.length > 1 || stacked;
+            const chart = new Chart(el, {
                 type: 'bar',
-                data: { labels: YEARS.map(String), datasets: datasets },
+                data: { labels: YEAR_LABELS, datasets: datasets },
                 options: opts
             });
+            charts[id] = chart;
+            return chart;
         }
 
-        function makeUnitsBar(id, data, label, color) {
-            const el = document.getElementById(id);
-            if (!el || typeof Chart === 'undefined') return;
-            new Chart(el, {
-                type: 'bar',
-                data: {
-                    labels: YEARS.map(String),
-                    datasets: [{
-                        label: label,
-                        data: data,
-                        backgroundColor: color,
-                        borderColor: color,
-                        borderWidth: 0,
-                        borderRadius: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function (ctx) {
-                                    return label + ': ' + fmtUnits(ctx.parsed.y);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: xAxis(),
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                color: tickColor,
-                                callback: function (v) { return fmtUnits(v); }
-                            },
-                            grid: { color: gridColor }
-                        }
-                    }
-                }
+        function setChartData(id, dataArrays) {
+            const c = charts[id];
+            if (!c) return;
+            dataArrays.forEach((arr, i) => {
+                if (c.data.datasets[i]) c.data.datasets[i].data = arr;
             });
+            c.update('none');
         }
 
-        // Individual stream charts
-        makeBar('chartGmv', [{
-            label: 'GMV',
-            data: series.gmv,
-            backgroundColor: COLORS.gmv,
-            borderRadius: 2
-        }], false);
-
-        makeBar('chartExchange', [{
-            label: 'Exchange revenue (5%)',
-            data: series.exchange,
-            backgroundColor: COLORS.exchange,
-            borderRadius: 2
-        }], false);
-
-        makeUnitsBar('chartSeatsUnits', series.seatUnits, 'New seats sold', COLORS.seats);
-
-        makeBar('chartSeatsRev', [{
-            label: 'Seat sales revenue',
-            data: series.seats,
-            backgroundColor: COLORS.seats,
-            borderRadius: 2
-        }], false);
-
-        makeBar('chartHardware', [{
-            label: 'Affiliate + financing',
-            data: series.hardware,
-            backgroundColor: COLORS.hardware,
-            borderRadius: 2
-        }], false);
-
-        makeBar('chartAds', [{
-            label: 'Nearby / attention',
-            data: series.ads,
-            backgroundColor: COLORS.ads,
-            borderRadius: 2
-        }], false);
-
-        makeBar('chartFranchise', [{
-            label: 'Franchise fees + royalties',
-            data: series.franchise,
-            backgroundColor: COLORS.franchise,
-            borderRadius: 2
-        }], false);
-
-        makeBar('chartHyperion', [{
-            label: 'Hyperion Fund fees',
-            data: series.hyperion,
-            backgroundColor: COLORS.hyperion,
-            borderRadius: 2
-        }], false);
-
-        // Stacked total revenue
+        // Initial empty charts (data filled by applyScenario)
+        makeBar('chartGmv', [{ label: 'GMV', data: [], backgroundColor: COLORS.gmv, borderRadius: 2 }], false);
+        makeBar('chartExchange', [{ label: 'Exchange take-rate revenue', data: [], backgroundColor: COLORS.exchange, borderRadius: 2 }], false);
+        makeBar('chartSeatsUnits', [{ label: 'New seats sold', data: [], backgroundColor: COLORS.seats, borderRadius: 2 }], false, true);
+        makeBar('chartSeatsRev', [{ label: 'Seat sales revenue', data: [], backgroundColor: COLORS.seats, borderRadius: 2 }], false);
+        makeBar('chartHardware', [{ label: 'Affiliate + financing', data: [], backgroundColor: COLORS.hardware, borderRadius: 2 }], false);
+        makeBar('chartAds', [{ label: 'Nearby / attention', data: [], backgroundColor: COLORS.ads, borderRadius: 2 }], false);
+        makeBar('chartFranchise', [{ label: 'Franchise fees + royalties', data: [], backgroundColor: COLORS.franchise, borderRadius: 2 }], false);
+        makeBar('chartHyperion', [{ label: 'Hyperion Fund fees', data: [], backgroundColor: COLORS.hyperion, borderRadius: 2 }], false);
         makeBar('chartRevenueStacked', [
-            { label: 'Exchange', data: series.exchange, backgroundColor: COLORS.exchange, borderRadius: 0 },
-            { label: 'Seats', data: series.seats, backgroundColor: COLORS.seats, borderRadius: 0 },
-            { label: 'Hardware', data: series.hardware, backgroundColor: COLORS.hardware, borderRadius: 0 },
-            { label: 'Ads', data: series.ads, backgroundColor: COLORS.ads, borderRadius: 0 },
-            { label: 'Franchise', data: series.franchise, backgroundColor: COLORS.franchise, borderRadius: 0 },
-            { label: 'Hyperion', data: series.hyperion, backgroundColor: COLORS.hyperion, borderRadius: 0 }
+            { label: 'Exchange', data: [], backgroundColor: COLORS.exchange, borderRadius: 0 },
+            { label: 'Seats', data: [], backgroundColor: COLORS.seats, borderRadius: 0 },
+            { label: 'Hardware', data: [], backgroundColor: COLORS.hardware, borderRadius: 0 },
+            { label: 'Ads', data: [], backgroundColor: COLORS.ads, borderRadius: 0 },
+            { label: 'Franchise', data: [], backgroundColor: COLORS.franchise, borderRadius: 0 },
+            { label: 'Hyperion', data: [], backgroundColor: COLORS.hyperion, borderRadius: 0 }
         ], true);
-
-        // Ex-seats recurring
         makeBar('chartRevenueExSeats', [
-            { label: 'Exchange', data: series.exchange, backgroundColor: COLORS.exchange, borderRadius: 0 },
-            { label: 'Hardware', data: series.hardware, backgroundColor: COLORS.hardware, borderRadius: 0 },
-            { label: 'Ads', data: series.ads, backgroundColor: COLORS.ads, borderRadius: 0 },
-            { label: 'Franchise', data: series.franchise, backgroundColor: COLORS.franchise, borderRadius: 0 },
-            { label: 'Hyperion', data: series.hyperion, backgroundColor: COLORS.hyperion, borderRadius: 0 }
+            { label: 'Exchange', data: [], backgroundColor: COLORS.exchange, borderRadius: 0 },
+            { label: 'Hardware', data: [], backgroundColor: COLORS.hardware, borderRadius: 0 },
+            { label: 'Ads', data: [], backgroundColor: COLORS.ads, borderRadius: 0 },
+            { label: 'Franchise', data: [], backgroundColor: COLORS.franchise, borderRadius: 0 },
+            { label: 'Hyperion', data: [], backgroundColor: COLORS.hyperion, borderRadius: 0 }
         ], true);
-
-        // Revenue / cost / profit grouped
         makeBar('chartProfit', [
-            { label: 'Revenue', data: series.revenue, backgroundColor: COLORS.revenue, borderRadius: 2 },
-            { label: 'Cost', data: series.cost, backgroundColor: COLORS.cost, borderRadius: 2 },
-            { label: 'Profit', data: series.profit, backgroundColor: COLORS.profit, borderRadius: 2 }
+            { label: 'Revenue', data: [], backgroundColor: COLORS.revenue, borderRadius: 2 },
+            { label: 'Cost', data: [], backgroundColor: COLORS.cost, borderRadius: 2 },
+            { label: 'Profit', data: [], backgroundColor: COLORS.profit, borderRadius: 2 }
         ], false);
-
-        // Profit stacked by stream
         makeBar('chartProfitStacked', [
-            { label: 'Exchange', data: series.pExchange, backgroundColor: COLORS.exchange, borderRadius: 0 },
-            { label: 'Seats', data: series.pSeats, backgroundColor: COLORS.seats, borderRadius: 0 },
-            { label: 'Hardware', data: series.pHardware, backgroundColor: COLORS.hardware, borderRadius: 0 },
-            { label: 'Ads', data: series.pAds, backgroundColor: COLORS.ads, borderRadius: 0 },
-            { label: 'Franchise', data: series.pFranchise, backgroundColor: COLORS.franchise, borderRadius: 0 },
-            { label: 'Hyperion', data: series.pHyperion, backgroundColor: COLORS.hyperion, borderRadius: 0 }
+            { label: 'Exchange', data: [], backgroundColor: COLORS.exchange, borderRadius: 0 },
+            { label: 'Seats', data: [], backgroundColor: COLORS.seats, borderRadius: 0 },
+            { label: 'Hardware', data: [], backgroundColor: COLORS.hardware, borderRadius: 0 },
+            { label: 'Ads', data: [], backgroundColor: COLORS.ads, borderRadius: 0 },
+            { label: 'Franchise', data: [], backgroundColor: COLORS.franchise, borderRadius: 0 },
+            { label: 'Hyperion', data: [], backgroundColor: COLORS.hyperion, borderRadius: 0 }
         ], true);
 
-        // P&L table
-        const tbody = document.querySelector('#pnlTable tbody');
-        if (tbody) {
+        function setText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        }
+
+        function updateDialLabels(p) {
+            setText('dialGmvVal', fmtMoney(p.gmv2035));
+            setText('dialTakeVal', (p.takeRate * 100).toFixed(1) + '%');
+            setText('dialSeatPriceVal', fmtMoney(p.seatPrice));
+            setText('dialNetworkVal', p.network.toFixed(2) + '×');
+            setText('dialCapitalVal', fmtMoney(p.capital));
+            setText('dialPartnersVal', String(p.partners));
+
+            const gmvEl = document.getElementById('dialGmv');
+            if (gmvEl) gmvEl.setAttribute('aria-valuetext', fmtMoney(p.gmv2035));
+        }
+
+        function updateMetrics(p, series) {
+            const i2035 = YEARS.indexOf(2035);
+            const i2040 = YEARS.indexOf(2040);
+            setText('metricGmv2035', fmtMoney(p.gmv2035));
+            setText('metricTakeRate', (p.takeRate * 100).toFixed(1) + '%');
+            setText('metricExch2035', fmtMoney(series.exchange[i2035]));
+            setText('metricExch2040', fmtMoney(series.exchange[i2040]));
+            setText('metricSeatPrice', '~' + fmtMoney(p.seatPrice));
+            const seatTarget = series.seatUnits.slice(0, 5).reduce((a, b) => a + b, 0);
+            setText('metricSeatTarget', fmtUnits(seatTarget));
+        }
+
+        function updateCapitalKpis(p, series) {
+            setText('kpiCheck', fmtMoney(p.capital / p.partners));
+            const cumProfit = series.profit.reduce((a, b) => a + b, 0);
+            setText('kpiProfit15', fmtMoney(cumProfit));
+            const ratio = p.capital > 0 ? cumProfit / p.capital : 0;
+            setText('kpiMoic', ratio.toFixed(2) + '×');
+
+            let running = 0;
+            let payback = '—';
+            for (let i = 0; i < series.profit.length; i++) {
+                running += series.profit[i];
+                if (running >= p.capital) {
+                    payback = String(YEARS[i] - 2026 + 1) + ' yrs (' + YEARS[i] + ')';
+                    break;
+                }
+            }
+            if (payback === '—' && cumProfit > 0) payback = '>15 yrs';
+            setText('kpiPayback', payback);
+
+            const i2035 = YEARS.indexOf(2035);
+            setText('kpiRev2035', fmtMoney(series.revenue[i2035]));
+            setText('kpiProfit2035', fmtMoney(series.profit[i2035]));
+        }
+
+        function updateTable(series) {
+            const tbody = document.querySelector('#pnlTable tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
             YEARS.forEach((y, i) => {
                 const tr = document.createElement('tr');
                 const cells = [
@@ -1193,6 +1364,84 @@
                 tbody.appendChild(tr);
             });
         }
+
+        function updateAssumptions(p) {
+            const el = document.getElementById('assumptionsLive');
+            if (!el) return;
+            el.innerHTML =
+                '<strong>// Live model assumptions</strong><br>' +
+                'GMV path anchors ' + fmtMoney(p.gmv2035) + ' in 2035 at ' + (p.takeRate * 100).toFixed(1) + '% take-rate. ' +
+                'Seats: ' + fmtMoney(p.seatPrice) + ' primary × network scale ' + p.network.toFixed(2) + '× (base 1B seats over ~5 yrs). ' +
+                'Hardware: $25k ASP, 3% affiliate, 40% finance attach × 1.5% referral (scaled). ' +
+                'Ads, franchise, Hyperion AUM scaled with network. ' +
+                'Equity raise scenario: ' + fmtMoney(p.capital) + ' across ' + p.partners + ' partners (~' +
+                fmtMoney(p.capital / p.partners) + ' average check). ' +
+                'Costs: per-stream ratios, linear improvement 2026→2035.' +
+                '<br><br><strong>Disclaimer:</strong> Illustrative forward-looking estimates for planning discussion only. ' +
+                'Not financial advice, not a securities offering, and not a guarantee of results. ' +
+                'Actual outcomes depend on adoption, regulation, competition, and execution.';
+        }
+
+        function applyScenario() {
+            const p = readParams();
+            updateDialLabels(p);
+            const series = buildSeries(p);
+            updateMetrics(p, series);
+            updateCapitalKpis(p, series);
+            updateTable(series);
+            updateAssumptions(p);
+
+            setChartData('chartGmv', [series.gmv]);
+            setChartData('chartExchange', [series.exchange]);
+            setChartData('chartSeatsUnits', [series.seatUnits]);
+            setChartData('chartSeatsRev', [series.seats]);
+            setChartData('chartHardware', [series.hardware]);
+            setChartData('chartAds', [series.ads]);
+            setChartData('chartFranchise', [series.franchise]);
+            setChartData('chartHyperion', [series.hyperion]);
+            setChartData('chartRevenueStacked', [
+                series.exchange, series.seats, series.hardware, series.ads, series.franchise, series.hyperion
+            ]);
+            setChartData('chartRevenueExSeats', [
+                series.exchange, series.hardware, series.ads, series.franchise, series.hyperion
+            ]);
+            setChartData('chartProfit', [series.revenue, series.cost, series.profit]);
+            setChartData('chartProfitStacked', [
+                series.pExchange, series.pSeats, series.pHardware, series.pAds, series.pFranchise, series.pHyperion
+            ]);
+        }
+
+        function setPreset(name) {
+            const pr = PRESETS[name];
+            if (!pr) return;
+            document.getElementById('dialGmv').value = pr.gmv;
+            document.getElementById('dialTake').value = pr.take;
+            document.getElementById('dialSeatPrice').value = pr.seatPrice;
+            document.getElementById('dialNetwork').value = pr.network;
+            document.getElementById('dialCapital').value = pr.capital;
+            document.getElementById('dialPartners').value = pr.partners;
+            document.querySelectorAll('.inv-presets button').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-preset') === name);
+            });
+            applyScenario();
+        }
+
+        ['dialGmv', 'dialTake', 'dialSeatPrice', 'dialNetwork', 'dialCapital', 'dialPartners'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', function () {
+                document.querySelectorAll('.inv-presets button').forEach(btn => btn.classList.remove('active'));
+                applyScenario();
+            });
+        });
+
+        document.querySelectorAll('.inv-presets button').forEach(btn => {
+            btn.addEventListener('click', function () {
+                setPreset(btn.getAttribute('data-preset'));
+            });
+        });
+
+        applyScenario();
 
         // Live stats
         document.addEventListener('DOMContentLoaded', async () => {
