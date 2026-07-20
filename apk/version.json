@@ -1,10 +1,10 @@
 {
-  "versionCode": 4,
-  "versionName": "1.3.0",
-  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.3.0.apk",
-  "apkFile": "The-RSE-1.3.0.apk",
+  "versionCode": 5,
+  "versionName": "1.3.1",
+  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.3.1.apk",
+  "apkFile": "The-RSE-1.3.1.apk",
   "mandatory": false,
   "minSupportedVersionCode": 1,
-  "releaseNotes": "Find friends via opt-in contact discovery (hash match). Prior: privacy dials, Nearby map, auto-requests, Jobs open requests.",
-  "sha256": "82e8b763ca7d9f32b52dcace6278e83b44f558bfc17cc937b3f395a0b721f913"
+  "releaseNotes": "Play Store readiness: privacy policy, Play install detection (skip sideload auto-update). Plus contacts discovery from 1.3.0.",
+  "sha256": "be5b649097da93ac455943d8911d37d6be7000cc2edbd80a77c9ef47d9900a47"
 }

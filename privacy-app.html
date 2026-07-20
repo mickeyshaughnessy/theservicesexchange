@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a2e">
+    <meta name="description" content="Privacy policy for The RSE Android mobile app.">
+    <title>The RSE App — Privacy Policy</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css?v=22" rel="stylesheet">
+    <style>
+        .policy { max-width: 820px; margin: 0 auto; }
+        .policy h2 { font-size: 1.1rem; color: var(--primary); margin-top: 1.75rem; }
+        .policy p, .policy li { font-family: 'Share Tech Mono', monospace; color: var(--text); line-height: 1.7; }
+        .policy .meta { color: var(--text-dim); font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">The RSE</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="index.html">Home</a>
+                <a class="nav-link" href="about.html">About</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero" style="padding: 100px 0 40px;" id="main-content" tabindex="-1">
+        <div class="container policy">
+            <h1>The RSE App — Privacy Policy</h1>
+            <p class="meta">Effective date: 2026-07-20 · Applies to the Android app <code>com.rse.app</code> (“The RSE”).</p>
+        </div>
+    </section>
+
+    <section class="py-4" style="background: var(--bg-deep); padding-bottom: 4rem !important;">
+        <div class="container policy">
+            <p>
+                The RSE is a demand-side marketplace client for robot labor. It talks to our public API at
+                <strong>rse-api.com</strong>. This policy describes what the mobile app collects, how we use it,
+                and the controls you have.
+            </p>
+
+            <h2>1. Who we are</h2>
+            <p>
+                Operator: The Services Exchange / The RSE.
+                Contact: use the in-app <strong>Feedback</strong> tab or the website feedback form at
+                <a href="feedback.html">feedback.html</a>.
+            </p>
+
+            <h2>2. Data the app processes</h2>
+            <ul>
+                <li><strong>Account credentials</strong> — username and password (password is hashed server-side; not readable by us as plain text after storage).</li>
+                <li><strong>Profile</strong> — optional display name, about text, public location string, private contact info you enter, avatar.</li>
+                <li><strong>Service requests &amp; jobs</strong> — service descriptions, prices, addresses, location type, payment method notes, ratings.</li>
+                <li><strong>Location</strong> — when you use Nearby or grant GPS, approximate coordinates or an address you type are used to query nearby open requests. Exact coordinates for matching may be stored on your own requests; public Nearby views apply privacy projections (noise / coarsening) based on your privacy dials.</li>
+                <li><strong>Contacts (optional)</strong> — only if you enable discovery or import contacts. Device contacts are read on-device; we store <em>one-way hashes</em> of phone/email identifiers for opt-in discovery, not your full address book.</li>
+                <li><strong>App updates (sideload builds)</strong> — version checks against our servers; APK download for update. Play Store installs update through Google Play instead.</li>
+                <li><strong>Diagnostics</strong> — standard server logs (IP, timestamps, API paths) for security and reliability.</li>
+            </ul>
+
+            <h2>3. Permissions (Android)</h2>
+            <ul>
+                <li><strong>Internet</strong> — required for marketplace API and maps tiles.</li>
+                <li><strong>Location (approximate/precise)</strong> — optional; used for Nearby discovery when you choose “Use my location”.</li>
+                <li><strong>Contacts</strong> — optional; used only when you import contacts or register discovery identifiers.</li>
+                <li><strong>Install packages</strong> — used only by non–Play Store (sideload) builds to install app updates you approve. Play Store builds do not use sideload auto-update.</li>
+            </ul>
+
+            <h2>4. How we use data</h2>
+            <ul>
+                <li>Operate the marketplace (post requests, match jobs, rate completion).</li>
+                <li>Show public profiles and privacy-filtered Nearby results.</li>
+                <li>Optional friend discovery via contact hashes.</li>
+                <li>Security, abuse prevention, and service improvement.</li>
+            </ul>
+            <p>We do not sell your personal information.</p>
+
+            <h2>5. Sharing</h2>
+            <ul>
+                <li><strong>Other users / operators</strong> — what you mark public (profile, public request fields). After a job match, operational details needed to fulfill work may be shared with the counterparty.</li>
+                <li><strong>Infrastructure providers</strong> — hosting, object storage, maps (e.g. Mapbox for map tiles when you open Nearby), and LLM providers when you use optional AI features on the wider platform.</li>
+                <li><strong>Legal</strong> — if required by law or to protect rights and safety.</li>
+            </ul>
+
+            <h2>6. Your controls</h2>
+            <ul>
+                <li>Privacy dials in Account control public precision for requests and profile.</li>
+                <li>Contact discovery can be turned off; hashes are cleared.</li>
+                <li>You may delete open requests; log out anytime.</li>
+                <li>For account deletion or data export requests, contact us via Feedback with your username.</li>
+            </ul>
+
+            <h2>7. Retention</h2>
+            <p>
+                Account, bid/job, and messaging data are retained while your account is active and as needed for
+                marketplace history, disputes, and legal obligations. Server logs are rotated on a routine schedule.
+            </p>
+
+            <h2>8. Children</h2>
+            <p>The app is not directed to children under 13. We do not knowingly collect data from children under 13.</p>
+
+            <h2>9. International</h2>
+            <p>
+                Servers may be located in the United States. By using the app you understand your data may be
+                processed in the U.S. and other regions where our providers operate.
+            </p>
+
+            <h2>10. Changes</h2>
+            <p>We may update this policy. The effective date above will change when we do. Continued use after updates means you accept the revised policy.</p>
+
+            <h2>11. Contact</h2>
+            <p>
+                Website: <a href="https://theservicesexchange.com">theservicesexchange.com</a><br>
+                In-app: Feedback tab<br>
+                Policy URL for stores: <a href="https://theservicesexchange.com/privacy-app.html">https://theservicesexchange.com/privacy-app.html</a>
+            </p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <a href="index.html">Home</a> ·
+            <a href="about.html">About</a> ·
+            <a href="feedback.html">Feedback</a>
+        </div>
+    </footer>
+</body>
+</html>

@@ -72,6 +72,15 @@ cp android/app/build/outputs/apk/release/app-release.apk dist/The-RSE-1.1.0.apk
 # Update ../apk/version.json (versionCode, versionName, apkUrl, sha256) then deploy
 ```
 
+## Google Play
+
+See **[PLAY_STORE.md](./PLAY_STORE.md)** for Console checklist, Data safety answers, and AAB upload steps.
+
+```bash
+npm run bundle
+# android/app/build/outputs/bundle/release/app-release.aab
+```
+
 ## Auto-update (sideloaded APK)
 
 The Android shell includes a native `AppUpdate` plugin. On launch the SPA:

@@ -1588,7 +1588,8 @@
         (info.versionName || '?') +
         ' (build ' +
         (info.versionCode != null ? info.versionCode : '?') +
-        ')';
+        ')' +
+        (info.fromPlayStore ? ' · Play Store' : ' · sideload');
     } catch {
       els.appVersionLabel.textContent = 'Version unknown';
     }
@@ -1985,6 +1986,21 @@
 
     try {
       const info = await plugin.getInfo();
+      // Play-distributed installs update via Play Store, not sideload APKs
+      if (info.fromPlayStore) {
+        if (force) {
+          toast('This install updates through the Play Store', 'ok');
+          try {
+            window.open(
+              'https://play.google.com/store/apps/details?id=com.rse.app',
+              '_blank'
+            );
+          } catch {
+            /* ignore */
+          }
+        }
+        return;
+      }
       const currentCode = Number(info.versionCode) || 0;
       const manifest = await fetchUpdateManifest();
       pendingManifest = manifest;

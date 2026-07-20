@@ -42,7 +42,8 @@ Robot mascot art ships **only** in the mobile app (not the website):
 
 ## Download
 
-- Homepage top-left: **Download The RSE App** → `apk/The-RSE-1.3.0.apk`
+- Homepage top-left: **Download The RSE App** → `apk/The-RSE-1.3.1.apk`
+- Play AAB: `mobile/dist/The-RSE-1.3.1.aab` (see `mobile/PLAY_STORE.md`)
 - Update manifest: `apk/version.json` and `GET /app/version` on the API
 - Build docs: `mobile/README.md`
 
@@ -51,4 +52,4 @@ Robot mascot art ships **only** in the mobile app (not the website):
 - Supply / grab_job / seats
 - Campaigns, parties, bulletin
 - iOS / App Store
-- Play Store listing (AAB pipeline ready via `npm run bundle`)
+- Play Store production listing (pipeline + docs: `mobile/PLAY_STORE.md`; privacy: `/privacy-app.html`)

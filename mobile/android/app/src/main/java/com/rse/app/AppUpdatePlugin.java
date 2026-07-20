@@ -52,9 +52,26 @@ public class AppUpdatePlugin extends Plugin {
             }
             ret.put("versionCode", code);
             ret.put("platform", "android");
+            // Play-installed builds must not self-update via sideload APKs (Play policy).
+            ret.put("fromPlayStore", isInstalledFromPlay(pm, pkg));
             call.resolve(ret);
         } catch (Exception e) {
             call.reject("Failed to read app version: " + e.getMessage());
+        }
+    }
+
+    private boolean isInstalledFromPlay(PackageManager pm, String pkg) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                String installer = pm.getInstallSourceInfo(pkg).getInstallingPackageName();
+                return "com.android.vending".equals(installer)
+                        || "com.google.android.feedback".equals(installer);
+            }
+            //noinspection deprecation
+            String installer = pm.getInstallerPackageName(pkg);
+            return "com.android.vending".equals(installer);
+        } catch (Exception e) {
+            return false;
         }
     }
 
