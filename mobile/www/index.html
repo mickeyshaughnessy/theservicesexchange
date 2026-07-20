@@ -270,6 +270,29 @@
     </div>
 
     <div class="card">
+      <div class="card-title">Find friends</div>
+      <p class="muted small">
+        Opt in so people who already have your phone or email in their address book can discover your RSE username.
+        We only store one-way hashes — never your raw contact book.
+      </p>
+      <p class="muted small" id="discoveryStatus">Discovery: loading…</p>
+      <label for="discoveryPhone">Your phone (for discovery)</label>
+      <input id="discoveryPhone" type="tel" autocomplete="tel" placeholder="+1 555 123 4567">
+      <label for="discoveryEmail">Your email (for discovery)</label>
+      <input id="discoveryEmail" type="email" autocomplete="email" placeholder="you@example.com">
+      <div class="btn-row">
+        <button type="button" class="btn btn-sm btn-primary" id="discoveryEnableBtn">Enable discovery</button>
+        <button type="button" class="btn btn-sm" id="discoveryDisableBtn">Turn off</button>
+      </div>
+      <hr class="soft-hr">
+      <p class="muted small">Import device contacts to see who is already on The RSE (opt-in users only).</p>
+      <button type="button" class="btn btn-sm btn-primary" id="importContactsBtn" style="width:100%">Import contacts &amp; match</button>
+      <div id="contactsMatchList" class="contacts-match-list">
+        <div class="empty">No matches yet.</div>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-title">App updates</div>
       <p class="muted small" id="appVersionLabel">Version —</p>
       <p class="muted small">On Android, the app checks for a newer APK on launch and installs it automatically (you confirm the system Install prompt).</p>

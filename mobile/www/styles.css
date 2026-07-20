@@ -462,6 +462,17 @@ body.app-ready .bottom-nav { display: grid; }
 .nearby-map .mapboxgl-ctrl-attrib {
   opacity: 0.7;
 }
+.soft-hr {
+  border: none;
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  margin: 14px 0;
+}
+.contacts-match-list {
+  margin-top: 12px;
+}
+.contacts-match-list .card {
+  margin-bottom: 8px;
+}
 #shareLinkInput {
   font-size: 0.8rem;
   color: var(--text);

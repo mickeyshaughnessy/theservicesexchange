@@ -118,6 +118,7 @@ ACTIVITY_JOB_INDEX_PREFIX = f"{S3_PREFIX}/activity_index/jobs"
 CHANNELS_PREFIX = f"{S3_PREFIX}/channels"
 CHANNEL_MESSAGES_PREFIX = f"{S3_PREFIX}/channel_messages"
 CHAT_CURSORS_PREFIX = f"{S3_PREFIX}/chat_cursors"
+CONTACT_HASHES_PREFIX = f"{S3_PREFIX}/contact_hashes"
 
 # -----------------------------------------------------------------------------
 # S3 Helper Functions
@@ -707,6 +708,35 @@ def save_slug_mapping(slug: str, username: str) -> None:
     key = f"{SLUGS_PREFIX}/{slug}.json"
     if not _s3_put(key, {'username': username}):
         logger.error(f"Failed to save slug mapping for {slug}")
+
+# -----------------------------------------------------------------------------
+# Contact discovery hashes (opt-in only; values are HMAC digests, never raw PII)
+# -----------------------------------------------------------------------------
+
+def get_contact_hash_record(contact_hash: str) -> Optional[Dict[str, Any]]:
+    """Lookup username for a contact identifier hash."""
+    if not contact_hash:
+        return None
+    key = f"{CONTACT_HASHES_PREFIX}/{contact_hash}.json"
+    data = _s3_get(key)
+    return data if isinstance(data, dict) else None
+
+
+def save_contact_hash_record(contact_hash: str, username: str) -> None:
+    key = f"{CONTACT_HASHES_PREFIX}/{contact_hash}.json"
+    if not _s3_put(key, {'username': username, 'updated_on': int(time.time())}):
+        logger.error(f"Failed to save contact hash for {username}")
+
+
+def delete_contact_hash_record(contact_hash: str) -> None:
+    if not contact_hash:
+        return
+    key = f"{CONTACT_HASHES_PREFIX}/{contact_hash}.json"
+    try:
+        s3_client.delete_object(Bucket=S3_BUCKET, Key=key)
+        _cache_delete(key)
+    except ClientError as e:
+        logger.error(f"S3 DELETE error for {key}: {e}")
 
 # -----------------------------------------------------------------------------
 # Avatar Storage

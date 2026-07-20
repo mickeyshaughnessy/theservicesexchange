@@ -11,6 +11,8 @@ import time
 import logging
 import math
 import hashlib
+import hmac
+import re
 import secrets
 import threading
 import requests
@@ -31,6 +33,7 @@ from utils import (
     get_financing_applications, save_financing_applications,
     get_follows, save_follows,
     get_username_by_slug, save_slug_mapping,
+    get_contact_hash_record, save_contact_hash_record, delete_contact_hash_record,
     save_avatar,
     get_shop_orders, save_shop_orders,
     get_all_accounts,
@@ -798,6 +801,8 @@ def _profile_defaults(user_data: Dict[str, Any]) -> Dict[str, Any]:
     user_data.setdefault('robots_owned', [])
     user_data.setdefault('subscriptions', [])
     user_data.setdefault('auto_bids', [])
+    user_data.setdefault('discoverable_by_contacts', False)
+    user_data.setdefault('contact_hashes', [])
     user_data.setdefault('privacy_level', privacy_mod.DEFAULT_PUBLIC_PRIVACY)
     user_data.setdefault('privacy_profile_level', privacy_mod.DEFAULT_PUBLIC_PRIVACY)
     user_data.setdefault('privacy_nearby_default', privacy_mod.DEFAULT_PUBLIC_PRIVACY)
@@ -904,6 +909,8 @@ def get_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                 user_data.get('privacy_nearby_default') or user_data.get('privacy_level')
             ),
             'auto_bids': user_data.get('auto_bids') or [],
+            'discoverable_by_contacts': bool(user_data.get('discoverable_by_contacts')),
+            'contact_hash_count': len(user_data.get('contact_hashes') or []),
         }, 200
     except Exception as e:
         logger.error(f"Get profile error: {str(e)}")
@@ -1515,6 +1522,184 @@ def process_auto_bids_for_user(username: str) -> Tuple[Dict[str, Any], int]:
         return {"posted": posted, "skipped": skipped, "auto_bids": auto_bids}, 200
     except Exception as e:
         logger.error(f"Process auto_bids error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+# -----------------------------------------------------------------------------
+# Contact discovery (opt-in hash match)
+# -----------------------------------------------------------------------------
+
+def _contact_pepper() -> str:
+    return (
+        getattr(config, 'CONTACT_HASH_PEPPER', None)
+        or getattr(config, 'RSE_PROOF_SIGNING_KEY', None)
+        or 'rse-contact-discovery-v1'
+    )
+
+
+def normalize_phone(raw: str) -> Optional[str]:
+    """Strip to digits; keep reasonable phone lengths."""
+    if not raw:
+        return None
+    digits = re.sub(r'\D+', '', str(raw))
+    if len(digits) < 7:
+        return None
+    if len(digits) > 15:
+        digits = digits[-15:]
+    return digits
+
+
+def normalize_email(raw: str) -> Optional[str]:
+    if not raw:
+        return None
+    e = str(raw).strip().lower()
+    if '@' not in e or '.' not in e.split('@')[-1]:
+        return None
+    if len(e) > 200:
+        return None
+    return e
+
+
+def hash_contact_identifier(kind: str, normalized: str) -> str:
+    msg = f"{kind}:{normalized}".encode('utf-8')
+    return hmac.new(_contact_pepper().encode('utf-8'), msg, hashlib.sha256).hexdigest()
+
+
+def _collect_contact_hashes(phones: Optional[List], emails: Optional[List]) -> List[str]:
+    hashes: List[str] = []
+    seen = set()
+    for p in phones or []:
+        n = normalize_phone(p)
+        if not n:
+            continue
+        h = hash_contact_identifier('phone', n)
+        if h not in seen:
+            seen.add(h)
+            hashes.append(h)
+    for e in emails or []:
+        n = normalize_email(e)
+        if not n:
+            continue
+        h = hash_contact_identifier('email', n)
+        if h not in seen:
+            seen.add(h)
+            hashes.append(h)
+    return hashes[:200]
+
+
+def set_contact_discovery(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """
+    Opt in/out of contact discovery and register hashed identifiers.
+    Never stores raw phone/email — only HMAC digests.
+    """
+    try:
+        username = data.get('username')
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+        _profile_defaults(user_data)
+
+        discoverable = bool(data.get('discoverable', data.get('discoverable_by_contacts', False)))
+        phones = data.get('phones') if isinstance(data.get('phones'), list) else []
+        emails = data.get('emails') if isinstance(data.get('emails'), list) else []
+
+        old_hashes = list(user_data.get('contact_hashes') or [])
+        for h in old_hashes:
+            rec = get_contact_hash_record(h)
+            if rec and rec.get('username') == username:
+                delete_contact_hash_record(h)
+
+        new_hashes: List[str] = []
+        if discoverable:
+            new_hashes = _collect_contact_hashes(phones, emails)
+            if not new_hashes and (phones or emails):
+                return {"error": "No valid phone or email identifiers provided"}, 400
+            for h in new_hashes:
+                existing = get_contact_hash_record(h)
+                if existing and existing.get('username') and existing.get('username') != username:
+                    continue
+                save_contact_hash_record(h, username)
+
+        user_data['discoverable_by_contacts'] = discoverable
+        user_data['contact_hashes'] = new_hashes if discoverable else []
+        save_account(username, user_data)
+
+        return {
+            "discoverable_by_contacts": discoverable,
+            "registered_identifiers": len(new_hashes),
+            "message": (
+                "Discoverable — friends who import contacts can find you."
+                if discoverable
+                else "Not discoverable — contact hashes cleared."
+            ),
+        }, 200
+    except Exception as e:
+        logger.error(f"set_contact_discovery error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_contact_discovery(username: str) -> Tuple[Dict[str, Any], int]:
+    try:
+        user_data = get_account(username)
+        if not user_data:
+            return {"error": "User not found"}, 404
+        _profile_defaults(user_data)
+        return {
+            "discoverable_by_contacts": bool(user_data.get('discoverable_by_contacts')),
+            "registered_identifiers": len(user_data.get('contact_hashes') or []),
+        }, 200
+    except Exception as e:
+        logger.error(f"get_contact_discovery error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def match_contacts(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Match imported identifiers against opt-in discoverable users."""
+    try:
+        username = data.get('username')
+        phones = data.get('phones') if isinstance(data.get('phones'), list) else []
+        emails = data.get('emails') if isinstance(data.get('emails'), list) else []
+        hashes_in = data.get('hashes') if isinstance(data.get('hashes'), list) else []
+
+        hash_list = _collect_contact_hashes(phones, emails)
+        for h in hashes_in:
+            if isinstance(h, str) and re.fullmatch(r'[0-9a-f]{64}', h.lower()):
+                hl = h.lower()
+                if hl not in hash_list:
+                    hash_list.append(hl)
+        hash_list = hash_list[:500]
+
+        matches = []
+        seen_users = set()
+        for h in hash_list:
+            rec = get_contact_hash_record(h)
+            if not rec:
+                continue
+            other = rec.get('username')
+            if not other or other == username or other in seen_users:
+                continue
+            acc = get_account(other)
+            if not acc:
+                continue
+            _profile_defaults(acc)
+            if not acc.get('discoverable_by_contacts'):
+                continue
+            seen_users.add(other)
+            matches.append({
+                'username': other,
+                'display_name': acc.get('display_name'),
+                'avatar_url': acc.get('avatar_url'),
+                'profile_slug': acc.get('profile_slug'),
+                'reputation_score': round(calculate_reputation_score(acc), 2),
+            })
+
+        return {
+            "matches": matches,
+            "checked": len(hash_list),
+            "match_count": len(matches),
+        }, 200
+    except Exception as e:
+        logger.error(f"match_contacts error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
 

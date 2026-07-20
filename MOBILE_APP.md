@@ -1,6 +1,6 @@
 # The RSE Mobile App
 
-Status: **v1.2.0 demand-side Android app shipped** (privacy dials, Nearby map, auto-requests).
+Status: **v1.3.0 demand-side Android app shipped** (contacts discovery + prior v1.2 features).
 
 ## What it is
 
@@ -42,7 +42,7 @@ Robot mascot art ships **only** in the mobile app (not the website):
 
 ## Download
 
-- Homepage top-left: **Download The RSE App** → `apk/The-RSE-1.2.0.apk`
+- Homepage top-left: **Download The RSE App** → `apk/The-RSE-1.3.0.apk`
 - Update manifest: `apk/version.json` and `GET /app/version` on the API
 - Build docs: `mobile/README.md`
 

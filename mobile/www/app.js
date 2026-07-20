@@ -95,6 +95,13 @@
     autoBidAddress: $('autoBidAddress'),
     autoBidSubmit: $('autoBidSubmit'),
     autoBidList: $('autoBidList'),
+    discoveryStatus: $('discoveryStatus'),
+    discoveryPhone: $('discoveryPhone'),
+    discoveryEmail: $('discoveryEmail'),
+    discoveryEnableBtn: $('discoveryEnableBtn'),
+    discoveryDisableBtn: $('discoveryDisableBtn'),
+    importContactsBtn: $('importContactsBtn'),
+    contactsMatchList: $('contactsMatchList'),
     tabLogin: $('tabLogin'),
     tabRegister: $('tabRegister'),
     authForm: $('authForm'),
@@ -448,6 +455,7 @@
     if (name === 'account') {
       loadAccount();
       loadAutoBids();
+      loadDiscoveryStatus();
     }
     if (name === 'feedback') loadFeedback();
   }
@@ -1350,6 +1358,221 @@
     }
   }
 
+  // ── Contact discovery ────────────────────────────────────────────
+  function getContactsPlugin() {
+    try {
+      const plugins = window.Capacitor && window.Capacitor.Plugins;
+      return (plugins && plugins.Contacts) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function loadDiscoveryStatus() {
+    if (!state.token || !els.discoveryStatus) return;
+    try {
+      const data = await api('/account/discovery');
+      const on = !!data.discoverable_by_contacts;
+      const n = data.registered_identifiers || 0;
+      els.discoveryStatus.textContent = on
+        ? `Discovery: ON (${n} hashed identifier${n === 1 ? '' : 's'})`
+        : 'Discovery: OFF — enable so friends can find you';
+    } catch (err) {
+      els.discoveryStatus.textContent =
+        'Discovery: could not load (' + (err.message || 'error') + ')';
+    }
+  }
+
+  async function enableDiscovery() {
+    const phones = [];
+    const emails = [];
+    if (els.discoveryPhone && els.discoveryPhone.value.trim()) {
+      phones.push(els.discoveryPhone.value.trim());
+    }
+    if (els.discoveryEmail && els.discoveryEmail.value.trim()) {
+      emails.push(els.discoveryEmail.value.trim());
+    }
+    if (!phones.length && !emails.length) {
+      toast('Add a phone or email to enable discovery', 'error');
+      return;
+    }
+    setLoading(els.discoveryEnableBtn, true, 'Enable discovery');
+    try {
+      const res = await api('/account/discovery', {
+        method: 'POST',
+        body: JSON.stringify({
+          discoverable: true,
+          phones,
+          emails,
+        }),
+      });
+      toast(res.message || 'Discovery enabled', 'ok');
+      await loadDiscoveryStatus();
+    } catch (err) {
+      toast(err.message || 'Could not enable discovery', 'error');
+    } finally {
+      setLoading(els.discoveryEnableBtn, false, 'Enable discovery');
+    }
+  }
+
+  async function disableDiscovery() {
+    setLoading(els.discoveryDisableBtn, true, 'Turn off');
+    try {
+      await api('/account/discovery', { method: 'DELETE' });
+      toast('Discovery turned off', 'ok');
+      await loadDiscoveryStatus();
+    } catch (err) {
+      toast(err.message || 'Could not turn off discovery', 'error');
+    } finally {
+      setLoading(els.discoveryDisableBtn, false, 'Turn off');
+    }
+  }
+
+  async function readDeviceContacts() {
+    const plugin = getContactsPlugin();
+    if (!plugin || typeof plugin.getContacts !== 'function') {
+      throw new Error(
+        'Contacts plugin unavailable. Rebuild the Android app, or enable discovery with your own phone/email first.'
+      );
+    }
+    if (plugin.requestPermissions) {
+      const perm = await plugin.requestPermissions();
+      const state =
+        (perm && perm.contacts) ||
+        (perm && perm.permission) ||
+        'prompt';
+      if (state === 'denied') {
+        throw new Error('Contacts permission denied');
+      }
+    }
+    const result = await plugin.getContacts({
+      projection: {
+        name: true,
+        phones: true,
+        emails: true,
+      },
+    });
+    const contacts = (result && result.contacts) || [];
+    const phones = [];
+    const emails = [];
+    contacts.forEach((c) => {
+      (c.phones || []).forEach((p) => {
+        const num = p.number || p.value || p;
+        if (typeof num === 'string' && num.trim()) phones.push(num.trim());
+      });
+      (c.emails || []).forEach((e) => {
+        const addr = e.address || e.value || e;
+        if (typeof addr === 'string' && addr.trim()) emails.push(addr.trim());
+      });
+    });
+    return { phones, emails, count: contacts.length };
+  }
+
+  async function importAndMatchContacts() {
+    setLoading(els.importContactsBtn, true, 'Import contacts & match');
+    if (els.contactsMatchList) {
+      els.contactsMatchList.innerHTML =
+        '<div class="loading">Reading contacts…</div>';
+    }
+    try {
+      const { phones, emails, count } = await readDeviceContacts();
+      if (!phones.length && !emails.length) {
+        throw new Error('No phone numbers or emails found in contacts');
+      }
+      if (els.contactsMatchList) {
+        els.contactsMatchList.innerHTML =
+          '<div class="loading">Matching ' +
+          (phones.length + emails.length) +
+          ' identifiers from ' +
+          count +
+          ' contacts…</div>';
+      }
+      // Batch identifiers to avoid huge payloads (server caps ~200 hashes/build)
+      const batchSize = 120;
+      const allMatches = [];
+      const seen = new Set();
+      const phoneChunks = [];
+      for (let i = 0; i < phones.length; i += batchSize) {
+        phoneChunks.push(phones.slice(i, i + batchSize));
+      }
+      const emailChunks = [];
+      for (let i = 0; i < emails.length; i += batchSize) {
+        emailChunks.push(emails.slice(i, i + batchSize));
+      }
+      const rounds = Math.max(phoneChunks.length, emailChunks.length, 1);
+      for (let i = 0; i < rounds; i++) {
+        const res = await api('/contacts/match', {
+          method: 'POST',
+          body: JSON.stringify({
+            phones: phoneChunks[i] || [],
+            emails: emailChunks[i] || [],
+          }),
+        });
+        (res.matches || []).forEach((m) => {
+          if (m.username && !seen.has(m.username)) {
+            seen.add(m.username);
+            allMatches.push(m);
+          }
+        });
+      }
+      renderContactMatches(allMatches);
+      toast(
+        allMatches.length
+          ? 'Found ' + allMatches.length + ' friend(s) on The RSE'
+          : 'No opt-in matches found',
+        allMatches.length ? 'ok' : undefined
+      );
+    } catch (err) {
+      if (els.contactsMatchList) {
+        els.contactsMatchList.innerHTML = `<div class="empty">${escapeHtml(
+          err.message || 'Import failed'
+        )}</div>`;
+      }
+      toast(err.message || 'Import failed', 'error');
+    } finally {
+      setLoading(els.importContactsBtn, false, 'Import contacts & match');
+    }
+  }
+
+  function renderContactMatches(matches) {
+    if (!els.contactsMatchList) return;
+    if (!matches.length) {
+      els.contactsMatchList.innerHTML =
+        '<div class="empty">No matches. Friends must enable discovery first.</div>';
+      return;
+    }
+    els.contactsMatchList.innerHTML = matches
+      .map((m) => {
+        const un = escapeHtml(m.username);
+        const dn = escapeHtml(m.display_name || m.username);
+        const rep =
+          m.reputation_score != null
+            ? Number(m.reputation_score).toFixed(2)
+            : '—';
+        return `
+        <div class="card">
+          <div class="card-title">${dn}</div>
+          <div class="card-meta">@${un} · rep ${escapeHtml(rep)}</div>
+          <div class="btn-row">
+            <button type="button" class="btn btn-sm btn-primary" data-follow="${un}">Follow</button>
+          </div>
+        </div>`;
+      })
+      .join('');
+  }
+
+  async function followUser(username) {
+    try {
+      await api('/follow', {
+        method: 'POST',
+        body: JSON.stringify({ target_username: username }),
+      });
+      toast('Following @' + username, 'ok');
+    } catch (err) {
+      toast(err.message || 'Follow failed', 'error');
+    }
+  }
+
   async function refreshAppVersionLabel() {
     if (!els.appVersionLabel) return;
     const plugin = getAppUpdatePlugin();
@@ -1490,6 +1713,15 @@
     if (els.autoBidForm) {
       els.autoBidForm.addEventListener('submit', handleAutoBidCreate);
     }
+    if (els.discoveryEnableBtn) {
+      els.discoveryEnableBtn.addEventListener('click', enableDiscovery);
+    }
+    if (els.discoveryDisableBtn) {
+      els.discoveryDisableBtn.addEventListener('click', disableDiscovery);
+    }
+    if (els.importContactsBtn) {
+      els.importContactsBtn.addEventListener('click', importAndMatchContacts);
+    }
     els.logoutBtn.addEventListener('click', () => {
       clearSession();
       showAuth();
@@ -1551,6 +1783,11 @@
             'cancelled'
           );
         }
+        return;
+      }
+      const followBtn = e.target.closest('[data-follow]');
+      if (followBtn) {
+        followUser(followBtn.getAttribute('data-follow'));
       }
     });
 

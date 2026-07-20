@@ -68,6 +68,9 @@ ADMIN_API_KEY = 'change-me-admin-key'
 # Optional HMAC for job proofs (export/proof)
 RSE_PROOF_SIGNING_KEY = ''
 
+# Contact discovery: HMAC pepper for phone/email hashes (never commit a prod value)
+CONTACT_HASH_PEPPER = 'change-me-contact-discovery-pepper'
+
 # Logging
 LOG_LEVEL = 'INFO'
 

@@ -64,6 +64,9 @@ from handlers import (
     create_auto_bid,
     update_auto_bid,
     process_auto_bids_for_user,
+    set_contact_discovery,
+    get_contact_discovery,
+    match_contacts,
     handle_get_cosmetics_catalog,
     handle_purchase_cosmetic,
     equip_cosmetic,
@@ -1003,6 +1006,46 @@ def handle_update_auto_bid(current_user, auto_bid_id):
 def handle_process_auto_bids(current_user):
     """Process due auto-bid templates for the authenticated user."""
     response, status = process_auto_bids_for_user(current_user)
+    return flask.jsonify(response), status
+
+# -----------------------------------------------------------------------------
+# Contact discovery
+# -----------------------------------------------------------------------------
+
+@app.route('/account/discovery', methods=['GET'])
+@token_required
+def handle_get_discovery(current_user):
+    response, status = get_contact_discovery(current_user)
+    return flask.jsonify(response), status
+
+@app.route('/account/discovery', methods=['POST'])
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_set_discovery(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = set_contact_discovery(data)
+    return flask.jsonify(response), status
+
+@app.route('/account/discovery', methods=['DELETE'])
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_clear_discovery(current_user):
+    response, status = set_contact_discovery({
+        'username': current_user,
+        'discoverable': False,
+        'phones': [],
+        'emails': [],
+    })
+    return flask.jsonify(response), status
+
+@app.route('/contacts/match', methods=['POST'])
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_match_contacts(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = match_contacts(data)
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------

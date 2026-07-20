@@ -1,10 +1,10 @@
 {
-  "versionCode": 3,
-  "versionName": "1.2.0",
-  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.2.0.apk",
-  "apkFile": "The-RSE-1.2.0.apk",
+  "versionCode": 4,
+  "versionName": "1.3.0",
+  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.3.0.apk",
+  "apkFile": "The-RSE-1.3.0.apk",
   "mandatory": false,
   "minSupportedVersionCode": 1,
-  "releaseNotes": "Jobs tab includes open requests; privacy dials; Nearby Mapbox map + differential privacy; auto-requests; fixed update check via API.",
-  "sha256": "8d29cc194be9a3ce1f9bc74c46c7cf8fcf01f23a4228134f078269e8f924569e"
+  "releaseNotes": "Find friends via opt-in contact discovery (hash match). Prior: privacy dials, Nearby map, auto-requests, Jobs open requests.",
+  "sha256": "82e8b763ca7d9f32b52dcace6278e83b44f558bfc17cc937b3f395a0b721f913"
 }
