@@ -1,10 +1,10 @@
 {
-  "versionCode": 5,
-  "versionName": "1.3.1",
-  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.3.1.apk",
-  "apkFile": "The-RSE-1.3.1.apk",
+  "versionCode": 6,
+  "versionName": "1.4.0",
+  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.4.0.apk",
+  "apkFile": "The-RSE-1.4.0.apk",
   "mandatory": false,
   "minSupportedVersionCode": 1,
-  "releaseNotes": "Play Store readiness: privacy policy, Play install detection (skip sideload auto-update). Plus contacts discovery from 1.3.0.",
-  "sha256": "be5b649097da93ac455943d8911d37d6be7000cc2edbd80a77c9ef47d9900a47"
+  "releaseNotes": "Phantom wallet for auto-bidding (paste Solana address), auto-request payment method Phantom/cash, prior privacy/nearby/contacts features.",
+  "sha256": "491f26c8fabef7f4a72d7f0f0ff655b7c60a05d47bf626c0dacd6a8c6ee58f9a"
 }
