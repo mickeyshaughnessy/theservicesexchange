@@ -1,6 +1,6 @@
 # The RSE Mobile App
 
-Status: **v1 demand-side Android app shipped** (API-only Capacitor shell).
+Status: **v1.1.0 demand-side Android app shipped** (API-only Capacitor shell + auto-update).
 
 ## What it is
 
@@ -16,10 +16,18 @@ Unlike GreenDial (which loads the live site in a WebView), this app is **indepen
 
 1. Register or log in (demand only)
 2. Post a service request (`POST /submit_bid`)
-3. View / cancel open bids (`GET /my_bids`, `POST /cancel_bid`)
+3. View / delete open bids (`GET /my_bids`, `POST /cancel_bid`)
 4. View active & completed jobs (`GET /my_jobs`)
 5. Sign and rate when work is done (`POST /sign_job`)
-6. Account snapshot (`GET /account`)
+6. Nearby discovery (`POST /nearby`) — GPS or address, radius 1–50 mi
+7. Product feedback board (`GET/POST /feedback`, `POST /feedback/{id}/reply`)
+8. Account: stats, edit profile (`GET/POST /profile`), share link (`GET /profile/share_link` → `profile.html?pid=…`), log out
+9. Auto-update (Android): fetch `apk/version.json`, download newer APK, system install prompt
+
+## Auto-update
+
+Sideloaded releases self-update via native `AppUpdate` plugin + hosted `https://theservicesexchange.com/apk/version.json`.  
+See `mobile/README.md` § Auto-update for shipping steps.
 
 ## Branding (app only)
 
@@ -34,7 +42,8 @@ Robot mascot art ships **only** in the mobile app (not the website):
 
 ## Download
 
-- Homepage top-left: **Download The RSE App** → `apk/The-RSE-1.0.0.apk`
+- Homepage top-left: **Download The RSE App** → `apk/The-RSE-1.1.0.apk`
+- Update manifest: `apk/version.json`
 - Build docs: `mobile/README.md`
 
 ## Out of scope (v1)

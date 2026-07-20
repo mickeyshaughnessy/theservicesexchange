@@ -12,11 +12,13 @@
 </head>
 <body class="auth-only">
   <header class="app-header" id="appHeader" hidden>
-    <img class="logo" src="robot-avatar.png" alt="The RSE">
-    <div class="brand">
-      <div class="brand-title">The RSE</div>
-      <div class="brand-sub" id="headerUser">Demand</div>
-    </div>
+    <button type="button" class="header-account" id="headerAccountBtn" aria-label="Open account">
+      <img class="logo" src="robot-avatar.png" alt="">
+      <div class="brand">
+        <div class="brand-title">The RSE</div>
+        <div class="brand-sub" id="headerUser">Demand</div>
+      </div>
+    </button>
   </header>
 
   <!-- Auth -->
@@ -122,11 +124,21 @@
 
   <!-- Account -->
   <section id="screen-account" class="screen" aria-label="Account">
-    <h1>Account</h1>
+    <div class="section-head">
+      <h1>Account</h1>
+    </div>
     <div id="accountError" class="error-box" role="alert"></div>
+    <div id="accountSuccess" class="success-box"></div>
+
     <div class="card">
-      <div class="card-title" id="acctName">—</div>
-      <div class="card-meta" id="acctType">demand</div>
+      <div class="acct-identity">
+        <div class="acct-avatar" id="acctAvatar" aria-hidden="true">◎</div>
+        <div class="acct-identity-text">
+          <div class="card-title" id="acctDisplayName">—</div>
+          <div class="card-meta" id="acctName">—</div>
+          <div class="card-meta" id="acctType">demand</div>
+        </div>
+      </div>
       <div class="stat-row">
         <div class="stat">
           <span class="val" id="acctRep">—</span>
@@ -136,13 +148,118 @@
           <span class="val" id="acctJobs">—</span>
           <span class="lbl">Completed</span>
         </div>
+        <div class="stat">
+          <span class="val" id="acctFollowers">—</span>
+          <span class="lbl">Followers</span>
+        </div>
       </div>
       <p class="muted small" id="acctStars"></p>
-      <button type="button" class="btn btn-danger" id="logoutBtn">Log out</button>
     </div>
+
+    <div class="card">
+      <div class="card-title">Public profile</div>
+      <p class="muted small">Share this link — it uses an opaque slug, not your login handle. Contact info stays private.</p>
+      <label for="shareLinkInput">Share URL</label>
+      <input id="shareLinkInput" type="text" readonly value="" placeholder="Loading…" autocomplete="off">
+      <div class="btn-row">
+        <button type="button" class="btn btn-sm btn-primary" id="copyShareBtn">Copy link</button>
+        <button type="button" class="btn btn-sm" id="openShareBtn">Open</button>
+      </div>
+    </div>
+
+    <form id="profileForm" class="card">
+      <div class="card-title">Edit profile</div>
+      <p class="muted small">Display name, about, and location are public. Contact info is private (only you see it here).</p>
+
+      <label for="profileDisplayName">Display name</label>
+      <input id="profileDisplayName" name="display_name" maxlength="40" placeholder="How you appear publicly">
+
+      <label for="profileAbout">About</label>
+      <textarea id="profileAbout" name="about" maxlength="1000" rows="3" placeholder="Short bio for your public profile"></textarea>
+
+      <label for="profileLocation">Location (public)</label>
+      <input id="profileLocation" name="location" maxlength="120" placeholder="City or region">
+
+      <label for="profileContact">Contact info (private)</label>
+      <input id="profileContact" name="contact_info" maxlength="300" placeholder="Phone, email, Signal — never on public profile">
+
+      <button type="submit" class="btn btn-primary" id="profileSaveBtn">Save profile</button>
+    </form>
+
+    <div class="card privacy-stub">
+      <div class="card-title">Privacy dials</div>
+      <p class="muted small">Coming soon: location precision and public redaction for Nearby and profile fields. Exact bidding details stay private to you (and matched providers).</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">App updates</div>
+      <p class="muted small" id="appVersionLabel">Version —</p>
+      <p class="muted small">On Android, the app checks for a newer APK on launch and installs it automatically (you confirm the system Install prompt).</p>
+      <button type="button" class="btn btn-sm" id="checkUpdateBtn" style="width:100%">Check for updates</button>
+    </div>
+
+    <button type="button" class="btn btn-danger" id="logoutBtn">Log out</button>
     <p class="footnote">
-      Session tokens last 24 hours. This app only uses demand-side API routes on rse-api.com.
+      Session tokens last 24 hours. Marketplace calls use rse-api.com; the share link opens your public page on theservicesexchange.com.
     </p>
+  </section>
+
+  <!-- Nearby -->
+  <section id="screen-nearby" class="screen" aria-label="Nearby">
+    <div class="section-head">
+      <h1>Nearby</h1>
+      <button type="button" class="btn btn-sm" id="refreshNearby">Refresh</button>
+    </div>
+    <p class="muted">Open physical and hybrid requests near you. Location stays on device for the query; privacy dials come later.</p>
+
+    <div id="nearbyError" class="error-box" role="alert"></div>
+
+    <div class="card">
+      <div class="row-2">
+        <div>
+          <label for="nearbyRadius">Radius (miles)</label>
+          <input id="nearbyRadius" type="range" min="1" max="50" value="10" step="1">
+          <p class="muted small" id="nearbyRadiusLabel">10 miles</p>
+        </div>
+        <div class="nearby-loc-actions">
+          <label>&nbsp;</label>
+          <button type="button" class="btn btn-sm btn-primary" id="nearbyUseGps" style="width:100%">Use my location</button>
+        </div>
+      </div>
+      <label for="nearbyAddress">Or address / city</label>
+      <input id="nearbyAddress" type="text" placeholder="e.g. Denver, CO" autocomplete="street-address">
+      <button type="button" class="btn btn-primary" id="nearbySearchBtn">Search nearby</button>
+      <p class="muted small" id="nearbyStatus">Set a location to discover open requests.</p>
+    </div>
+
+    <h2 style="margin-top:1rem">Open nearby</h2>
+    <div id="nearbyList">
+      <div class="empty">Search to load the feed.</div>
+    </div>
+  </section>
+
+  <!-- Feedback -->
+  <section id="screen-feedback" class="screen" aria-label="Feedback">
+    <div class="section-head">
+      <h1>Feedback</h1>
+      <button type="button" class="btn btn-sm" id="refreshFeedback">Refresh</button>
+    </div>
+    <p class="muted">Product ideas, bugs, and comments. Separate from job star ratings on Jobs.</p>
+
+    <div id="feedbackError" class="error-box" role="alert"></div>
+    <div id="feedbackSuccess" class="success-box"></div>
+
+    <form id="feedbackForm" class="card">
+      <label for="feedbackMessage">Your message</label>
+      <textarea id="feedbackMessage" name="message" required maxlength="2000" rows="3" placeholder="What's on your mind?"></textarea>
+      <p class="muted small" id="feedbackAs">Posting as Guest</p>
+      <button type="submit" class="btn btn-primary" id="feedbackSubmit">Post feedback</button>
+    </form>
+
+    <h2 style="margin-top:1.25rem">Community board</h2>
+    <div id="feedbackList">
+      <div class="loading">Loading…</div>
+    </div>
   </section>
 
   <nav class="bottom-nav" aria-label="Main">
@@ -154,6 +271,14 @@
       <span class="ico">☰</span>
       Jobs
     </button>
+    <button type="button" data-screen="nearby">
+      <span class="ico">⌖</span>
+      Nearby
+    </button>
+    <button type="button" data-screen="feedback">
+      <span class="ico">💬</span>
+      Feedback
+    </button>
     <button type="button" data-screen="account">
       <span class="ico">◎</span>
       Account
@@ -161,6 +286,22 @@
   </nav>
 
   <div id="toast" class="toast" role="status"></div>
+
+  <!-- In-app APK auto-update overlay (native Android only) -->
+  <div id="updateOverlay" class="update-overlay" hidden>
+    <div class="update-card" role="dialog" aria-labelledby="updateTitle" aria-live="polite">
+      <h2 id="updateTitle">Updating The RSE</h2>
+      <p class="muted small" id="updateMessage">Checking for a new version…</p>
+      <div class="update-progress-track" aria-hidden="true">
+        <div class="update-progress-bar" id="updateProgressBar"></div>
+      </div>
+      <p class="muted small" id="updatePercent"></p>
+      <div class="btn-row" id="updateActions" hidden>
+        <button type="button" class="btn btn-sm btn-primary" id="updateRetryBtn">Retry update</button>
+        <button type="button" class="btn btn-sm" id="updateDismissBtn">Later</button>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>

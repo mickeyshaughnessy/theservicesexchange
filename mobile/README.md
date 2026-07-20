@@ -66,9 +66,54 @@ npm run assemble
 # android/app/build/outputs/apk/release/app-release.apk
 
 mkdir -p ../apk ../mobile/dist
-cp android/app/build/outputs/apk/release/app-release.apk ../apk/The-RSE-1.0.0.apk
-cp android/app/build/outputs/apk/release/app-release.apk dist/The-RSE-1.0.0.apk
+# Match versionName from android/app/build.gradle
+cp android/app/build/outputs/apk/release/app-release.apk ../apk/The-RSE-1.1.0.apk
+cp android/app/build/outputs/apk/release/app-release.apk dist/The-RSE-1.1.0.apk
+# Update ../apk/version.json (versionCode, versionName, apkUrl, sha256) then deploy
 ```
+
+## Auto-update (sideloaded APK)
+
+The Android shell includes a native `AppUpdate` plugin. On launch the SPA:
+
+1. Reads installed `versionCode` / `versionName`
+2. Fetches `https://theservicesexchange.com/apk/version.json` (no-cache)
+3. If remote `versionCode` is higher, downloads `apkUrl` and opens the system installer
+
+**Android always shows a system Install confirmation** — fully silent install is not allowed for normal consumer apps. The download and installer launch are automatic.
+
+### Shipping a new version
+
+1. Bump **both** in `android/app/build.gradle`:
+   - `versionCode` (integer, must increase every release)
+   - `versionName` (e.g. `1.1.0`)
+2. Build the release APK and copy to `apk/The-RSE-<versionName>.apk` (and `mobile/dist/` if desired).
+3. Update `apk/version.json` **on the live website** (same deploy as the APK):
+
+```json
+{
+  "versionCode": 2,
+  "versionName": "1.1.0",
+  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.1.0.apk",
+  "apkFile": "The-RSE-1.1.0.apk",
+  "mandatory": false,
+  "minSupportedVersionCode": 1,
+  "releaseNotes": "What changed",
+  "sha256": null
+}
+```
+
+Optional `sha256` (hex) verifies the download before install:
+
+```bash
+shasum -a 256 apk/The-RSE-1.1.0.apk
+```
+
+4. Deploy `apk/version.json` + the new APK to the site. Existing app installs check on next cold start.
+
+**Note:** Builds **without** this feature must install the first auto-update-capable APK once manually (website download). After that, later `versionCode` bumps self-update.
+
+`mandatory: true` blocks the “Later” dismiss path for that `versionCode`.
 
 Debug install (USB):
 
