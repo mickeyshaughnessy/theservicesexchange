@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a2e">
-    <meta name="description" content="The RSE for investors and fleet partners — revenue model, 15-year projections, and multi-stream economics for the robot labor exchange.">
+    <meta name="description" content="Invest in The RSE — the open exchange for robot labor. How the marketplace works, six revenue streams, and interactive 15-year projections.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="The RSE">
@@ -14,7 +14,7 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css?v=23" rel="stylesheet">
-    <title>Investors — The RSE</title>
+    <title>Invest — The RSE</title>
     <style>
         .inv-page { background: var(--bg-deep); color: var(--text); }
         .inv-hero {
@@ -235,18 +235,24 @@
             background: var(--bg-panel);
             border: 1px solid rgba(0,255,255,0.3);
             box-shadow: 0 0 28px rgba(0,255,255,0.06);
-            padding: 1.25rem 1.35rem 1.1rem;
+            padding: 0.85rem 1.15rem 0.9rem;
             margin-bottom: 1.5rem;
             position: sticky;
             top: 0.5rem;
             z-index: 20;
         }
+        .inv-dials.is-expanded {
+            padding: 1.15rem 1.35rem 1.1rem;
+        }
         .inv-dials-head {
             display: flex;
             flex-wrap: wrap;
-            align-items: baseline;
+            align-items: center;
             justify-content: space-between;
-            gap: 0.75rem;
+            gap: 0.65rem 0.85rem;
+            margin-bottom: 0;
+        }
+        .inv-dials.is-expanded .inv-dials-head {
             margin-bottom: 1rem;
         }
         .inv-dials-head h3 {
@@ -255,6 +261,67 @@
             font-size: 0.95rem;
             color: var(--primary);
             letter-spacing: 0.04em;
+        }
+        .inv-dials-toggle {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem 0.85rem;
+            flex: 1 1 220px;
+            min-width: 0;
+            background: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            text-align: left;
+            color: inherit;
+        }
+        .inv-dials-toggle:hover h3 { color: var(--accent); }
+        .inv-dials-toggle:focus-visible {
+            outline: 1px solid var(--accent);
+            outline-offset: 3px;
+        }
+        .inv-dials-summary {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            line-height: 1.45;
+            letter-spacing: 0.02em;
+        }
+        .inv-dials-summary strong {
+            color: var(--accent);
+            font-weight: normal;
+        }
+        .inv-dials-chevron {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--primary);
+            border: 1px solid rgba(0,255,255,0.35);
+            padding: 0.25rem 0.55rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .inv-dials-toggle:hover .inv-dials-chevron {
+            color: var(--bg-deep);
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .inv-dials-body {
+            display: none;
+        }
+        .inv-dials.is-expanded .inv-dials-body {
+            display: block;
+        }
+        .inv-dials-collapsed-kpis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .inv-dials.is-expanded .inv-dials-collapsed-kpis {
+            display: none;
         }
         .inv-presets {
             display: flex;
@@ -444,7 +511,8 @@
         @media (max-width: 768px) {
             .inv-chart-box, .inv-chart-box.tall { height: 320px; }
             .inv-table { font-size: 0.75rem; }
-            .inv-dials { position: static; }
+            .inv-dials { position: sticky; top: 0; }
+            .inv-dials-summary { font-size: 0.7rem; }
         }
     </style>
 </head>
@@ -498,21 +566,22 @@
 
     <header class="inv-hero" id="main-content" tabindex="-1">
         <div class="container">
-            <p class="inv-kicker">// Investors &amp; fleet partners</p>
-            <h1>The clearing layer for robot labor</h1>
+            <p class="inv-kicker">Investor overview</p>
+            <h1>How The RSE works — and how it earns</h1>
             <p class="lede">
-                The RSE is an open exchange where demand posts work, robot operators claim matches,
-                and reputation records who delivers. Revenue compounds across seven streams:
-                exchange take-rate on transaction volume, eternal supply seats, hardware affiliate &amp; financing,
-                attention products on <code>/nearby</code>, physical franchises, and the Hyperion Fund.
+                The RSE is an open marketplace for robot labor. Buyers post work; providers (robots and their operators)
+                claim matches; reputation tracks delivery. The exchange captures value as volume and density grow—
+                take-rate on jobs cleared, supply-side seats, hardware referrals, attention products, franchises,
+                and fund platform fees.
             </p>
             <div class="inv-cta-row">
-                <a class="btn btn-primary btn-lg" href="mailto:mickeyshaughnessy@gmail.com?subject=RSE%20investor%20/%20fleet%20inquiry">Contact</a>
-                <a class="btn btn-outline-light btn-lg" href="#projections">15-year projections</a>
-                <a class="btn btn-outline-light btn-lg" href="api_docs.html">API Docs</a>
+                <a class="btn btn-primary btn-lg" href="mailto:mickeyshaughnessy@gmail.com?subject=RSE%20investor%20inquiry">Contact</a>
+                <a class="btn btn-outline-light btn-lg" href="#streams">Revenue streams</a>
+                <a class="btn btn-outline-light btn-lg" href="#projections">15-year model</a>
             </div>
             <nav class="inv-toc" aria-label="Page sections">
                 <a href="#snapshot">Live snapshot</a>
+                <a href="#how-it-works">How it works</a>
                 <a href="#streams">Revenue streams</a>
                 <a href="#exchange-gmv">1. Exchange GMV</a>
                 <a href="#seats">2. Seats</a>
@@ -521,7 +590,7 @@
                 <a href="#franchising">5. Franchising</a>
                 <a href="#hyperion">6. Hyperion Fund</a>
                 <a href="#costs">7. Costs</a>
-                <a href="#projections">Scenario dials &amp; charts</a>
+                <a href="#projections">Projections</a>
             </nav>
         </div>
     </header>
@@ -529,7 +598,7 @@
     <section class="inv-section" id="snapshot">
         <div class="container">
             <h2>Live network snapshot</h2>
-            <p class="inv-prose mb-4">Public platform counters from the live API. Early stage; density is the work ahead.</p>
+            <p class="inv-prose mb-4">Public counters from the production API — the base layer the model scales from.</p>
             <div class="inv-grid" id="invMetrics">
                 <div class="inv-metric"><div class="n" id="invDemand">—</div><div class="l">Buyers</div></div>
                 <div class="inv-metric"><div class="n" id="invSupply">—</div><div class="l">Providers</div></div>
@@ -541,32 +610,33 @@
         </div>
     </section>
 
-    <section class="inv-section">
+    <section class="inv-section" id="how-it-works">
         <div class="container">
-            <h2>Thesis</h2>
+            <h2>What the exchange does</h2>
             <p class="inv-prose">
-                If autonomous robots are the next platform shift, the scarce asset is not another OEM line—
-                it is the exchange that clears idle capacity against real demand, with reputation and multi-agent
-                cooperation as the compounding layer. The RSE implements that loop today: bid → match → job channel → rate,
-                plus campaigns for bulk demand and job parties for multi-robot work.
+                Demand posts a job. Supply grabs a match by capability, location, reputation, and price.
+                The platform runs the match loop, job channel, and ratings—the same flywheel that compounds
+                liquidity on any two-sided marketplace. Campaigns handle bulk demand; job parties cover multi-agent work.
+                As density rises, take-rate on cleared volume becomes the core recurring engine; seats, hardware,
+                ads, franchises, and fund fees diversify the stack.
             </p>
             <div class="row g-3 mt-3">
                 <div class="col-md-4">
                     <div class="inv-card">
                         <h3>Demand</h3>
-                        <p>Post a job in plain language. Price and location can be filled automatically. Edit open bids from the console.</p>
+                        <p>Buyers post work in plain language with price and location. Open bids stay editable until claimed.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="inv-card">
                         <h3>Supply</h3>
-                        <p>Operators describe capabilities and grab matches. Eternal RSE Seat NFTs on Base gate grab access when enabled.</p>
+                        <p>Providers describe capabilities and grab matches. Eternal seats (Base NFT) gate grab access when enabled.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="inv-card">
-                        <h3>Machines</h3>
-                        <p>OpenAPI + agent tokens point to robot-native participation—not only a human marketplace UI.</p>
+                        <h3>API-first</h3>
+                        <p>OpenAPI and agent tokens let operators and machines participate natively—not only through a human UI.</p>
                     </div>
                 </div>
             </div>
@@ -578,8 +648,9 @@
         <div class="container">
             <h2>Six revenue streams</h2>
             <p class="inv-stream-lede">
-                Each stream is a simple formula. Numbers below track the scenario dials (2035 GMV, take-rate, seat price, network scale).
-                Illustrative only — not guarantees.
+                How the exchange makes money for investors. Each stream is a transparent formula.
+                Live figures track the scenario dials under <a href="#projections">Projections</a>
+                (2035 GMV, take-rate, seat price, network scale)—adjust them, then scroll back here to compare what moves.
             </p>
             <div class="row g-3">
                 <div class="col-md-6 col-lg-4">
@@ -660,7 +731,8 @@
                 <br><span style="color:var(--text-dim);font-size:0.85rem;">GMV = dollar value of robot labor jobs cleared on the exchange</span>
             </p>
             <p class="inv-stream-lede">
-                Fee on transaction volume once payments/escrow are on-platform. Scenario dials set 2035 GMV and take-rate; the chart is that product each year.
+                Platform fee on transaction volume once payments and escrow are on-platform.
+                Dials set 2035 GMV and take-rate; each chart bar is GMV × take-rate for that year.
             </p>
             <div class="inv-stream-meta">
                 <div class="inv-metric"><div class="n" id="metricGmv2035">—</div><div class="l">GMV · 2035 (dial)</div></div>
@@ -689,7 +761,8 @@
                 <br><span style="color:var(--text-dim);font-size:0.85rem;">Seats are eternal · primary issuance ramps then plateaus (not recurring rent)</span>
             </p>
             <p class="inv-stream-lede">
-                One-time primary sale of supply-side access (Base NFT when verification is on). Network scale multiplies units sold; seat price dial sets $/seat.
+                One-time primary sale of supply-side access (Base NFT when verification is on).
+                Network scale multiplies units sold; the seat-price dial sets dollars per seat.
             </p>
             <div class="inv-stream-meta">
                 <div class="inv-metric"><div class="n" id="metricSeatPrice">—</div><div class="l">Price / seat (dial)</div></div>
@@ -803,7 +876,8 @@
                 <br><span style="color:var(--text-dim);font-size:0.85rem;">1% management + 15% of ~12% gross performance · LPs receive distributed profits</span>
             </p>
             <p class="inv-stream-lede">
-                Automated algorithmic fund (equities &amp; emerging assets) for seat holders / qualified participants. Bars below are <em>platform fees</em>, not fund AUM or LP returns.
+                Algorithmic fund for seat holders and qualified participants. Chart bars are
+                <em>platform fees</em> to the exchange (~2.8% of AUM)—not fund AUM or LP returns.
             </p>
             <div class="inv-stream-meta">
                 <div class="inv-metric"><div class="n" id="metricAum2035">—</div><div class="l">Fund AUM · 2035</div></div>
@@ -824,8 +898,8 @@
         <div class="container">
             <h2>7. Cost structure by stream</h2>
             <p class="inv-stream-lede">
-                Profit = stream revenue − (cost % × revenue). Ratios fall as fixed platform spend is amortized.
-                Combined P&amp;L charts are under scenario dials.
+                Profit = stream revenue − (cost % × revenue). Cost ratios fall as fixed platform spend is amortized
+                across growing volume. Combined P&amp;L is in the projections charts below.
             </p>
             <div class="inv-table-wrap">
                 <table class="inv-table">
@@ -886,14 +960,20 @@
         <div class="container">
             <h2>15-year revenue &amp; profit projections</h2>
             <p class="inv-prose mb-4">
-                Years <strong>2026–2040</strong>. Use the scenario dials to re-tune the model—charts, the P&amp;L table,
-                and equity-raise KPIs update live. Seat primary issuance dominates mid-ramp totals, then plateaus;
-                exchange take-rate becomes the largest <em>recurring</em> line by the mid-2030s.
+                Years <strong>2026–2040</strong>. Expand the scenario dials to re-tune GMV, take-rate, seats, network scale,
+                and equity assumptions—charts, the P&amp;L table, stream summaries above, and raise KPIs update live.
+                Seat primary issuance leads mid-ramp totals, then plateaus; exchange take-rate becomes the largest
+                recurring line by the mid-2030s.
             </p>
 
             <div class="inv-dials" id="scenarioDials" aria-label="Scenario tuning dials">
                 <div class="inv-dials-head">
-                    <h3>// Scenario dials</h3>
+                    <button type="button" class="inv-dials-toggle" id="dialsToggle"
+                        aria-expanded="false" aria-controls="scenarioDialsBody">
+                        <h3>Scenario dials</h3>
+                        <span class="inv-dials-summary" id="dialsSummary">Base · GMV $10.0T · take 5.0% · seats $100k · net 1.00×</span>
+                        <span class="inv-dials-chevron" id="dialsChevron">Expand</span>
+                    </button>
                     <div class="inv-presets" role="group" aria-label="Scenario presets">
                         <button type="button" data-preset="conservative">Conservative</button>
                         <button type="button" data-preset="base" class="active">Base</button>
@@ -901,55 +981,65 @@
                         <button type="button" data-preset="capital">$1.5T raise</button>
                     </div>
                 </div>
-                <div class="inv-dial-grid">
-                    <div class="inv-dial">
-                        <label for="dialGmv">2035 GMV <span class="val" id="dialGmvVal">$10.0T</span></label>
-                        <input type="range" id="dialGmv" min="5" max="500" step="5" value="100" aria-valuetext="$10.0T">
-                        <div class="hint">Scales the full GMV path. Base = $10T in 2035 (slider 100 = $10.0T).</div>
-                    </div>
-                    <div class="inv-dial">
-                        <label for="dialTake">Take-rate <span class="val" id="dialTakeVal">5.0%</span></label>
-                        <input type="range" id="dialTake" min="10" max="150" step="5" value="50">
-                        <div class="hint">Platform share of GMV. Base 5%. Range 1.0%–15.0%.</div>
-                    </div>
-                    <div class="inv-dial">
-                        <label for="dialSeatPrice">Seat price <span class="val" id="dialSeatPriceVal">$100k</span></label>
-                        <input type="range" id="dialSeatPrice" min="10" max="250" step="5" value="100">
-                        <div class="hint">Primary issuance price per eternal seat. Base $100k.</div>
-                    </div>
-                    <div class="inv-dial">
-                        <label for="dialNetwork">Network scale <span class="val" id="dialNetworkVal">1.00×</span></label>
-                        <input type="range" id="dialNetwork" min="25" max="300" step="5" value="100">
-                        <div class="hint">Multiplies seat volume, hardware, ads, franchises, and Hyperion AUM vs base.</div>
-                    </div>
+
+                <div class="inv-dials-collapsed-kpis" aria-label="Key outcomes for current scenario">
+                    <div class="inv-kpi"><div class="n" id="kpiRev2035Mini">—</div><div class="l">Revenue · 2035</div></div>
+                    <div class="inv-kpi"><div class="n" id="kpiProfit2035Mini">—</div><div class="l">Profit · 2035</div></div>
+                    <div class="inv-kpi"><div class="n" id="kpiProfit15Mini">—</div><div class="l">15-yr cum. profit</div></div>
+                    <div class="inv-kpi"><div class="n" id="kpiCheckMini">—</div><div class="l">Avg check / partner</div></div>
                 </div>
 
-                <div class="inv-capital-strip">
-                    <div class="title">// Equity raise scenario · ~6–7 partners</div>
+                <div class="inv-dials-body" id="scenarioDialsBody">
                     <div class="inv-dial-grid">
                         <div class="inv-dial">
-                            <label for="dialCapital">Equity capital <span class="val" id="dialCapitalVal">$1.50T</span></label>
-                            <input type="range" id="dialCapital" min="10" max="300" step="5" value="150">
-                            <div class="hint">Contemplated raise size. Default $1.5T from institutional equity partners.</div>
+                            <label for="dialGmv">2035 GMV <span class="val" id="dialGmvVal">$10.0T</span></label>
+                            <input type="range" id="dialGmv" min="5" max="500" step="5" value="100" aria-valuetext="$10.0T">
+                            <div class="hint">Scales the full GMV path. Base = $10T in 2035.</div>
                         </div>
                         <div class="inv-dial">
-                            <label for="dialPartners">Equity partners <span class="val" id="dialPartnersVal">7</span></label>
-                            <input type="range" id="dialPartners" min="3" max="12" step="1" value="7">
-                            <div class="hint">Number of equity partners sharing the round (equal-split check size shown below).</div>
+                            <label for="dialTake">Take-rate <span class="val" id="dialTakeVal">5.0%</span></label>
+                            <input type="range" id="dialTake" min="10" max="150" step="5" value="50">
+                            <div class="hint">Platform share of GMV. Base 5%. Range 1.0%–15.0%.</div>
+                        </div>
+                        <div class="inv-dial">
+                            <label for="dialSeatPrice">Seat price <span class="val" id="dialSeatPriceVal">$100k</span></label>
+                            <input type="range" id="dialSeatPrice" min="10" max="250" step="5" value="100">
+                            <div class="hint">Primary issuance price per eternal seat. Base $100k.</div>
+                        </div>
+                        <div class="inv-dial">
+                            <label for="dialNetwork">Network scale <span class="val" id="dialNetworkVal">1.00×</span></label>
+                            <input type="range" id="dialNetwork" min="25" max="300" step="5" value="100">
+                            <div class="hint">Multiplies seats, hardware, ads, franchises, and Hyperion AUM vs base.</div>
                         </div>
                     </div>
-                    <div class="inv-kpi-row" id="capitalKpis">
-                        <div class="inv-kpi"><div class="n" id="kpiCheck">—</div><div class="l">Avg check / partner</div></div>
-                        <div class="inv-kpi"><div class="n" id="kpiProfit15">—</div><div class="l">15-yr cum. profit</div></div>
-                        <div class="inv-kpi"><div class="n" id="kpiMoic">—</div><div class="l">Illustrative profit / capital</div></div>
-                        <div class="inv-kpi"><div class="n" id="kpiPayback">—</div><div class="l">Years until cum. profit ≥ capital</div></div>
-                        <div class="inv-kpi"><div class="n" id="kpiRev2035">—</div><div class="l">Total revenue · 2035</div></div>
-                        <div class="inv-kpi"><div class="n" id="kpiProfit2035">—</div><div class="l">Profit · 2035</div></div>
+
+                    <div class="inv-capital-strip">
+                        <div class="title">Equity raise scenario · partners</div>
+                        <div class="inv-dial-grid">
+                            <div class="inv-dial">
+                                <label for="dialCapital">Equity capital <span class="val" id="dialCapitalVal">$1.50T</span></label>
+                                <input type="range" id="dialCapital" min="10" max="300" step="5" value="150">
+                                <div class="hint">Modeled raise size for planning. Default $1.5T across institutional partners.</div>
+                            </div>
+                            <div class="inv-dial">
+                                <label for="dialPartners">Equity partners <span class="val" id="dialPartnersVal">7</span></label>
+                                <input type="range" id="dialPartners" min="3" max="12" step="1" value="7">
+                                <div class="hint">Partners sharing the round (equal-split check size below).</div>
+                            </div>
+                        </div>
+                        <div class="inv-kpi-row" id="capitalKpis">
+                            <div class="inv-kpi"><div class="n" id="kpiCheck">—</div><div class="l">Avg check / partner</div></div>
+                            <div class="inv-kpi"><div class="n" id="kpiProfit15">—</div><div class="l">15-yr cum. profit</div></div>
+                            <div class="inv-kpi"><div class="n" id="kpiMoic">—</div><div class="l">Illustrative profit / capital</div></div>
+                            <div class="inv-kpi"><div class="n" id="kpiPayback">—</div><div class="l">Years until cum. profit ≥ capital</div></div>
+                            <div class="inv-kpi"><div class="n" id="kpiRev2035">—</div><div class="l">Total revenue · 2035</div></div>
+                            <div class="inv-kpi"><div class="n" id="kpiProfit2035">—</div><div class="l">Profit · 2035</div></div>
+                        </div>
+                        <p class="inv-note" style="margin-top:0.75rem;margin-bottom:0;">
+                            Profit / capital compares cumulative modeled operating profit to raised equity—
+                            not ownership MOIC or LP distributions.
+                        </p>
                     </div>
-                    <p class="inv-note" style="margin-top:0.75rem;margin-bottom:0;">
-                        Profit / capital is an <em>illustrative</em> ratio of cumulative modeled operating profit to raised equity—
-                        not ownership MOIC, not diluted returns, and not a forecast of LP distributions.
-                    </p>
                 </div>
             </div>
 
@@ -993,7 +1083,7 @@
             </div>
 
             <div class="inv-assumptions mt-4" id="assumptionsLive">
-                <strong>// Live model assumptions</strong><br>
+                <strong>Live model assumptions</strong><br>
                 Loading scenario…
             </div>
         </div>
@@ -1001,36 +1091,36 @@
 
     <section class="inv-section">
         <div class="container">
-            <h2>Trust &amp; economics (current product)</h2>
+            <h2>Product status → monetization path</h2>
             <table class="inv-table">
                 <thead>
-                    <tr><th>Topic</th><th>Today</th><th>Direction</th></tr>
+                    <tr><th>Layer</th><th>Today</th><th>Revenue path</th></tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td>Matching</td>
-                        <td>Location + AI capability match + reputation alignment + price</td>
-                        <td>Denser job history as the real moat</td>
+                        <td>Location + AI capability match + reputation + price</td>
+                        <td>Liquidity moat as job history densifies</td>
                     </tr>
                     <tr>
                         <td>Reputation</td>
                         <td>Mutual 1–5 star sign-off; public portfolios</td>
-                        <td>Portable proofs &amp; dual identity (seat / username)</td>
+                        <td>Portable proofs; dual identity (seat / username)</td>
                     </tr>
                     <tr>
                         <td>Payments</td>
-                        <td>Off-platform settlement; exchange records price, charges no fee</td>
-                        <td>Pilot take-rate / escrow → 5% model corridor</td>
+                        <td>Off-platform settlement; exchange records price</td>
+                        <td>Escrow + take-rate (model corridor ~5% of GMV)</td>
                     </tr>
                     <tr>
                         <td>Disputes</td>
-                        <td>Either party can file; admin review path</td>
-                        <td>Insurance &amp; SLA partners for institutional tickets</td>
+                        <td>Either party can file; admin review</td>
+                        <td>Insurance &amp; SLA partners for institutional volume</td>
                     </tr>
                     <tr>
-                        <td>Supply quality</td>
+                        <td>Supply access</td>
                         <td>Optional RSE Seat (Base L2) for grab access</td>
-                        <td>Eternal seat economics + fleet LOIs</td>
+                        <td>Primary seat sales + fleet partnerships</td>
                     </tr>
                 </tbody>
             </table>
@@ -1039,16 +1129,15 @@
 
     <section class="inv-section">
         <div class="container">
-            <h2>For fleets &amp; partners</h2>
+            <h2>Partners &amp; fleets</h2>
             <p class="inv-prose">
-                We want design partners with real robots or recurring facility demand: campus, logistics, inspection, security.
-                Concierge matching is available while local density is built. API integration for operators and agents is first-class.
+                Design partners with fleet capacity or recurring facility demand (campus, logistics, inspection, security)
+                accelerate density—the input every revenue stream depends on. API integration for operators and agents is first-class.
             </p>
             <div class="inv-cta-row">
-                <a class="btn btn-primary" href="mailto:mickeyshaughnessy@gmail.com?subject=Fleet%20design%20partner">Request a pilot conversation</a>
+                <a class="btn btn-primary" href="mailto:mickeyshaughnessy@gmail.com?subject=RSE%20partner%20/%20investor">Talk with us</a>
+                <a class="btn btn-outline-light" href="api_docs.html">API Docs</a>
                 <a class="btn btn-outline-light" href="grab_job.html">Provider console</a>
-                <a class="btn btn-outline-light" href="garage.html">Stonewright's Garage</a>
-                <a class="btn btn-outline-light" href="robots.html">Buy a Robot</a>
             </div>
         </div>
     </section>
@@ -1421,6 +1510,16 @@
 
             const gmvEl = document.getElementById('dialGmv');
             if (gmvEl) gmvEl.setAttribute('aria-valuetext', fmtMoney(p.gmv2035));
+
+            const activePreset = document.querySelector('.inv-presets button.active');
+            const presetName = activePreset
+                ? activePreset.textContent.trim()
+                : 'Custom';
+            setText('dialsSummary',
+                presetName + ' · GMV ' + fmtMoney(p.gmv2035) +
+                ' · take ' + (p.takeRate * 100).toFixed(1) + '%' +
+                ' · seats ' + fmtMoney(p.seatPrice) +
+                ' · net ' + p.network.toFixed(2) + '×');
         }
 
         function peakOf(arr) {
@@ -1485,11 +1584,25 @@
         }
 
         function updateCapitalKpis(p, series) {
-            setText('kpiCheck', fmtMoney(p.capital / p.partners));
+            const i2035 = YEARS.indexOf(2035);
+            const check = fmtMoney(p.capital / p.partners);
             const cumProfit = series.profit.reduce((a, b) => a + b, 0);
-            setText('kpiProfit15', fmtMoney(cumProfit));
+            const cumProfitFmt = fmtMoney(cumProfit);
+            const rev2035 = fmtMoney(series.revenue[i2035]);
+            const profit2035 = fmtMoney(series.profit[i2035]);
             const ratio = p.capital > 0 ? cumProfit / p.capital : 0;
+
+            setText('kpiCheck', check);
+            setText('kpiProfit15', cumProfitFmt);
             setText('kpiMoic', ratio.toFixed(2) + '×');
+            setText('kpiRev2035', rev2035);
+            setText('kpiProfit2035', profit2035);
+
+            // Compact KPIs when dials are collapsed
+            setText('kpiCheckMini', check);
+            setText('kpiProfit15Mini', cumProfitFmt);
+            setText('kpiRev2035Mini', rev2035);
+            setText('kpiProfit2035Mini', profit2035);
 
             let running = 0;
             let payback = '—';
@@ -1502,10 +1615,6 @@
             }
             if (payback === '—' && cumProfit > 0) payback = '>15 yrs';
             setText('kpiPayback', payback);
-
-            const i2035 = YEARS.indexOf(2035);
-            setText('kpiRev2035', fmtMoney(series.revenue[i2035]));
-            setText('kpiProfit2035', fmtMoney(series.profit[i2035]));
         }
 
         function updateTable(series) {
@@ -1546,17 +1655,26 @@
             const el = document.getElementById('assumptionsLive');
             if (!el) return;
             el.innerHTML =
-                '<strong>// Live model assumptions</strong><br>' +
+                '<strong>Live model assumptions</strong><br>' +
                 'GMV path anchors ' + fmtMoney(p.gmv2035) + ' in 2035 at ' + (p.takeRate * 100).toFixed(1) + '% take-rate. ' +
-                'Seats: ' + fmtMoney(p.seatPrice) + ' primary × network scale ' + p.network.toFixed(2) + '× (base 1B seats over ~5 yrs). ' +
-                'Hardware: $25k ASP, 3% affiliate, 40% finance attach × 1.5% referral (scaled). ' +
-                'Ads, franchise, Hyperion AUM scaled with network. ' +
-                'Equity raise scenario: ' + fmtMoney(p.capital) + ' across ' + p.partners + ' partners (~' +
+                'Seats: ' + fmtMoney(p.seatPrice) + ' primary × network scale ' + p.network.toFixed(2) + '× (base ~1B seats over five years). ' +
+                'Hardware: $25k ASP, 3% affiliate, 40% finance attach × 1.5% referral (network-scaled). ' +
+                'Ads, franchise openings, and Hyperion AUM scale with network. ' +
+                'Equity raise: ' + fmtMoney(p.capital) + ' across ' + p.partners + ' partners (~' +
                 fmtMoney(p.capital / p.partners) + ' average check). ' +
                 'Costs: per-stream ratios, linear improvement 2026→2035.' +
-                '<br><br><strong>Disclaimer:</strong> Illustrative forward-looking estimates for planning discussion only. ' +
-                'Not financial advice, not a securities offering, and not a guarantee of results. ' +
-                'Actual outcomes depend on adoption, regulation, competition, and execution.';
+                '<br><br>Planning model only — not financial advice or a securities offering. ' +
+                'Outcomes depend on adoption, regulation, competition, and execution.';
+        }
+
+        function setDialsExpanded(expanded) {
+            const panel = document.getElementById('scenarioDials');
+            const toggle = document.getElementById('dialsToggle');
+            const chevron = document.getElementById('dialsChevron');
+            if (!panel || !toggle) return;
+            panel.classList.toggle('is-expanded', expanded);
+            toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            if (chevron) chevron.textContent = expanded ? 'Collapse' : 'Expand';
         }
 
         function applyScenario() {
@@ -1617,6 +1735,16 @@
                 setPreset(btn.getAttribute('data-preset'));
             });
         });
+
+        const dialsToggle = document.getElementById('dialsToggle');
+        if (dialsToggle) {
+            dialsToggle.addEventListener('click', function () {
+                const panel = document.getElementById('scenarioDials');
+                const open = panel && panel.classList.contains('is-expanded');
+                setDialsExpanded(!open);
+            });
+        }
+        setDialsExpanded(false);
 
         applyScenario();
 
