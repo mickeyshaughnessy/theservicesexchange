@@ -351,6 +351,96 @@
             color: var(--text-dim);
             margin-top: 0.3rem;
         }
+        .inv-formula {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--accent);
+            background: rgba(57,255,20,0.06);
+            border: 1px solid rgba(57,255,20,0.35);
+            padding: 0.75rem 1rem;
+            margin: 0 0 1rem;
+            max-width: 48rem;
+            line-height: 1.55;
+        }
+        .inv-formula code {
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+        .inv-stream-lede {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.65;
+            color: var(--text);
+            max-width: 44rem;
+            margin-bottom: 1.15rem;
+        }
+        .inv-stream-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.65rem;
+            margin-bottom: 1.15rem;
+        }
+        .inv-stream-meta .inv-metric .n { font-size: 1.25rem; }
+        .inv-stream-meta .inv-metric .l { font-size: 0.68rem; }
+        .inv-card .formula-mini {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--accent);
+            margin: 0 0 0.55rem;
+            line-height: 1.45;
+        }
+        .inv-card .live-num {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.15rem;
+            color: var(--primary);
+            margin: 0.35rem 0 0.15rem;
+        }
+        .inv-card .live-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+        .inv-card a.stream-jump {
+            display: inline-block;
+            margin-top: 0.65rem;
+            font-size: 0.78rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .inv-card a.stream-jump:hover { color: var(--accent); }
+        .inv-fact-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.65rem;
+            margin-bottom: 1rem;
+        }
+        .inv-fact {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.15);
+            padding: 0.75rem 0.9rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.55;
+            color: var(--text);
+        }
+        .inv-fact strong {
+            display: block;
+            color: var(--text-dim);
+            font-weight: normal;
+            font-size: 0.68rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        .inv-chart-caption {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            margin: -0.5rem 0 1.25rem;
+            line-height: 1.5;
+        }
         @media (max-width: 768px) {
             .inv-chart-box, .inv-chart-box.tall { height: 320px; }
             .inv-table { font-size: 0.75rem; }
@@ -486,159 +576,190 @@
     <!-- ========== REVENUE STREAMS ========== -->
     <section class="inv-section" id="streams">
         <div class="container">
-            <h2>Seven revenue streams</h2>
-            <p class="inv-prose mb-4">
-                Forward-looking model for 2026–2040. Figures are illustrative planning projections, not guarantees.
-                Seat primary issuance ramps to one billion eternal seats over ~five years, then plateaus;
-                recurring streams (exchange take-rate, ads, royalties, fund fees) carry long-run growth.
+            <h2>Six revenue streams</h2>
+            <p class="inv-stream-lede">
+                Each stream is a simple formula. Numbers below track the scenario dials (2035 GMV, take-rate, seat price, network scale).
+                Illustrative only — not guarantees.
             </p>
             <div class="row g-3">
                 <div class="col-md-6 col-lg-4">
                     <div class="inv-card">
                         <span class="inv-pill">01 · Exchange</span>
-                        <h3>Transaction volume @ 5%</h3>
-                        <p>Gross merchandise value (GMV) of robot labor cleared on the exchange reaches <strong>$10T by 2035</strong>. Platform take-rate: <strong>5%</strong> → ~$500B exchange revenue in 2035.</p>
-                        <p class="cost-line"><strong>Cost:</strong> matching infra, support, disputes, insurance partners — ~35% of stream early → ~12% at scale.</p>
+                        <h3>Take-rate on GMV</h3>
+                        <p class="formula-mini">Revenue = GMV × take-rate</p>
+                        <div class="live-num" id="cardExch2035">—</div>
+                        <div class="live-label">Platform revenue · 2035</div>
+                        <p class="cost-line"><strong>Cost load:</strong> 35% → 12% of stream rev</p>
+                        <a class="stream-jump" href="#exchange-gmv">Details &amp; chart →</a>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="inv-card">
                         <span class="inv-pill">02 · Seats</span>
-                        <h3>Supply-side seat sales</h3>
-                        <p>Eternal seats at ~<strong>$100k</strong>. Cumulative primary sales: <strong>1M → 10M → 100M → 1B</strong> over ~5 years. Once inventory is placed, primary revenue plateaus (secondary market off-platform / residual only).</p>
-                        <p class="cost-line"><strong>Cost:</strong> mint ops, compliance, channel — ~15% early → ~5% mature (high-margin issuance).</p>
+                        <h3>Eternal supply seats</h3>
+                        <p class="formula-mini">Revenue = seats sold × seat price</p>
+                        <div class="live-num" id="cardSeatsPeak">—</div>
+                        <div class="live-label">Peak year seat revenue</div>
+                        <p class="cost-line"><strong>Cost load:</strong> 15% → 5% · then plateaus</p>
+                        <a class="stream-jump" href="#seats">Details &amp; chart →</a>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="inv-card">
                         <span class="inv-pill">03 · Hardware</span>
-                        <h3>Affiliate &amp; financing</h3>
-                        <p>From <a href="robots.html">Buy a Robot</a>: manufacturer affiliate commission (~3% ASP) plus financing-partner referral (~1.5% of financed principal, ~40% attach).</p>
-                        <p class="cost-line"><strong>Cost:</strong> catalog, partner ops, underwriting handoff — ~25% early → ~12% mature.</p>
+                        <h3>Affiliate + financing</h3>
+                        <p class="formula-mini">~3% ASP + ~1.5% of financed principal</p>
+                        <div class="live-num" id="cardHw2035">—</div>
+                        <div class="live-label">Hardware revenue · 2035</div>
+                        <p class="cost-line"><strong>Cost load:</strong> 25% → 12% · <a href="robots.html">Buy a Robot</a></p>
+                        <a class="stream-jump" href="#hardware">Details &amp; chart →</a>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="inv-card">
                         <span class="inv-pill">04 · Attention</span>
-                        <h3>/nearby &amp; ads</h3>
-                        <p>Premium placement, sponsored local results, and attention products on <code>/nearby</code> and related discovery surfaces—OEM, franchise, and fleet advertisers bid for robot and operator attention.</p>
-                        <p class="cost-line"><strong>Cost:</strong> ad product, sales, brand safety — ~45% early → ~28% mature.</p>
+                        <h3>/nearby ads</h3>
+                        <p class="formula-mini">Sponsored placement × network density</p>
+                        <div class="live-num" id="cardAds2035">—</div>
+                        <div class="live-label">Ads revenue · 2035</div>
+                        <p class="cost-line"><strong>Cost load:</strong> 45% → 28% of stream rev</p>
+                        <a class="stream-jump" href="#nearby-ads">Details &amp; chart →</a>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="inv-card">
                         <span class="inv-pill">05 · Franchises</span>
                         <h3>Garage + Lighthouse</h3>
-                        <p><a href="garage.html">Stonewright's Garage</a> (robot MRO &amp; R&amp;R): $75k fee + 6% royalty. <strong>The Lighthouse</strong> (robot charging stations): $50k fee + 8% royalty on station gross.</p>
-                        <p class="cost-line"><strong>Cost:</strong> training, field support, brand — ~55% early → ~35% mature.</p>
+                        <p class="formula-mini">New-site fees + ongoing royalties</p>
+                        <div class="live-num" id="cardFran2035">—</div>
+                        <div class="live-label">Franchise revenue · 2035</div>
+                        <p class="cost-line"><strong>Cost load:</strong> 55% → 35% · <a href="garage.html">Garage</a></p>
+                        <a class="stream-jump" href="#franchising">Details &amp; chart →</a>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="inv-card">
                         <span class="inv-pill">06 · Hyperion</span>
-                        <h3>The Hyperion Fund</h3>
-                        <p>Exclusive, profit-distributing automated algorithmic fund investing in stocks, equities, and emerging asset classes. Platform economics: ~1% AUM management + ~15% of gross performance (modeled ~2.8% effective on AUM in base case).</p>
-                        <p class="cost-line"><strong>Cost:</strong> compliance, risk, algo eng — ~50% early → ~30% mature.</p>
+                        <h3>Fund platform fees</h3>
+                        <p class="formula-mini">Revenue ≈ 2.8% × fund AUM</p>
+                        <div class="live-num" id="cardHyp2035">—</div>
+                        <div class="live-label">Hyperion revenue · 2035</div>
+                        <p class="cost-line"><strong>Cost load:</strong> 50% → 30% of stream rev</p>
+                        <a class="stream-jump" href="#hyperion">Details &amp; chart →</a>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 1. Exchange GMV -->
+    <!-- 1. Exchange -->
     <section class="inv-section" id="exchange-gmv">
         <div class="container">
-            <h2>1. Transaction volume &amp; exchange take-rate</h2>
-            <p class="inv-prose">
-                Physical AI labor is a multi-trillion addressable market: logistics, facility services, inspection,
-                security, agriculture, construction support, and household remnant hours. The RSE models
-                <strong>gross transaction volume of $10 trillion by 2035</strong>, with the exchange earning a
-                <strong>5% take-rate</strong> once payments / escrow corridors are fully on-platform
-                (today: protocol live, take-rate pilot path).
+            <h2>1. Exchange take-rate</h2>
+            <p class="inv-formula">Revenue = <code>GMV</code> × <code>take-rate</code>
+                <br><span style="color:var(--text-dim);font-size:0.85rem;">GMV = dollar value of robot labor jobs cleared on the exchange</span>
             </p>
-            <div class="row g-3 mt-2">
-                <div class="col-md-3"><div class="inv-metric"><div class="n" id="metricGmv2035">$10T</div><div class="l">GMV target · 2035</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n" id="metricTakeRate">5%</div><div class="l">Platform take-rate</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n" id="metricExch2035">$500B</div><div class="l">Exchange rev · 2035</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n" id="metricExch2040">$1.6T</div><div class="l">Exchange rev · 2040</div></div>
-            </div>
-            <div class="inv-chart-box mt-4">
-                <h3>Gross transaction volume (GMV) by year</h3>
-                <canvas id="chartGmv" aria-label="Bar chart of GMV by year"></canvas>
+            <p class="inv-stream-lede">
+                Fee on transaction volume once payments/escrow are on-platform. Scenario dials set 2035 GMV and take-rate; the chart is that product each year.
+            </p>
+            <div class="inv-stream-meta">
+                <div class="inv-metric"><div class="n" id="metricGmv2035">—</div><div class="l">GMV · 2035 (dial)</div></div>
+                <div class="inv-metric"><div class="n" id="metricTakeRate">—</div><div class="l">Take-rate (dial)</div></div>
+                <div class="inv-metric"><div class="n" id="metricExch2035">—</div><div class="l">= GMV × take · 2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricExch2040">—</div><div class="l">Revenue · 2040</div></div>
             </div>
             <div class="inv-chart-box">
-                <h3>Exchange take-rate revenue (5% of GMV)</h3>
-                <canvas id="chartExchange" aria-label="Bar chart of exchange revenue by year"></canvas>
+                <h3 id="titleChartExchange">Platform revenue from take-rate ($ / year)</h3>
+                <canvas id="chartExchange" aria-label="Bar chart of exchange take-rate revenue by year"></canvas>
             </div>
-            <p class="inv-note">2035 GMV is the planning anchor. Path is an S-curve from early liquidity (2026–2028) through densification (2029–2032) to global scale (2033–2040).</p>
+            <p class="inv-chart-caption" id="captionExchange">Each bar = that year’s GMV × take-rate. Not GMV itself.</p>
+            <div class="inv-chart-box">
+                <h3 id="titleChartGmv">Underlying GMV (jobs cleared, $ / year)</h3>
+                <canvas id="chartGmv" aria-label="Bar chart of GMV by year"></canvas>
+            </div>
+            <p class="inv-chart-caption">Context only — GMV is the base the take-rate applies to. Platform keeps the take-rate bar above, not full GMV.</p>
         </div>
     </section>
 
     <!-- 2. Seats -->
     <section class="inv-section" id="seats">
         <div class="container">
-            <h2>2. Supply-side seat sales</h2>
-            <p class="inv-prose">
-                RSE Seats are <strong>eternal</strong> access rights for supply-side participation (NFT on Base when verification is enabled).
-                Primary issuance is planned at approximately <strong>$100,000 per seat</strong>, with cumulative sales ramping
-                <strong>1M → 10M → 100M → 1B over roughly five years</strong>. Because seats are not consumed, primary inventory
-                saturates and <strong>seat-sale revenue plateaus</strong> after the billionth seat—ongoing value shifts to utilization
-                (jobs cleared through the exchange) rather than re-issuance.
+            <h2>2. Seat sales</h2>
+            <p class="inv-formula">Revenue = <code>new seats sold</code> × <code>seat price</code>
+                <br><span style="color:var(--text-dim);font-size:0.85rem;">Seats are eternal · primary issuance ramps then plateaus (not recurring rent)</span>
             </p>
-            <div class="row g-3 mt-2">
-                <div class="col-md-3"><div class="inv-metric"><div class="n" id="metricSeatPrice">~$100k</div><div class="l">Price / seat</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n" id="metricSeatTarget">1B</div><div class="l">Primary seats · ~5 yrs</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n">Eternal</div><div class="l">No expiry / re-mint</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n">Plateau</div><div class="l">Post-issuance revenue</div></div>
-            </div>
-            <div class="inv-chart-box mt-4">
-                <h3>New seats sold (primary) by year</h3>
-                <canvas id="chartSeatsUnits" aria-label="Bar chart of seats sold by year"></canvas>
+            <p class="inv-stream-lede">
+                One-time primary sale of supply-side access (Base NFT when verification is on). Network scale multiplies units sold; seat price dial sets $/seat.
+            </p>
+            <div class="inv-stream-meta">
+                <div class="inv-metric"><div class="n" id="metricSeatPrice">—</div><div class="l">Price / seat (dial)</div></div>
+                <div class="inv-metric"><div class="n" id="metricSeatTarget">—</div><div class="l">Seats sold · first 5 yrs</div></div>
+                <div class="inv-metric"><div class="n" id="metricSeatsPeak">—</div><div class="l">Peak year revenue</div></div>
+                <div class="inv-metric"><div class="n" id="metricSeats2035">—</div><div class="l">Revenue · 2035 (post-plateau)</div></div>
             </div>
             <div class="inv-chart-box">
-                <h3>Seat sales revenue by year</h3>
+                <h3 id="titleChartSeatsRev">Seat sales revenue ($ / year)</h3>
                 <canvas id="chartSeatsRev" aria-label="Bar chart of seat revenue by year"></canvas>
             </div>
-            <p class="inv-note">Model: 1M (2026), +9M (2027), +90M (2028), +400M (2029), +500M (2030) = 1B cumulative, then residual taper to near-zero primary sales.</p>
+            <p class="inv-chart-caption" id="captionSeats">Each bar = seats sold that year × seat price. Spike = issuance ramp; flat tail = residual only.</p>
+            <div class="inv-chart-box">
+                <h3>New seats sold (units / year)</h3>
+                <canvas id="chartSeatsUnits" aria-label="Bar chart of seats sold by year"></canvas>
+            </div>
+            <p class="inv-chart-caption">Base shape: 1M → 10M → 100M → 1B cumulative over ~5 years, then taper. Scaled by network dial.</p>
         </div>
     </section>
 
     <!-- 3. Hardware -->
     <section class="inv-section" id="hardware">
         <div class="container">
-            <h2>3. Affiliate &amp; financing (Buy a Robot)</h2>
-            <p class="inv-prose">
-                The <a href="robots.html">Buy a Robot</a> catalog routes buyers to manufacturers and financing partners.
-                Economics: <strong>~3% affiliate</strong> on average selling price (~$25k ASP in the model) plus
-                <strong>financing referral</strong> of ~1.5% of principal on an assumed ~40% finance attach rate.
-                Combined ~$900 revenue per robot referred at those assumptions—before scale discounts or exclusive OEM deals.
+            <h2>3. Hardware affiliate &amp; financing</h2>
+            <p class="inv-formula">Revenue ≈ robots referred × ($25k ASP × 3% + finance fees)
+                <br><span style="color:var(--text-dim);font-size:0.85rem;">Finance fee = 40% of buyers finance × 1.5% of principal · from <a href="robots.html">Buy a Robot</a></span>
             </p>
-            <div class="row g-3 mt-2">
-                <div class="col-md-4"><div class="inv-metric"><div class="n">~3%</div><div class="l">Affiliate of ASP</div></div>
-                <div class="col-md-4"><div class="inv-metric"><div class="n">~1.5%</div><div class="l">Financing referral</div></div>
-                <div class="col-md-4"><div class="inv-metric"><div class="n">40%</div><div class="l">Finance attach rate</div></div>
+            <p class="inv-stream-lede">
+                Commission when buyers purchase robots through the catalog, plus referral fees when they take financing. Scales with network density.
+            </p>
+            <div class="inv-fact-row">
+                <div class="inv-fact"><strong>Affiliate</strong>3% of ~$25k ASP ≈ $750 / robot</div>
+                <div class="inv-fact"><strong>Financing</strong>40% attach × 1.5% of principal ≈ $150 / robot</div>
+                <div class="inv-fact"><strong>Combined</strong>≈ $900 platform revenue per robot referred</div>
             </div>
-            <div class="inv-chart-box mt-4">
-                <h3>Hardware affiliate + financing revenue</h3>
+            <div class="inv-stream-meta">
+                <div class="inv-metric"><div class="n" id="metricHw2030">—</div><div class="l">Revenue · 2030</div></div>
+                <div class="inv-metric"><div class="n" id="metricHw2035">—</div><div class="l">Revenue · 2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricHw2040">—</div><div class="l">Revenue · 2040</div></div>
+                <div class="inv-metric"><div class="n" id="metricHwPerRobot">~$900</div><div class="l">Rev / robot (fixed model)</div></div>
+            </div>
+            <div class="inv-chart-box">
+                <h3>Hardware affiliate + financing revenue ($ / year)</h3>
                 <canvas id="chartHardware" aria-label="Bar chart of hardware revenue by year"></canvas>
             </div>
+            <p class="inv-chart-caption">Each bar = annual platform cut from robot sales + financing referrals (network-scaled unit volume).</p>
         </div>
     </section>
 
     <!-- 4. Nearby ads -->
     <section class="inv-section" id="nearby-ads">
         <div class="container">
-            <h2>4. /nearby &amp; attention products</h2>
-            <p class="inv-prose">
-                Robots and operators continuously query the physical world for charge, repair, parts, and next jobs.
-                <code>/nearby</code> and related discovery surfaces monetize that attention with premium placement,
-                sponsored categories, franchise badges (see Stonewright's Garage), and campaign-style boosts—
-                an ad network for machine attention, not only human eyeballs.
+            <h2>4. /nearby &amp; attention</h2>
+            <p class="inv-formula">Revenue = ad / placement spend on discovery surfaces
+                <br><span style="color:var(--text-dim);font-size:0.85rem;"><code>/nearby</code>, sponsored categories, franchise badges, boosts</span>
             </p>
-            <div class="inv-chart-box mt-4">
-                <h3>Nearby / attention revenue</h3>
+            <p class="inv-stream-lede">
+                OEMs, fleets, and franchisees pay for attention when robots and operators search for charge, repair, parts, and next jobs.
+            </p>
+            <div class="inv-stream-meta">
+                <div class="inv-metric"><div class="n" id="metricAds2030">—</div><div class="l">Revenue · 2030</div></div>
+                <div class="inv-metric"><div class="n" id="metricAds2035">—</div><div class="l">Revenue · 2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricAds2040">—</div><div class="l">Revenue · 2040</div></div>
+                <div class="inv-metric"><div class="n" id="metricAdsCost">45%→28%</div><div class="l">Cost as % of this rev</div></div>
+            </div>
+            <div class="inv-chart-box">
+                <h3>Nearby / attention revenue ($ / year)</h3>
                 <canvas id="chartAds" aria-label="Bar chart of ads revenue by year"></canvas>
             </div>
+            <p class="inv-chart-caption">Each bar = annual ad-like revenue. Scales with the network dial (more density → more queries → more spend).</p>
         </div>
     </section>
 
@@ -646,38 +767,31 @@
     <section class="inv-section" id="franchising">
         <div class="container">
             <h2>5. Franchising — Garage &amp; Lighthouse</h2>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="inv-card">
-                        <h3>Stonewright's Garage</h3>
-                        <p>Robot maintenance, repair &amp; replace (R&amp;R), parts, and bay services. Physical outposts of the exchange with premium <code>/nearby</code> placement.</p>
-                        <ul>
-                            <li>Franchise fee: <strong>$75,000</strong></li>
-                            <li>Kit &amp; buildout: ~$140k–$180k (franchisee capex)</li>
-                            <li>Royalty: <strong>6% of gross</strong></li>
-                            <li>Model garage gross: ~$280k/yr → ~$17k royalty</li>
-                        </ul>
-                        <p class="cost-line"><a href="garage.html">garage.html →</a></p>
-                    </div>
+            <p class="inv-formula">Revenue = new franchise fees + royalties on active sites
+                <br><span style="color:var(--text-dim);font-size:0.85rem;">Two brands, one stream in the model</span>
+            </p>
+            <div class="inv-fact-row">
+                <div class="inv-fact">
+                    <strong>Stonewright's Garage</strong>
+                    MRO / R&amp;R bays · fee <strong>$75k</strong> · royalty <strong>6%</strong> of ~$280k site gross
+                    · <a href="garage.html">page →</a>
                 </div>
-                <div class="col-md-6">
-                    <div class="inv-card">
-                        <h3>The Lighthouse</h3>
-                        <p>Robot charging stations—grid, solar, and fuel-cell capable nodes along high-utilization corridors. Complements garages: charge here, MRO next door.</p>
-                        <ul>
-                            <li>Franchise fee: <strong>$50,000</strong></li>
-                            <li>Station buildout: franchisee capex (site-dependent)</li>
-                            <li>Royalty: <strong>8% of station gross</strong></li>
-                            <li>Model station gross: ~$180k/yr → ~$14k royalty</li>
-                        </ul>
-                        <p class="cost-line">Charging density compounds exchange liquidity.</p>
-                    </div>
+                <div class="inv-fact">
+                    <strong>The Lighthouse</strong>
+                    Robot charging · fee <strong>$50k</strong> · royalty <strong>8%</strong> of ~$180k station gross
                 </div>
             </div>
-            <div class="inv-chart-box mt-4">
-                <h3>Franchise fees + royalties (Garage + Lighthouse)</h3>
+            <div class="inv-stream-meta">
+                <div class="inv-metric"><div class="n" id="metricFran2030">—</div><div class="l">Revenue · 2030</div></div>
+                <div class="inv-metric"><div class="n" id="metricFran2035">—</div><div class="l">Revenue · 2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricFran2040">—</div><div class="l">Revenue · 2040</div></div>
+                <div class="inv-metric"><div class="n" id="metricFranCost">55%→35%</div><div class="l">Cost as % of this rev</div></div>
+            </div>
+            <div class="inv-chart-box">
+                <h3>Franchise fees + royalties ($ / year)</h3>
                 <canvas id="chartFranchise" aria-label="Bar chart of franchise revenue by year"></canvas>
             </div>
+            <p class="inv-chart-caption">Each bar = fees from new openings that year + royalties from the cumulative active base (95% stay open). Network scale multiplies openings.</p>
         </div>
     </section>
 
@@ -685,24 +799,23 @@
     <section class="inv-section" id="hyperion">
         <div class="container">
             <h2>6. The Hyperion Fund</h2>
-            <p class="inv-prose">
-                <strong>The Hyperion Fund</strong> is an exclusive, profit-distributing automated algorithmic vehicle
-                for seat holders and qualified participants. It allocates across equities, broader public markets,
-                and emerging asset classes with systematic strategies. Investors receive distributed profits;
-                the exchange earns management and performance economics modeled as roughly <strong>2.8% of AUM</strong>
-                in a base case (1% management + 15% of ~12% gross performance).
+            <p class="inv-formula">Platform revenue ≈ <code>2.8% × AUM</code>
+                <br><span style="color:var(--text-dim);font-size:0.85rem;">1% management + 15% of ~12% gross performance · LPs receive distributed profits</span>
             </p>
-            <div class="row g-3 mt-2">
-                <div class="col-md-3"><div class="inv-metric"><div class="n">Algo</div><div class="l">Automated strategies</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n">~1% + 15%</div><div class="l">Mgmt + performance</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n">$1T</div><div class="l">AUM target · 2035</div></div>
-                <div class="col-md-3"><div class="inv-metric"><div class="n">Distribute</div><div class="l">Profits to LPs</div></div>
+            <p class="inv-stream-lede">
+                Automated algorithmic fund (equities &amp; emerging assets) for seat holders / qualified participants. Bars below are <em>platform fees</em>, not fund AUM or LP returns.
+            </p>
+            <div class="inv-stream-meta">
+                <div class="inv-metric"><div class="n" id="metricAum2035">—</div><div class="l">Fund AUM · 2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricHyp2035">—</div><div class="l">Platform fees · 2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricHyp2040">—</div><div class="l">Platform fees · 2040</div></div>
+                <div class="inv-metric"><div class="n">2.8%</div><div class="l">Effective fee on AUM</div></div>
             </div>
-            <div class="inv-chart-box mt-4">
-                <h3>Hyperion Fund platform revenue</h3>
-                <canvas id="chartHyperion" aria-label="Bar chart of Hyperion revenue by year"></canvas>
+            <div class="inv-chart-box">
+                <h3>Hyperion platform fee revenue ($ / year)</h3>
+                <canvas id="chartHyperion" aria-label="Bar chart of Hyperion platform revenue by year"></canvas>
             </div>
-            <p class="inv-note">Not an offer to sell securities. Structure, eligibility, and registrations would follow applicable law; figures are product-vision economics only.</p>
+            <p class="inv-chart-caption">Each bar = ~2.8% of year-end AUM (network-scaled). Not an offer to sell securities.</p>
         </div>
     </section>
 
@@ -710,9 +823,9 @@
     <section class="inv-section" id="costs">
         <div class="container">
             <h2>7. Cost structure by stream</h2>
-            <p class="inv-prose mb-4">
-                Each stream carries different operating intensity. Cost ratios improve with scale as fixed platform
-                spend is amortized. Profit in the charts below is stream revenue minus stream cost (before corporate tax).
+            <p class="inv-stream-lede">
+                Profit = stream revenue − (cost % × revenue). Ratios fall as fixed platform spend is amortized.
+                Combined P&amp;L charts are under scenario dials.
             </p>
             <div class="inv-table-wrap">
                 <table class="inv-table">
@@ -1217,6 +1330,21 @@
 
         const charts = {};
 
+        function styleDatasets(datasets) {
+            return datasets.map(function (ds) {
+                return Object.assign({
+                    borderRadius: 3,
+                    maxBarThickness: stackedMaxBar(ds),
+                    categoryPercentage: 0.78,
+                    barPercentage: 0.9
+                }, ds);
+            });
+        }
+        function stackedMaxBar(ds) {
+            // slightly thicker for single-series stream charts
+            return 36;
+        }
+
         function makeBar(id, datasets, stacked, units) {
             const el = document.getElementById(id);
             if (!el || typeof Chart === 'undefined') return null;
@@ -1224,7 +1352,7 @@
             opts.plugins.legend.display = datasets.length > 1 || stacked;
             const chart = new Chart(el, {
                 type: 'bar',
-                data: { labels: YEAR_LABELS, datasets: datasets },
+                data: { labels: YEAR_LABELS, datasets: styleDatasets(datasets) },
                 options: opts
             });
             charts[id] = chart;
@@ -1240,15 +1368,15 @@
             c.update('none');
         }
 
-        // Initial empty charts (data filled by applyScenario)
-        makeBar('chartGmv', [{ label: 'GMV', data: [], backgroundColor: COLORS.gmv, borderRadius: 2 }], false);
-        makeBar('chartExchange', [{ label: 'Exchange take-rate revenue', data: [], backgroundColor: COLORS.exchange, borderRadius: 2 }], false);
-        makeBar('chartSeatsUnits', [{ label: 'New seats sold', data: [], backgroundColor: COLORS.seats, borderRadius: 2 }], false, true);
-        makeBar('chartSeatsRev', [{ label: 'Seat sales revenue', data: [], backgroundColor: COLORS.seats, borderRadius: 2 }], false);
-        makeBar('chartHardware', [{ label: 'Affiliate + financing', data: [], backgroundColor: COLORS.hardware, borderRadius: 2 }], false);
-        makeBar('chartAds', [{ label: 'Nearby / attention', data: [], backgroundColor: COLORS.ads, borderRadius: 2 }], false);
-        makeBar('chartFranchise', [{ label: 'Franchise fees + royalties', data: [], backgroundColor: COLORS.franchise, borderRadius: 2 }], false);
-        makeBar('chartHyperion', [{ label: 'Hyperion Fund fees', data: [], backgroundColor: COLORS.hyperion, borderRadius: 2 }], false);
+        // Stream charts (filled by applyScenario from dials)
+        makeBar('chartExchange', [{ label: 'Take-rate revenue ($)', data: [], backgroundColor: COLORS.exchange }], false);
+        makeBar('chartGmv', [{ label: 'GMV — jobs cleared ($)', data: [], backgroundColor: COLORS.gmv }], false);
+        makeBar('chartSeatsRev', [{ label: 'Seat sales revenue ($)', data: [], backgroundColor: COLORS.seats }], false);
+        makeBar('chartSeatsUnits', [{ label: 'New seats sold (units)', data: [], backgroundColor: COLORS.seats }], false, true);
+        makeBar('chartHardware', [{ label: 'Affiliate + financing ($)', data: [], backgroundColor: COLORS.hardware }], false);
+        makeBar('chartAds', [{ label: 'Nearby / ads revenue ($)', data: [], backgroundColor: COLORS.ads }], false);
+        makeBar('chartFranchise', [{ label: 'Franchise fees + royalties ($)', data: [], backgroundColor: COLORS.franchise }], false);
+        makeBar('chartHyperion', [{ label: 'Hyperion platform fees ($)', data: [], backgroundColor: COLORS.hyperion }], false);
         makeBar('chartRevenueStacked', [
             { label: 'Exchange', data: [], backgroundColor: COLORS.exchange, borderRadius: 0 },
             { label: 'Seats', data: [], backgroundColor: COLORS.seats, borderRadius: 0 },
@@ -1295,16 +1423,65 @@
             if (gmvEl) gmvEl.setAttribute('aria-valuetext', fmtMoney(p.gmv2035));
         }
 
+        function peakOf(arr) {
+            let m = -Infinity, yi = 0;
+            arr.forEach((v, i) => { if (v > m) { m = v; yi = i; } });
+            return { value: m, year: YEARS[yi] };
+        }
+
         function updateMetrics(p, series) {
+            const i2030 = YEARS.indexOf(2030);
             const i2035 = YEARS.indexOf(2035);
             const i2040 = YEARS.indexOf(2040);
+
+            // Exchange
             setText('metricGmv2035', fmtMoney(p.gmv2035));
             setText('metricTakeRate', (p.takeRate * 100).toFixed(1) + '%');
             setText('metricExch2035', fmtMoney(series.exchange[i2035]));
             setText('metricExch2040', fmtMoney(series.exchange[i2040]));
-            setText('metricSeatPrice', '~' + fmtMoney(p.seatPrice));
+            setText('cardExch2035', fmtMoney(series.exchange[i2035]));
+            setText('titleChartExchange', 'Platform revenue = GMV × ' + (p.takeRate * 100).toFixed(1) + '%  ($ / year)');
+            setText('captionExchange',
+                '2035: ' + fmtMoney(p.gmv2035) + ' GMV × ' + (p.takeRate * 100).toFixed(1) + '% = ' +
+                fmtMoney(series.exchange[i2035]) + ' platform revenue. Each bar is take-rate revenue, not full GMV.');
+
+            // Seats
+            setText('metricSeatPrice', fmtMoney(p.seatPrice));
             const seatTarget = series.seatUnits.slice(0, 5).reduce((a, b) => a + b, 0);
             setText('metricSeatTarget', fmtUnits(seatTarget));
+            const seatPeak = peakOf(series.seats);
+            setText('metricSeatsPeak', fmtMoney(seatPeak.value));
+            setText('metricSeats2035', fmtMoney(series.seats[i2035]));
+            setText('cardSeatsPeak', fmtMoney(seatPeak.value));
+            setText('titleChartSeatsRev', 'Seat revenue = units × ' + fmtMoney(p.seatPrice) + '  ($ / year)');
+            setText('captionSeats',
+                'Peak ' + seatPeak.year + ': ' + fmtMoney(seatPeak.value) +
+                '. First 5 yrs units: ' + fmtUnits(seatTarget) + ' × price from dial.');
+
+            // Hardware
+            setText('metricHw2030', fmtMoney(series.hardware[i2030]));
+            setText('metricHw2035', fmtMoney(series.hardware[i2035]));
+            setText('metricHw2040', fmtMoney(series.hardware[i2040]));
+            setText('cardHw2035', fmtMoney(series.hardware[i2035]));
+
+            // Ads
+            setText('metricAds2030', fmtMoney(series.ads[i2030]));
+            setText('metricAds2035', fmtMoney(series.ads[i2035]));
+            setText('metricAds2040', fmtMoney(series.ads[i2040]));
+            setText('cardAds2035', fmtMoney(series.ads[i2035]));
+
+            // Franchise
+            setText('metricFran2030', fmtMoney(series.franchise[i2030]));
+            setText('metricFran2035', fmtMoney(series.franchise[i2035]));
+            setText('metricFran2040', fmtMoney(series.franchise[i2040]));
+            setText('cardFran2035', fmtMoney(series.franchise[i2035]));
+
+            // Hyperion
+            const aum2035 = BASE_AUM[2035] * p.network;
+            setText('metricAum2035', fmtMoney(aum2035));
+            setText('metricHyp2035', fmtMoney(series.hyperion[i2035]));
+            setText('metricHyp2040', fmtMoney(series.hyperion[i2040]));
+            setText('cardHyp2035', fmtMoney(series.hyperion[i2035]));
         }
 
         function updateCapitalKpis(p, series) {
