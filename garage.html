@@ -654,9 +654,9 @@
                             </div>
                         </div>
                         <div class="sw-config-field" style="margin-top:0.5rem;">
-                            <label for="cfgEmailBody">Email message (edit before sending)</label>
+                            <label for="cfgEmailBody">Message (copied when you send — paste into an X DM)</label>
                             <textarea id="cfgEmailBody" maxlength="4000" aria-describedby="cfgEmailHint"></textarea>
-                            <p class="sw-config-hint" id="cfgEmailHint" style="margin-top:0.4rem;">Opens your email app to mickeyshaughnessy@gmail.com with this message. Edit freely before you send.</p>
+                            <p class="sw-config-hint" id="cfgEmailHint" style="margin-top:0.4rem;">Copies this message and opens X (@MichaelSha10041). Paste into a DM to send your inquiry.</p>
                         </div>
                     </div>
 
@@ -786,7 +786,7 @@
 
     <script>
     (function () {
-        const INQUIRY_EMAIL = 'mickeyshaughnessy@gmail.com';
+        const INQUIRY_X = 'https://x.com/MichaelSha10041';
         const bodyEl = document.getElementById('cfgEmailBody');
         const fields = ['cfgBays', 'cfgLocation', 'cfgName', 'cfgGenModule', 'cfgAttendants', 'cfgTimeline'];
         let bodyDirty = false;
@@ -836,13 +836,13 @@
         bodyEl.addEventListener('input', function () { bodyDirty = true; });
 
         document.getElementById('franchiseBuyBtn').addEventListener('click', function () {
-            const subject = "Stonewright's Garage Franchise Inquiry — " +
-                document.getElementById('cfgBays').value + ' bay';
             const body = bodyEl.value.trim() || buildEmailBody();
-            const href = 'mailto:' + INQUIRY_EMAIL +
-                '?subject=' + encodeURIComponent(subject) +
-                '&body=' + encodeURIComponent(body);
-            window.location.href = href;
+            const openX = function () { window.open(INQUIRY_X, '_blank', 'noopener'); };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(body).then(openX).catch(openX);
+            } else {
+                openX();
+            }
         });
 
         refreshBody(true);

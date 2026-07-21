@@ -630,9 +630,9 @@
                                 </select>
                             </div>
                             <div class="col-12">
-                                <label class="form-label" for="buyEmailBody">Email message (edit before sending)</label>
+                                <label class="form-label" for="buyEmailBody">Message (copied when you send — paste into an X DM)</label>
                                 <textarea class="form-control" id="buyEmailBody" maxlength="4000"></textarea>
-                                <p class="buy-hint">Opens your email app to mickeyshaughnessy@gmail.com with this message. Edit freely before you send.</p>
+                                <p class="buy-hint">Copies this message and opens X (@MichaelSha10041). Paste into a DM to send your inquiry.</p>
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary mt-3 w-100" id="buyInquirySubmit">SEND INQUIRY →</button>
@@ -721,7 +721,7 @@
     </div>
 
     <script>
-    const BUY_INQUIRY_EMAIL = 'mickeyshaughnessy@gmail.com';
+    const BUY_INQUIRY_X = 'https://x.com/MichaelSha10041';
     let buyBodyDirty = false;
 
     function robotLookup(fullName) {
@@ -793,13 +793,13 @@
         document.getElementById('buyEmailBody').addEventListener('input', () => { buyBodyDirty = true; });
         document.getElementById('buyInquiryForm').addEventListener('submit', function (e) {
             e.preventDefault();
-            const robot = document.getElementById('buyRobot').value;
-            const subject = 'Robot Purchase Inquiry — ' + robot;
             const body = document.getElementById('buyEmailBody').value.trim() || buildBuyEmailBody();
-            const href = 'mailto:' + BUY_INQUIRY_EMAIL +
-                '?subject=' + encodeURIComponent(subject) +
-                '&body=' + encodeURIComponent(body);
-            window.location.href = href;
+            const openX = function () { window.open(BUY_INQUIRY_X, '_blank', 'noopener'); };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(body).then(openX).catch(openX);
+            } else {
+                openX();
+            }
         });
     })();
 

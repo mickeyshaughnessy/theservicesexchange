@@ -75,7 +75,8 @@ info:
     **400** validation, **401** auth, **403** wrong role/forbidden, **404** missing,
     **409** conflict, **429** rate limit/cooldown, **204** no matching work (grab).
   contact:
-    email: mickeyshaughnessy@gmail.com
+    name: Michael Shaughnessy
+    url: https://x.com/MichaelSha10041
 
 servers:
   - url: https://rse-api.com:5003
