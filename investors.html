@@ -13,10 +13,18 @@
     <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=23" rel="stylesheet">
+    <link href="styles.css?v=25" rel="stylesheet">
     <title>Invest — The RSE</title>
     <style>
-        .inv-page { background: var(--bg-deep); color: var(--text); }
+        /* Lighter body copy for contrast on deep navy panels */
+        .inv-page {
+            --inv-text: #e4ecff;
+            --inv-text-soft: #c8d6f5;
+            --inv-text-dim: #9aadd8;
+            --inv-pink: #ff4dd2;
+            background: var(--bg-deep);
+            color: var(--inv-text);
+        }
         .inv-hero {
             padding: 4rem 0 3rem;
             border-bottom: 1px solid rgba(0,255,255,0.25);
@@ -34,7 +42,7 @@
         .inv-hero .lede {
             font-family: 'Share Tech Mono', monospace;
             font-size: 1.05rem;
-            color: var(--text);
+            color: var(--inv-text);
             max-width: 44rem;
             line-height: 1.7;
         }
@@ -68,7 +76,7 @@
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.95rem;
             line-height: 1.75;
-            color: var(--text);
+            color: var(--inv-text);
             max-width: 46rem;
         }
         .inv-grid {
@@ -92,7 +100,7 @@
             font-size: 0.72rem;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: var(--text-dim);
+            color: var(--inv-text-dim);
             margin-top: 0.35rem;
         }
         .inv-card {
@@ -111,7 +119,7 @@
         .inv-card p, .inv-card li {
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.88rem;
-            color: var(--text);
+            color: var(--inv-text);
             line-height: 1.65;
             margin: 0;
         }
@@ -121,7 +129,7 @@
             padding-top: 0.75rem;
             border-top: 1px solid rgba(0,255,255,0.12);
             font-size: 0.82rem;
-            color: var(--text-dim);
+            color: var(--inv-text-dim);
         }
         .inv-card .cost-line strong { color: var(--yellow, #ff0); }
         .inv-cta-row {
@@ -144,7 +152,7 @@
         .inv-note {
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.8rem;
-            color: var(--text-dim);
+            color: var(--inv-text-dim);
             margin-top: 1rem;
             line-height: 1.6;
         }
@@ -158,17 +166,33 @@
             text-align: left;
             padding: 0.65rem 0.75rem;
             border-bottom: 1px solid rgba(0,255,255,0.12);
-            color: var(--text);
+            color: var(--inv-text);
         }
-        .inv-table th {
-            color: var(--text-dim);
-            font-weight: normal;
+        .inv-table thead th,
+        .inv-table > thead > tr > th {
+            color: var(--inv-pink);
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
-            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            font-size: 0.78rem;
+            text-shadow: 0 0 10px rgba(255, 77, 210, 0.35);
+        }
+        .inv-table tbody th[scope="row"] {
+            color: var(--inv-text-soft);
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: 0;
+            font-size: 0.85rem;
         }
         .inv-table td.num, .inv-table th.num { text-align: right; white-space: nowrap; }
         .inv-table tbody tr:hover { background: rgba(0,255,255,0.04); }
+        /* Magnitude suffixes: M / B / T (and K) — bold, inherit number text color */
+        .inv-mag {
+            color: inherit;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            margin-left: 0.05em;
+        }
         .inv-table-wrap {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -228,9 +252,9 @@
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.82rem;
             line-height: 1.7;
-            color: var(--text-dim);
+            color: var(--inv-text-soft);
         }
-        .inv-assumptions strong { color: var(--text); }
+        .inv-assumptions strong { color: var(--inv-text); }
         .inv-dials {
             background: var(--bg-panel);
             border: 1px solid rgba(0,255,255,0.3);
@@ -284,7 +308,7 @@
         .inv-dials-summary {
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.75rem;
-            color: var(--text-dim);
+            color: var(--inv-text-soft);
             line-height: 1.45;
             letter-spacing: 0.02em;
         }
@@ -333,7 +357,7 @@
             font-size: 0.72rem;
             letter-spacing: 0.04em;
             text-transform: uppercase;
-            color: var(--text);
+            color: var(--inv-text);
             background: transparent;
             border: 1px solid rgba(0,255,255,0.3);
             padding: 0.3rem 0.55rem;
@@ -357,7 +381,7 @@
             gap: 0.5rem;
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.78rem;
-            color: var(--text-dim);
+            color: var(--inv-text-dim);
             letter-spacing: 0.04em;
             text-transform: uppercase;
             margin-bottom: 0.35rem;
@@ -376,7 +400,7 @@
         .inv-dial .hint {
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.7rem;
-            color: var(--text-dim);
+            color: var(--inv-text-dim);
             margin-top: 0.25rem;
             line-height: 1.4;
         }
@@ -415,7 +439,7 @@
             font-size: 0.68rem;
             letter-spacing: 0.06em;
             text-transform: uppercase;
-            color: var(--text-dim);
+            color: var(--inv-text-dim);
             margin-top: 0.3rem;
         }
         .inv-formula {
@@ -437,7 +461,7 @@
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.9rem;
             line-height: 1.65;
-            color: var(--text);
+            color: var(--inv-text);
             max-width: 44rem;
             margin-bottom: 1.15rem;
         }
@@ -467,7 +491,7 @@
             font-size: 0.7rem;
             letter-spacing: 0.06em;
             text-transform: uppercase;
-            color: var(--text-dim);
+            color: var(--inv-text-dim);
         }
         .inv-card a.stream-jump {
             display: inline-block;
@@ -490,11 +514,11 @@
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.82rem;
             line-height: 1.55;
-            color: var(--text);
+            color: var(--inv-text);
         }
         .inv-fact strong {
             display: block;
-            color: var(--text-dim);
+            color: var(--inv-text-dim);
             font-weight: normal;
             font-size: 0.68rem;
             letter-spacing: 0.06em;
@@ -504,7 +528,7 @@
         .inv-chart-caption {
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.78rem;
-            color: var(--text-dim);
+            color: var(--inv-text-dim);
             margin: -0.5rem 0 1.25rem;
             line-height: 1.5;
         }
@@ -513,6 +537,256 @@
             .inv-table { font-size: 0.75rem; }
             .inv-dials { position: sticky; top: 0; }
             .inv-dials-summary { font-size: 0.7rem; }
+        }
+        /* Cap table explorer */
+        .cap-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.65rem 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .cap-toolbar .count-pill {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--accent);
+            border: 1px solid rgba(57,255,20,0.4);
+            padding: 0.35rem 0.7rem;
+        }
+        .cap-toolbar .count-pill.warn { color: #ff6b8a; border-color: rgba(255,107,138,0.5); }
+        .cap-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+        }
+        .cap-filters button {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--inv-text);
+            background: transparent;
+            border: 1px solid rgba(0,255,255,0.3);
+            padding: 0.3rem 0.55rem;
+            cursor: pointer;
+        }
+        .cap-filters button:hover,
+        .cap-filters button.active {
+            color: var(--bg-deep);
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .cap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 0.55rem;
+            margin-bottom: 1.25rem;
+        }
+        .cap-item {
+            display: flex;
+            gap: 0.65rem;
+            align-items: flex-start;
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.18);
+            padding: 0.75rem 0.85rem;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .cap-item:hover { border-color: rgba(0,255,255,0.45); }
+        .cap-item.is-selected {
+            border-color: rgba(57,255,20,0.55);
+            background: rgba(57,255,20,0.06);
+        }
+        .cap-item input {
+            margin-top: 0.2rem;
+            accent-color: var(--accent);
+            flex-shrink: 0;
+        }
+        .cap-item .cap-body { min-width: 0; }
+        .cap-item .cap-name {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.88rem;
+            color: var(--inv-text);
+            line-height: 1.35;
+        }
+        .cap-item .cap-meta {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--inv-text-dim);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-top: 0.2rem;
+        }
+        .cap-item .cap-blurb {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--inv-text-soft);
+            line-height: 1.45;
+            margin-top: 0.35rem;
+        }
+        .cap-controls {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.25);
+            padding: 1.15rem 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        .cap-controls .row-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0.85rem 1rem;
+            margin-bottom: 0.85rem;
+        }
+        .cap-controls label {
+            display: block;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--inv-text-dim);
+            margin-bottom: 0.3rem;
+        }
+        .cap-controls select,
+        .cap-controls input[type="number"],
+        .cap-controls textarea {
+            width: 100%;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.88rem;
+            color: var(--inv-text);
+            background: var(--bg-deep);
+            border: 1px solid rgba(0,255,255,0.28);
+            padding: 0.45rem 0.55rem;
+        }
+        .cap-controls textarea { min-height: 72px; resize: vertical; }
+        .cap-scenario-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.85rem;
+        }
+        .cap-scenario-pills button {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--inv-text);
+            background: transparent;
+            border: 1px solid rgba(0,255,255,0.3);
+            padding: 0.4rem 0.7rem;
+            cursor: pointer;
+        }
+        .cap-scenario-pills button.active {
+            color: var(--bg-deep);
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .cap-scenario-pills button:hover:not(.active) {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .cap-run-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+            align-items: center;
+        }
+        .cap-run-row .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-deep);
+            font-family: 'Share Tech Mono', monospace;
+        }
+        .cap-run-row .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .cap-status {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--inv-text-dim);
+        }
+        .cap-results {
+            display: none;
+        }
+        .cap-results.is-visible { display: block; }
+        .cap-summary {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.92rem;
+            line-height: 1.7;
+            color: var(--inv-text);
+            background: rgba(57,255,20,0.05);
+            border: 1px solid rgba(57,255,20,0.3);
+            padding: 1rem 1.15rem;
+            margin-bottom: 1.15rem;
+        }
+        .cap-val-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.6rem;
+            margin-bottom: 1.15rem;
+        }
+        .cap-val-grid .inv-metric.is-focus {
+            border-color: rgba(57,255,20,0.55);
+            box-shadow: 0 0 18px rgba(57,255,20,0.08);
+        }
+        .cap-two-col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.15rem;
+        }
+        .cap-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .cap-list li {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--inv-text);
+            line-height: 1.55;
+            padding: 0.55rem 0;
+            border-bottom: 1px solid rgba(0,255,255,0.1);
+        }
+        .cap-list li:last-child { border-bottom: none; }
+        .cap-list .tag {
+            display: inline-block;
+            font-size: 0.68rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--accent);
+            border: 1px solid rgba(57,255,20,0.35);
+            padding: 0.1rem 0.4rem;
+            margin-right: 0.4rem;
+        }
+        .cap-scenario-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin: 1rem 0 0.85rem;
+        }
+        .cap-scenario-tabs button {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--inv-text);
+            background: transparent;
+            border: 1px solid rgba(0,255,255,0.3);
+            padding: 0.35rem 0.6rem;
+            cursor: pointer;
+        }
+        .cap-scenario-tabs button.active {
+            color: var(--bg-deep);
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        .cap-narrative {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--inv-text-soft);
+            line-height: 1.6;
+            margin-bottom: 0.85rem;
         }
     </style>
 </head>
@@ -591,6 +865,7 @@
                 <a href="#hyperion">6. Hyperion Fund</a>
                 <a href="#costs">7. Costs</a>
                 <a href="#projections">Projections</a>
+                <a href="#cap-table">Cap table explorer</a>
             </nav>
         </div>
     </header>
@@ -728,7 +1003,7 @@
         <div class="container">
             <h2>1. Exchange take-rate</h2>
             <p class="inv-formula">Revenue = <code>GMV</code> × <code>take-rate</code>
-                <br><span style="color:var(--text-dim);font-size:0.85rem;">GMV = dollar value of robot labor jobs cleared on the exchange</span>
+                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">GMV = dollar value of robot labor jobs cleared on the exchange</span>
             </p>
             <p class="inv-stream-lede">
                 Platform fee on transaction volume once payments and escrow are on-platform.
@@ -758,7 +1033,7 @@
         <div class="container">
             <h2>2. Seat sales</h2>
             <p class="inv-formula">Revenue = <code>new seats sold</code> × <code>seat price</code>
-                <br><span style="color:var(--text-dim);font-size:0.85rem;">Seats are eternal · primary issuance ramps then plateaus (not recurring rent)</span>
+                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">Seats are eternal · primary issuance ramps then plateaus (not recurring rent)</span>
             </p>
             <p class="inv-stream-lede">
                 One-time primary sale of supply-side access (Base NFT when verification is on).
@@ -788,7 +1063,7 @@
         <div class="container">
             <h2>3. Hardware affiliate &amp; financing</h2>
             <p class="inv-formula">Revenue ≈ robots referred × ($25k ASP × 3% + expected finance fee)
-                <br><span style="color:var(--text-dim);font-size:0.85rem;">Expected finance fee / robot = 40% attach × 1.5% × $25k ASP · from <a href="robots.html">Buy a Robot</a></span>
+                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">Expected finance fee / robot = 40% attach × 1.5% × $25k ASP · from <a href="robots.html">Buy a Robot</a></span>
             </p>
             <p class="inv-stream-lede">
                 Commission when buyers purchase robots through the catalog, plus referral fees when they take financing. Scales with network density.
@@ -817,7 +1092,7 @@
         <div class="container">
             <h2>4. /nearby &amp; attention</h2>
             <p class="inv-formula">Revenue = ad / placement spend on discovery surfaces
-                <br><span style="color:var(--text-dim);font-size:0.85rem;"><code>/nearby</code>, sponsored categories, franchise badges, boosts · plus demand-side attention (service discovery, autobidding, multi-party bid discovery)</span>
+                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;"><code>/nearby</code>, sponsored categories, franchise badges, boosts · plus demand-side attention (service discovery, autobidding, multi-party bid discovery)</span>
             </p>
             <p class="inv-stream-lede">
                 Attention is two-sided. On the supply side, OEMs, fleets, and franchisees pay for placement when robots and operators search for charge, repair, parts, and next jobs.
@@ -842,7 +1117,7 @@
         <div class="container">
             <h2>5. Franchising — Garage &amp; Lighthouse</h2>
             <p class="inv-formula">Revenue = new franchise fees + royalties on active sites
-                <br><span style="color:var(--text-dim);font-size:0.85rem;">Two brands, one stream in the model</span>
+                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">Two brands, one stream in the model</span>
             </p>
             <div class="inv-fact-row">
                 <div class="inv-fact">
@@ -874,7 +1149,7 @@
         <div class="container">
             <h2>6. The Hyperion Fund</h2>
             <p class="inv-formula">Platform revenue ≈ <code>2.8% × AUM</code>
-                <br><span style="color:var(--text-dim);font-size:0.85rem;">1% management + 15% of ~12% gross performance · LPs receive distributed profits</span>
+                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">1% management + 15% of ~12% gross performance · LPs receive distributed profits</span>
             </p>
             <p class="inv-stream-lede">
                 Algorithmic fund for seat holders and qualified participants. Chart bars are
@@ -1128,6 +1403,99 @@
         </div>
     </section>
 
+    <section class="inv-section" id="cap-table">
+        <div class="container">
+            <h2>Cap table explorer</h2>
+            <p class="inv-prose mb-3">
+                Build an illustrative syndicate from ~35 financially non-overlapping potential participants
+                (strategics, tier-1 VCs, growth funds, sovereigns, and family offices). Select any combination
+                of <strong>1–30</strong> names, then run the synergy tool for recommended equity split and valuation
+                under <strong>conservative</strong>, <strong>base</strong>, and <strong>aggressive</strong> cases.
+            </p>
+            <p class="inv-note mb-4">
+                Scenario planning only — not an offer, solicitation, or indication of interest from any named party.
+                No commitment is implied. Not financial or legal advice.
+            </p>
+
+            <div class="cap-toolbar">
+                <span class="count-pill" id="capCountPill">0 selected · pick 1–30</span>
+                <button type="button" class="btn btn-outline-light btn-sm" id="capSelectNone">Clear</button>
+                <button type="button" class="btn btn-outline-light btn-sm" id="capSelectCore">Core tech stack</button>
+                <button type="button" class="btn btn-outline-light btn-sm" id="capSelectVc">Tier-1 VC slate</button>
+                <button type="button" class="btn btn-outline-light btn-sm" id="capSelectGlobal">Global sovereign mix</button>
+            </div>
+            <div class="cap-filters" id="capFilters" aria-label="Filter investors by category"></div>
+            <div class="cap-grid" id="capGrid" role="group" aria-label="Potential investors">
+                <p class="inv-note" id="capGridLoading">Loading investor menu…</p>
+            </div>
+
+            <div class="cap-controls">
+                <h3 style="margin-top:0;">Synergy &amp; valuation tool</h3>
+                <p class="inv-stream-lede" style="margin-bottom:0.85rem;">
+                    Uses the marketplace LLM (with a local heuristic fallback) to explore synergies across the
+                    selected makeup and recommend equity breakdown plus pre/post-money valuation.
+                </p>
+                <div class="cap-scenario-pills" role="group" aria-label="Scenario picker">
+                    <button type="button" data-scenario="conservative">Conservative</button>
+                    <button type="button" class="active" data-scenario="base">Base</button>
+                    <button type="button" data-scenario="aggressive">Aggressive</button>
+                </div>
+                <div class="row-fields">
+                    <div>
+                        <label for="capRaiseOverride">Raise override ($M, optional)</label>
+                        <input type="number" id="capRaiseOverride" min="1" max="5000" step="1" placeholder="e.g. 25">
+                    </div>
+                    <div>
+                        <label for="capPremoneyOverride">Pre-money override ($M, optional)</label>
+                        <input type="number" id="capPremoneyOverride" min="1" max="50000" step="1" placeholder="e.g. 90">
+                    </div>
+                </div>
+                <div style="margin-bottom:0.85rem;">
+                    <label for="capNotes">Planner notes (optional)</label>
+                    <textarea id="capNotes" maxlength="800" placeholder="e.g. Prefer US dual-use path; keep founders &gt;55%; series A marketplace thesis…"></textarea>
+                </div>
+                <div class="cap-run-row">
+                    <button type="button" class="btn btn-primary" id="capRunBtn" disabled>Explore synergies</button>
+                    <span class="cap-status" id="capStatus">Select at least one investor</span>
+                </div>
+            </div>
+
+            <div class="cap-results" id="capResults" aria-live="polite">
+                <div class="cap-summary" id="capSummary"></div>
+                <div class="cap-val-grid" id="capValGrid"></div>
+                <div class="cap-two-col">
+                    <div class="inv-card">
+                        <h3>Synergies</h3>
+                        <ul class="cap-list" id="capSynergies"></ul>
+                    </div>
+                    <div class="inv-card">
+                        <h3>Risks &amp; tensions</h3>
+                        <ul class="cap-list" id="capRisks"></ul>
+                    </div>
+                </div>
+                <h3>Equity breakdown</h3>
+                <div class="cap-scenario-tabs" id="capResultTabs" role="tablist"></div>
+                <p class="cap-narrative" id="capNarrative"></p>
+                <div class="inv-kpi-row" id="capScenarioKpis"></div>
+                <div class="inv-table-wrap mt-3">
+                    <table class="inv-table" id="capBreakdownTable">
+                        <thead>
+                            <tr>
+                                <th>Participant</th>
+                                <th>Role</th>
+                                <th class="num">Equity %</th>
+                                <th class="num">Check ($)</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <p class="inv-note mt-3" id="capDisclaimer"></p>
+            </div>
+        </div>
+    </section>
+
     <section class="inv-section">
         <div class="container">
             <h2>Partners &amp; fleets</h2>
@@ -1271,6 +1639,21 @@
             return String(Math.round(x));
         }
 
+        /** Wrap K/M/B/T magnitude letters for pink bold styling in HTML contexts. */
+        function withMag(str) {
+            return String(str).replace(/([KMBT])(?![a-zA-Z])/g, '<span class="inv-mag">$1</span>');
+        }
+        function setHtml(id, html) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        }
+        function setMoney(id, x) {
+            setHtml(id, withMag(fmtMoney(x)));
+        }
+        function setUnits(id, x) {
+            setHtml(id, withMag(fmtUnits(x)));
+        }
+
         function readParams() {
             return {
                 gmv2035: (Number(document.getElementById('dialGmv').value) / 10) * 1e12, // 100 → $10T
@@ -1351,10 +1734,10 @@
             return series;
         }
 
-        // Chart theme
+        // Chart theme (lighter ticks for readability on dark panels)
         const gridColor = 'rgba(0,255,255,0.08)';
-        const tickColor = 'rgba(170,190,220,0.85)';
-        const legendColor = 'rgba(200,220,240,0.9)';
+        const tickColor = 'rgba(220,232,255,0.92)';
+        const legendColor = 'rgba(230,238,255,0.95)';
 
         if (typeof Chart !== 'undefined') {
             Chart.defaults.color = legendColor;
@@ -1510,11 +1893,11 @@
         }
 
         function updateDialLabels(p) {
-            setText('dialGmvVal', fmtMoney(p.gmv2035));
+            setMoney('dialGmvVal', p.gmv2035);
             setText('dialTakeVal', (p.takeRate * 100).toFixed(1) + '%');
-            setText('dialSeatPriceVal', fmtMoney(p.seatPrice));
+            setMoney('dialSeatPriceVal', p.seatPrice);
             setText('dialNetworkVal', p.network.toFixed(2) + '×');
-            setText('dialCapitalVal', fmtMoney(p.capital));
+            setMoney('dialCapitalVal', p.capital);
             setText('dialPartnersVal', String(p.partners));
 
             const gmvEl = document.getElementById('dialGmv');
@@ -1524,11 +1907,12 @@
             const presetName = activePreset
                 ? activePreset.textContent.trim()
                 : 'Custom';
-            setText('dialsSummary',
+            setHtml('dialsSummary', withMag(
                 presetName + ' · GMV ' + fmtMoney(p.gmv2035) +
                 ' · take ' + (p.takeRate * 100).toFixed(1) + '%' +
                 ' · seats ' + fmtMoney(p.seatPrice) +
-                ' · net ' + p.network.toFixed(2) + '×');
+                ' · net ' + p.network.toFixed(2) + '×'
+            ));
         }
 
         function peakOf(arr) {
@@ -1543,75 +1927,79 @@
             const i2040 = YEARS.indexOf(2040);
 
             // Exchange
-            setText('metricGmv2035', fmtMoney(p.gmv2035));
+            setMoney('metricGmv2035', p.gmv2035);
             setText('metricTakeRate', (p.takeRate * 100).toFixed(1) + '%');
-            setText('metricExch2035', fmtMoney(series.exchange[i2035]));
-            setText('metricExch2040', fmtMoney(series.exchange[i2040]));
-            setText('cardExch2035', fmtMoney(series.exchange[i2035]));
+            setMoney('metricExch2035', series.exchange[i2035]);
+            setMoney('metricExch2040', series.exchange[i2040]);
+            setMoney('cardExch2035', series.exchange[i2035]);
             setText('titleChartExchange', 'Platform revenue = GMV × ' + (p.takeRate * 100).toFixed(1) + '%  ($ / year)');
-            setText('captionExchange',
+            setHtml('captionExchange', withMag(
                 '2035: ' + fmtMoney(p.gmv2035) + ' GMV × ' + (p.takeRate * 100).toFixed(1) + '% = ' +
-                fmtMoney(series.exchange[i2035]) + ' platform revenue. Each bar is take-rate revenue, not full GMV.');
+                fmtMoney(series.exchange[i2035]) + ' platform revenue. Each bar is take-rate revenue, not full GMV.'
+            ));
 
             // Seats
-            setText('metricSeatPrice', fmtMoney(p.seatPrice));
+            setMoney('metricSeatPrice', p.seatPrice);
             const seatTarget = series.seatUnits.slice(0, 5).reduce((a, b) => a + b, 0);
-            setText('metricSeatTarget', fmtUnits(seatTarget));
+            setUnits('metricSeatTarget', seatTarget);
             const seatPeak = peakOf(series.seats);
-            setText('metricSeatsPeak', fmtMoney(seatPeak.value));
-            setText('metricSeats2035', fmtMoney(series.seats[i2035]));
-            setText('cardSeatsPeak', fmtMoney(seatPeak.value));
-            setText('titleChartSeatsRev', 'Seat revenue = units × ' + fmtMoney(p.seatPrice) + '  ($ / year)');
-            setText('captionSeats',
+            setMoney('metricSeatsPeak', seatPeak.value);
+            setMoney('metricSeats2035', series.seats[i2035]);
+            setMoney('cardSeatsPeak', seatPeak.value);
+            setHtml('titleChartSeatsRev', withMag(
+                'Seat revenue = units × ' + fmtMoney(p.seatPrice) + '  ($ / year)'
+            ));
+            setHtml('captionSeats', withMag(
                 'Peak ' + seatPeak.year + ': ' + fmtMoney(seatPeak.value) +
-                '. First 5 yrs units: ' + fmtUnits(seatTarget) + ' × price from dial.');
+                '. First 5 yrs units: ' + fmtUnits(seatTarget) + ' × price from dial.'
+            ));
 
             // Hardware
-            setText('metricHw2030', fmtMoney(series.hardware[i2030]));
-            setText('metricHw2035', fmtMoney(series.hardware[i2035]));
-            setText('metricHw2040', fmtMoney(series.hardware[i2040]));
-            setText('cardHw2035', fmtMoney(series.hardware[i2035]));
+            setMoney('metricHw2030', series.hardware[i2030]);
+            setMoney('metricHw2035', series.hardware[i2035]);
+            setMoney('metricHw2040', series.hardware[i2040]);
+            setMoney('cardHw2035', series.hardware[i2035]);
 
             // Ads
-            setText('metricAds2030', fmtMoney(series.ads[i2030]));
-            setText('metricAds2035', fmtMoney(series.ads[i2035]));
-            setText('metricAds2040', fmtMoney(series.ads[i2040]));
-            setText('cardAds2035', fmtMoney(series.ads[i2035]));
+            setMoney('metricAds2030', series.ads[i2030]);
+            setMoney('metricAds2035', series.ads[i2035]);
+            setMoney('metricAds2040', series.ads[i2040]);
+            setMoney('cardAds2035', series.ads[i2035]);
 
             // Franchise
-            setText('metricFran2030', fmtMoney(series.franchise[i2030]));
-            setText('metricFran2035', fmtMoney(series.franchise[i2035]));
-            setText('metricFran2040', fmtMoney(series.franchise[i2040]));
-            setText('cardFran2035', fmtMoney(series.franchise[i2035]));
+            setMoney('metricFran2030', series.franchise[i2030]);
+            setMoney('metricFran2035', series.franchise[i2035]);
+            setMoney('metricFran2040', series.franchise[i2040]);
+            setMoney('cardFran2035', series.franchise[i2035]);
 
             // Hyperion
             const aum2035 = BASE_AUM[2035] * p.network;
-            setText('metricAum2035', fmtMoney(aum2035));
-            setText('metricHyp2035', fmtMoney(series.hyperion[i2035]));
-            setText('metricHyp2040', fmtMoney(series.hyperion[i2040]));
-            setText('cardHyp2035', fmtMoney(series.hyperion[i2035]));
+            setMoney('metricAum2035', aum2035);
+            setMoney('metricHyp2035', series.hyperion[i2035]);
+            setMoney('metricHyp2040', series.hyperion[i2040]);
+            setMoney('cardHyp2035', series.hyperion[i2035]);
         }
 
         function updateCapitalKpis(p, series) {
             const i2035 = YEARS.indexOf(2035);
-            const check = fmtMoney(p.capital / p.partners);
+            const check = withMag(fmtMoney(p.capital / p.partners));
             const cumProfit = series.profit.reduce((a, b) => a + b, 0);
-            const cumProfitFmt = fmtMoney(cumProfit);
-            const rev2035 = fmtMoney(series.revenue[i2035]);
-            const profit2035 = fmtMoney(series.profit[i2035]);
+            const cumProfitFmt = withMag(fmtMoney(cumProfit));
+            const rev2035 = withMag(fmtMoney(series.revenue[i2035]));
+            const profit2035 = withMag(fmtMoney(series.profit[i2035]));
             const ratio = p.capital > 0 ? cumProfit / p.capital : 0;
 
-            setText('kpiCheck', check);
-            setText('kpiProfit15', cumProfitFmt);
+            setHtml('kpiCheck', check);
+            setHtml('kpiProfit15', cumProfitFmt);
             setText('kpiMoic', ratio.toFixed(2) + '×');
-            setText('kpiRev2035', rev2035);
-            setText('kpiProfit2035', profit2035);
+            setHtml('kpiRev2035', rev2035);
+            setHtml('kpiProfit2035', profit2035);
 
             // Compact KPIs when dials are collapsed
-            setText('kpiCheckMini', check);
-            setText('kpiProfit15Mini', cumProfitFmt);
-            setText('kpiRev2035Mini', rev2035);
-            setText('kpiProfit2035Mini', profit2035);
+            setHtml('kpiCheckMini', check);
+            setHtml('kpiProfit15Mini', cumProfitFmt);
+            setHtml('kpiRev2035Mini', rev2035);
+            setHtml('kpiProfit2035Mini', profit2035);
 
             let running = 0;
             let payback = '—';
@@ -1652,7 +2040,7 @@
                         td.textContent = c;
                     } else {
                         td.className = 'num';
-                        td.textContent = c;
+                        td.innerHTML = withMag(c);
                     }
                     tr.appendChild(td);
                 });
@@ -1663,7 +2051,7 @@
         function updateAssumptions(p) {
             const el = document.getElementById('assumptionsLive');
             if (!el) return;
-            el.innerHTML =
+            el.innerHTML = withMag(
                 '<strong>Live model assumptions</strong><br>' +
                 'GMV path anchors ' + fmtMoney(p.gmv2035) + ' in 2035 at ' + (p.takeRate * 100).toFixed(1) + '% take-rate. ' +
                 'Seats: ' + fmtMoney(p.seatPrice) + ' primary × network scale ' + p.network.toFixed(2) + '× (base ~1B seats over five years). ' +
@@ -1673,7 +2061,8 @@
                 fmtMoney(p.capital / p.partners) + ' average check). ' +
                 'Costs: per-stream ratios, linear improvement 2026→2035.' +
                 '<br><br>Planning model only — not financial advice or a securities offering. ' +
-                'Outcomes depend on adoption, regulation, competition, and execution.';
+                'Outcomes depend on adoption, regulation, competition, and execution.'
+            );
         }
 
         function setDialsExpanded(expanded) {
@@ -1757,11 +2146,12 @@
 
         applyScenario();
 
-        // Live stats
+        // Live stats + cap table explorer
         document.addEventListener('DOMContentLoaded', async () => {
             if (typeof rseTrack === 'function') rseTrack('investors_view');
+            const apiBase = (typeof API_URL !== 'undefined' ? API_URL : 'https://rse-api.com:5003');
             try {
-                const res = await fetch((typeof API_URL !== 'undefined' ? API_URL : 'https://rse-api.com:5003') + '/stats');
+                const res = await fetch(apiBase + '/stats');
                 if (!res.ok) throw new Error('stats');
                 const s = await res.json();
                 const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v != null ? v : '—'; };
@@ -1776,7 +2166,347 @@
                 const ts = document.getElementById('invMetricsTs');
                 if (ts) ts.textContent = 'stats unavailable';
             }
+
+            initCapTableExplorer(apiBase);
         });
+
+        function initCapTableExplorer(apiBase) {
+            const grid = document.getElementById('capGrid');
+            const filtersEl = document.getElementById('capFilters');
+            const countPill = document.getElementById('capCountPill');
+            const runBtn = document.getElementById('capRunBtn');
+            const statusEl = document.getElementById('capStatus');
+            const resultsEl = document.getElementById('capResults');
+            if (!grid || !runBtn) return;
+
+            const MAX_SELECT = 30;
+            const MIN_SELECT = 1;
+            let investors = [];
+            let selected = new Set();
+            let filterKey = 'all';
+            let scenario = 'base';
+            let lastResult = null;
+            let viewScenario = 'base';
+
+            const PRESETS = {
+                core: ['spacex_tesla', 'nvidia', 'unitree', 'a16z', 'sequoia'],
+                vc: ['a16z', 'sequoia', 'benchmark', 'founders_fund', 'khosla', 'accel'],
+                global: ['pif_saudi', 'nbim_norway', 'kic_korea', 'temasek', 'softbank', 'blackrock'],
+            };
+
+            function money(n) {
+                if (n == null || isNaN(n)) return '—';
+                const abs = Math.abs(n);
+                if (abs >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'T';
+                if (abs >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+                if (abs >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+                if (abs >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
+                return '$' + Math.round(n).toLocaleString();
+            }
+
+            function categoryBucket(cat) {
+                const c = (cat || '').toLowerCase();
+                if (c.includes('sovereign')) return 'Sovereign';
+                if (c.includes('family')) return 'Family office';
+                if (c.includes('venture') || c.includes('growth')) return 'VC / growth';
+                if (c.includes('strategic') || c.includes('corporate') || c.includes('defense') || c.includes('industrial') || c.includes('oem') || c.includes('platform') || c.includes('enterprise') || c.includes('logistics') || c.includes('cloud') || c.includes('security') || c.includes('compute') || c.includes('autonomy') || c.includes('mega fund') || c.includes('asset manager')) return 'Strategic';
+                return 'Other';
+            }
+
+            function updateCountUi() {
+                const n = selected.size;
+                if (countPill) {
+                    countPill.textContent = n + ' selected · pick ' + MIN_SELECT + '–' + MAX_SELECT;
+                    countPill.classList.toggle('warn', n > MAX_SELECT);
+                }
+                const ok = n >= MIN_SELECT && n <= MAX_SELECT;
+                runBtn.disabled = !ok;
+                if (statusEl && !runBtn.dataset.busy) {
+                    if (n === 0) statusEl.textContent = 'Select at least one investor';
+                    else if (n > MAX_SELECT) statusEl.textContent = 'Deselect to ' + MAX_SELECT + ' or fewer';
+                    else statusEl.textContent = n + ' participant' + (n === 1 ? '' : 's') + ' · ready';
+                }
+            }
+
+            function renderFilters() {
+                if (!filtersEl) return;
+                const buckets = ['all', 'Strategic', 'VC / growth', 'Sovereign', 'Family office'];
+                filtersEl.innerHTML = buckets.map(b => {
+                    const label = b === 'all' ? 'All' : b;
+                    const active = filterKey === b ? ' active' : '';
+                    return '<button type="button" data-filter="' + b + '" class="' + active.trim() + '">' + label + '</button>';
+                }).join('');
+                filtersEl.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        filterKey = btn.getAttribute('data-filter') || 'all';
+                        renderFilters();
+                        renderGrid();
+                    });
+                });
+            }
+
+            function renderGrid() {
+                const list = investors.filter(inv => {
+                    if (filterKey === 'all') return true;
+                    return categoryBucket(inv.category) === filterKey;
+                });
+                if (!list.length) {
+                    grid.innerHTML = '<p class="inv-note">No investors in this filter.</p>';
+                    return;
+                }
+                grid.innerHTML = list.map(inv => {
+                    const checked = selected.has(inv.id);
+                    return (
+                        '<label class="cap-item' + (checked ? ' is-selected' : '') + '" data-id="' + inv.id + '">' +
+                        '<input type="checkbox" value="' + inv.id + '"' + (checked ? ' checked' : '') + '>' +
+                        '<span class="cap-body">' +
+                        '<span class="cap-name">' + escapeHtml(inv.name) + '</span>' +
+                        '<span class="cap-meta">' + escapeHtml(inv.category) + ' · ' + escapeHtml(inv.region || '') + '</span>' +
+                        '<span class="cap-blurb">' + escapeHtml(inv.blurb || '') + '</span>' +
+                        '</span></label>'
+                    );
+                }).join('');
+                grid.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                    cb.addEventListener('change', () => {
+                        const id = cb.value;
+                        if (cb.checked) {
+                            if (selected.size >= MAX_SELECT) {
+                                cb.checked = false;
+                                if (statusEl) statusEl.textContent = 'Maximum ' + MAX_SELECT + ' participants';
+                                return;
+                            }
+                            selected.add(id);
+                        } else {
+                            selected.delete(id);
+                        }
+                        const label = cb.closest('.cap-item');
+                        if (label) label.classList.toggle('is-selected', cb.checked);
+                        updateCountUi();
+                    });
+                });
+            }
+
+            function escapeHtml(s) {
+                return String(s == null ? '' : s)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function setPreset(ids) {
+                selected = new Set();
+                ids.forEach(id => {
+                    if (investors.some(i => i.id === id) && selected.size < MAX_SELECT) selected.add(id);
+                });
+                renderGrid();
+                updateCountUi();
+            }
+
+            document.getElementById('capSelectNone')?.addEventListener('click', () => setPreset([]));
+            document.getElementById('capSelectCore')?.addEventListener('click', () => setPreset(PRESETS.core));
+            document.getElementById('capSelectVc')?.addEventListener('click', () => setPreset(PRESETS.vc));
+            document.getElementById('capSelectGlobal')?.addEventListener('click', () => setPreset(PRESETS.global));
+
+            document.querySelectorAll('.cap-scenario-pills button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    scenario = btn.getAttribute('data-scenario') || 'base';
+                    document.querySelectorAll('.cap-scenario-pills button').forEach(b => {
+                        b.classList.toggle('active', b === btn);
+                    });
+                });
+            });
+
+            function renderResultScenario(key) {
+                if (!lastResult || !lastResult.scenarios) return;
+                viewScenario = key;
+                const sc = lastResult.scenarios[key] || lastResult.scenarios.base;
+                if (!sc) return;
+
+                const tabs = document.getElementById('capResultTabs');
+                if (tabs) {
+                    tabs.innerHTML = ['conservative', 'base', 'aggressive'].map(k => {
+                        const lab = (lastResult.scenarios[k] && lastResult.scenarios[k].label) || k;
+                        return '<button type="button" data-key="' + k + '" class="' + (k === key ? 'active' : '') + '">' + escapeHtml(lab) + '</button>';
+                    }).join('');
+                    tabs.querySelectorAll('button').forEach(b => {
+                        b.addEventListener('click', () => renderResultScenario(b.getAttribute('data-key')));
+                    });
+                }
+
+                const narr = document.getElementById('capNarrative');
+                if (narr) narr.textContent = sc.narrative || '';
+
+                const kpis = document.getElementById('capScenarioKpis');
+                if (kpis) {
+                    kpis.innerHTML = [
+                        ['Pre-money', money(sc.pre_money_usd)],
+                        ['Raise', money(sc.raise_usd)],
+                        ['Post-money', money(sc.post_money_usd)],
+                        ['Investor equity', (sc.equity_sold_pct != null ? sc.equity_sold_pct + '%' : '—')],
+                        ['Founders / prior', (sc.founder_equity_pct != null ? sc.founder_equity_pct + '%' : '—')],
+                        ['ESOP', (sc.esop_pct != null ? sc.esop_pct + '%' : '—')],
+                    ].map(([l, n]) => '<div class="inv-kpi"><div class="n">' + escapeHtml(String(n)) + '</div><div class="l">' + escapeHtml(l) + '</div></div>').join('');
+                }
+
+                const tbody = document.querySelector('#capBreakdownTable tbody');
+                if (tbody) {
+                    const rows = (sc.breakdown || []).slice().sort((a, b) => (b.equity_pct || 0) - (a.equity_pct || 0));
+                    const extra = [
+                        { name: 'Founders / prior holders', role: 'Ownership', equity_pct: sc.founder_equity_pct, check_size_usd: null, notes: 'Illustrative residual after round' },
+                        { name: 'ESOP / option pool', role: 'Talent', equity_pct: sc.esop_pct, check_size_usd: null, notes: 'Reserved for hires' },
+                    ];
+                    tbody.innerHTML = rows.concat(extra).map(r => (
+                        '<tr>' +
+                        '<td>' + escapeHtml(r.name || r.id || '—') + '</td>' +
+                        '<td>' + escapeHtml(r.role || '—') + '</td>' +
+                        '<td class="num">' + (r.equity_pct != null ? Number(r.equity_pct).toFixed(2) + '%' : '—') + '</td>' +
+                        '<td class="num">' + (r.check_size_usd != null ? money(r.check_size_usd) : '—') + '</td>' +
+                        '<td>' + escapeHtml(r.notes || '') + '</td>' +
+                        '</tr>'
+                    )).join('');
+                }
+
+                // Highlight focus scenario metrics
+                const valGrid = document.getElementById('capValGrid');
+                if (valGrid && lastResult.scenarios) {
+                    valGrid.innerHTML = ['conservative', 'base', 'aggressive'].map(k => {
+                        const s = lastResult.scenarios[k];
+                        if (!s) return '';
+                        const focus = k === key ? ' is-focus' : '';
+                        return (
+                            '<div class="inv-metric' + focus + '">' +
+                            '<div class="n">' + money(s.post_money_usd) + '</div>' +
+                            '<div class="l">' + escapeHtml(s.label || k) + ' · post-money</div>' +
+                            '</div>'
+                        );
+                    }).join('');
+                }
+            }
+
+            function showResults(data) {
+                lastResult = data;
+                resultsEl.classList.add('is-visible');
+                const sum = document.getElementById('capSummary');
+                if (sum) {
+                    const src = data.source === 'llm' ? 'LLM' : 'heuristic model';
+                    sum.textContent = (data.summary || '') + (data.model ? ' · model: ' + data.model : ' · source: ' + src);
+                }
+                const syn = document.getElementById('capSynergies');
+                if (syn) {
+                    const items = data.synergies || [];
+                    syn.innerHTML = items.length
+                        ? items.map(s => {
+                            if (typeof s === 'string') return '<li>' + escapeHtml(s) + '</li>';
+                            return '<li><span class="tag">' + escapeHtml(s.strength || 'medium') + '</span><strong>' +
+                                escapeHtml(s.theme || '') + '</strong> — ' + escapeHtml(s.rationale || '') + '</li>';
+                        }).join('')
+                        : '<li>No synergies returned.</li>';
+                }
+                const risks = document.getElementById('capRisks');
+                if (risks) {
+                    const items = data.risks || [];
+                    risks.innerHTML = items.length
+                        ? items.map(r => '<li>' + escapeHtml(typeof r === 'string' ? r : (r.rationale || JSON.stringify(r))) + '</li>').join('')
+                        : '<li>No material tensions flagged.</li>';
+                }
+                const disc = document.getElementById('capDisclaimer');
+                if (disc) disc.textContent = data.disclaimer || '';
+                renderResultScenario(data.scenario_focus || scenario || 'base');
+                resultsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            runBtn.addEventListener('click', async () => {
+                if (selected.size < MIN_SELECT || selected.size > MAX_SELECT) return;
+                runBtn.disabled = true;
+                runBtn.dataset.busy = '1';
+                if (statusEl) statusEl.textContent = 'Analyzing syndicate…';
+                const body = {
+                    investor_ids: Array.from(selected),
+                    scenario: scenario,
+                    notes: (document.getElementById('capNotes') || {}).value || '',
+                };
+                const raiseEl = document.getElementById('capRaiseOverride');
+                const preEl = document.getElementById('capPremoneyOverride');
+                if (raiseEl && raiseEl.value) body.raise_usd_millions = Number(raiseEl.value);
+                if (preEl && preEl.value) body.pre_money_usd_millions = Number(preEl.value);
+
+                try {
+                    const res = await fetch(apiBase + '/investors/cap_table_synergy', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body),
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        if (statusEl) statusEl.textContent = data.error || ('Request failed (' + res.status + ')');
+                        return;
+                    }
+                    if (statusEl) statusEl.textContent = 'Done · ' + (data.source === 'llm' ? 'LLM' : 'heuristic') + ' · ' + (data.selected_count || selected.size) + ' participants';
+                    showResults(data);
+                } catch (err) {
+                    if (statusEl) statusEl.textContent = 'Network error — try again';
+                } finally {
+                    delete runBtn.dataset.busy;
+                    updateCountUi();
+                }
+            });
+
+            // Embedded fallback menu if API unavailable (keeps page useful offline/static)
+            const FALLBACK_INVESTORS = [
+                {id:'spacex_tesla',name:'SpaceX / Tesla',category:'Strategic — autonomy & fleet',region:'US',blurb:'Autonomy, manufacturing scale, brand, and multi-domain robotics adjacency.'},
+                {id:'nvidia',name:'NVIDIA',category:'Strategic — compute & simulation',region:'US',blurb:'Edge GPUs, Isaac/Omniverse, and AI training stack for robot fleets.'},
+                {id:'unitree',name:'Unitree Robotics',category:'Strategic — OEM (legged)',region:'CN',blurb:'High-volume quadruped/humanoid hardware partner and channel.'},
+                {id:'boston_dynamics_hyundai',name:'Boston Dynamics / Hyundai Motor Group',category:'Strategic — OEM (mobile robots)',region:'US/KR',blurb:'Industrial mobile robots, auto manufacturing density, global service network.'},
+                {id:'inqtel',name:'In-Q-Tel',category:'Strategic — US national security',region:'US',blurb:'USIC strategic capital; dual-use, compliance, and government pathways.'},
+                {id:'google_alphabet',name:'Google / Alphabet (GV & corporate)',category:'Strategic — platform & AI',region:'US',blurb:'Maps, cloud, Gemini, and consumer/enterprise distribution surfaces.'},
+                {id:'microsoft',name:'Microsoft (M12 / strategic)',category:'Strategic — enterprise cloud',region:'US',blurb:'Azure robotics/IoT stack, enterprise procurement, Copilot ecosystem.'},
+                {id:'amazon_aws',name:'Amazon / AWS',category:'Strategic — logistics & cloud',region:'US',blurb:'Warehouse robotics demand, logistics density, and cloud credits.'},
+                {id:'softbank',name:'SoftBank Vision Fund',category:'Mega fund',region:'JP/Global',blurb:'Large late-stage checks; global robotics and mobility thesis.'},
+                {id:'pif_saudi',name:'Saudi Public Investment Fund (PIF)',category:'Sovereign wealth',region:'SA',blurb:'Vision 2030 industrial automation, giga-projects, and regional scale.'},
+                {id:'nbim_norway',name:'Norges Bank Investment Management',category:'Sovereign wealth',region:'NO',blurb:'Norway oil fund; long-duration public/private growth exposure.'},
+                {id:'kic_korea',name:'Korea Investment Corporation (KIC)',category:'Sovereign wealth',region:'KR',blurb:'South Korean sovereign; advanced manufacturing and robotics corridor.'},
+                {id:'temasek',name:'Temasek Holdings',category:'Sovereign wealth',region:'SG',blurb:'Singapore sovereign; Asia tech, logistics, and deep-tech platforms.'},
+                {id:'a16z',name:'Andreessen Horowitz (a16z)',category:'Venture capital',region:'US',blurb:'American Dynamism / infra; market-making network and talent brand.'},
+                {id:'sequoia',name:'Sequoia Capital',category:'Venture capital',region:'US',blurb:'Category-defining platforms; multi-stage company building.'},
+                {id:'benchmark',name:'Benchmark Capital',category:'Venture capital',region:'US',blurb:'Early concentrated bets; product-led marketplaces and network effects.'},
+                {id:'founders_fund',name:'Founders Fund',category:'Venture capital',region:'US',blurb:'Hard-tech, defense-adjacent, and bold multi-decade theses.'},
+                {id:'khosla',name:'Khosla Ventures',category:'Venture capital',region:'US',blurb:'Deep tech and AI; founder-friendly hard-problem capital.'},
+                {id:'accel',name:'Accel',category:'Venture capital',region:'US/EU',blurb:'Global multi-stage; enterprise and consumer platform DNA.'},
+                {id:'lightspeed',name:'Lightspeed Venture Partners',category:'Venture capital',region:'US',blurb:'Enterprise, consumer, and fintech; strong series A–C muscle.'},
+                {id:'index',name:'Index Ventures',category:'Venture capital',region:'EU/US',blurb:'Transatlantic platforms; marketplace and developer tools strength.'},
+                {id:'general_catalyst',name:'General Catalyst',category:'Venture capital',region:'US',blurb:'Resilience / applied AI; multi-stage platform building.'},
+                {id:'bessemer',name:'Bessemer Venture Partners',category:'Venture capital',region:'US',blurb:'Cloud and marketplace playbooks; long partnership horizon.'},
+                {id:'coatue',name:'Coatue Management',category:'Growth equity / hedge',region:'US',blurb:'Tech growth rounds; public-market fluency for later stages.'},
+                {id:'tiger',name:'Tiger Global',category:'Growth equity / hedge',region:'US',blurb:'Global growth capital; speed and scale orientation.'},
+                {id:'insight',name:'Insight Partners',category:'Growth equity',region:'US',blurb:'Scale-up software ops; go-to-market and enterprise expansion.'},
+                {id:'thrive',name:'Thrive Capital',category:'Venture / growth',region:'US',blurb:'Internet platforms and applied AI; concentrated ownership style.'},
+                {id:'blackrock',name:'BlackRock (private markets)',category:'Asset manager / PE growth',region:'US/Global',blurb:'Institutional LP credibility and multi-asset distribution.'},
+                {id:'bezos_expeditions',name:'Bezos Expeditions',category:'Family office',region:'US',blurb:'Long-duration tech and infrastructure; founder-aligned patient capital.'},
+                {id:'emerson_collective',name:'Emerson Collective',category:'Family office',region:'US',blurb:'Impact-minded tech and climate-adjacent platforms.'},
+                {id:'walton_enterprises',name:'Walton Family / Walton Enterprises',category:'Family office',region:'US',blurb:'Retail/logistics adjacency and long-horizon private capital.'},
+                {id:'caterpillar_ventures',name:'Caterpillar Ventures',category:'Strategic — industrial',region:'US',blurb:'Heavy equipment sites, construction autonomy, industrial service demand.'},
+                {id:'lockheed_ventures',name:'Lockheed Martin Ventures',category:'Strategic — defense',region:'US',blurb:'Defense prime pathways; autonomy, ISR, and contested logistics.'},
+                {id:'palantir',name:'Palantir Technologies',category:'Strategic — enterprise & gov software',region:'US',blurb:'Ontology/ops software for fleets; government and industrial buyers.'},
+                {id:'samsung_ventures',name:'Samsung Ventures',category:'Corporate venture',region:'KR',blurb:'Electronics, components, and Korea/global manufacturing pull-through.'},
+            ];
+
+            (async () => {
+                try {
+                    const res = await fetch(apiBase + '/investors/cap_table');
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.investors && data.investors.length) {
+                            investors = data.investors;
+                        }
+                    }
+                } catch (e) { /* use fallback */ }
+                if (!investors.length) investors = FALLBACK_INVESTORS;
+                renderFilters();
+                renderGrid();
+                updateCountUi();
+            })();
+        }
     })();
     </script>
 </body>

@@ -66,6 +66,7 @@ from handlers import (
     create_auto_bid,
     update_auto_bid,
     process_auto_bids_for_user,
+    create_bid_request,
     set_contact_discovery,
     get_contact_discovery,
     match_contacts,
@@ -107,6 +108,8 @@ from handlers import (
     invite_campaign_sponsor,
     respond_campaign_sponsor,
     get_campaign_sponsors,
+    get_cap_table_investors,
+    analyze_cap_table_synergy,
 )
 from utils import get_token_username, get_agent_token_record
 
@@ -456,11 +459,34 @@ def handle_parse_service_request():
     response, status = parse_service_request(data)
     return flask.jsonify(response), status
 
+@app.route('/bid', methods=['POST'])
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_bid(current_user):
+    """
+    Canonical bid endpoint. Supports one-shot open requests and recurring
+    subscription / autobids (recurring=true + cadence). Time-bound spending
+    limits apply to recurring subscription bids. Optional payment integrations
+    (Stripe, XMoney, PayPal, Phantom) may be attached; live charge only when
+    provider config keys are present.
+    """
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = create_bid_request(data)
+    return flask.jsonify(response), status
+
 @app.route('/submit_bid', methods=['POST'])
 @token_required
 def make_bid(current_user):
+    """Legacy one-shot bid alias. Prefer POST /bid (supports recurring autobids)."""
     data = flask.request.get_json() or {}
     data['username'] = current_user
+    # One-shot only: strip recurring flags so autobidding is only on /bid
+    data.pop('recurring', None)
+    data.pop('subscription', None)
+    data.pop('auto_bid', None)
+    if data.get('kind') in ('subscription', 'subscription_bid', 'recurring'):
+        data['kind'] = 'bid'
     response, status = submit_bid(data)
     return flask.jsonify(response), status
 
@@ -887,6 +913,29 @@ def financing_apply():
     response, status = handle_submit_financing(data)
     return flask.jsonify(response), status
 
+
+# -----------------------------------------------------------------------------
+# Investor cap table explorer (illustrative; public, rate-limited)
+# -----------------------------------------------------------------------------
+
+@app.route('/investors/cap_table', methods=['GET'])
+def investors_cap_table_menu():
+    """Public menu of potential non-overlapping illustrative investors for scenario planning."""
+    response, status = get_cap_table_investors()
+    return flask.jsonify(response), status
+
+@app.route('/investors/cap_table_synergy', methods=['POST'])
+@limiter.limit(_STRICT_LIMIT)
+def investors_cap_table_synergy():
+    """
+    Public (rate-limited): given selected cap-table participants (1–30), explore synergies
+    and recommend equity breakdown + valuation under conservative / base / aggressive cases.
+    LLM when configured; heuristic fallback otherwise.
+    """
+    data = flask.request.get_json() or {}
+    response, status = analyze_cap_table_synergy(data)
+    return flask.jsonify(response), status
+
 # -----------------------------------------------------------------------------
 # Profile Endpoints
 # -----------------------------------------------------------------------------
@@ -1006,9 +1055,15 @@ def handle_list_auto_bids(current_user):
 @token_required
 @limiter.limit(_STRICT_LIMIT)
 def handle_create_auto_bid(current_user):
+    """
+    Deprecated create path — recurring subscription bids must be created via
+    POST /bid with recurring=true. This handler forwards for backward compatibility.
+    """
     data = flask.request.get_json() or {}
     data['username'] = current_user
-    response, status = create_auto_bid(data)
+    data['recurring'] = True
+    data.setdefault('source', 'auto_bids_compat')
+    response, status = create_bid_request(data)
     return flask.jsonify(response), status
 
 @app.route('/auto_bids/<auto_bid_id>', methods=['POST'])

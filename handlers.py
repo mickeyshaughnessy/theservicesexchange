@@ -1346,6 +1346,50 @@ _CADENCE_SECONDS = {
     "biweekly": 14 * 86400,
     "monthly": 30 * 86400,
 }
+_SPEND_PERIODS = ("daily", "weekly", "monthly")
+_SPEND_PERIOD_SECONDS = {
+    "daily": 86400,
+    "weekly": 7 * 86400,
+    "monthly": 30 * 86400,
+}
+# Optional payment integrations accepted on /bid (and auto-bid templates created from it).
+# Real processor webhooks are optional stubs — settlement remains counterparty-arranged
+# unless a provider marks integration_status=live and config enables charging.
+_BID_PAYMENT_METHODS = frozenset({
+    "cash", "credit_card", "debit_card", "paypal", "venmo", "zelle",
+    "bank_transfer", "wire", "xmoney", "stripe", "phantom", "phantom_wallet",
+    "solana", "usdc_sol", "usdc", "crypto", "invoice", "other",
+})
+_PAYMENT_INTEGRATIONS = {
+    "stripe": {
+        "id": "stripe",
+        "name": "Stripe",
+        "description": "Optional card payments via Stripe (Checkout/PaymentIntent). Config keys enable live charge.",
+        "integration_status": "optional",
+        "config_keys": ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
+    },
+    "xmoney": {
+        "id": "xmoney",
+        "name": "XMoney",
+        "description": "Optional XMoney card/bank rails. Account id stored on bid for counterparty settlement.",
+        "integration_status": "optional",
+        "config_keys": ["XMONEY_API_KEY", "XMONEY_MERCHANT_ID"],
+    },
+    "paypal": {
+        "id": "paypal",
+        "name": "PayPal",
+        "description": "Optional PayPal settlement hint (email / merchant id).",
+        "integration_status": "optional",
+        "config_keys": ["PAYPAL_CLIENT_ID", "PAYPAL_CLIENT_SECRET"],
+    },
+    "phantom": {
+        "id": "phantom",
+        "name": "Phantom Wallet",
+        "description": "Solana/USDC wallet address for off-platform settlement.",
+        "integration_status": "optional",
+        "config_keys": [],
+    },
+}
 
 
 def _next_run_at(from_ts: int, cadence: str, preferred_local_hour: int = 8) -> int:
@@ -1357,6 +1401,204 @@ def _next_run_at(from_ts: int, cadence: str, preferred_local_hour: int = 8) -> i
     hour = max(0, min(23, int(preferred_local_hour or 8)))
     day = nxt // 86400
     return day * 86400 + hour * 3600
+
+
+def _normalize_payment_method(raw: Any) -> str:
+    pm = str(raw or "cash").strip().lower()[:80] or "cash"
+    if pm in ("phantom_wallet", "solana", "usdc_sol", "usdc"):
+        return "phantom"
+    if pm not in _BID_PAYMENT_METHODS and pm not in _PAYMENT_INTEGRATIONS:
+        # Allow free-form labels up to 80 chars for counterparty notes
+        return pm
+    return pm
+
+
+def _parse_spending_limits(raw: Any) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """
+    Parse time-bound spending limits for recurring subscription bids.
+    Returns (limits_dict | None, error_message | None).
+    """
+    if raw is None or raw == {}:
+        return None, None
+    if not isinstance(raw, dict):
+        return None, "spending_limits must be an object"
+    period = str(raw.get("period") or raw.get("window") or "weekly").strip().lower()
+    if period not in _SPEND_PERIODS:
+        return None, f"spending_limits.period must be one of {_SPEND_PERIODS}"
+    try:
+        max_amount = float(
+            raw.get("max_amount")
+            if raw.get("max_amount") is not None
+            else raw.get("max_per_period")
+            if raw.get("max_per_period") is not None
+            else raw.get("limit")
+        )
+    except (TypeError, ValueError):
+        return None, "spending_limits.max_amount must be a positive number"
+    if max_amount <= 0:
+        return None, "spending_limits.max_amount must be positive"
+    currency = str(raw.get("currency") or "USD").strip().upper()[:8] or "USD"
+    return {
+        "max_amount": max_amount,
+        "period": period,
+        "currency": currency,
+    }, None
+
+
+def _period_start_ts(now: int, period: str) -> int:
+    window = _SPEND_PERIOD_SECONDS.get(period, 7 * 86400)
+    return int(now) - (int(now) % window)
+
+
+def _spent_in_period(spend_log: List[Dict[str, Any]], period: str, now: int) -> float:
+    start = _period_start_ts(now, period)
+    total = 0.0
+    for entry in spend_log or []:
+        try:
+            ts = int(entry.get("ts") or 0)
+            amt = float(entry.get("amount") or 0)
+        except (TypeError, ValueError):
+            continue
+        if ts >= start:
+            total += amt
+    return total
+
+
+def _would_exceed_spending_limit(
+    item: Dict[str, Any], amount: float, now: int
+) -> Tuple[bool, float, Optional[Dict[str, Any]]]:
+    """
+    Check whether posting `amount` would exceed the auto-bid's time-bound limit.
+    Returns (exceeds, spent_so_far, limits_or_none).
+    """
+    limits = item.get("spending_limits")
+    if not limits or not isinstance(limits, dict):
+        return False, 0.0, None
+    try:
+        max_amount = float(limits.get("max_amount") or 0)
+    except (TypeError, ValueError):
+        return False, 0.0, None
+    if max_amount <= 0:
+        return False, 0.0, limits
+    period = str(limits.get("period") or "weekly")
+    spent = _spent_in_period(item.get("spend_log") or [], period, now)
+    if spent + float(amount) > max_amount + 1e-9:
+        return True, spent, limits
+    return False, spent, limits
+
+
+def _record_spend(item: Dict[str, Any], amount: float, bid_id: str, now: int) -> None:
+    log = item.setdefault("spend_log", [])
+    log.append({"ts": now, "amount": float(amount), "bid_id": bid_id})
+    # Cap log length; retain ~1 year of daily entries
+    if len(log) > 400:
+        item["spend_log"] = log[-400:]
+
+
+def _normalize_payment_integration(
+    payment_method: str, raw: Any, user_data: Dict[str, Any]
+) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """Optional provider-specific metadata attached to bids / auto-bid templates."""
+    if raw is None or raw == {}:
+        # Auto-attach Phantom wallet when method is phantom
+        if payment_method == "phantom":
+            addr = user_data.get("phantom_wallet_address")
+            if not addr:
+                return None, "Link a Phantom wallet before paying with Phantom"
+            return {
+                "provider": "phantom",
+                "wallet_address": addr,
+                "integration_status": "optional",
+            }, None
+        return None, None
+    if not isinstance(raw, dict):
+        return None, "payment_integration must be an object"
+    provider = str(
+        raw.get("provider") or raw.get("id") or payment_method or ""
+    ).strip().lower()
+    if provider in ("phantom_wallet", "solana", "usdc_sol"):
+        provider = "phantom"
+    if payment_method == "phantom" and not provider:
+        provider = "phantom"
+    known = _PAYMENT_INTEGRATIONS.get(provider)
+    out: Dict[str, Any] = {
+        "provider": provider or payment_method,
+        "integration_status": (known or {}).get("integration_status", "optional"),
+    }
+    # Pass through safe public settlement hints only (no secrets)
+    for key in (
+        "account_id", "merchant_id", "email", "wallet_address",
+        "customer_id", "checkout_url", "note", "xmoney_account",
+    ):
+        if raw.get(key) is not None:
+            out[key] = str(raw[key])[:200]
+    if provider == "phantom" or payment_method == "phantom":
+        addr = (
+            out.get("wallet_address")
+            or user_data.get("phantom_wallet_address")
+        )
+        if not addr:
+            return None, "Link a Phantom wallet before paying with Phantom"
+        norm = normalize_solana_address(str(addr))
+        if not norm:
+            return None, "Invalid Phantom / Solana wallet address"
+        out["wallet_address"] = norm
+        out["provider"] = "phantom"
+    if provider == "xmoney" and not out.get("xmoney_account") and not out.get("account_id"):
+        # Allow empty — informational only
+        pass
+    # Live charge only when both config and explicit flag are set
+    live = bool(raw.get("charge_now")) and _payment_provider_live(provider)
+    out["charge_now"] = live
+    if raw.get("charge_now") and not live:
+        out["note"] = (
+            out.get("note") or ""
+        ) + " charge_now ignored — provider not live or missing config keys"
+        out["note"] = out["note"].strip()
+    return out, None
+
+
+def _payment_provider_live(provider: str) -> bool:
+    """True only when optional payment config keys are present for the provider."""
+    meta = _PAYMENT_INTEGRATIONS.get(provider)
+    if not meta:
+        return False
+    keys = meta.get("config_keys") or []
+    if not keys:
+        return provider == "phantom"  # wallet address is enough for settlement hint
+    return all(bool(getattr(config, k, None)) for k in keys)
+
+
+def _optional_charge_for_bid(
+    payment_integration: Optional[Dict[str, Any]],
+    amount: float,
+    currency: str,
+    bid_id: str,
+) -> Optional[Dict[str, Any]]:
+    """
+    Attempt optional live charge when integration is configured.
+    Default is no-op stub; records a pending payment intent metadata blob.
+    """
+    if not payment_integration or not payment_integration.get("charge_now"):
+        return None
+    provider = payment_integration.get("provider")
+    if not _payment_provider_live(str(provider or "")):
+        return {
+            "status": "skipped",
+            "reason": "provider_not_live",
+            "provider": provider,
+        }
+    # Stubs: real Stripe/XMoney SDK calls can be wired when keys are present.
+    # We never invent charges — only record an intent for operators/webhooks.
+    return {
+        "status": "pending_intent",
+        "provider": provider,
+        "amount": float(amount),
+        "currency": currency,
+        "bid_id": bid_id,
+        "created_at": int(time.time()),
+        "note": "Optional payment intent recorded; complete via provider webhook/SDK.",
+    }
 
 
 def list_auto_bids(username: str) -> Tuple[Dict[str, Any], int]:
@@ -1375,7 +1617,12 @@ def list_auto_bids(username: str) -> Tuple[Dict[str, Any], int]:
 
 
 def create_auto_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
-    """Create a recurring auto-request template (max 5 active)."""
+    """
+    Create a recurring auto-request template (max 5 active).
+
+    Preferred entry point for new clients is POST /bid with recurring=true.
+    Direct POST /auto_bids remains for management UIs but shares this logic.
+    """
     try:
         username = data.get("username")
         user_data = get_account(username)
@@ -1437,34 +1684,81 @@ def create_auto_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         if not name:
             name = service[:40] or "Auto request"
 
-        payment_method = (
+        payment_method = _normalize_payment_method(
             template_in.get("payment_method")
             or data.get("payment_method")
             or "cash"
         )
-        payment_method = str(payment_method).strip().lower()[:80] or "cash"
-        phantom_addr = user_data.get("phantom_wallet_address")
-        if payment_method in ("phantom", "phantom_wallet", "solana", "usdc_sol"):
-            payment_method = "phantom"
+        pay_int_raw = (
+            template_in.get("payment_integration")
+            if "payment_integration" in template_in
+            else data.get("payment_integration")
+        )
+        payment_integration, pay_err = _normalize_payment_integration(
+            payment_method, pay_int_raw, user_data
+        )
+        if pay_err:
+            return {"error": pay_err}, 400
+
+        phantom_addr = None
+        if payment_method == "phantom":
+            phantom_addr = (
+                (payment_integration or {}).get("wallet_address")
+                or user_data.get("phantom_wallet_address")
+            )
             if not phantom_addr:
                 return {
                     "error": "Link a Phantom wallet before creating auto-bids that pay with Phantom",
                 }, 400
+
+        # Time-bound spending limits (required for safe recurring spend)
+        limits_raw = (
+            data.get("spending_limits")
+            if data.get("spending_limits") is not None
+            else template_in.get("spending_limits")
+        )
+        spending_limits, lim_err = _parse_spending_limits(limits_raw)
+        if lim_err:
+            return {"error": lim_err}, 400
+        # Default safety rail: 4× unit price per cadence period when omitted
+        if spending_limits is None:
+            period = "weekly" if cadence in ("weekly", "biweekly") else (
+                "daily" if cadence == "daily" else "monthly"
+            )
+            spending_limits = {
+                "max_amount": round(price * 4, 2),
+                "period": period,
+                "currency": (
+                    "USDC" if payment_method == "phantom"
+                    else (template_in.get("currency") or data.get("currency") or "USD")
+                )[:8],
+                "defaulted": True,
+            }
+
+        currency = (
+            "USDC" if payment_method == "phantom"
+            else (template_in.get("currency") or data.get("currency") or "USD")
+        )[:8]
 
         item = {
             "id": str(uuid.uuid4()),
             "name": name,
             "status": "active",
             "cadence": cadence,
+            "kind": "subscription_bid",
             "template": {
                 "service": service[:2000],
                 "price": price,
-                "currency": (
-                    "USDC" if payment_method == "phantom"
-                    else (template_in.get("currency") or data.get("currency") or "USD")
-                )[:8],
+                "currency": currency,
                 "payment_method": payment_method,
+                "payment_integration": payment_integration,
                 "phantom_wallet_address": phantom_addr if payment_method == "phantom" else None,
+                "xmoney_account": (
+                    (payment_integration or {}).get("xmoney_account")
+                    or (payment_integration or {}).get("account_id")
+                    or template_in.get("xmoney_account")
+                    or data.get("xmoney_account")
+                ),
                 "location_type": location_type,
                 "address": address,
                 "expires_in_hours": expires_in_hours,
@@ -1477,11 +1771,14 @@ def create_auto_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                 "last_bid_id": None,
             },
             "limits": {"max_open_from_this": 1},
+            "spending_limits": spending_limits,
+            "spend_log": [],
             "created_on": now,
+            "source": data.get("source") or "auto_bids",
         }
         auto_bids.append(item)
         save_account(username, user_data)
-        return {"auto_bid": item}, 201
+        return {"auto_bid": item, "subscription_bid": item}, 201
     except Exception as e:
         logger.error(f"Create auto_bid error: {str(e)}")
         return {"error": "Internal server error"}, 500
@@ -1519,12 +1816,21 @@ def update_auto_bid(username: str, auto_bid_id: str, data: Dict[str, Any]) -> Tu
             tin = data["template"]
             for key in (
                 "service", "price", "currency", "payment_method",
+                "payment_integration", "xmoney_account",
                 "location_type", "address", "expires_in_hours", "privacy_level",
             ):
                 if key in tin:
                     tpl[key] = tin[key]
             if "privacy_level" in tpl:
                 tpl["privacy_level"] = privacy_mod.normalize_privacy_level(tpl["privacy_level"])
+            if "payment_method" in tpl:
+                tpl["payment_method"] = _normalize_payment_method(tpl["payment_method"])
+        if "spending_limits" in data:
+            spending_limits, lim_err = _parse_spending_limits(data.get("spending_limits"))
+            if lim_err:
+                return {"error": lim_err}, 400
+            if spending_limits is not None:
+                target["spending_limits"] = spending_limits
         save_account(username, user_data)
         return {"auto_bid": target}, 200
     except Exception as e:
@@ -1536,6 +1842,7 @@ def process_auto_bids_for_user(username: str) -> Tuple[Dict[str, Any], int]:
     """
     Process due auto-bid templates for one user.
     Skips if a prior open bid from the same template is still live.
+    Enforces time-bound spending_limits before posting.
     """
     try:
         user_data = get_account(username)
@@ -1569,14 +1876,34 @@ def process_auto_bids_for_user(username: str) -> Tuple[Dict[str, Any], int]:
                     continue
 
             tpl = item.get("template") or {}
+            try:
+                price = float(tpl.get("price") or 0)
+            except (TypeError, ValueError):
+                price = 0.0
+            exceeds, spent, limits = _would_exceed_spending_limit(item, price, now)
+            if exceeds:
+                sched["next_run_at"] = _next_run_at(
+                    now, item.get("cadence") or "weekly",
+                    sched.get("preferred_local_hour", 8),
+                )
+                skipped.append({
+                    "id": item["id"],
+                    "reason": "spending_limit",
+                    "spent": spent,
+                    "limit": (limits or {}).get("max_amount"),
+                    "period": (limits or {}).get("period"),
+                })
+                continue
+
             hours = int(tpl.get("expires_in_hours") or 24)
             end_time = now + max(1, min(168, hours)) * 3600
             # Refresh Phantom address from account at post time
             acc_now = get_account(username) or {}
-            pay_method = (tpl.get("payment_method") or "cash")
-            if str(pay_method).lower() in ("phantom", "phantom_wallet", "solana", "usdc_sol"):
-                pay_method = "phantom"
-                if not acc_now.get("phantom_wallet_address"):
+            pay_method = _normalize_payment_method(tpl.get("payment_method") or "cash")
+            if pay_method == "phantom":
+                if not acc_now.get("phantom_wallet_address") and not (
+                    (tpl.get("payment_integration") or {}).get("wallet_address")
+                ):
                     skipped.append({
                         "id": item["id"],
                         "reason": "phantom_wallet_missing",
@@ -1596,13 +1923,17 @@ def process_auto_bids_for_user(username: str) -> Tuple[Dict[str, Any], int]:
                     else (tpl.get("currency") or "USD")
                 ),
                 "payment_method": pay_method,
+                "payment_integration": tpl.get("payment_integration"),
+                "xmoney_account": tpl.get("xmoney_account"),
                 "end_time": end_time,
                 "location_type": tpl.get("location_type") or "physical",
                 "privacy_level": tpl.get("privacy_level"),
+                "from_auto_bid_id": item.get("id"),
             }
             if pay_method == "phantom":
-                bid_payload["phantom_wallet_address"] = acc_now.get(
-                    "phantom_wallet_address"
+                bid_payload["phantom_wallet_address"] = (
+                    (tpl.get("payment_integration") or {}).get("wallet_address")
+                    or acc_now.get("phantom_wallet_address")
                 )
             if tpl.get("address"):
                 bid_payload["address"] = tpl["address"]
@@ -1622,18 +1953,132 @@ def process_auto_bids_for_user(username: str) -> Tuple[Dict[str, Any], int]:
                 continue
 
             bid_id = result.get("bid_id")
+            _record_spend(item, price, bid_id, now)
             sched["last_run_at"] = now
             sched["last_bid_id"] = bid_id
             sched["next_run_at"] = _next_run_at(
                 now, item.get("cadence") or "weekly",
                 sched.get("preferred_local_hour", 8),
             )
-            posted.append({"id": item["id"], "bid_id": bid_id})
+            posted.append({
+                "id": item["id"],
+                "bid_id": bid_id,
+                "spent_this_period": _spent_in_period(
+                    item.get("spend_log") or [],
+                    (item.get("spending_limits") or {}).get("period") or "weekly",
+                    now,
+                ),
+            })
 
         save_account(username, user_data)
         return {"posted": posted, "skipped": skipped, "auto_bids": auto_bids}, 200
     except Exception as e:
         logger.error(f"Process auto_bids error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def create_bid_request(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """
+    Canonical POST /bid handler.
+
+    One-shot: same as submit_bid (requires end_time).
+    Recurring subscription bid: set recurring=true (or subscription=true) and cadence;
+    creates an auto-bid template with time-bound spending_limits and optionally posts
+    the first open request. Autobidding is only created through this path's recurring
+    branch (not on campaigns, grab_job, cosmetics, etc.).
+    """
+    try:
+        recurring = bool(
+            data.get("recurring")
+            or data.get("subscription")
+            or data.get("auto_bid")
+            or (data.get("kind") in ("subscription", "subscription_bid", "recurring"))
+        )
+        # Cadence without end_time implies recurring subscription bid
+        if not recurring and data.get("cadence") and data.get("end_time") is None:
+            recurring = True
+
+        if recurring:
+            payload = dict(data)
+            payload["source"] = "bid"
+            # Prefer explicit spending_limits on the request body
+            result, status = create_auto_bid(payload)
+            if status >= 400:
+                return result, status
+
+            auto_bid = result.get("auto_bid") or result.get("subscription_bid")
+            response: Dict[str, Any] = {
+                "kind": "subscription_bid",
+                "recurring": True,
+                "auto_bid": auto_bid,
+                "subscription_bid": auto_bid,
+                "spending_limits": (auto_bid or {}).get("spending_limits"),
+                "payment_integrations": list(_PAYMENT_INTEGRATIONS.values()),
+            }
+
+            # Post first open bid immediately unless caller opts out
+            post_now = data.get("post_now")
+            if post_now is None:
+                post_now = True
+            if post_now:
+                username = data.get("username")
+                proc, pstatus = process_auto_bids_for_user(username)
+                if pstatus < 400:
+                    response["process"] = {
+                        "posted": proc.get("posted"),
+                        "skipped": proc.get("skipped"),
+                    }
+                    posted = proc.get("posted") or []
+                    if posted:
+                        response["bid_id"] = posted[0].get("bid_id")
+                # Refresh auto_bid from process result if present
+                if pstatus < 400 and proc.get("auto_bids"):
+                    aid = (auto_bid or {}).get("id")
+                    for a in proc["auto_bids"]:
+                        if a.get("id") == aid:
+                            response["auto_bid"] = a
+                            response["subscription_bid"] = a
+                            response["spending_limits"] = a.get("spending_limits")
+                            break
+            return response, 201
+
+        # One-shot open request
+        if data.get("end_time") is None:
+            # Default 24h window when omitted
+            hours = int(data.get("expires_in_hours") or 24)
+            hours = max(1, min(168, hours))
+            data = dict(data)
+            data["end_time"] = int(time.time()) + hours * 3600
+
+        # Normalize optional payment integration onto the one-shot bid
+        user_data = get_account(data.get("username")) or {}
+        pm = _normalize_payment_method(data.get("payment_method") or "cash")
+        data = dict(data)
+        data["payment_method"] = pm
+        if "payment_integration" in data or pm == "phantom":
+            pay_int, pay_err = _normalize_payment_integration(
+                pm, data.get("payment_integration"), user_data
+            )
+            if pay_err:
+                return {"error": pay_err}, 400
+            if pay_int:
+                data["payment_integration"] = pay_int
+                if pay_int.get("wallet_address"):
+                    data["phantom_wallet_address"] = pay_int["wallet_address"]
+                if pay_int.get("xmoney_account") or pay_int.get("account_id"):
+                    data["xmoney_account"] = (
+                        pay_int.get("xmoney_account") or pay_int.get("account_id")
+                    )
+
+        result, status = submit_bid(data)
+        if status >= 400:
+            return result, status
+        result = dict(result)
+        result["kind"] = "bid"
+        result["recurring"] = False
+        return result, status
+    except Exception as e:
+        logger.error(f"Create bid request error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
 
@@ -2241,6 +2686,29 @@ def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             p_addr = data.get('phantom_wallet_address') or user_data.get('phantom_wallet_address')
             if p_addr and normalize_solana_address(str(p_addr)):
                 bid['phantom_wallet_address'] = normalize_solana_address(str(p_addr))
+
+        # Optional payment integration metadata (Stripe / XMoney / PayPal / Phantom)
+        pay_int = data.get('payment_integration')
+        if isinstance(pay_int, dict) and pay_int:
+            bid['payment_integration'] = {
+                k: pay_int[k] for k in pay_int
+                if k in (
+                    'provider', 'integration_status', 'account_id', 'merchant_id',
+                    'email', 'wallet_address', 'customer_id', 'checkout_url',
+                    'note', 'xmoney_account', 'charge_now',
+                )
+            }
+            charge_meta = _optional_charge_for_bid(
+                bid.get('payment_integration'),
+                float(price),
+                bid.get('currency') or currency,
+                bid_id,
+            )
+            if charge_meta:
+                bid['payment_charge'] = charge_meta
+
+        if data.get('from_auto_bid_id'):
+            bid['from_auto_bid_id'] = str(data['from_auto_bid_id'])[:80]
         
         save_bid(bid_id, bid)
         _emit('bid.posted', username=username, actor=public_actor(username),
@@ -2248,7 +2716,10 @@ def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
               idempotency_key=f"bid.posted:{bid_id}")
         logger.info(f"Bid created: {bid_id}")
         
-        return {"bid_id": bid_id}, 200
+        out = {"bid_id": bid_id}
+        if bid.get('payment_charge'):
+            out['payment_charge'] = bid['payment_charge']
+        return out, 200
         
     except Exception as e:
         logger.error(f"Bid error: {str(e)}")
@@ -4966,3 +5437,775 @@ def admin_resolve_dispute(dispute_id: str, data: Dict[str, Any]) -> Tuple[Dict[s
     except Exception as e:
         logger.error(f"Admin resolve dispute error: {str(e)}")
         return {"error": "Internal server error"}, 500
+
+
+# -----------------------------------------------------------------------------
+# Investor cap table menu + synergy / valuation explorer (illustrative)
+# -----------------------------------------------------------------------------
+
+CAP_TABLE_INVESTORS: List[Dict[str, Any]] = [
+    {
+        "id": "spacex_tesla",
+        "name": "SpaceX / Tesla",
+        "category": "Strategic — autonomy & fleet",
+        "region": "US",
+        "tier": "mega",
+        "typical_check": "large",
+        "blurb": "Autonomy, manufacturing scale, brand, and multi-domain robotics adjacency.",
+    },
+    {
+        "id": "nvidia",
+        "name": "NVIDIA",
+        "category": "Strategic — compute & simulation",
+        "region": "US",
+        "tier": "mega",
+        "typical_check": "large",
+        "blurb": "Edge GPUs, Isaac/Omniverse, and AI training stack for robot fleets.",
+    },
+    {
+        "id": "unitree",
+        "name": "Unitree Robotics",
+        "category": "Strategic — OEM (legged)",
+        "region": "CN",
+        "tier": "large",
+        "typical_check": "medium",
+        "blurb": "High-volume quadruped/humanoid hardware partner and channel.",
+    },
+    {
+        "id": "boston_dynamics_hyundai",
+        "name": "Boston Dynamics / Hyundai Motor Group",
+        "category": "Strategic — OEM (mobile robots)",
+        "region": "US/KR",
+        "tier": "large",
+        "typical_check": "large",
+        "blurb": "Industrial mobile robots, auto manufacturing density, global service network.",
+    },
+    {
+        "id": "inqtel",
+        "name": "In-Q-Tel",
+        "category": "Strategic — US national security",
+        "region": "US",
+        "tier": "specialist",
+        "typical_check": "medium",
+        "blurb": "USIC strategic capital; dual-use, compliance, and government pathways.",
+    },
+    {
+        "id": "google_alphabet",
+        "name": "Google / Alphabet (GV & corporate)",
+        "category": "Strategic — platform & AI",
+        "region": "US",
+        "tier": "mega",
+        "typical_check": "large",
+        "blurb": "Maps, cloud, Gemini, and consumer/enterprise distribution surfaces.",
+    },
+    {
+        "id": "microsoft",
+        "name": "Microsoft (M12 / strategic)",
+        "category": "Strategic — enterprise cloud",
+        "region": "US",
+        "tier": "mega",
+        "typical_check": "large",
+        "blurb": "Azure robotics/IoT stack, enterprise procurement, Copilot ecosystem.",
+    },
+    {
+        "id": "amazon_aws",
+        "name": "Amazon / AWS",
+        "category": "Strategic — logistics & cloud",
+        "region": "US",
+        "tier": "mega",
+        "typical_check": "large",
+        "blurb": "Warehouse robotics demand, logistics density, and cloud credits.",
+    },
+    {
+        "id": "softbank",
+        "name": "SoftBank Vision Fund",
+        "category": "Mega fund",
+        "region": "JP/Global",
+        "tier": "mega",
+        "typical_check": "xlarge",
+        "blurb": "Large late-stage checks; global robotics and mobility thesis.",
+    },
+    {
+        "id": "pif_saudi",
+        "name": "Saudi Public Investment Fund (PIF)",
+        "category": "Sovereign wealth",
+        "region": "SA",
+        "tier": "sovereign",
+        "typical_check": "xlarge",
+        "blurb": "Vision 2030 industrial automation, giga-projects, and regional scale.",
+    },
+    {
+        "id": "nbim_norway",
+        "name": "Norges Bank Investment Management",
+        "category": "Sovereign wealth",
+        "region": "NO",
+        "tier": "sovereign",
+        "typical_check": "large",
+        "blurb": "Norway oil fund; long-duration public/private growth exposure.",
+    },
+    {
+        "id": "kic_korea",
+        "name": "Korea Investment Corporation (KIC)",
+        "category": "Sovereign wealth",
+        "region": "KR",
+        "tier": "sovereign",
+        "typical_check": "large",
+        "blurb": "South Korean sovereign; advanced manufacturing and robotics corridor.",
+    },
+    {
+        "id": "temasek",
+        "name": "Temasek Holdings",
+        "category": "Sovereign wealth",
+        "region": "SG",
+        "tier": "sovereign",
+        "typical_check": "large",
+        "blurb": "Singapore sovereign; Asia tech, logistics, and deep-tech platforms.",
+    },
+    {
+        "id": "a16z",
+        "name": "Andreessen Horowitz (a16z)",
+        "category": "Venture capital",
+        "region": "US",
+        "tier": "tier1_vc",
+        "typical_check": "large",
+        "blurb": "American Dynamism / infra; market-making network and talent brand.",
+    },
+    {
+        "id": "sequoia",
+        "name": "Sequoia Capital",
+        "category": "Venture capital",
+        "region": "US",
+        "tier": "tier1_vc",
+        "typical_check": "large",
+        "blurb": "Category-defining platforms; multi-stage company building.",
+    },
+    {
+        "id": "benchmark",
+        "name": "Benchmark Capital",
+        "category": "Venture capital",
+        "region": "US",
+        "tier": "tier1_vc",
+        "typical_check": "medium",
+        "blurb": "Early concentrated bets; product-led marketplaces and network effects.",
+    },
+    {
+        "id": "founders_fund",
+        "name": "Founders Fund",
+        "category": "Venture capital",
+        "region": "US",
+        "tier": "tier1_vc",
+        "typical_check": "large",
+        "blurb": "Hard-tech, defense-adjacent, and bold multi-decade theses.",
+    },
+    {
+        "id": "khosla",
+        "name": "Khosla Ventures",
+        "category": "Venture capital",
+        "region": "US",
+        "tier": "tier1_vc",
+        "typical_check": "medium",
+        "blurb": "Deep tech and AI; founder-friendly hard-problem capital.",
+    },
+    {
+        "id": "accel",
+        "name": "Accel",
+        "category": "Venture capital",
+        "region": "US/EU",
+        "tier": "tier1_vc",
+        "typical_check": "medium",
+        "blurb": "Global multi-stage; enterprise and consumer platform DNA.",
+    },
+    {
+        "id": "lightspeed",
+        "name": "Lightspeed Venture Partners",
+        "category": "Venture capital",
+        "region": "US",
+        "tier": "tier1_vc",
+        "typical_check": "medium",
+        "blurb": "Enterprise, consumer, and fintech; strong series A–C muscle.",
+    },
+    {
+        "id": "index",
+        "name": "Index Ventures",
+        "category": "Venture capital",
+        "region": "EU/US",
+        "tier": "tier1_vc",
+        "typical_check": "medium",
+        "blurb": "Transatlantic platforms; marketplace and developer tools strength.",
+    },
+    {
+        "id": "general_catalyst",
+        "name": "General Catalyst",
+        "category": "Venture capital",
+        "region": "US",
+        "tier": "tier1_vc",
+        "typical_check": "large",
+        "blurb": "Resilience / applied AI; multi-stage platform building.",
+    },
+    {
+        "id": "bessemer",
+        "name": "Bessemer Venture Partners",
+        "category": "Venture capital",
+        "region": "US",
+        "tier": "growth_vc",
+        "typical_check": "medium",
+        "blurb": "Cloud and marketplace playbooks; long partnership horizon.",
+    },
+    {
+        "id": "coatue",
+        "name": "Coatue Management",
+        "category": "Growth equity / hedge",
+        "region": "US",
+        "tier": "growth",
+        "typical_check": "large",
+        "blurb": "Tech growth rounds; public-market fluency for later stages.",
+    },
+    {
+        "id": "tiger",
+        "name": "Tiger Global",
+        "category": "Growth equity / hedge",
+        "region": "US",
+        "tier": "growth",
+        "typical_check": "large",
+        "blurb": "Global growth capital; speed and scale orientation.",
+    },
+    {
+        "id": "insight",
+        "name": "Insight Partners",
+        "category": "Growth equity",
+        "region": "US",
+        "tier": "growth",
+        "typical_check": "large",
+        "blurb": "Scale-up software ops; go-to-market and enterprise expansion.",
+    },
+    {
+        "id": "thrive",
+        "name": "Thrive Capital",
+        "category": "Venture / growth",
+        "region": "US",
+        "tier": "growth_vc",
+        "typical_check": "large",
+        "blurb": "Internet platforms and applied AI; concentrated ownership style.",
+    },
+    {
+        "id": "blackrock",
+        "name": "BlackRock (private markets)",
+        "category": "Asset manager / PE growth",
+        "region": "US/Global",
+        "tier": "mega",
+        "typical_check": "xlarge",
+        "blurb": "Institutional LP credibility and multi-asset distribution.",
+    },
+    {
+        "id": "bezos_expeditions",
+        "name": "Bezos Expeditions",
+        "category": "Family office",
+        "region": "US",
+        "tier": "family",
+        "typical_check": "large",
+        "blurb": "Long-duration tech and infrastructure; founder-aligned patient capital.",
+    },
+    {
+        "id": "emerson_collective",
+        "name": "Emerson Collective",
+        "category": "Family office",
+        "region": "US",
+        "tier": "family",
+        "typical_check": "medium",
+        "blurb": "Impact-minded tech and climate-adjacent platforms.",
+    },
+    {
+        "id": "walton_enterprises",
+        "name": "Walton Family / Walton Enterprises",
+        "category": "Family office",
+        "region": "US",
+        "tier": "family",
+        "typical_check": "large",
+        "blurb": "Retail/logistics adjacency and long-horizon private capital.",
+    },
+    {
+        "id": "caterpillar_ventures",
+        "name": "Caterpillar Ventures",
+        "category": "Strategic — industrial",
+        "region": "US",
+        "tier": "corporate_vc",
+        "typical_check": "medium",
+        "blurb": "Heavy equipment sites, construction autonomy, industrial service demand.",
+    },
+    {
+        "id": "lockheed_ventures",
+        "name": "Lockheed Martin Ventures",
+        "category": "Strategic — defense",
+        "region": "US",
+        "tier": "corporate_vc",
+        "typical_check": "medium",
+        "blurb": "Defense prime pathways; autonomy, ISR, and contested logistics.",
+    },
+    {
+        "id": "palantir",
+        "name": "Palantir Technologies",
+        "category": "Strategic — enterprise & gov software",
+        "region": "US",
+        "tier": "large",
+        "typical_check": "medium",
+        "blurb": "Ontology/ops software for fleets; government and industrial buyers.",
+    },
+    {
+        "id": "samsung_ventures",
+        "name": "Samsung Ventures",
+        "category": "Corporate venture",
+        "region": "KR",
+        "tier": "corporate_vc",
+        "typical_check": "medium",
+        "blurb": "Electronics, components, and Korea/global manufacturing pull-through.",
+    },
+]
+
+_CAP_TABLE_BY_ID = {inv["id"]: inv for inv in CAP_TABLE_INVESTORS}
+
+_CHECK_WEIGHT = {
+    "xlarge": 4.0,
+    "large": 2.5,
+    "medium": 1.5,
+    "small": 1.0,
+}
+
+_SCENARIO_PARAMS = {
+    # Illustrative seed/series-scale defaults for a robot labor exchange.
+    "conservative": {
+        "pre_money_m": 40,
+        "raise_m": 12,
+        "equity_sold_pct": 18,
+        "esop_pct": 10,
+        "label": "Conservative",
+    },
+    "base": {
+        "pre_money_m": 90,
+        "raise_m": 25,
+        "equity_sold_pct": 20,
+        "esop_pct": 12,
+        "label": "Base",
+    },
+    "aggressive": {
+        "pre_money_m": 220,
+        "raise_m": 60,
+        "equity_sold_pct": 18,
+        "esop_pct": 12,
+        "label": "Aggressive",
+    },
+}
+
+
+def get_cap_table_investors() -> Tuple[Dict[str, Any], int]:
+    """Public menu of potential, non-overlapping illustrative investors."""
+    return {
+        "investors": CAP_TABLE_INVESTORS,
+        "count": len(CAP_TABLE_INVESTORS),
+        "min_select": 1,
+        "max_select": min(30, len(CAP_TABLE_INVESTORS)),
+        "disclaimer": (
+            "Illustrative menu only — not an offer, solicitation, or indication of interest "
+            "from any named party. Combinations are for scenario planning."
+        ),
+    }, 200
+
+
+def _cap_table_heuristic(
+    selected: List[Dict[str, Any]],
+    scenario_key: str,
+    notes: str,
+    raise_override_m: Optional[float],
+    premoney_override_m: Optional[float],
+) -> Dict[str, Any]:
+    """Deterministic fallback when LLM is unavailable."""
+    n = len(selected)
+    scenarios_out: Dict[str, Any] = {}
+
+    for key, base in _SCENARIO_PARAMS.items():
+        # Scale raise slightly with participant count and mega presence
+        mega_n = sum(1 for s in selected if s.get("tier") in ("mega", "sovereign"))
+        scale = 1.0 + 0.04 * max(0, n - 3) + 0.06 * mega_n
+        raise_m = float(raise_override_m) if (raise_override_m and key == scenario_key) else base["raise_m"] * min(scale, 2.2)
+        pre_m = float(premoney_override_m) if (premoney_override_m and key == scenario_key) else base["pre_money_m"] * min(1.0 + 0.03 * mega_n + 0.015 * n, 1.8)
+        post_m = pre_m + raise_m
+        sold = base["equity_sold_pct"]
+        # Keep sold equity in a sensible band for multi-party rounds
+        if n >= 8:
+            sold = min(28.0, sold + (n - 7) * 0.6)
+        elif n == 1:
+            sold = max(12.0, sold - 2)
+        esop = base["esop_pct"]
+        investor_pool = sold  # % of fully diluted post-money allocated to this round investors
+        weights = []
+        for s in selected:
+            w = _CHECK_WEIGHT.get(s.get("typical_check", "medium"), 1.5)
+            if s.get("tier") in ("mega", "sovereign"):
+                w *= 1.15
+            if s.get("tier") == "specialist":
+                w *= 0.85
+            weights.append(w)
+        wsum = sum(weights) or 1.0
+        breakdown = []
+        for s, w in zip(selected, weights):
+            pct = round(investor_pool * (w / wsum), 2)
+            check = round(raise_m * 1_000_000 * (w / wsum))
+            breakdown.append({
+                "id": s["id"],
+                "name": s["name"],
+                "equity_pct": pct,
+                "check_size_usd": check,
+                "role": s.get("category"),
+                "notes": s.get("blurb"),
+            })
+        # Fix rounding drift on equity %
+        drift = round(investor_pool - sum(b["equity_pct"] for b in breakdown), 2)
+        if breakdown and abs(drift) >= 0.01:
+            breakdown[0]["equity_pct"] = round(breakdown[0]["equity_pct"] + drift, 2)
+        founder_pct = round(100.0 - investor_pool - esop, 2)
+        if founder_pct < 40:
+            # Rebalance: shrink investor pool slightly to protect founders in crowded rounds
+            shrink = min(investor_pool * 0.15, 40 - founder_pct + 5)
+            investor_pool = round(investor_pool - shrink, 2)
+            factor = investor_pool / max(sum(b["equity_pct"] for b in breakdown), 0.01)
+            for b in breakdown:
+                b["equity_pct"] = round(b["equity_pct"] * factor, 2)
+                b["check_size_usd"] = int(round(raise_m * 1_000_000 * (b["equity_pct"] / max(investor_pool, 0.01))))
+            founder_pct = round(100.0 - investor_pool - esop, 2)
+
+        scenarios_out[key] = {
+            "label": base["label"],
+            "pre_money_usd": int(pre_m * 1_000_000),
+            "post_money_usd": int(post_m * 1_000_000),
+            "raise_usd": int(raise_m * 1_000_000),
+            "equity_sold_pct": round(investor_pool, 2),
+            "founder_equity_pct": founder_pct,
+            "esop_pct": esop,
+            "breakdown": breakdown,
+            "narrative": (
+                f"{base['label']} case assumes ~${raise_m:.0f}M raise at "
+                f"~${pre_m:.0f}M pre-money with {n} participant(s). "
+                "Allocation weights strategic/mega checks larger than specialist or early VC seats. "
+                "Illustrative only."
+            ),
+        }
+
+    # Synergies by simple category co-presence
+    cats = {s["id"]: s for s in selected}
+    synergies = []
+    risks = []
+    ids = set(cats.keys())
+
+    def has(*x):
+        return all(i in ids for i in x)
+
+    def has_any(*x):
+        return any(i in ids for i in x)
+
+    if has_any("nvidia") and has_any("unitree", "boston_dynamics_hyundai", "spacex_tesla"):
+        synergies.append({
+            "theme": "Silicon + body",
+            "strength": "high",
+            "rationale": "Compute partner plus robot OEM creates a full-stack supply story for fleet operators on the exchange.",
+        })
+    if has_any("spacex_tesla") and has_any("nvidia", "google_alphabet", "microsoft"):
+        synergies.append({
+            "theme": "Autonomy stack credibility",
+            "strength": "high",
+            "rationale": "Flagship autonomy brand plus AI/cloud platform anchors enterprise and municipal RFPs.",
+        })
+    if has_any("inqtel", "lockheed_ventures", "palantir") and has_any("a16z", "founders_fund", "sequoia"):
+        synergies.append({
+            "theme": "Dual-use commercial + secure buyers",
+            "strength": "medium",
+            "rationale": "Commercial VC distribution with defense/intel pathways diversifies demand beyond consumer services.",
+        })
+    if has_any("pif_saudi", "nbim_norway", "kic_korea", "temasek") and has_any("softbank", "blackrock"):
+        synergies.append({
+            "theme": "Sovereign + institutional scale",
+            "strength": "high",
+            "rationale": "Patient sovereign capital with mega-fund process expertise supports multi-region density build-out.",
+        })
+    if has_any("amazon_aws", "caterpillar_ventures", "boston_dynamics_hyundai"):
+        synergies.append({
+            "theme": "Industrial / logistics demand pull",
+            "strength": "medium",
+            "rationale": "Buyer-side strategics accelerate GMV in warehouse, yard, and facility robotics jobs.",
+        })
+    if has_any("a16z", "sequoia", "benchmark") and n <= 5:
+        synergies.append({
+            "theme": "Tier-1 VC governance simplicity",
+            "strength": "medium",
+            "rationale": "A compact top-tier syndicate is easier to close and often cleaner for follow-ons than a crowded cap table.",
+        })
+    if has_any("bezos_expeditions", "emerson_collective", "walton_enterprises") and has_any("softbank", "tiger", "coatue"):
+        synergies.append({
+            "theme": "Patient + growth barbell",
+            "strength": "medium",
+            "rationale": "Family-office patience balances growth-fund velocity on board dynamics and runway strategy.",
+        })
+    if not synergies:
+        synergies.append({
+            "theme": "Diversified capital stack",
+            "strength": "medium",
+            "rationale": "Selected participants span different capital styles; primary synergy is financing flexibility and network breadth.",
+        })
+
+    if n > 10:
+        risks.append("Crowded round may slow closing and complicate pro-rata / information rights.")
+    if has_any("unitree") and has_any("boston_dynamics_hyundai"):
+        risks.append("Two OEM strategics can create channel conflict or exclusivity tension unless roles are carefully scoped.")
+    if has_any("inqtel", "lockheed_ventures") and has_any("unitree", "pif_saudi"):
+        risks.append("Export control / CFIUS and dual-use optics require counsel before combining certain strategics.")
+    if has_any("softbank", "tiger") and has_any("benchmark"):
+        risks.append("Ownership and board control expectations can diverge between early concentrated VC and mega growth funds.")
+    if mega_n >= 4:
+        risks.append("Multiple mega strategics may each demand preferred rights that stack poorly.")
+    if not risks:
+        risks.append("Primary risk is over-indexing valuation on brand names without matching commercial contracts.")
+
+    focus = scenarios_out.get(scenario_key) or scenarios_out["base"]
+    summary = (
+        f"With {n} participant(s), the {focus.get('label', scenario_key)} case centers on a "
+        f"${focus['raise_usd'] / 1e6:.0f}M raise at ${focus['pre_money_usd'] / 1e6:.0f}M pre-money "
+        f"(${focus['post_money_usd'] / 1e6:.0f}M post), selling ~{focus['equity_sold_pct']}% to investors "
+        f"while reserving ~{focus['esop_pct']}% ESOP and ~{focus['founder_equity_pct']}% for founders/prior. "
+    )
+    if notes:
+        summary += f"Planner notes considered: {notes[:240]}"
+
+    return {
+        "source": "heuristic",
+        "selected_count": n,
+        "scenario_focus": scenario_key,
+        "summary": summary,
+        "synergies": synergies,
+        "risks": risks,
+        "scenarios": scenarios_out,
+        "disclaimer": (
+            "Illustrative model only. Not financial, legal, or investment advice. "
+            "No named party has committed capital. Not an offer or solicitation."
+        ),
+    }
+
+
+def analyze_cap_table_synergy(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """
+    Given a selected subset of CAP_TABLE_INVESTORS (1–30), explore synergies and
+    recommend equity breakdown + valuation under conservative / base / aggressive cases.
+    Uses OpenRouter when available; falls back to a deterministic heuristic.
+    """
+    raw_ids = data.get("investor_ids") or data.get("investors") or []
+    if not isinstance(raw_ids, list):
+        return {"error": "investor_ids must be a list of investor id strings"}, 400
+
+    ids: List[str] = []
+    for item in raw_ids:
+        if isinstance(item, str):
+            ids.append(item.strip())
+        elif isinstance(item, dict) and item.get("id"):
+            ids.append(str(item["id"]).strip())
+    # de-dupe preserve order
+    seen = set()
+    ordered: List[str] = []
+    for i in ids:
+        if i and i not in seen:
+            seen.add(i)
+            ordered.append(i)
+
+    if not ordered:
+        return {"error": "Select at least 1 investor"}, 400
+    max_n = min(30, len(CAP_TABLE_INVESTORS))
+    if len(ordered) > max_n:
+        return {"error": f"Select at most {max_n} investors"}, 400
+
+    unknown = [i for i in ordered if i not in _CAP_TABLE_BY_ID]
+    if unknown:
+        return {"error": f"Unknown investor id(s): {', '.join(unknown[:8])}"}, 400
+
+    selected = [_CAP_TABLE_BY_ID[i] for i in ordered]
+    scenario = (data.get("scenario") or "base").strip().lower()
+    if scenario not in _SCENARIO_PARAMS:
+        scenario = "base"
+
+    notes = (data.get("notes") or data.get("context") or "").strip()[:800]
+    raise_override = data.get("raise_usd_millions")
+    premoney_override = data.get("pre_money_usd_millions")
+    try:
+        raise_override_f = float(raise_override) if raise_override is not None and raise_override != "" else None
+    except (TypeError, ValueError):
+        raise_override_f = None
+    try:
+        premoney_override_f = float(premoney_override) if premoney_override is not None and premoney_override != "" else None
+    except (TypeError, ValueError):
+        premoney_override_f = None
+
+    fallback = _cap_table_heuristic(selected, scenario, notes, raise_override_f, premoney_override_f)
+
+    inv_lines = "\n".join(
+        f"- id={s['id']}; name={s['name']}; category={s['category']}; region={s['region']}; "
+        f"tier={s['tier']}; typical_check={s['typical_check']}; blurb={s['blurb']}"
+        for s in selected
+    )
+    prompt = f"""You are a careful venture/strategic finance analyst for The RSE (Robot Services Exchange):
+an open marketplace for robot labor (buyers post work; robot operators claim jobs; take-rate + seats + hardware referrals).
+
+Task: Given this ILLUSTRATIVE potential syndicate (NOT real commitments), analyze synergies and recommend
+equity + valuation under three cases: conservative, base, aggressive.
+
+Selected participants ({len(selected)}):
+{inv_lines}
+
+Planner scenario focus: {scenario}
+Optional planner notes: {notes or '(none)'}
+Optional raise override ($M): {raise_override_f if raise_override_f is not None else '(none)'}
+Optional pre-money override ($M): {premoney_override_f if premoney_override_f is not None else '(none)'}
+
+Return ONLY valid JSON (no markdown) with this shape:
+{{
+  "summary": "2-4 sentence plain-language recommendation",
+  "synergies": [{{"theme": str, "strength": "high"|"medium"|"low", "rationale": str}}],
+  "risks": [str],
+  "scenarios": {{
+    "conservative": {{
+      "label": "Conservative",
+      "pre_money_usd": int,
+      "post_money_usd": int,
+      "raise_usd": int,
+      "equity_sold_pct": number,
+      "founder_equity_pct": number,
+      "esop_pct": number,
+      "breakdown": [{{"id": str, "name": str, "equity_pct": number, "check_size_usd": int, "role": str, "notes": str}}],
+      "narrative": str
+    }},
+    "base": {{ ... same keys ... }},
+    "aggressive": {{ ... same keys ... }}
+  }}
+}}
+
+Rules:
+- financially non-overlapping menu; treat each participant as independent capital source
+- equity_sold_pct + founder_equity_pct + esop_pct ≈ 100 (post-money fully diluted view of this round structure)
+- sum of breakdown equity_pct ≈ equity_sold_pct
+- sum of check_size_usd ≈ raise_usd
+- weight checks by strategic value and typical check size (mega/sovereign larger; specialists smaller)
+- keep founder_equity_pct generally ≥ 45 unless a very large multi-party growth round
+- valuations should be coherent with a robot labor marketplace (not a pure foundation model lab)
+- if raise/pre-money overrides are provided, apply them primarily to the "{scenario}" scenario
+- be concrete but humble; this is scenario planning only
+JSON only:"""
+
+    try:
+        raw = call_openrouter_llm(prompt, temperature=0.25, max_tokens=3500, timeout=45)
+        if not raw:
+            return fallback, 200
+
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.strip("`")
+            if cleaned.lower().startswith("json"):
+                cleaned = cleaned[4:].strip()
+        start = cleaned.find("{")
+        end = cleaned.rfind("}")
+        if start >= 0 and end > start:
+            cleaned = cleaned[start : end + 1]
+        parsed = json.loads(cleaned)
+        if not isinstance(parsed, dict) or "scenarios" not in parsed:
+            return fallback, 200
+
+        # Normalize / fill gaps from heuristic
+        out_scenarios = {}
+        for key in ("conservative", "base", "aggressive"):
+            src = (parsed.get("scenarios") or {}).get(key) or {}
+            fb = fallback["scenarios"][key]
+            if not isinstance(src, dict) or not src.get("breakdown"):
+                out_scenarios[key] = fb
+                continue
+            breakdown = []
+            for b in src.get("breakdown") or []:
+                if not isinstance(b, dict):
+                    continue
+                bid = str(b.get("id") or "").strip()
+                meta = _CAP_TABLE_BY_ID.get(bid)
+                name = str(b.get("name") or (meta["name"] if meta else bid))
+                try:
+                    eq = float(b.get("equity_pct", 0))
+                except (TypeError, ValueError):
+                    eq = 0.0
+                try:
+                    chk = int(float(b.get("check_size_usd", 0)))
+                except (TypeError, ValueError):
+                    chk = 0
+                breakdown.append({
+                    "id": bid or name,
+                    "name": name,
+                    "equity_pct": round(eq, 2),
+                    "check_size_usd": max(0, chk),
+                    "role": str(b.get("role") or (meta.get("category") if meta else "")),
+                    "notes": str(b.get("notes") or "")[:300],
+                })
+            if not breakdown:
+                out_scenarios[key] = fb
+                continue
+
+            def _num(v, default):
+                try:
+                    return int(float(v))
+                except (TypeError, ValueError):
+                    return default
+
+            def _pct(v, default):
+                try:
+                    return round(float(v), 2)
+                except (TypeError, ValueError):
+                    return default
+
+            pre = _num(src.get("pre_money_usd"), fb["pre_money_usd"])
+            raise_u = _num(src.get("raise_usd"), fb["raise_usd"])
+            post = _num(src.get("post_money_usd"), pre + raise_u)
+            out_scenarios[key] = {
+                "label": str(src.get("label") or fb["label"]),
+                "pre_money_usd": pre,
+                "post_money_usd": post,
+                "raise_usd": raise_u,
+                "equity_sold_pct": _pct(src.get("equity_sold_pct"), fb["equity_sold_pct"]),
+                "founder_equity_pct": _pct(src.get("founder_equity_pct"), fb["founder_equity_pct"]),
+                "esop_pct": _pct(src.get("esop_pct"), fb["esop_pct"]),
+                "breakdown": breakdown,
+                "narrative": str(src.get("narrative") or fb["narrative"])[:1200],
+            }
+
+        synergies = parsed.get("synergies") if isinstance(parsed.get("synergies"), list) else fallback["synergies"]
+        risks = parsed.get("risks") if isinstance(parsed.get("risks"), list) else fallback["risks"]
+        # sanitize synergies
+        clean_syn = []
+        for s in synergies[:12]:
+            if isinstance(s, dict) and s.get("theme"):
+                clean_syn.append({
+                    "theme": str(s.get("theme"))[:120],
+                    "strength": str(s.get("strength") or "medium")[:16],
+                    "rationale": str(s.get("rationale") or "")[:500],
+                })
+            elif isinstance(s, str):
+                clean_syn.append({"theme": s[:120], "strength": "medium", "rationale": ""})
+        clean_risks = []
+        for r in risks[:12]:
+            if isinstance(r, str) and r.strip():
+                clean_risks.append(r.strip()[:400])
+            elif isinstance(r, dict) and r.get("rationale"):
+                clean_risks.append(str(r.get("rationale"))[:400])
+
+        model_name = getattr(config, "OPENROUTER_MODEL", None)
+        return {
+            "source": "llm",
+            "model": model_name,
+            "selected_count": len(selected),
+            "scenario_focus": scenario,
+            "summary": str(parsed.get("summary") or fallback["summary"])[:2000],
+            "synergies": clean_syn or fallback["synergies"],
+            "risks": clean_risks or fallback["risks"],
+            "scenarios": out_scenarios,
+            "disclaimer": fallback["disclaimer"],
+        }, 200
+    except Exception as e:
+        logger.warning(f"analyze_cap_table_synergy LLM/parse failed: {e}")
+        return fallback, 200
