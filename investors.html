@@ -1423,6 +1423,13 @@
                 of <strong>1–30</strong> names, then run the synergy tool for recommended equity split and valuation
                 under <strong>conservative</strong>, <strong>base</strong>, and <strong>aggressive</strong> cases.
             </p>
+            <p class="inv-prose mb-2">
+                Valuations are a <strong>DCF of the same 15-year projection curves</strong> used above
+                (exchange take-rate, seats, hardware, ads, franchising, Hyperion)—not a seed-stage rule of thumb.
+                Cap-table makeup sets a <strong>risk premium per revenue stream</strong> (e.g. NVIDIA/Unitree de-risk
+                hardware; a16z/Sequoia de-risk marketplace take-rate; sovereigns/BlackRock de-risk Hyperion).
+                Live scenario dials under <a href="#projections">Projections</a> are sent for the focus scenario when you run the tool.
+            </p>
             <p class="inv-note mb-4">
                 Scenario planning only — not an offer, solicitation, or indication of interest from any named party.
                 No commitment is implied. Not financial or legal advice.
@@ -1443,8 +1450,9 @@
             <div class="cap-controls">
                 <h3 style="margin-top:0;">Synergy &amp; valuation tool</h3>
                 <p class="inv-stream-lede" style="margin-bottom:0.85rem;">
-                    Uses the marketplace LLM (with a local heuristic fallback) to explore synergies across the
-                    selected makeup and recommend equity breakdown plus pre/post-money valuation.
+                    Projection DCF sets valuation scale; syndicate composition adjusts stream risk premia.
+                    Optional LLM narrative when configured. Defaults match page presets: capital
+                    <strong>$0.5T / $1.5T / $2.0T</strong> raise for conservative / base / aggressive.
                 </p>
                 <div class="cap-scenario-pills" role="group" aria-label="Scenario picker">
                     <button type="button" data-scenario="conservative">Conservative</button>
@@ -1453,12 +1461,12 @@
                 </div>
                 <div class="row-fields">
                     <div>
-                        <label for="capRaiseOverride">Raise override ($M, optional)</label>
-                        <input type="number" id="capRaiseOverride" min="1" max="5000" step="1" placeholder="e.g. 25">
+                        <label for="capRaiseOverride">Raise override ($B, optional)</label>
+                        <input type="number" id="capRaiseOverride" min="1" max="20000" step="1" placeholder="e.g. 1500 = $1.5T">
                     </div>
                     <div>
-                        <label for="capPremoneyOverride">Pre-money override ($M, optional)</label>
-                        <input type="number" id="capPremoneyOverride" min="1" max="50000" step="1" placeholder="e.g. 90">
+                        <label for="capPremoneyOverride">Pre-money override ($B, optional)</label>
+                        <input type="number" id="capPremoneyOverride" min="1" max="200000" step="1" placeholder="e.g. 30000 = $30T">
                     </div>
                 </div>
                 <div style="margin-bottom:0.85rem;">
@@ -1488,6 +1496,24 @@
                 <div class="cap-scenario-tabs" id="capResultTabs" role="tablist"></div>
                 <p class="cap-narrative" id="capNarrative"></p>
                 <div class="inv-kpi-row" id="capScenarioKpis"></div>
+                <h3 class="mt-4">Stream risk &amp; DCF contribution</h3>
+                <p class="inv-note mb-2">Residual risk premium after syndicate mitigation; NPV is discounted stream profit 2026–2040.</p>
+                <div class="inv-table-wrap">
+                    <table class="inv-table" id="capStreamTable">
+                        <thead>
+                            <tr>
+                                <th>Stream</th>
+                                <th class="num">Base risk</th>
+                                <th class="num">Residual risk</th>
+                                <th class="num">Discount</th>
+                                <th class="num">Rev · 2035</th>
+                                <th class="num">Stream NPV</th>
+                                <th>Top supporters</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
                 <div class="inv-table-wrap mt-3">
                     <table class="inv-table" id="capBreakdownTable">
                         <thead>
@@ -2350,14 +2376,37 @@
 
                 const kpis = document.getElementById('capScenarioKpis');
                 if (kpis) {
+                    const proj = sc.projection || {};
                     kpis.innerHTML = [
+                        ['DCF enterprise value', money(sc.enterprise_value_usd != null ? sc.enterprise_value_usd : sc.post_money_usd)],
                         ['Pre-money', money(sc.pre_money_usd)],
                         ['Raise', money(sc.raise_usd)],
                         ['Post-money', money(sc.post_money_usd)],
+                        ['Peak seat revenue', money(proj.peak_seat_revenue)],
+                        ['Revenue · 2035', money(proj.rev_2035)],
+                        ['15-yr cum. profit', money(proj.cum_profit_15yr)],
                         ['Investor equity', (sc.equity_sold_pct != null ? sc.equity_sold_pct + '%' : '—')],
                         ['Founders / prior', (sc.founder_equity_pct != null ? sc.founder_equity_pct + '%' : '—')],
                         ['ESOP', (sc.esop_pct != null ? sc.esop_pct + '%' : '—')],
                     ].map(([l, n]) => '<div class="inv-kpi"><div class="n">' + escapeHtml(String(n)) + '</div><div class="l">' + escapeHtml(l) + '</div></div>').join('');
+                }
+
+                const streamBody = document.querySelector('#capStreamTable tbody');
+                if (streamBody) {
+                    const rows = sc.stream_valuation || [];
+                    streamBody.innerHTML = rows.length
+                        ? rows.map(r => (
+                            '<tr>' +
+                            '<td>' + escapeHtml(r.label || r.stream || '—') + '</td>' +
+                            '<td class="num">' + (r.base_risk_premium != null ? (Number(r.base_risk_premium) * 100).toFixed(1) + '%' : '—') + '</td>' +
+                            '<td class="num">' + (r.risk_premium != null ? (Number(r.risk_premium) * 100).toFixed(1) + '%' : '—') + '</td>' +
+                            '<td class="num">' + (r.discount_rate != null ? (Number(r.discount_rate) * 100).toFixed(1) + '%' : '—') + '</td>' +
+                            '<td class="num">' + money(r.rev_2035) + '</td>' +
+                            '<td class="num">' + money(r.npv) + '</td>' +
+                            '<td>' + escapeHtml((r.top_supporters || []).slice(0, 4).join(', ') || '—') + '</td>' +
+                            '</tr>'
+                        )).join('')
+                        : '<tr><td colspan="7">No stream breakdown.</td></tr>';
                 }
 
                 const tbody = document.querySelector('#capBreakdownTable tbody');
@@ -2400,8 +2449,11 @@
                 resultsEl.classList.add('is-visible');
                 const sum = document.getElementById('capSummary');
                 if (sum) {
-                    const src = data.source === 'llm' ? 'LLM' : 'heuristic model';
-                    sum.textContent = (data.summary || '') + (data.model ? ' · model: ' + data.model : ' · source: ' + src);
+                    const method = data.valuation_method === 'projection_dcf_stream_risk'
+                        ? 'projection DCF + stream risk'
+                        : (data.source || 'model');
+                    sum.textContent = (data.summary || '') + ' · ' + method +
+                        (data.model ? ' · LLM: ' + data.model : '');
                 }
                 const syn = document.getElementById('capSynergies');
                 if (syn) {
@@ -2437,10 +2489,24 @@
                     scenario: scenario,
                     notes: (document.getElementById('capNotes') || {}).value || '',
                 };
+                // Pass live projection dials so valuation matches charts for the focus scenario
+                try {
+                    if (typeof readParams === 'function') {
+                        const p = readParams();
+                        body.projection = {
+                            gmv2035: p.gmv2035,
+                            takeRate: p.takeRate,
+                            seatPrice: p.seatPrice,
+                            network: p.network,
+                            capital: p.capital,
+                        };
+                    }
+                } catch (e) { /* dials may not be ready */ }
                 const raiseEl = document.getElementById('capRaiseOverride');
                 const preEl = document.getElementById('capPremoneyOverride');
-                if (raiseEl && raiseEl.value) body.raise_usd_millions = Number(raiseEl.value);
-                if (preEl && preEl.value) body.pre_money_usd_millions = Number(preEl.value);
+                // Overrides are in $B (billions)
+                if (raiseEl && raiseEl.value) body.raise_usd_billions = Number(raiseEl.value);
+                if (preEl && preEl.value) body.pre_money_usd_billions = Number(preEl.value);
 
                 try {
                     const res = await fetch(apiBase + '/investors/cap_table_synergy', {

@@ -5770,29 +5770,158 @@ _CHECK_WEIGHT = {
     "small": 1.0,
 }
 
-_SCENARIO_PARAMS = {
-    # Illustrative seed/series-scale defaults for a robot labor exchange.
+# Projection dials — mirrors investors.html PRESETS / readParams()
+# capital dial: value/100 * $1T  → base 150 = $1.5T raise
+_PROJECTION_PRESETS = {
     "conservative": {
-        "pre_money_m": 40,
-        "raise_m": 12,
-        "equity_sold_pct": 18,
-        "esop_pct": 10,
         "label": "Conservative",
+        "gmv": 25,          # → $2.5T 2035 GMV
+        "take": 30,         # → 3.0% take-rate
+        "seatPrice": 50,    # → $50k / seat
+        "network": 40,      # → 0.40×
+        "capital": 50,      # → $0.5T raise
+        "esop_pct": 10.0,
+        "base_discount": 0.34,  # high discount for path uncertainty
     },
     "base": {
-        "pre_money_m": 90,
-        "raise_m": 25,
-        "equity_sold_pct": 20,
-        "esop_pct": 12,
         "label": "Base",
+        "gmv": 100,         # → $10T 2035 GMV
+        "take": 50,         # → 5.0%
+        "seatPrice": 100,   # → $100k
+        "network": 100,     # → 1.0×
+        "capital": 150,     # → $1.5T raise
+        "esop_pct": 12.0,
+        "base_discount": 0.28,
     },
     "aggressive": {
-        "pre_money_m": 220,
-        "raise_m": 60,
-        "equity_sold_pct": 18,
-        "esop_pct": 12,
         "label": "Aggressive",
+        "gmv": 250,         # → $25T 2035 GMV
+        "take": 70,         # → 7.0%
+        "seatPrice": 120,   # → $120k
+        "network": 180,     # → 1.8×
+        "capital": 200,     # → $2.0T raise
+        "esop_pct": 12.0,
+        "base_discount": 0.22,
     },
+}
+
+# Keep name for scenario key validation
+_SCENARIO_PARAMS = _PROJECTION_PRESETS
+
+# Base curves (absolute units at network scale = 1.0) — same as investors.html
+_BASE_GMV = {
+    2026: 1e9, 2027: 8e9, 2028: 40e9, 2029: 150e9, 2030: 450e9,
+    2031: 1.1e12, 2032: 2.4e12, 2033: 4.5e12, 2034: 7.0e12, 2035: 10e12,
+    2036: 13.5e12, 2037: 17.5e12, 2038: 22e12, 2039: 27e12, 2040: 32e12,
+}
+_BASE_SEAT_NEW = {
+    2026: 1e6, 2027: 9e6, 2028: 90e6, 2029: 400e6, 2030: 500e6,
+    2031: 1e7, 2032: 2e6, 2033: 5e5, 2034: 2e5, 2035: 1e5,
+    2036: 5e4, 2037: 5e4, 2038: 5e4, 2039: 5e4, 2040: 5e4,
+}
+_BASE_ROBOTS = {
+    2026: 5e4, 2027: 4e5, 2028: 2e6, 2029: 8e6, 2030: 25e6,
+    2031: 60e6, 2032: 110e6, 2033: 170e6, 2034: 230e6, 2035: 300e6,
+    2036: 360e6, 2037: 420e6, 2038: 480e6, 2039: 540e6, 2040: 600e6,
+}
+_BASE_ADS = {
+    2026: 5e6, 2027: 40e6, 2028: 200e6, 2029: 800e6, 2030: 2.5e9,
+    2031: 6e9, 2032: 12e9, 2033: 20e9, 2034: 30e9, 2035: 45e9,
+    2036: 60e9, 2037: 75e9, 2038: 90e9, 2039: 105e9, 2040: 120e9,
+}
+_BASE_G_NEW = {
+    2026: 20, 2027: 80, 2028: 250, 2029: 600, 2030: 1200,
+    2031: 2000, 2032: 2800, 2033: 3200, 2034: 3500, 2035: 3600,
+    2036: 3400, 2037: 3000, 2038: 2600, 2039: 2200, 2040: 1800,
+}
+_BASE_L_NEW = {
+    2026: 50, 2027: 200, 2028: 700, 2029: 1800, 2030: 4000,
+    2031: 7000, 2032: 10000, 2033: 12000, 2034: 13000, 2035: 14000,
+    2036: 13000, 2037: 12000, 2038: 10000, 2039: 9000, 2040: 8000,
+}
+_BASE_AUM = {
+    2026: 50e6, 2027: 400e6, 2028: 2.5e9, 2029: 12e9, 2030: 40e9,
+    2031: 100e9, 2032: 220e9, 2033: 400e9, 2034: 650e9, 2035: 1e12,
+    2036: 1.4e12, 2037: 1.85e12, 2038: 2.3e12, 2039: 2.8e12, 2040: 3.3e12,
+}
+_ASP = 25000.0
+_AFF = 0.03
+_FIN_ATTACH = 0.40
+_FIN_FEE = 0.015
+_HYP_RATE = 0.028
+_BASE_GMV_2035 = 10e12
+_COST_BANDS = {
+    "exchange": (0.35, 0.12),
+    "seats": (0.15, 0.05),
+    "hardware": (0.25, 0.12),
+    "ads": (0.45, 0.28),
+    "franchise": (0.55, 0.35),
+    "hyperion": (0.50, 0.30),
+}
+_STREAM_KEYS = ("exchange", "seats", "hardware", "ads", "franchise", "hyperion")
+_STREAM_LABELS = {
+    "exchange": "Exchange take-rate",
+    "seats": "Eternal seats",
+    "hardware": "Hardware referrals",
+    "ads": "Nearby / ads",
+    "franchise": "Franchising",
+    "hyperion": "Hyperion Fund fees",
+}
+# Unmitigated path risk premium by stream (added to base discount)
+_STREAM_BASE_RISK = {
+    "exchange": 0.12,
+    "seats": 0.10,
+    "hardware": 0.14,
+    "ads": 0.15,
+    "franchise": 0.16,
+    "hyperion": 0.13,
+}
+# Max fraction of stream risk that a perfectly aligned syndicate can remove
+_STREAM_MAX_MITIGATION = {
+    "exchange": 0.55,
+    "seats": 0.50,
+    "hardware": 0.60,
+    "ads": 0.45,
+    "franchise": 0.40,
+    "hyperion": 0.55,
+}
+# Investor → stream affinity weights (how strongly they de-risk each stream)
+_INVESTOR_STREAM_AFFINITY: Dict[str, Dict[str, float]] = {
+    "spacex_tesla": {"exchange": 0.9, "seats": 0.7, "hardware": 0.85, "ads": 0.2, "franchise": 0.25, "hyperion": 0.3},
+    "nvidia": {"exchange": 0.55, "seats": 0.35, "hardware": 1.0, "ads": 0.25, "franchise": 0.15, "hyperion": 0.35},
+    "unitree": {"exchange": 0.4, "seats": 0.45, "hardware": 1.0, "ads": 0.1, "franchise": 0.35, "hyperion": 0.15},
+    "boston_dynamics_hyundai": {"exchange": 0.55, "seats": 0.5, "hardware": 0.95, "ads": 0.15, "franchise": 0.45, "hyperion": 0.2},
+    "inqtel": {"exchange": 0.5, "seats": 0.25, "hardware": 0.35, "ads": 0.1, "franchise": 0.1, "hyperion": 0.2},
+    "google_alphabet": {"exchange": 0.75, "seats": 0.4, "hardware": 0.35, "ads": 1.0, "franchise": 0.2, "hyperion": 0.35},
+    "microsoft": {"exchange": 0.7, "seats": 0.35, "hardware": 0.4, "ads": 0.45, "franchise": 0.2, "hyperion": 0.4},
+    "amazon_aws": {"exchange": 0.85, "seats": 0.45, "hardware": 0.55, "ads": 0.5, "franchise": 0.25, "hyperion": 0.3},
+    "softbank": {"exchange": 0.6, "seats": 0.7, "hardware": 0.45, "ads": 0.35, "franchise": 0.4, "hyperion": 0.65},
+    "pif_saudi": {"exchange": 0.45, "seats": 0.55, "hardware": 0.4, "ads": 0.2, "franchise": 0.55, "hyperion": 0.8},
+    "nbim_norway": {"exchange": 0.35, "seats": 0.4, "hardware": 0.25, "ads": 0.2, "franchise": 0.3, "hyperion": 0.85},
+    "kic_korea": {"exchange": 0.4, "seats": 0.45, "hardware": 0.55, "ads": 0.25, "franchise": 0.35, "hyperion": 0.75},
+    "temasek": {"exchange": 0.5, "seats": 0.5, "hardware": 0.4, "ads": 0.3, "franchise": 0.4, "hyperion": 0.8},
+    "a16z": {"exchange": 0.9, "seats": 0.65, "hardware": 0.4, "ads": 0.45, "franchise": 0.35, "hyperion": 0.4},
+    "sequoia": {"exchange": 0.9, "seats": 0.7, "hardware": 0.4, "ads": 0.45, "franchise": 0.4, "hyperion": 0.4},
+    "benchmark": {"exchange": 0.95, "seats": 0.55, "hardware": 0.3, "ads": 0.5, "franchise": 0.3, "hyperion": 0.25},
+    "founders_fund": {"exchange": 0.7, "seats": 0.5, "hardware": 0.55, "ads": 0.25, "franchise": 0.25, "hyperion": 0.35},
+    "khosla": {"exchange": 0.65, "seats": 0.4, "hardware": 0.7, "ads": 0.25, "franchise": 0.25, "hyperion": 0.3},
+    "accel": {"exchange": 0.75, "seats": 0.55, "hardware": 0.35, "ads": 0.4, "franchise": 0.35, "hyperion": 0.3},
+    "lightspeed": {"exchange": 0.7, "seats": 0.5, "hardware": 0.35, "ads": 0.4, "franchise": 0.3, "hyperion": 0.3},
+    "index": {"exchange": 0.75, "seats": 0.5, "hardware": 0.3, "ads": 0.4, "franchise": 0.35, "hyperion": 0.3},
+    "general_catalyst": {"exchange": 0.75, "seats": 0.55, "hardware": 0.4, "ads": 0.35, "franchise": 0.35, "hyperion": 0.35},
+    "bessemer": {"exchange": 0.7, "seats": 0.5, "hardware": 0.3, "ads": 0.35, "franchise": 0.3, "hyperion": 0.3},
+    "coatue": {"exchange": 0.55, "seats": 0.55, "hardware": 0.35, "ads": 0.55, "franchise": 0.25, "hyperion": 0.5},
+    "tiger": {"exchange": 0.5, "seats": 0.55, "hardware": 0.3, "ads": 0.45, "franchise": 0.25, "hyperion": 0.5},
+    "insight": {"exchange": 0.6, "seats": 0.5, "hardware": 0.3, "ads": 0.4, "franchise": 0.3, "hyperion": 0.4},
+    "thrive": {"exchange": 0.7, "seats": 0.55, "hardware": 0.35, "ads": 0.5, "franchise": 0.3, "hyperion": 0.35},
+    "blackrock": {"exchange": 0.45, "seats": 0.5, "hardware": 0.3, "ads": 0.3, "franchise": 0.35, "hyperion": 1.0},
+    "bezos_expeditions": {"exchange": 0.65, "seats": 0.5, "hardware": 0.45, "ads": 0.3, "franchise": 0.35, "hyperion": 0.45},
+    "emerson_collective": {"exchange": 0.4, "seats": 0.35, "hardware": 0.25, "ads": 0.35, "franchise": 0.45, "hyperion": 0.35},
+    "walton_enterprises": {"exchange": 0.55, "seats": 0.4, "hardware": 0.35, "ads": 0.45, "franchise": 0.55, "hyperion": 0.4},
+    "caterpillar_ventures": {"exchange": 0.6, "seats": 0.4, "hardware": 0.75, "ads": 0.15, "franchise": 0.4, "hyperion": 0.2},
+    "lockheed_ventures": {"exchange": 0.55, "seats": 0.3, "hardware": 0.5, "ads": 0.1, "franchise": 0.15, "hyperion": 0.2},
+    "palantir": {"exchange": 0.7, "seats": 0.35, "hardware": 0.4, "ads": 0.2, "franchise": 0.2, "hyperion": 0.35},
+    "samsung_ventures": {"exchange": 0.4, "seats": 0.4, "hardware": 0.85, "ads": 0.3, "franchise": 0.3, "hyperion": 0.25},
 }
 
 
@@ -5803,6 +5932,10 @@ def get_cap_table_investors() -> Tuple[Dict[str, Any], int]:
         "count": len(CAP_TABLE_INVESTORS),
         "min_select": 1,
         "max_select": min(30, len(CAP_TABLE_INVESTORS)),
+        "valuation_basis": (
+            "DCF of 2026–2040 operating profit by revenue stream from the investors.html "
+            "projection model; cap-table makeup reduces per-stream risk premia."
+        ),
         "disclaimer": (
             "Illustrative menu only — not an offer, solicitation, or indication of interest "
             "from any named party. Combinations are for scenario planning."
@@ -5810,189 +5943,526 @@ def get_cap_table_investors() -> Tuple[Dict[str, Any], int]:
     }, 200
 
 
+def _cost_ratio(year: int, early: float, late: float) -> float:
+    t = min(1.0, max(0.0, (year - 2026) / (2035 - 2026)))
+    return early + (late - early) * t
+
+
+def _dial_params_from_preset(preset: Dict[str, Any]) -> Dict[str, float]:
+    """Convert UI dial integers to model parameters (matches investors.html readParams)."""
+    return {
+        "gmv2035": (float(preset["gmv"]) / 10.0) * 1e12,
+        "takeRate": float(preset["take"]) / 1000.0,
+        "seatPrice": float(preset["seatPrice"]) * 1000.0,
+        "network": float(preset["network"]) / 100.0,
+        "capital": (float(preset["capital"]) / 100.0) * 1e12,
+    }
+
+
+def _merge_projection_overrides(preset_key: str, overrides: Optional[Dict[str, Any]]) -> Dict[str, float]:
+    """Start from scenario preset; optional client dials (same units as readParams)."""
+    base = _dial_params_from_preset(_PROJECTION_PRESETS[preset_key])
+    if not overrides or not isinstance(overrides, dict):
+        return base
+    if overrides.get("gmv2035") is not None:
+        try:
+            base["gmv2035"] = float(overrides["gmv2035"])
+        except (TypeError, ValueError):
+            pass
+    if overrides.get("takeRate") is not None:
+        try:
+            base["takeRate"] = float(overrides["takeRate"])
+        except (TypeError, ValueError):
+            pass
+    if overrides.get("seatPrice") is not None:
+        try:
+            base["seatPrice"] = float(overrides["seatPrice"])
+        except (TypeError, ValueError):
+            pass
+    if overrides.get("network") is not None:
+        try:
+            base["network"] = float(overrides["network"])
+        except (TypeError, ValueError):
+            pass
+    if overrides.get("capital") is not None:
+        try:
+            base["capital"] = float(overrides["capital"])
+        except (TypeError, ValueError):
+            pass
+    # Sanity clamps
+    base["gmv2035"] = max(1e9, min(100e12, base["gmv2035"]))
+    base["takeRate"] = max(0.005, min(0.20, base["takeRate"]))
+    base["seatPrice"] = max(1000.0, min(1e6, base["seatPrice"]))
+    base["network"] = max(0.05, min(5.0, base["network"]))
+    base["capital"] = max(1e6, min(20e12, base["capital"]))
+    return base
+
+
+def _build_projection_series(p: Dict[str, float]) -> Dict[str, Any]:
+    """Mirror investors.html buildSeries — revenue & profit by stream, 2026–2040."""
+    gmv_scale = p["gmv2035"] / _BASE_GMV_2035
+    n = p["network"]
+    years = list(range(2026, 2041))
+    series: Dict[str, Any] = {
+        "years": years,
+        "gmv": [],
+        "revenue": [],
+        "cost": [],
+        "profit": [],
+        "by_stream_rev": {k: [] for k in _STREAM_KEYS},
+        "by_stream_profit": {k: [] for k in _STREAM_KEYS},
+    }
+    g_active = 0
+    l_active = 0
+    garage_gross, lighthouse_gross = 320000.0, 180000.0
+    garage_fee, lighthouse_fee = 75000.0, 50000.0
+    garage_royalty, lighthouse_royalty = 0.06, 0.08
+    franchise_retain = 0.95
+
+    for y in years:
+        gmv = _BASE_GMV[y] * gmv_scale
+        exchange = gmv * p["takeRate"]
+        seat_units = _BASE_SEAT_NEW[y] * n
+        seats = seat_units * p["seatPrice"]
+        robots = _BASE_ROBOTS[y] * n
+        hardware = robots * _ASP * _AFF + robots * _FIN_ATTACH * _ASP * _FIN_FEE
+        ads = _BASE_ADS[y] * n
+        g_new = max(0, int(round(_BASE_G_NEW[y] * n)))
+        l_new = max(0, int(round(_BASE_L_NEW[y] * n)))
+        g_active = int(g_active * franchise_retain) + g_new
+        l_active = int(l_active * franchise_retain) + l_new
+        franchise = (
+            g_new * garage_fee + l_new * lighthouse_fee
+            + g_active * garage_gross * garage_royalty
+            + l_active * lighthouse_gross * lighthouse_royalty
+        )
+        hyperion = _BASE_AUM[y] * n * _HYP_RATE
+        revs = {
+            "exchange": exchange,
+            "seats": seats,
+            "hardware": hardware,
+            "ads": ads,
+            "franchise": franchise,
+            "hyperion": hyperion,
+        }
+        costs = {
+            k: revs[k] * _cost_ratio(y, *_COST_BANDS[k]) for k in _STREAM_KEYS
+        }
+        profits = {k: revs[k] - costs[k] for k in _STREAM_KEYS}
+        rev = sum(revs.values())
+        cost = sum(costs.values())
+        series["gmv"].append(gmv)
+        series["revenue"].append(rev)
+        series["cost"].append(cost)
+        series["profit"].append(rev - cost)
+        for k in _STREAM_KEYS:
+            series["by_stream_rev"][k].append(revs[k])
+            series["by_stream_profit"][k].append(profits[k])
+
+    # Peak seat revenue (matches UI "peak year seat revenue")
+    seat_revs = series["by_stream_rev"]["seats"]
+    peak_seats = max(seat_revs) if seat_revs else 0.0
+    idx_2035 = years.index(2035)
+    series["peak_seat_revenue"] = peak_seats
+    series["rev_2035"] = series["revenue"][idx_2035]
+    series["profit_2035"] = series["profit"][idx_2035]
+    series["cum_profit"] = sum(series["profit"])
+    series["stream_cum_profit"] = {
+        k: sum(series["by_stream_profit"][k]) for k in _STREAM_KEYS
+    }
+    series["stream_rev_2035"] = {
+        k: series["by_stream_rev"][k][idx_2035] for k in _STREAM_KEYS
+    }
+    return series
+
+
+def _stream_risk_from_cap_table(selected: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Cap-table makeup → per-stream risk premium.
+    Affinity scores from selected investors reduce unmitigated stream risk.
+    """
+    scores = {k: 0.0 for k in _STREAM_KEYS}
+    contributors: Dict[str, List[str]] = {k: [] for k in _STREAM_KEYS}
+    for inv in selected:
+        iid = inv["id"]
+        aff = _INVESTOR_STREAM_AFFINITY.get(iid) or {
+            "exchange": 0.35, "seats": 0.35, "hardware": 0.3,
+            "ads": 0.25, "franchise": 0.25, "hyperion": 0.3,
+        }
+        # Larger checks / mega tiers de-risk more (capital + credibility)
+        tier_boost = {
+            "mega": 1.15, "sovereign": 1.2, "tier1_vc": 1.05, "growth": 1.0,
+            "growth_vc": 1.0, "family": 0.95, "corporate_vc": 1.05,
+            "specialist": 1.1, "large": 1.05,
+        }.get(inv.get("tier"), 1.0)
+        check_boost = {"xlarge": 1.2, "large": 1.1, "medium": 1.0, "small": 0.9}.get(
+            inv.get("typical_check"), 1.0
+        )
+        mult = tier_boost * check_boost
+        for sk in _STREAM_KEYS:
+            w = float(aff.get(sk, 0.3)) * mult
+            scores[sk] += w
+            if w >= 0.55:
+                contributors[sk].append(inv["name"])
+
+    # Normalize: diminishing returns — affinity sum of ~3.0 ≈ full mitigation budget
+    risk = {}
+    for sk in _STREAM_KEYS:
+        raw = scores[sk]
+        mitigation_frac = min(1.0, raw / 3.0) * _STREAM_MAX_MITIGATION[sk]
+        base_r = _STREAM_BASE_RISK[sk]
+        residual = base_r * (1.0 - mitigation_frac)
+        # Floor residual risk (never fully risk-free)
+        residual = max(0.025, residual)
+        risk[sk] = {
+            "stream": sk,
+            "label": _STREAM_LABELS[sk],
+            "base_risk_premium": round(base_r, 4),
+            "affinity_score": round(raw, 3),
+            "mitigation_frac": round(mitigation_frac, 4),
+            "risk_premium": round(residual, 4),
+            "top_supporters": contributors[sk][:6],
+        }
+    return risk
+
+
+def _fmt_usd_short(x: float) -> str:
+    ax = abs(x)
+    sign = "-" if x < 0 else ""
+    if ax >= 999.995e9:
+        return f"{sign}${ax / 1e12:.2f}T"
+    if ax >= 999.95e6:
+        return f"{sign}${ax / 1e9:.2f}B"
+    if ax >= 999.5e3:
+        return f"{sign}${ax / 1e6:.1f}M"
+    if ax >= 1e3:
+        return f"{sign}${ax / 1e3:.0f}K"
+    return f"{sign}${ax:.0f}"
+
+
+def _dcf_stream_profits(
+    series: Dict[str, Any],
+    stream_risk: Dict[str, Any],
+    base_discount: float,
+) -> Dict[str, Any]:
+    """NPV of each stream's operating profit path; EV = sum of stream NPVs."""
+    years = series["years"]
+    stream_npv = {}
+    total = 0.0
+    for sk in _STREAM_KEYS:
+        r = base_discount + float(stream_risk[sk]["risk_premium"])
+        npv = 0.0
+        for t, y in enumerate(years):
+            profit = series["by_stream_profit"][sk][t]
+            npv += profit / ((1.0 + r) ** t)
+        stream_npv[sk] = {
+            "npv": npv,
+            "discount_rate": round(r, 4),
+            "cum_profit": series["stream_cum_profit"][sk],
+            "rev_2035": series["stream_rev_2035"][sk],
+            "label": _STREAM_LABELS[sk],
+            "risk_premium": stream_risk[sk]["risk_premium"],
+        }
+        total += npv
+    return {"stream_npv": stream_npv, "enterprise_value": total}
+
+
+def _investor_weights(selected: List[Dict[str, Any]]) -> List[float]:
+    weights = []
+    for s in selected:
+        w = _CHECK_WEIGHT.get(s.get("typical_check", "medium"), 1.5)
+        if s.get("tier") in ("mega", "sovereign"):
+            w *= 1.2
+        if s.get("tier") == "specialist":
+            w *= 0.9
+        # Slight boost if broad stream affinity
+        aff = _INVESTOR_STREAM_AFFINITY.get(s["id"], {})
+        if aff:
+            w *= 1.0 + 0.08 * (sum(aff.values()) / max(len(aff), 1))
+        weights.append(w)
+    return weights
+
+
 def _cap_table_heuristic(
     selected: List[Dict[str, Any]],
     scenario_key: str,
     notes: str,
-    raise_override_m: Optional[float],
-    premoney_override_m: Optional[float],
+    raise_override_usd: Optional[float],
+    premoney_override_usd: Optional[float],
+    projection_overrides: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Deterministic fallback when LLM is unavailable."""
+    """
+    Valuation from 15-year projection DCF; cap table sets per-stream risk premia.
+    Raise defaults to scenario capital dial ($0.5T / $1.5T / $2T).
+    """
     n = len(selected)
+    stream_risk = _stream_risk_from_cap_table(selected)
+    mega_n = sum(1 for s in selected if s.get("tier") in ("mega", "sovereign"))
     scenarios_out: Dict[str, Any] = {}
+    projection_summaries: Dict[str, Any] = {}
 
-    for key, base in _SCENARIO_PARAMS.items():
-        # Scale raise slightly with participant count and mega presence
-        mega_n = sum(1 for s in selected if s.get("tier") in ("mega", "sovereign"))
-        scale = 1.0 + 0.04 * max(0, n - 3) + 0.06 * mega_n
-        raise_m = float(raise_override_m) if (raise_override_m and key == scenario_key) else base["raise_m"] * min(scale, 2.2)
-        pre_m = float(premoney_override_m) if (premoney_override_m and key == scenario_key) else base["pre_money_m"] * min(1.0 + 0.03 * mega_n + 0.015 * n, 1.8)
-        post_m = pre_m + raise_m
-        sold = base["equity_sold_pct"]
-        # Keep sold equity in a sensible band for multi-party rounds
-        if n >= 8:
-            sold = min(28.0, sold + (n - 7) * 0.6)
-        elif n == 1:
-            sold = max(12.0, sold - 2)
-        esop = base["esop_pct"]
-        investor_pool = sold  # % of fully diluted post-money allocated to this round investors
-        weights = []
-        for s in selected:
-            w = _CHECK_WEIGHT.get(s.get("typical_check", "medium"), 1.5)
-            if s.get("tier") in ("mega", "sovereign"):
-                w *= 1.15
-            if s.get("tier") == "specialist":
-                w *= 0.85
-            weights.append(w)
+    for key, preset in _PROJECTION_PRESETS.items():
+        params = _merge_projection_overrides(
+            key,
+            projection_overrides if key == scenario_key else None,
+        )
+        series = _build_projection_series(params)
+        dcf = _dcf_stream_profits(series, stream_risk, float(preset["base_discount"]))
+        ev = float(dcf["enterprise_value"])
+
+        # Raise: capital dial, slightly scaled by syndicate depth for focus scenario only
+        raise_usd = float(params["capital"])
+        if key == scenario_key and raise_override_usd is not None:
+            raise_usd = float(raise_override_usd)
+        else:
+            # More mega/sovereign capacity → can absorb larger primary
+            capacity = 1.0 + 0.03 * mega_n + 0.01 * max(0, n - 5)
+            raise_usd = raise_usd * min(capacity, 1.35)
+
+        if key == scenario_key and premoney_override_usd is not None:
+            pre_usd = float(premoney_override_usd)
+            post_usd = pre_usd + raise_usd
+            # If override fights DCF, keep EV note but use override for round math
+            ev_used = post_usd
+        else:
+            # Equity value today ≈ risk-adjusted DCF of projected profits
+            post_usd = max(ev, raise_usd * 1.05)
+            pre_usd = max(post_usd - raise_usd, post_usd * 0.15)
+
+        # Dilution from this primary
+        equity_sold = 100.0 * raise_usd / post_usd if post_usd > 0 else 20.0
+        equity_sold = max(8.0, min(35.0, equity_sold))
+        # If cap hit, reconcile raise to sold% of post (keep post/EV, adjust raise)
+        if equity_sold >= 34.9 or equity_sold <= 8.1:
+            raise_usd = post_usd * (equity_sold / 100.0)
+            pre_usd = post_usd - raise_usd
+
+        esop = float(preset["esop_pct"])
+        # Crowded tables: slightly larger primary pool
+        if n >= 12:
+            equity_sold = min(35.0, equity_sold + min(4.0, (n - 11) * 0.35))
+            raise_usd = post_usd * (equity_sold / 100.0)
+            pre_usd = post_usd - raise_usd
+
+        investor_pool = equity_sold
+        weights = _investor_weights(selected)
         wsum = sum(weights) or 1.0
         breakdown = []
         for s, w in zip(selected, weights):
             pct = round(investor_pool * (w / wsum), 2)
-            check = round(raise_m * 1_000_000 * (w / wsum))
+            check = int(round(raise_usd * (w / wsum)))
+            # Annotate primary stream support
+            aff = _INVESTOR_STREAM_AFFINITY.get(s["id"], {})
+            top_stream = max(aff, key=aff.get) if aff else "exchange"
             breakdown.append({
                 "id": s["id"],
                 "name": s["name"],
                 "equity_pct": pct,
                 "check_size_usd": check,
                 "role": s.get("category"),
-                "notes": s.get("blurb"),
+                "notes": f"Primary de-risk: {_STREAM_LABELS.get(top_stream, top_stream)}. {s.get('blurb', '')}"[:300],
             })
-        # Fix rounding drift on equity %
         drift = round(investor_pool - sum(b["equity_pct"] for b in breakdown), 2)
         if breakdown and abs(drift) >= 0.01:
             breakdown[0]["equity_pct"] = round(breakdown[0]["equity_pct"] + drift, 2)
+
         founder_pct = round(100.0 - investor_pool - esop, 2)
         if founder_pct < 40:
-            # Rebalance: shrink investor pool slightly to protect founders in crowded rounds
-            shrink = min(investor_pool * 0.15, 40 - founder_pct + 5)
+            shrink = min(investor_pool * 0.2, (40 - founder_pct) + 2)
             investor_pool = round(investor_pool - shrink, 2)
             factor = investor_pool / max(sum(b["equity_pct"] for b in breakdown), 0.01)
             for b in breakdown:
                 b["equity_pct"] = round(b["equity_pct"] * factor, 2)
-                b["check_size_usd"] = int(round(raise_m * 1_000_000 * (b["equity_pct"] / max(investor_pool, 0.01))))
+                b["check_size_usd"] = int(round(raise_usd * (b["equity_pct"] / max(investor_pool, 0.01))))
             founder_pct = round(100.0 - investor_pool - esop, 2)
+            equity_sold = investor_pool
+
+        stream_rows = []
+        for sk in _STREAM_KEYS:
+            sn = dcf["stream_npv"][sk]
+            sr = stream_risk[sk]
+            stream_rows.append({
+                "stream": sk,
+                "label": sn["label"],
+                "rev_2035": int(sn["rev_2035"]),
+                "cum_profit": int(sn["cum_profit"]),
+                "npv": int(sn["npv"]),
+                "discount_rate": sn["discount_rate"],
+                "risk_premium": sn["risk_premium"],
+                "base_risk_premium": sr["base_risk_premium"],
+                "mitigation_frac": sr["mitigation_frac"],
+                "top_supporters": sr["top_supporters"],
+            })
+
+        peak_seats = series["peak_seat_revenue"]
+        narrative = (
+            f"{preset['label']} uses the investors.html projection path "
+            f"(2035 GMV {_fmt_usd_short(params['gmv2035'])}, take-rate {params['takeRate']*100:.1f}%, "
+            f"seat {_fmt_usd_short(params['seatPrice'])}, network {params['network']:.2f}×). "
+            f"Peak seat revenue {_fmt_usd_short(peak_seats)}; 2035 total revenue {_fmt_usd_short(series['rev_2035'])}; "
+            f"15-yr cum. profit {_fmt_usd_short(series['cum_profit'])}. "
+            f"Enterprise value {_fmt_usd_short(ev)} = DCF of stream profits at base discount "
+            f"{preset['base_discount']*100:.0f}% plus residual stream risk premia after syndicate mitigation. "
+            f"Primary raise {_fmt_usd_short(raise_usd)} → {_fmt_usd_short(pre_usd)} pre / {_fmt_usd_short(post_usd)} post."
+        )
 
         scenarios_out[key] = {
-            "label": base["label"],
-            "pre_money_usd": int(pre_m * 1_000_000),
-            "post_money_usd": int(post_m * 1_000_000),
-            "raise_usd": int(raise_m * 1_000_000),
+            "label": preset["label"],
+            "pre_money_usd": int(pre_usd),
+            "post_money_usd": int(post_usd),
+            "raise_usd": int(raise_usd),
+            "enterprise_value_usd": int(ev),
             "equity_sold_pct": round(investor_pool, 2),
             "founder_equity_pct": founder_pct,
             "esop_pct": esop,
             "breakdown": breakdown,
-            "narrative": (
-                f"{base['label']} case assumes ~${raise_m:.0f}M raise at "
-                f"~${pre_m:.0f}M pre-money with {n} participant(s). "
-                "Allocation weights strategic/mega checks larger than specialist or early VC seats. "
-                "Illustrative only."
-            ),
+            "narrative": narrative,
+            "projection": {
+                "gmv_2035": int(params["gmv2035"]),
+                "take_rate": params["takeRate"],
+                "seat_price": params["seatPrice"],
+                "network": params["network"],
+                "capital_dial": int(params["capital"]),
+                "peak_seat_revenue": int(peak_seats),
+                "rev_2035": int(series["rev_2035"]),
+                "profit_2035": int(series["profit_2035"]),
+                "cum_profit_15yr": int(series["cum_profit"]),
+                "base_discount": preset["base_discount"],
+            },
+            "stream_valuation": stream_rows,
         }
+        projection_summaries[key] = scenarios_out[key]["projection"]
 
-    # Synergies by simple category co-presence
-    cats = {s["id"]: s for s in selected}
+    # Synergies (same qualitative rules + projection-aware note)
     synergies = []
     risks = []
-    ids = set(cats.keys())
-
-    def has(*x):
-        return all(i in ids for i in x)
+    ids = {s["id"] for s in selected}
 
     def has_any(*x):
         return any(i in ids for i in x)
+
+    # Stream-risk-informed synergy blurbs
+    best_mitigated = sorted(
+        stream_risk.values(), key=lambda r: r["mitigation_frac"], reverse=True
+    )[:2]
+    for bm in best_mitigated:
+        if bm["mitigation_frac"] >= 0.15 and bm["top_supporters"]:
+            synergies.append({
+                "theme": f"De-risked: {bm['label']}",
+                "strength": "high" if bm["mitigation_frac"] >= 0.3 else "medium",
+                "rationale": (
+                    f"Syndicate affinity cuts this stream's risk premium from "
+                    f"{bm['base_risk_premium']*100:.1f}% to {bm['risk_premium']*100:.1f}% "
+                    f"(supporters include {', '.join(bm['top_supporters'][:3])})."
+                ),
+            })
 
     if has_any("nvidia") and has_any("unitree", "boston_dynamics_hyundai", "spacex_tesla"):
         synergies.append({
             "theme": "Silicon + body",
             "strength": "high",
-            "rationale": "Compute partner plus robot OEM creates a full-stack supply story for fleet operators on the exchange.",
+            "rationale": "Compute + OEM coverage raises hardware referral probability and seat attach on the projection path.",
         })
     if has_any("spacex_tesla") and has_any("nvidia", "google_alphabet", "microsoft"):
         synergies.append({
             "theme": "Autonomy stack credibility",
             "strength": "high",
-            "rationale": "Flagship autonomy brand plus AI/cloud platform anchors enterprise and municipal RFPs.",
+            "rationale": "Lowers exchange GMV execution risk in the DCF (enterprise and municipal demand).",
         })
     if has_any("inqtel", "lockheed_ventures", "palantir") and has_any("a16z", "founders_fund", "sequoia"):
         synergies.append({
             "theme": "Dual-use commercial + secure buyers",
             "strength": "medium",
-            "rationale": "Commercial VC distribution with defense/intel pathways diversifies demand beyond consumer services.",
+            "rationale": "Diversifies take-rate GMV beyond consumer robotics jobs.",
         })
     if has_any("pif_saudi", "nbim_norway", "kic_korea", "temasek") and has_any("softbank", "blackrock"):
         synergies.append({
             "theme": "Sovereign + institutional scale",
             "strength": "high",
-            "rationale": "Patient sovereign capital with mega-fund process expertise supports multi-region density build-out.",
+            "rationale": "Supports Hyperion AUM ramp and multi-region network scale in the model.",
         })
     if has_any("amazon_aws", "caterpillar_ventures", "boston_dynamics_hyundai"):
         synergies.append({
             "theme": "Industrial / logistics demand pull",
             "strength": "medium",
-            "rationale": "Buyer-side strategics accelerate GMV in warehouse, yard, and facility robotics jobs.",
+            "rationale": "Buyer-side strategics lift exchange and hardware stream probability-weighted profits.",
         })
-    if has_any("a16z", "sequoia", "benchmark") and n <= 5:
+    if has_any("google_alphabet") and has_any("amazon_aws", "microsoft"):
         synergies.append({
-            "theme": "Tier-1 VC governance simplicity",
+            "theme": "Attention + cloud distribution",
             "strength": "medium",
-            "rationale": "A compact top-tier syndicate is easier to close and often cleaner for follow-ons than a crowded cap table.",
-        })
-    if has_any("bezos_expeditions", "emerson_collective", "walton_enterprises") and has_any("softbank", "tiger", "coatue"):
-        synergies.append({
-            "theme": "Patient + growth barbell",
-            "strength": "medium",
-            "rationale": "Family-office patience balances growth-fund velocity on board dynamics and runway strategy.",
+            "rationale": "Reduces Nearby/ads and exchange distribution risk in the 15-year path.",
         })
     if not synergies:
         synergies.append({
             "theme": "Diversified capital stack",
             "strength": "medium",
-            "rationale": "Selected participants span different capital styles; primary synergy is financing flexibility and network breadth.",
+            "rationale": "Broad syndicate applies moderate risk mitigation across all six revenue streams.",
         })
 
+    weak = [r for r in stream_risk.values() if r["mitigation_frac"] < 0.12]
+    for w in weak[:3]:
+        risks.append(
+            f"{w['label']} remains high-risk in the DCF (premium ~{w['risk_premium']*100:.1f}%); "
+            f"few selected investors map strongly to this stream."
+        )
     if n > 10:
         risks.append("Crowded round may slow closing and complicate pro-rata / information rights.")
     if has_any("unitree") and has_any("boston_dynamics_hyundai"):
-        risks.append("Two OEM strategics can create channel conflict or exclusivity tension unless roles are carefully scoped.")
+        risks.append("Two OEM strategics can create channel conflict unless hardware roles are scoped.")
     if has_any("inqtel", "lockheed_ventures") and has_any("unitree", "pif_saudi"):
-        risks.append("Export control / CFIUS and dual-use optics require counsel before combining certain strategics.")
-    if has_any("softbank", "tiger") and has_any("benchmark"):
-        risks.append("Ownership and board control expectations can diverge between early concentrated VC and mega growth funds.")
+        risks.append("Export control / CFIUS optics require counsel before combining certain strategics.")
     if mega_n >= 4:
-        risks.append("Multiple mega strategics may each demand preferred rights that stack poorly.")
+        risks.append("Multiple mega/sovereign names may stack preferred rights that pressure founder ownership.")
     if not risks:
-        risks.append("Primary risk is over-indexing valuation on brand names without matching commercial contracts.")
+        risks.append(
+            "Primary risk is model path risk: DCF assumes the projection curves materialize; "
+            "syndicate quality only partially offsets that."
+        )
 
     focus = scenarios_out.get(scenario_key) or scenarios_out["base"]
+    proj = focus["projection"]
     summary = (
-        f"With {n} participant(s), the {focus.get('label', scenario_key)} case centers on a "
-        f"${focus['raise_usd'] / 1e6:.0f}M raise at ${focus['pre_money_usd'] / 1e6:.0f}M pre-money "
-        f"(${focus['post_money_usd'] / 1e6:.0f}M post), selling ~{focus['equity_sold_pct']}% to investors "
-        f"while reserving ~{focus['esop_pct']}% ESOP and ~{focus['founder_equity_pct']}% for founders/prior. "
+        f"With {n} participant(s), the {focus.get('label', scenario_key)} case is anchored to the "
+        f"15-year revenue model (peak seats {_fmt_usd_short(proj['peak_seat_revenue'])}, "
+        f"2035 revenue {_fmt_usd_short(proj['rev_2035'])}, 15-yr cum. profit {_fmt_usd_short(proj['cum_profit_15yr'])}). "
+        f"Risk-adjusted DCF EV {_fmt_usd_short(focus['enterprise_value_usd'])}; "
+        f"recommended primary {_fmt_usd_short(focus['raise_usd'])} at "
+        f"{_fmt_usd_short(focus['pre_money_usd'])} pre / {_fmt_usd_short(focus['post_money_usd'])} post "
+        f"(~{focus['equity_sold_pct']}% to investors, ~{focus['esop_pct']}% ESOP, "
+        f"~{focus['founder_equity_pct']}% founders/prior). "
+        f"Cap-table makeup sets residual risk premia on each of the six streams. "
     )
     if notes:
         summary += f"Planner notes considered: {notes[:240]}"
 
     return {
         "source": "heuristic",
+        "valuation_method": "projection_dcf_stream_risk",
         "selected_count": n,
         "scenario_focus": scenario_key,
         "summary": summary,
         "synergies": synergies,
         "risks": risks,
+        "stream_risk": {k: stream_risk[k] for k in _STREAM_KEYS},
         "scenarios": scenarios_out,
         "disclaimer": (
-            "Illustrative model only. Not financial, legal, or investment advice. "
-            "No named party has committed capital. Not an offer or solicitation."
+            "Illustrative model only. Valuations are DCFs of the public investors.html projection "
+            "curves with syndicate-adjusted risk premia — not market quotes or committed capital. "
+            "Not financial, legal, or investment advice. Not an offer or solicitation."
         ),
     }
 
 
+
 def analyze_cap_table_synergy(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     """
-    Given a selected subset of CAP_TABLE_INVESTORS (1–30), explore synergies and
-    recommend equity breakdown + valuation under conservative / base / aggressive cases.
-    Uses OpenRouter when available; falls back to a deterministic heuristic.
+    Given selected CAP_TABLE_INVESTORS (1–30), explore synergies and recommend equity
+    + valuation under conservative / base / aggressive cases.
+
+    Valuations always come from the investors.html 15-year projection DCF with
+    per-stream risk premia set by cap-table makeup. LLM (if available) only enriches
+    synergy / risk narrative — it cannot replace projection-scale numbers.
     """
     raw_ids = data.get("investor_ids") or data.get("investors") or []
     if not isinstance(raw_ids, list):
@@ -6004,7 +6474,6 @@ def analyze_cap_table_synergy(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int
             ids.append(item.strip())
         elif isinstance(item, dict) and item.get("id"):
             ids.append(str(item["id"]).strip())
-    # de-dupe preserve order
     seen = set()
     ordered: List[str] = []
     for i in ids:
@@ -6024,188 +6493,185 @@ def analyze_cap_table_synergy(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int
 
     selected = [_CAP_TABLE_BY_ID[i] for i in ordered]
     scenario = (data.get("scenario") or "base").strip().lower()
-    if scenario not in _SCENARIO_PARAMS:
+    if scenario not in _PROJECTION_PRESETS:
         scenario = "base"
 
     notes = (data.get("notes") or data.get("context") or "").strip()[:800]
-    raise_override = data.get("raise_usd_millions")
-    premoney_override = data.get("pre_money_usd_millions")
-    try:
-        raise_override_f = float(raise_override) if raise_override is not None and raise_override != "" else None
-    except (TypeError, ValueError):
-        raise_override_f = None
-    try:
-        premoney_override_f = float(premoney_override) if premoney_override is not None and premoney_override != "" else None
-    except (TypeError, ValueError):
-        premoney_override_f = None
 
-    fallback = _cap_table_heuristic(selected, scenario, notes, raise_override_f, premoney_override_f)
+    def _parse_money_usd(raw: Any, unit_hint: str = "auto") -> Optional[float]:
+        """Parse override as USD. Accept absolute USD, or billions/millions fields."""
+        if raw is None or raw == "":
+            return None
+        try:
+            v = float(raw)
+        except (TypeError, ValueError):
+            return None
+        if unit_hint == "billions":
+            return v * 1e9
+        if unit_hint == "millions":
+            return v * 1e6
+        if unit_hint == "trillions":
+            return v * 1e12
+        # auto: small numbers are treated as $B (legacy form used $M; projection scale is $B–$T)
+        if abs(v) < 1e6:
+            # 1..1e6 → interpret as billions (e.g. 1500 = $1.5T)
+            return v * 1e9
+        return v
 
+    raise_override_usd = None
+    if data.get("raise_usd") is not None:
+        raise_override_usd = _parse_money_usd(data.get("raise_usd"), "auto")
+    elif data.get("raise_usd_billions") is not None:
+        raise_override_usd = _parse_money_usd(data.get("raise_usd_billions"), "billions")
+    elif data.get("raise_usd_trillions") is not None:
+        raise_override_usd = _parse_money_usd(data.get("raise_usd_trillions"), "trillions")
+    elif data.get("raise_usd_millions") is not None:
+        # Legacy field: if value looks like old seed ($M tens/hundreds), upscale is wrong;
+        # treat >= 1000 as millions-of-USD literal, else as $B for projection scale.
+        try:
+            rm = float(data.get("raise_usd_millions"))
+            raise_override_usd = rm * 1e9 if rm < 10000 else rm * 1e6
+        except (TypeError, ValueError):
+            raise_override_usd = None
+
+    premoney_override_usd = None
+    if data.get("pre_money_usd") is not None:
+        premoney_override_usd = _parse_money_usd(data.get("pre_money_usd"), "auto")
+    elif data.get("pre_money_usd_billions") is not None:
+        premoney_override_usd = _parse_money_usd(data.get("pre_money_usd_billions"), "billions")
+    elif data.get("pre_money_usd_trillions") is not None:
+        premoney_override_usd = _parse_money_usd(data.get("pre_money_usd_trillions"), "trillions")
+    elif data.get("pre_money_usd_millions") is not None:
+        try:
+            pm = float(data.get("pre_money_usd_millions"))
+            premoney_override_usd = pm * 1e9 if pm < 10000 else pm * 1e6
+        except (TypeError, ValueError):
+            premoney_override_usd = None
+
+    projection_overrides = data.get("projection") or data.get("projection_params") or None
+    if isinstance(projection_overrides, dict):
+        # Allow dial-style integers from the page (gmv 100 = $10T, etc.)
+        po = dict(projection_overrides)
+        if "gmv" in po and "gmv2035" not in po:
+            try:
+                po["gmv2035"] = (float(po["gmv"]) / 10.0) * 1e12
+            except (TypeError, ValueError):
+                pass
+        if "take" in po and "takeRate" not in po:
+            try:
+                po["takeRate"] = float(po["take"]) / 1000.0
+            except (TypeError, ValueError):
+                pass
+        if "seatPrice" in po and po.get("seatPrice") is not None and float(po["seatPrice"]) < 1e4:
+            # dial units ($k)
+            try:
+                po["seatPrice"] = float(po["seatPrice"]) * 1000.0
+            except (TypeError, ValueError):
+                pass
+        if "network" in po and po.get("network") is not None and float(po["network"]) > 5:
+            try:
+                po["network"] = float(po["network"]) / 100.0
+            except (TypeError, ValueError):
+                pass
+        if "capital" in po and po.get("capital") is not None and float(po["capital"]) < 1e6:
+            try:
+                po["capital"] = (float(po["capital"]) / 100.0) * 1e12
+            except (TypeError, ValueError):
+                pass
+        projection_overrides = po
+    else:
+        projection_overrides = None
+
+    result = _cap_table_heuristic(
+        selected, scenario, notes, raise_override_usd, premoney_override_usd, projection_overrides
+    )
+
+    # LLM enriches narrative only — never overwrite projection-scale valuations
     inv_lines = "\n".join(
-        f"- id={s['id']}; name={s['name']}; category={s['category']}; region={s['region']}; "
-        f"tier={s['tier']}; typical_check={s['typical_check']}; blurb={s['blurb']}"
+        f"- {s['name']} ({s['category']}; {s['tier']})"
         for s in selected
     )
-    prompt = f"""You are a careful venture/strategic finance analyst for The RSE (Robot Services Exchange):
-an open marketplace for robot labor (buyers post work; robot operators claim jobs; take-rate + seats + hardware referrals).
-
-Task: Given this ILLUSTRATIVE potential syndicate (NOT real commitments), analyze synergies and recommend
-equity + valuation under three cases: conservative, base, aggressive.
+    focus = result["scenarios"].get(scenario) or result["scenarios"]["base"]
+    proj = focus.get("projection") or {}
+    stream_bits = []
+    for row in (focus.get("stream_valuation") or [])[:6]:
+        stream_bits.append(
+            f"{row['label']}: risk {row['risk_premium']*100:.1f}% "
+            f"(was {row['base_risk_premium']*100:.1f}%), NPV {_fmt_usd_short(row['npv'])}"
+        )
+    prompt = f"""You analyze strategic fit for an ILLUSTRATIVE robot labor exchange syndicate (The RSE).
+Do NOT invent valuations — numbers are fixed by a 15-year projection DCF.
 
 Selected participants ({len(selected)}):
 {inv_lines}
 
-Planner scenario focus: {scenario}
-Optional planner notes: {notes or '(none)'}
-Optional raise override ($M): {raise_override_f if raise_override_f is not None else '(none)'}
-Optional pre-money override ($M): {premoney_override_f if premoney_override_f is not None else '(none)'}
+Fixed valuation (do not change):
+- Focus scenario: {scenario} / {focus.get('label')}
+- Peak seat revenue: {_fmt_usd_short(proj.get('peak_seat_revenue', 0))}
+- 2035 revenue: {_fmt_usd_short(proj.get('rev_2035', 0))}; 2035 profit: {_fmt_usd_short(proj.get('profit_2035', 0))}
+- 15-yr cum profit: {_fmt_usd_short(proj.get('cum_profit_15yr', 0))}
+- DCF enterprise value: {_fmt_usd_short(focus.get('enterprise_value_usd', 0))}
+- Raise / pre / post: {_fmt_usd_short(focus.get('raise_usd', 0))} / {_fmt_usd_short(focus.get('pre_money_usd', 0))} / {_fmt_usd_short(focus.get('post_money_usd', 0))}
+- Stream risk-adjusted NPVs: {'; '.join(stream_bits)}
 
-Return ONLY valid JSON (no markdown) with this shape:
+Planner notes: {notes or '(none)'}
+
+Return ONLY JSON:
 {{
-  "summary": "2-4 sentence plain-language recommendation",
+  "summary": "3-5 sentences tying syndicate composition to which revenue streams are de-risked and why the projection-based valuation is appropriate",
   "synergies": [{{"theme": str, "strength": "high"|"medium"|"low", "rationale": str}}],
-  "risks": [str],
-  "scenarios": {{
-    "conservative": {{
-      "label": "Conservative",
-      "pre_money_usd": int,
-      "post_money_usd": int,
-      "raise_usd": int,
-      "equity_sold_pct": number,
-      "founder_equity_pct": number,
-      "esop_pct": number,
-      "breakdown": [{{"id": str, "name": str, "equity_pct": number, "check_size_usd": int, "role": str, "notes": str}}],
-      "narrative": str
-    }},
-    "base": {{ ... same keys ... }},
-    "aggressive": {{ ... same keys ... }}
-  }}
+  "risks": [str]
 }}
-
-Rules:
-- financially non-overlapping menu; treat each participant as independent capital source
-- equity_sold_pct + founder_equity_pct + esop_pct ≈ 100 (post-money fully diluted view of this round structure)
-- sum of breakdown equity_pct ≈ equity_sold_pct
-- sum of check_size_usd ≈ raise_usd
-- weight checks by strategic value and typical check size (mega/sovereign larger; specialists smaller)
-- keep founder_equity_pct generally ≥ 45 unless a very large multi-party growth round
-- valuations should be coherent with a robot labor marketplace (not a pure foundation model lab)
-- if raise/pre-money overrides are provided, apply them primarily to the "{scenario}" scenario
-- be concrete but humble; this is scenario planning only
 JSON only:"""
 
     try:
-        raw = call_openrouter_llm(prompt, temperature=0.25, max_tokens=3500, timeout=45)
-        if not raw:
-            return fallback, 200
-
-        cleaned = raw.strip()
-        if cleaned.startswith("```"):
-            cleaned = cleaned.strip("`")
-            if cleaned.lower().startswith("json"):
-                cleaned = cleaned[4:].strip()
-        start = cleaned.find("{")
-        end = cleaned.rfind("}")
-        if start >= 0 and end > start:
-            cleaned = cleaned[start : end + 1]
-        parsed = json.loads(cleaned)
-        if not isinstance(parsed, dict) or "scenarios" not in parsed:
-            return fallback, 200
-
-        # Normalize / fill gaps from heuristic
-        out_scenarios = {}
-        for key in ("conservative", "base", "aggressive"):
-            src = (parsed.get("scenarios") or {}).get(key) or {}
-            fb = fallback["scenarios"][key]
-            if not isinstance(src, dict) or not src.get("breakdown"):
-                out_scenarios[key] = fb
-                continue
-            breakdown = []
-            for b in src.get("breakdown") or []:
-                if not isinstance(b, dict):
-                    continue
-                bid = str(b.get("id") or "").strip()
-                meta = _CAP_TABLE_BY_ID.get(bid)
-                name = str(b.get("name") or (meta["name"] if meta else bid))
-                try:
-                    eq = float(b.get("equity_pct", 0))
-                except (TypeError, ValueError):
-                    eq = 0.0
-                try:
-                    chk = int(float(b.get("check_size_usd", 0)))
-                except (TypeError, ValueError):
-                    chk = 0
-                breakdown.append({
-                    "id": bid or name,
-                    "name": name,
-                    "equity_pct": round(eq, 2),
-                    "check_size_usd": max(0, chk),
-                    "role": str(b.get("role") or (meta.get("category") if meta else "")),
-                    "notes": str(b.get("notes") or "")[:300],
-                })
-            if not breakdown:
-                out_scenarios[key] = fb
-                continue
-
-            def _num(v, default):
-                try:
-                    return int(float(v))
-                except (TypeError, ValueError):
-                    return default
-
-            def _pct(v, default):
-                try:
-                    return round(float(v), 2)
-                except (TypeError, ValueError):
-                    return default
-
-            pre = _num(src.get("pre_money_usd"), fb["pre_money_usd"])
-            raise_u = _num(src.get("raise_usd"), fb["raise_usd"])
-            post = _num(src.get("post_money_usd"), pre + raise_u)
-            out_scenarios[key] = {
-                "label": str(src.get("label") or fb["label"]),
-                "pre_money_usd": pre,
-                "post_money_usd": post,
-                "raise_usd": raise_u,
-                "equity_sold_pct": _pct(src.get("equity_sold_pct"), fb["equity_sold_pct"]),
-                "founder_equity_pct": _pct(src.get("founder_equity_pct"), fb["founder_equity_pct"]),
-                "esop_pct": _pct(src.get("esop_pct"), fb["esop_pct"]),
-                "breakdown": breakdown,
-                "narrative": str(src.get("narrative") or fb["narrative"])[:1200],
-            }
-
-        synergies = parsed.get("synergies") if isinstance(parsed.get("synergies"), list) else fallback["synergies"]
-        risks = parsed.get("risks") if isinstance(parsed.get("risks"), list) else fallback["risks"]
-        # sanitize synergies
-        clean_syn = []
-        for s in synergies[:12]:
-            if isinstance(s, dict) and s.get("theme"):
-                clean_syn.append({
-                    "theme": str(s.get("theme"))[:120],
-                    "strength": str(s.get("strength") or "medium")[:16],
-                    "rationale": str(s.get("rationale") or "")[:500],
-                })
-            elif isinstance(s, str):
-                clean_syn.append({"theme": s[:120], "strength": "medium", "rationale": ""})
-        clean_risks = []
-        for r in risks[:12]:
-            if isinstance(r, str) and r.strip():
-                clean_risks.append(r.strip()[:400])
-            elif isinstance(r, dict) and r.get("rationale"):
-                clean_risks.append(str(r.get("rationale"))[:400])
-
-        model_name = getattr(config, "OPENROUTER_MODEL", None)
-        return {
-            "source": "llm",
-            "model": model_name,
-            "selected_count": len(selected),
-            "scenario_focus": scenario,
-            "summary": str(parsed.get("summary") or fallback["summary"])[:2000],
-            "synergies": clean_syn or fallback["synergies"],
-            "risks": clean_risks or fallback["risks"],
-            "scenarios": out_scenarios,
-            "disclaimer": fallback["disclaimer"],
-        }, 200
+        raw = call_openrouter_llm(prompt, temperature=0.3, max_tokens=1200, timeout=30)
+        if raw:
+            cleaned = raw.strip()
+            if cleaned.startswith("```"):
+                cleaned = cleaned.strip("`")
+                if cleaned.lower().startswith("json"):
+                    cleaned = cleaned[4:].strip()
+            start_j = cleaned.find("{")
+            end_j = cleaned.rfind("}")
+            if start_j >= 0 and end_j > start_j:
+                cleaned = cleaned[start_j : end_j + 1]
+            parsed = json.loads(cleaned)
+            if isinstance(parsed, dict):
+                if isinstance(parsed.get("summary"), str) and parsed["summary"].strip():
+                    result["summary"] = parsed["summary"].strip()[:2000]
+                if isinstance(parsed.get("synergies"), list) and parsed["synergies"]:
+                    clean_syn = []
+                    for s in parsed["synergies"][:12]:
+                        if isinstance(s, dict) and s.get("theme"):
+                            clean_syn.append({
+                                "theme": str(s.get("theme"))[:120],
+                                "strength": str(s.get("strength") or "medium")[:16],
+                                "rationale": str(s.get("rationale") or "")[:500],
+                            })
+                        elif isinstance(s, str):
+                            clean_syn.append({"theme": s[:120], "strength": "medium", "rationale": ""})
+                    if clean_syn:
+                        # Keep model-derived stream de-risk notes, append LLM themes
+                        existing_themes = {x.get("theme") for x in result.get("synergies") or []}
+                        merged = list(result.get("synergies") or [])
+                        for s in clean_syn:
+                            if s["theme"] not in existing_themes:
+                                merged.append(s)
+                        result["synergies"] = merged[:14]
+                if isinstance(parsed.get("risks"), list) and parsed["risks"]:
+                    clean_risks = []
+                    for r in parsed["risks"][:12]:
+                        if isinstance(r, str) and r.strip():
+                            clean_risks.append(r.strip()[:400])
+                    if clean_risks:
+                        base_risks = result.get("risks") or []
+                        extra = [r for r in clean_risks if r not in base_risks]
+                        result["risks"] = (base_risks + extra)[:14]
+                result["source"] = "llm+projection_dcf"
+                result["model"] = getattr(config, "OPENROUTER_MODEL", None)
     except Exception as e:
-        logger.warning(f"analyze_cap_table_synergy LLM/parse failed: {e}")
-        return fallback, 200
+        logger.warning(f"analyze_cap_table_synergy LLM enrich failed: {e}")
+
+    return result, 200
+
