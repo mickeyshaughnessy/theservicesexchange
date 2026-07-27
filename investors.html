@@ -788,6 +788,15 @@
             line-height: 1.6;
             margin-bottom: 0.85rem;
         }
+        /* Deep-link targets: clear sticky dials / navbar */
+        #capitaltable,
+        #cap-table,
+        #projections,
+        #snapshot,
+        #how-it-works,
+        #streams {
+            scroll-margin-top: 1.25rem;
+        }
     </style>
 </head>
 <body class="inv-page">
@@ -865,7 +874,7 @@
                 <a href="#hyperion">6. Hyperion Fund</a>
                 <a href="#costs">7. Costs</a>
                 <a href="#projections">Projections</a>
-                <a href="#cap-table">Cap table explorer</a>
+                <a href="#capitaltable">Cap table explorer</a>
             </nav>
         </div>
     </header>
@@ -1403,7 +1412,9 @@
         </div>
     </section>
 
-    <section class="inv-section" id="cap-table">
+    <section class="inv-section" id="capitaltable">
+        <!-- Alias for #cap-table deep links -->
+        <div id="cap-table" style="position:relative;top:-1px;height:0;overflow:hidden;" aria-hidden="true"></div>
         <div class="container">
             <h2>Cap table explorer</h2>
             <p class="inv-prose mb-3">
