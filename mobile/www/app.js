@@ -431,6 +431,9 @@
     els.body.classList.add('auth-only');
     els.body.classList.remove('app-ready');
     els.header.hidden = true;
+    // Floating hamburger stays available so site pages (investors, garage, …)
+    // are readable before login.
+    setSiteMenuOpen(false);
     document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
     els.screenAuth.classList.add('active');
   }

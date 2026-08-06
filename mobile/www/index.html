@@ -12,6 +12,11 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="auth-only">
+  <!-- Always-visible site menu (works on login screen AND in-app) -->
+  <button type="button" class="fab-menu-btn" id="headerMenuBtn" aria-label="Open site menu" aria-expanded="false" aria-controls="siteMenuDrawer">
+    <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+  </button>
+
   <header class="app-header" id="appHeader" hidden>
     <button type="button" class="header-account" id="headerAccountBtn" aria-label="Open account">
       <img class="logo" src="robot-avatar.png" alt="">
@@ -19,9 +24,6 @@
         <div class="brand-title">The RSE</div>
         <div class="brand-sub" id="headerUser">Demand</div>
       </div>
-    </button>
-    <button type="button" class="header-menu-btn" id="headerMenuBtn" aria-label="Open site menu" aria-expanded="false" aria-controls="siteMenuDrawer">
-      <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
     </button>
   </header>
 
@@ -41,17 +43,23 @@
       <a class="site-menu-link" data-site-path="robots.html" href="https://theservicesexchange.com/robots.html">Buy a Robot</a>
       <a class="site-menu-link" data-site-path="garage.html" href="https://theservicesexchange.com/garage.html">Stonewright's Garage</a>
       <a class="site-menu-link" data-site-path="investors.html" href="https://theservicesexchange.com/investors.html">Investors</a>
+      <a class="site-menu-link" data-site-path="invest/" href="https://theservicesexchange.com/invest/">Invest (landing)</a>
       <a class="site-menu-link" data-site-path="portfolio.html" href="https://theservicesexchange.com/portfolio.html">Portfolio</a>
       <a class="site-menu-link" data-site-path="campaigns.html" href="https://theservicesexchange.com/campaigns.html">Campaigns</a>
       <a class="site-menu-link" data-site-path="examples.html" href="https://theservicesexchange.com/examples.html">Examples</a>
+      <a class="site-menu-link" data-site-path="dashboard.html" href="https://theservicesexchange.com/dashboard.html">Dashboard</a>
+      <a class="site-menu-link" data-site-path="demo.html" href="https://theservicesexchange.com/demo.html">Demo</a>
+      <a class="site-menu-link" data-site-path="rideshare.html" href="https://theservicesexchange.com/rideshare.html">Rideshare</a>
       <a class="site-menu-link" data-site-path="about.html" href="https://theservicesexchange.com/about.html">About</a>
+      <p class="site-menu-label">Work &amp; profile</p>
+      <a class="site-menu-link" data-site-path="grab_job.html" href="https://theservicesexchange.com/grab_job.html">Find Work (web)</a>
+      <a class="site-menu-link" data-site-path="profile.html" href="https://theservicesexchange.com/profile.html">Profile (web)</a>
+      <a class="site-menu-link" data-site-path="feedback.html" href="https://theservicesexchange.com/feedback.html">Feedback board</a>
       <p class="site-menu-label">Developers &amp; legal</p>
       <a class="site-menu-link" data-site-path="api_docs.html" href="https://theservicesexchange.com/api_docs.html">API Docs</a>
       <a class="site-menu-link" data-site-path="arazzo.html" href="https://theservicesexchange.com/arazzo.html">Arazzo</a>
       <a class="site-menu-link" data-site-path="agents.html" href="https://theservicesexchange.com/agents.html">Agents</a>
-      <a class="site-menu-link" data-site-path="feedback.html" href="https://theservicesexchange.com/feedback.html">Feedback board</a>
       <a class="site-menu-link" data-site-path="privacy-app.html" href="https://theservicesexchange.com/privacy-app.html">Privacy policy</a>
-      <a class="site-menu-link" data-site-path="grab_job.html" href="https://theservicesexchange.com/grab_job.html">Find Work (web)</a>
     </nav>
   </aside>
 

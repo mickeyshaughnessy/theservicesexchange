@@ -1,10 +1,10 @@
 {
-  "versionCode": 7,
-  "versionName": "1.5.0",
-  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.5.0.apk",
-  "apkFile": "The-RSE-1.5.0.apk",
+  "versionCode": 8,
+  "versionName": "1.5.1",
+  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.5.1.apk",
+  "apkFile": "The-RSE-1.5.1.apk",
   "mandatory": false,
   "minSupportedVersionCode": 1,
-  "releaseNotes": "Hamburger menu for full website (Investors, Garage, Buy a Robot, API Docs, etc). Nearby maps deep-links + activity feed. Privacy hardening on public surfaces.",
-  "sha256": "eaa9705ec85da4f2458fa562cb34e5aeebb75dec1c7b52aaaa3c32162bcef8cb"
+  "releaseNotes": "Hamburger menu always available (including login). Full site pages: Investors, Garage, Dashboard, Demo, Rideshare, Invest, Profile, etc.",
+  "sha256": "c70d31149b2faf52b84d6b61e5c1681aa052ef67039857b9df87d1901436b509"
 }
