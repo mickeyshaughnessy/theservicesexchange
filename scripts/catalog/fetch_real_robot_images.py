@@ -127,21 +127,30 @@ def _tokens(robot: dict) -> List[str]:
     return uniq
 
 
+# Common English words used as product names that collide with non-robot photos
+_AMBIGUOUS_NAMES = {
+    "burro", "serve", "scout", "pepper", "spot", "atlas", "wing", "iron",
+    "origin", "vector", "chuck", "neo", "eve", "digit", "walker", "ranger",
+}
+
+
 def relevance_score(text: str, robot: dict) -> float:
     """Require meaningful token overlap so we don't accept Fujifilm X30 for Deep X30."""
     if not text:
         return 0.0
     t = text.lower()
+    # hard rejects
+    if any(b in t for b in ("logo.svg", "wordmark", "favicon", "icon_only")):
+        return 0.0
+    if "logo" in t and "robot" not in t and "humanoid" not in t:
+        return 0.0
     toks = _tokens(robot)
     if not toks:
         return 0.0
-    # reject common false friends
-    bad = ("camera", "lens", "fujifilm", "aircraft", "md-11", "airline", "logo", "svg", "diagram")
-    if any(b in t for b in bad) and not any(x in t for x in ("robot", "humanoid", "drone", "cobot")):
-        # still allow if strong brand match
-        pass
+    bad = ("camera", "lens", "fujifilm", "aircraft", "md-11", "airline", "diagram", "schematic")
+    if any(b in t for b in bad) and not any(x in t for x in ("robot", "humanoid", "drone", "cobot", "amr")):
+        return 0.0
     hits = sum(1 for tok in toks if tok in t)
-    # require at least one strong token (maker or primary name word length>=4)
     strong = [tok for tok in toks if len(tok) >= 4]
     strong_hits = sum(1 for tok in strong if tok in t)
     if strong and strong_hits == 0:
@@ -149,14 +158,19 @@ def relevance_score(text: str, robot: dict) -> float:
     if hits == 0:
         return 0.0
     score = hits / max(len(toks), 1)
-    if "robot" in t or "humanoid" in t or "cobot" in t:
-        score += 0.15
+    if "robot" in t or "humanoid" in t or "cobot" in t or "amr" in t:
+        score += 0.2
     maker = str(robot.get("maker") or "").lower()
     name = str(robot.get("name") or "").lower()
     if maker and maker in t:
         score += 0.35
     if name and len(name) >= 3 and name in t:
         score += 0.35
+    # Ambiguous product names (e.g. Burro the donkey) need maker or robot cue
+    name_toks = set(re.split(r"[^a-z0-9]+", name.lower()))
+    if name_toks & _AMBIGUOUS_NAMES:
+        if maker not in t and "robot" not in t and "autonom" not in t:
+            return 0.0
     return score
 
 
