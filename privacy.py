@@ -145,8 +145,35 @@ def redact_public_text(text: Optional[str], level: str) -> Optional[str]:
     return s
 
 
+# Fields that must never appear on public Nearby / exchange cards
+_NEARBY_FORBIDDEN_KEYS = (
+    "username",
+    "buyer",
+    "buyer_username",
+    "contact_info",
+    "contact",
+    "payment",
+    "payment_method",
+    "payment_details",
+    "email",
+    "phone",
+    "wallet_address",
+    "phantom_wallet_address",
+    "exact_address",
+    "raw_address",
+)
+
+
 def project_nearby_service(bid: Dict[str, Any], distance: float) -> Dict[str, Any]:
-    """Public Nearby card projection for one bid."""
+    """Public Nearby card projection for one bid.
+
+    Differential / geo-indistinguishability privacy:
+    - Matching uses private exact lat/lon server-side only.
+    - Published pins use deterministic Gaussian noise (σ by level) stable per
+      entity_id + UTC day so pins don't "jitter" across refreshes the same day.
+    - Addresses are coarsened; phones/emails/SSNs redacted from service text.
+    - Buyer identity, payment methods, and contact info are never included.
+    """
     level = normalize_privacy_level(bid.get("privacy_level") or DEFAULT_PUBLIC_PRIVACY)
     entity_id = str(bid.get("bid_id") or bid.get("id") or "")
     lat, lon = bid.get("lat"), bid.get("lon")
@@ -168,12 +195,40 @@ def project_nearby_service(bid: Dict[str, Any], distance: float) -> Dict[str, An
         "address": coarsen_address(bid.get("address"), level),
         "buyer_reputation": bid.get("buyer_reputation", 2.5),
         "privacy_level": level,
+        "location_type": bid.get("location_type"),
     }
     if public_coords is not None:
+        # 5 decimal places ≈ 1.1 m — still noisy at neighborhood/city σ
         out["lat"] = round(public_coords[0], 5)
         out["lon"] = round(public_coords[1], 5)
+    # Defense in depth: never copy forbidden private keys even if present on bid
+    for k in _NEARBY_FORBIDDEN_KEYS:
+        out.pop(k, None)
     return out
 
 
 def project_public_location_field(location: Optional[str], level: str) -> Optional[str]:
     return coarsen_address(location, level) if location else None
+
+
+def project_public_profile(user_data: Dict[str, Any], *, username: str) -> Dict[str, Any]:
+    """
+    Build the public profile subset. Contact info, wallets, auto-bids, and
+    discovery hashes are never included.
+    """
+    plvl = normalize_privacy_level(
+        user_data.get("privacy_profile_level") or user_data.get("privacy_level")
+    )
+    about = redact_public_text(user_data.get("about"), plvl)
+    location = project_public_location_field(user_data.get("location"), plvl)
+    return {
+        "username": username,
+        "display_name": user_data.get("display_name") or username,
+        "avatar_url": user_data.get("avatar_url"),
+        "location": location,
+        "about": about,
+        "privacy_level": plvl,
+        # Explicitly omitted (document for auditors):
+        # contact_info, wallet_address, phantom_wallet_address, contact_hashes,
+        # auto_bids, email, phone, payment methods
+    }

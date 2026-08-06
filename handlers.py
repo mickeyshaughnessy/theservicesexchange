@@ -1066,24 +1066,16 @@ def get_public_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         _profile_defaults(user_data)
         follows = get_follows(username)
 
-        plvl = privacy_mod.normalize_privacy_level(
-            user_data.get('privacy_profile_level') or user_data.get('privacy_level')
-        )
-        about = privacy_mod.redact_public_text(user_data.get('about'), plvl)
-        location = privacy_mod.project_public_location_field(
-            user_data.get('location'), plvl
-        )
+        # Public projection only — contact, wallets, hashes never included
+        base = privacy_mod.project_public_profile(user_data, username=username)
+        plvl = base['privacy_level']
         return {
-            'username': username,
-            'display_name': user_data['display_name'],
-            'avatar_url': user_data['avatar_url'],
-            'location': location,
-            'about': about,
+            **base,
             'reputation_score': round(calculate_reputation_score(user_data), 2),
             'stars': user_data.get('stars', 0),
             'total_ratings': user_data.get('total_ratings', 0),
-            'robots_owned': user_data['robots_owned'],
-            'cosmetics_equipped': user_data['cosmetics_equipped'],
+            'robots_owned': user_data.get('robots_owned') or [],
+            'cosmetics_equipped': user_data.get('cosmetics_equipped') or {},
             'follower_count': len(follows['followers']),
             'following_count': len(follows['following']),
             'reputation_breakdown': _reputation_breakdown(username),
@@ -3225,7 +3217,11 @@ def sign_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         return {"error": "Internal server error"}, 500
 
 def nearby_services(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
-    """Find nearby services. Public projections apply per-bid privacy levels."""
+    """Find nearby services. Public projections apply per-bid privacy levels.
+
+    Optional maps enrichment (Google/Apple/Bing/Yahoo deep links, Mapbox,
+    OpenStreetMap) and a text events feed when ``enrich`` is true (default true).
+    """
     try:
         if 'lat' in data and 'lon' in data:
             user_lat = data['lat']
@@ -3237,39 +3233,92 @@ def nearby_services(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         else:
             return {"error": "Location required"}, 400
 
+        try:
+            user_lat = float(user_lat)
+            user_lon = float(user_lon)
+        except (TypeError, ValueError):
+            return {"error": "Invalid lat/lon"}, 400
+
         radius = data.get('radius', 10)
-        
+        try:
+            radius = float(radius)
+        except (TypeError, ValueError):
+            radius = 10.0
+        radius = max(0.1, min(radius, 100.0))
+
+        # enrich defaults on; clients can pass enrich=false for a lean payload
+        enrich = data.get('enrich', True)
+        if isinstance(enrich, str):
+            enrich = enrich.strip().lower() not in ('0', 'false', 'no', 'off')
+
         nearby_bids = []
         all_bids = get_all_bids()
-        
+
         for bid in all_bids:
             if bid.get('location_type') == 'remote':
                 continue
             if bid.get('end_time', 0) <= time.time():
                 continue
-            
+
             if bid.get('lat') is not None and bid.get('lon') is not None:
                 distance = calculate_distance(
                     user_lat, user_lon,
                     bid['lat'], bid['lon']
                 )
-                
+
                 if distance <= radius:
                     # Match on true coords; publish privacy-projected fields only
                     nearby_bids.append(
                         privacy_mod.project_nearby_service(bid, distance)
                     )
-        
+
         nearby_bids.sort(key=lambda x: x['distance'])
-        
-        return {
+
+        result: Dict[str, Any] = {
             "services": nearby_bids,
             "privacy_note": (
                 "Addresses and coordinates are privacy-projected per the "
-                "poster's privacy level (Gaussian geo noise + address coarsening)."
+                "poster's privacy level (Gaussian geo noise + address coarsening). "
+                "Matching uses private exact coordinates server-side; the public "
+                "payload never includes raw pins or street numbers unless the "
+                "poster chose privacy_level=precise."
             ),
-        }, 200
-        
+            "query": {
+                "lat": round(user_lat, 5),
+                "lon": round(user_lon, 5),
+                "radius_miles": radius,
+            },
+        }
+
+        if enrich:
+            try:
+                import maps_enrichment
+
+                bulletins = []
+                try:
+                    raw_b = get_all_bulletins() or []
+                    bulletins = sorted(
+                        raw_b,
+                        key=lambda b: int(b.get('posted_at') or 0),
+                        reverse=True,
+                    )[:15]
+                except Exception:
+                    bulletins = []
+
+                result["maps"] = maps_enrichment.enrich_nearby(
+                    user_lat,
+                    user_lon,
+                    nearby_bids,
+                    bulletins=bulletins,
+                )
+                result["events"] = result["maps"].get("events") or []
+            except Exception as enrich_err:
+                logger.warning(f"Nearby maps enrichment skipped: {enrich_err}")
+                result["maps"] = None
+                result["events"] = []
+
+        return result, 200
+
     except Exception as e:
         logger.error(f"Nearby error: {str(e)}")
         return {"error": "Internal server error"}, 500
@@ -3374,18 +3423,37 @@ def get_exchange_data(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                     if not bid.get('address') or location_filter.lower() not in bid['address'].lower():
                         continue
 
-                active_bids.append({
+                # Public market feed: apply same privacy projection as /nearby
+                # (never leak raw house numbers / exact coords unless precise).
+                level = privacy_mod.normalize_privacy_level(
+                    bid.get('privacy_level') or privacy_mod.DEFAULT_PUBLIC_PRIVACY
+                )
+                entity_id = str(bid.get('bid_id') or '')
+                public_coords = None
+                if bid.get('lat') is not None and bid.get('lon') is not None:
+                    public_coords = privacy_mod.noisy_lat_lon(
+                        float(bid['lat']), float(bid['lon']), level, entity_id=entity_id
+                    )
+                svc = bid.get('service')
+                if isinstance(svc, dict):
+                    svc = svc.get('description') or str(svc)
+                svc = privacy_mod.redact_public_text(svc, level)
+                pub_addr = privacy_mod.coarsen_address(bid.get('address'), level)
+                entry = {
                     'bid_id': bid['bid_id'],
-                    'service': bid['service'],
+                    'service': svc,
                     'price': bid['price'],
                     'currency': bid.get('currency', 'USD'),
-                    'location': bid.get('address', 'Remote'),
-                    'address': bid.get('address'),
-                    'lat': bid.get('lat'),
-                    'lon': bid.get('lon'),
+                    'location': pub_addr or ('Remote' if bid.get('location_type') == 'remote' else None),
+                    'address': pub_addr,
                     'buyer_reputation': bid.get('buyer_reputation'),
-                    'posted_at': bid['created_at']
-                })
+                    'posted_at': bid['created_at'],
+                    'privacy_level': level,
+                }
+                if public_coords is not None:
+                    entry['lat'] = round(public_coords[0], 5)
+                    entry['lon'] = round(public_coords[1], 5)
+                active_bids.append(entry)
         
         active_bids.sort(key=lambda x: x['posted_at'], reverse=True)
         active_bids = active_bids[:limit]
@@ -3414,17 +3482,34 @@ def get_exchange_data(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                     if job.get('provider_rating'): ratings.append(job['provider_rating'])
                     avg_rating = sum(ratings) / len(ratings) if ratings else None
                     
-                    completed_jobs.append({
+                    level = privacy_mod.normalize_privacy_level(
+                        job.get('privacy_level') or privacy_mod.DEFAULT_PUBLIC_PRIVACY
+                    )
+                    entity_id = str(job.get('job_id') or '')
+                    public_coords = None
+                    if job.get('lat') is not None and job.get('lon') is not None:
+                        public_coords = privacy_mod.noisy_lat_lon(
+                            float(job['lat']), float(job['lon']), level, entity_id=entity_id
+                        )
+                    svc = job.get('service')
+                    if isinstance(svc, dict):
+                        svc = svc.get('description') or str(svc)
+                    svc = privacy_mod.redact_public_text(svc, level)
+                    pub_addr = privacy_mod.coarsen_address(job.get('address'), level)
+                    entry = {
                         'job_id': job['job_id'],
-                        'service': job['service'],
+                        'service': svc,
                         'price': job['price'],
                         'currency': job.get('currency', 'USD'),
-                        'address': job.get('address'),
-                        'lat': job.get('lat'),
-                        'lon': job.get('lon'),
+                        'address': pub_addr,
                         'avg_rating': avg_rating,
-                        'completed_at': job.get('completed_at', job['accepted_at'])
-                    })
+                        'completed_at': job.get('completed_at', job['accepted_at']),
+                        'privacy_level': level,
+                    }
+                    if public_coords is not None:
+                        entry['lat'] = round(public_coords[0], 5)
+                        entry['lon'] = round(public_coords[1], 5)
+                    completed_jobs.append(entry)
             
             completed_jobs.sort(key=lambda x: x['completed_at'], reverse=True)
             completed_jobs = completed_jobs[:limit]

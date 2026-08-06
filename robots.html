@@ -15,7 +15,7 @@
 
 <title>The RSE — Buy a Robot</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=22" rel="stylesheet">
+    <link href="styles.css?v=25" rel="stylesheet">
     <style>
         .robot-card {
             background: var(--bg-panel);
@@ -352,7 +352,10 @@
                 <button class="btn btn-primary mt-3" onclick="openFinancing('')">Apply for Financing</button>
             </div>
 
-            <div id="robotCatalog"></div>
+            <p id="catalogMeta" class="mb-4" style="font-family:'Share Tech Mono',monospace;font-size:0.75rem;color:var(--text-dim);"></p>
+            <div id="robotCatalog">
+                <p class="text-muted" style="font-family:'Share Tech Mono',monospace;">Loading robot catalog…</p>
+            </div>
 
             <div class="mt-5 p-3" style="border:1px solid rgba(85,102,170,0.4);">
                 <p class="mb-0" style="font-family:'Share Tech Mono',monospace;font-size:0.75rem;color:var(--text-dim);line-height:1.8;">
@@ -360,6 +363,8 @@
                     based on each robot's capabilities and typical service rates. They are not guarantees — actual
                     earnings depend on local demand, utilization, and operating costs. Prices and availability are set
                     by each manufacturer and may change. The RSE is not affiliated with the manufacturers listed.
+                    Catalog is a static JSON DB on DigitalOcean Spaces, refreshed weekly from manufacturer sites and
+                    robot news accounts (e.g. @humanoidhub).
                 </p>
             </div>
         </div>
@@ -390,175 +395,99 @@
     </footer>
 
     <script>
-    // Each entry's `buyUrl` is the manufacturer's real product page. When an
-    // affiliate/referral program is secured for a maker, swap the URL here.
-    const ROBOTS = [
+    // Catalog load order (same-origin first so the page never depends on Spaces CORS):
+    //   1. /catalog/robots.json  (deployed with the site)
+    //   2. DigitalOcean Spaces public JSON DB
+    //   3. Tiny embedded seed if both fail
+    const ROBOT_CATALOG_URLS = [
+        'catalog/robots.json',
+        'https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/catalog/robots.json'
+    ];
+    const FALLBACK_ROBOTS = [
         {
-            maker: "Tesla",
-            name: "Optimus",
+            maker: "Tesla", name: "Optimus",
             image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/tesla-optimus.jpg",
             tags: ["Humanoid", "General Purpose"],
-            desc: "Tesla's general-purpose humanoid. First-generation production lines are being installed for volume production. Suited to household help, retail floor work, and light logistics.",
-            earnings: "$350 – $700 / week",
-            price: "~$20,000–30,000 (expected)",
-            status: "planned", statusLabel: "Planned",
-            buyUrl: "https://www.tesla.com/AI"
+            desc: "Tesla's general-purpose humanoid for household help, retail floor work, and light logistics.",
+            earnings: "$350 – $700 / week", price: "~$20,000–30,000 (expected)",
+            status: "planned", statusLabel: "Planned", buyUrl: "https://www.tesla.com/AI"
         },
         {
-            maker: "Tesla",
-            name: "Robotaxi (Cybercab)",
-            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/tesla-cybercab.jpg",
-            tags: ["Autonomous Vehicle", "Rideshare"],
-            desc: "Two-seat autonomous vehicle, in production since early 2026 with retail sales confirmed under $30,000. Earn by listing remnant seat-hours on The RSE rideshare requests.",
-            earnings: "$800 – $1,500 / week",
-            price: "Under $30,000",
-            status: "preorder", statusLabel: "Coming 2026",
-            buyUrl: "https://www.tesla.com/cybercab"
-        },
-        {
-            maker: "Unitree",
-            name: "Go2 (Robot Dog)",
-            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-go2.png",
-            tags: ["Quadruped", "Patrol", "Inspection"],
-            desc: "Compact quadruped with rider-grade agility. Good for property patrol loops, site walk-throughs, promo appearances, and light inspection routes.",
-            earnings: "$100 – $250 / week",
-            price: "From $1,600",
-            status: "available", statusLabel: "Available Now",
-            buyUrl: "https://shop.unitree.com/products/unitree-go2"
-        },
-        {
-            maker: "Unitree",
-            name: "B2 (Industrial Dog)",
-            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-b2.jpg",
-            tags: ["Quadruped", "Industrial"],
-            desc: "Heavy-duty industrial quadruped: IP-rated, long endurance, big payload. Built for perimeter security, plant inspection, and hazardous-area walk-downs.",
-            earnings: "$500 – $900 / week",
-            price: "Contact for quote",
-            status: "available", statusLabel: "Available Now",
-            buyUrl: "https://shop.unitree.com/products/unitree-b2"
-        },
-        {
-            maker: "Unitree",
-            name: "G1 (Humanoid)",
+            maker: "Unitree", name: "G1",
             image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-g1.jpg",
             tags: ["Humanoid"],
-            desc: "Affordable full-size humanoid with dexterous options. Popular for research, brand activations, demos, and light repetitive tasks.",
-            earnings: "$250 – $500 / week",
-            price: "From $13,500",
+            desc: "Affordable full-size humanoid for research, activations, and light repetitive tasks.",
+            earnings: "$250 – $500 / week", price: "From $13,500",
             status: "available", statusLabel: "Available Now",
             buyUrl: "https://shop.unitree.com/products/unitree-g1"
         },
         {
-            maker: "Unitree",
-            name: "R1 (Humanoid)",
-            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-r1.jpg",
-            tags: ["Humanoid", "Entry Level"],
-            desc: "Unitree's entry-level humanoid — the cheapest ticket into humanoid labor. Best for demos, events, and simple carry-and-place work.",
-            earnings: "$150 – $350 / week",
-            price: "From $4,900",
-            status: "available", statusLabel: "Available Now",
-            buyUrl: "https://shop.unitree.com/products/unitree-r1"
-        },
-        {
-            maker: "Figure",
-            name: "Figure 03",
-            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/figure-03.jpg",
-            tags: ["Humanoid", "Home"],
-            desc: "Home-focused humanoid running Figure's Helix vision-language-action AI. Production is ramping; limited home deployments target late 2026.",
-            earnings: "$300 – $600 / week",
-            price: "~$20,000 (expected)",
-            status: "planned", statusLabel: "Waitlist",
-            buyUrl: "https://www.figure.ai/figure"
-        },
-        {
-            maker: "Boston Dynamics",
-            name: "Spot",
+            maker: "Boston Dynamics", name: "Spot",
             image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/bd-spot.jpg",
             tags: ["Quadruped", "Inspection"],
-            desc: "The proven industrial quadruped. Autonomous inspection rounds, thermal and gauge reading, and site documentation — enterprises pay well for Spot hours.",
-            earnings: "$700 – $1,200 / week",
-            price: "~$75,000",
+            desc: "Industrial quadruped for autonomous inspection and site documentation.",
+            earnings: "$700 – $1,200 / week", price: "~$75,000",
             status: "available", statusLabel: "Available Now",
             buyUrl: "https://bostondynamics.com/products/spot/"
         },
         {
-            maker: "Boston Dynamics",
-            name: "Stretch",
-            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/bd-stretch.jpg",
-            tags: ["Logistics", "Warehouse"],
-            desc: "Case-handling robot that unloads trucks and moves boxes all shift. Warehouse operators buy every spare hour — the highest-utilization machine on this page.",
-            earnings: "$1,500 – $2,500 / week",
-            price: "Contact sales",
-            status: "available", statusLabel: "Available Now",
-            buyUrl: "https://bostondynamics.com/products/stretch/"
-        },
-        {
-            maker: "Boston Dynamics",
-            name: "Atlas",
-            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/bd-atlas.jpg",
-            tags: ["Humanoid", "Industrial"],
-            desc: "All-electric production Atlas entered serial production in 2026. Current allocations are committed to launch partners; new orders open in 2027.",
-            earnings: "$1,500 – $3,000 / week",
-            price: "Contact sales",
-            status: "planned", statusLabel: "Orders 2027",
-            buyUrl: "https://bostondynamics.com/products/atlas/"
-        },
-        {
-            maker: "Carbon Robotics",
-            name: "LaserWeeder G2",
-            image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/carbon-laserweeder.webp",
-            tags: ["Agriculture", "Laser Weeding"],
-            desc: "Laser weeding at up to 60-foot swaths. In season, custom weeding services command premium acreage rates — sell idle capacity to neighboring farms via The RSE.",
-            earnings: "$8,000 – $15,000 / week (in season)",
-            price: "From ~$1.4M",
-            status: "available", statusLabel: "Available Now",
-            buyUrl: "https://carbonrobotics.com/laserweeder-g2"
-        },
-        {
-            maker: "1X",
-            name: "NEO",
+            maker: "1X", name: "NEO",
             image: "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/1x-neo.jpg",
             tags: ["Humanoid", "Home"],
-            desc: "66-lb soft-bodied home humanoid that opens doors, fetches, tidies, and does laundry. Pre-orders open now; US deliveries began in 2026.",
-            earnings: "$200 – $450 / week",
-            price: "$20,000 or $499/mo",
-            status: "preorder", statusLabel: "Pre-Order",
-            buyUrl: "https://www.1x.tech/order"
+            desc: "Soft-bodied home humanoid for doors, fetch, tidy, and laundry.",
+            earnings: "$200 – $450 / week", price: "$20,000 or $499/mo",
+            status: "preorder", statusLabel: "Pre-Order", buyUrl: "https://www.1x.tech/order"
         }
     ];
 
+    let ROBOTS = FALLBACK_ROBOTS.slice();
     const STATUS_CLASS = { available: "status-available", preorder: "status-preorder", planned: "status-planned" };
+    const IMG_PLACEHOLDER = 'https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-g1.jpg';
+
+    function escapeAttr(s) {
+        return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+    function escapeHtml(s) {
+        return String(s || '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
     function renderCatalog() {
         const byMaker = {};
         ROBOTS.forEach(r => { (byMaker[r.maker] = byMaker[r.maker] || []).push(r); });
 
         const container = document.getElementById('robotCatalog');
+        if (!ROBOTS.length) {
+            container.innerHTML = '<p class="text-muted">Catalog empty — check catalog/robots.json.</p>';
+            return;
+        }
         container.innerHTML = Object.entries(byMaker).map(([maker, robots]) => `
-            <h2 class="maker-heading">// ${maker}</h2>
+            <h2 class="maker-heading">// ${escapeHtml(maker)}</h2>
             <div class="row g-4">
                 ${robots.map(r => `
                 <div class="col-md-6 col-lg-4">
                     <div class="robot-card">
-                        <img class="robot-card-img" src="${r.image}" alt="${r.maker} ${r.name}" loading="lazy">
+                        <img class="robot-card-img" src="${escapeHtml(r.image || IMG_PLACEHOLDER)}" alt="${escapeHtml(r.maker)} ${escapeHtml(r.name)}" loading="lazy"
+                             onerror="if(!this.dataset.err){this.dataset.err=1;this.src='${IMG_PLACEHOLDER}';}else{this.style.opacity=0.35}">
                         <div class="robot-card-body">
-                            <div class="robot-maker">${r.maker}</div>
-                            <div class="robot-name">${r.name}</div>
-                            <div class="robot-tags">${r.tags.map(t => `<span class="robot-tag">${t}</span>`).join('')}</div>
-                            <p class="robot-desc">${r.desc}</p>
+                            <div class="robot-maker">${escapeHtml(r.maker)}</div>
+                            <div class="robot-name">${escapeHtml(r.name)}</div>
+                            <div class="robot-tags">${(r.tags || []).map(t => `<span class="robot-tag">${escapeHtml(t)}</span>`).join('')}</div>
+                            <p class="robot-desc">${escapeHtml(r.desc || '')}</p>
                             <div class="robot-earnings">
                                 <div class="label">EST. THE RSE EARNINGS</div>
-                                <div class="value">${r.earnings}</div>
+                                <div class="value">${escapeHtml(r.earnings || 'See market rates')}</div>
                             </div>
                             <div class="robot-meta">
-                                <span class="robot-price">${r.price}</span>
-                                <span class="robot-status ${STATUS_CLASS[r.status]}">${r.statusLabel}</span>
+                                <span class="robot-price">${escapeHtml(r.price || '')}</span>
+                                <span class="robot-status ${STATUS_CLASS[r.status] || 'status-planned'}">${escapeHtml(r.statusLabel || r.status || '')}</span>
                             </div>
                             <div class="robot-btn-row">
-                                <button type="button" class="robot-buy-btn" onclick="openBuyInquiry('${r.maker} ${r.name}')">BUY NOW →</button>
-                                <button type="button" class="robot-finance-btn" onclick="openFinancing('${r.maker} ${r.name}')">FINANCE</button>
+                                <button type="button" class="robot-buy-btn" onclick="openBuyInquiry('${escapeAttr(r.maker + ' ' + r.name)}')">BUY NOW →</button>
+                                <button type="button" class="robot-finance-btn" onclick="openFinancing('${escapeAttr(r.maker + ' ' + r.name)}')">FINANCE</button>
                             </div>
-                            <a class="robot-maker-link" href="${r.buyUrl}" target="_blank" rel="noopener">Manufacturer site ↗</a>
+                            <a class="robot-maker-link" href="${escapeHtml(r.buyUrl || '#')}" target="_blank" rel="noopener">Manufacturer site ↗</a>
                             <div class="seat-note">Includes The RSE exchange seat</div>
                         </div>
                     </div>
@@ -566,7 +495,44 @@
             </div>
         `).join('');
     }
-    renderCatalog();
+
+    async function fetchCatalogJson(url) {
+        const res = await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-cache' });
+        if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + url);
+        const data = await res.json();
+        const list = data.robots || data;
+        if (!Array.isArray(list) || !list.length) throw new Error('empty catalog from ' + url);
+        return { data, list, url };
+    }
+
+    async function loadCatalog() {
+        const meta = document.getElementById('catalogMeta');
+        let lastErr = null;
+        for (const url of ROBOT_CATALOG_URLS) {
+            try {
+                const { data, list, url: used } = await fetchCatalogJson(url);
+                ROBOTS = list;
+                if (meta) {
+                    const updated = data.updated_at_iso || (data.updated_at
+                        ? new Date(data.updated_at * 1000).toISOString() : '');
+                    const source = used.indexOf('digitaloceanspaces') >= 0 ? 'spaces' : 'local';
+                    meta.textContent = `// ${list.length} robots · catalog updated ${updated || 'n/a'} · source ${data.source || source}`;
+                }
+                renderCatalog();
+                return;
+            } catch (e) {
+                lastErr = e;
+                console.warn('Catalog source failed:', url, e);
+            }
+        }
+        ROBOTS = FALLBACK_ROBOTS.slice();
+        if (meta) {
+            meta.textContent = `// Fallback seed (${ROBOTS.length} robots) — full catalog unavailable`;
+        }
+        console.warn('Robot catalog load failed, using fallback', lastErr);
+        renderCatalog();
+    }
+    loadCatalog();
     </script>
 
     <!-- Buy Now Inquiry Modal -->

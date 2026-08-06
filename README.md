@@ -7,7 +7,10 @@ Docs: **https://rse-api.com:5003/api_docs.html**
 
 ## How It Works
 
-1. **Buyers** register, post a bid (`/submit_bid`) with a service description, price, and location
+1. **Buyers** register, post a bid (`POST /bid`) with a service description, price, and location
+   - One-shot open requests, or **recurring subscription bids** (`recurring: true` + `cadence`) with **time-bound spending limits**
+   - Optional payment integrations (Stripe / XMoney / PayPal / Phantom) as settlement hints; live charge only when configured
+   - Autobidding is created **only** on `/bid` (not campaigns, grab_job, etc.). Legacy `/submit_bid` remains one-shot only.
 2. **Providers** (robot operators) register, link their wallet (`/set_wallet`), and call `/grab_job`
 3. The API matches the provider with the best compatible job using AI capability matching and reputation alignment
 4. Both parties complete the job and rate each other (`/sign_job`)
@@ -28,6 +31,17 @@ curl -X POST https://rse-api.com:5003/set_wallet \
   -H "Content-Type: application/json" \
   -d '{"wallet_address": "0xYourAddress"}'
 ```
+
+## Deploy
+
+See **[DEPLOYMENT_NOTES.md](DEPLOYMENT_NOTES.md)** — short playbook:
+
+```bash
+git push origin main
+./deploy.sh
+```
+
+Optional Grok job (suggests 3 next features): `./scripts/prod/suggest_next_features.sh`
 
 ## Running Locally
 
@@ -67,7 +81,9 @@ python int_tests.py
 | POST | /login | — | Get access token |
 | GET | /account | ✓ | Account info + seat status |
 | POST | /set_wallet | ✓ | Link Ethereum wallet |
-| POST | /submit_bid | ✓ | Post a service request |
+| POST | /bid | ✓ | Post a service request or create recurring subscription bid (autobidding) |
+| POST | /submit_bid | ✓ | Legacy one-shot bid (no recurring) |
+| GET/POST | /auto_bids | ✓ | List / manage recurring templates; process due posts |
 | POST | /grab_job | ✓ + seat | Claim a matching job |
 | POST | /sign_job | ✓ | Complete and rate a job |
 | POST | /reject_job | ✓ | Reject an assigned job |
@@ -76,6 +92,35 @@ python int_tests.py
 | GET | /stats | — | Platform statistics |
 | POST | /chat | ✓ | Send a message |
 | POST | /bulletin | ✓ | Post to community board |
+
+## Buy a Robot catalog
+
+The [Buy a Robot](https://theservicesexchange.com/robots.html) page loads a static JSON DB, in order:
+
+1. Same-origin [`catalog/robots.json`](catalog/robots.json) (deployed with the site)
+2. DigitalOcean Spaces mirror: `https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/catalog/robots.json`
+3. Tiny embedded seed if both fail
+
+Canonical seed also lives at `data/catalog/robots.json`. Robot images are under Spaces `…/robots/`.
+
+```bash
+# Seed / re-upload catalog JSON to Spaces (+ refresh catalog/robots.json)
+python3 scripts/catalog/upload_robots_catalog.py
+
+# Ensure every robot has a public image (reuse existing or generate placeholders)
+python3 scripts/catalog/sync_robot_images.py
+
+# Weekly merge (web crawl + optional Grok/X enrichment) then upload
+python3 scripts/catalog/update_robots_catalog.py
+```
+
+On production, install Grok Build + crontab with:
+
+```bash
+bash scripts/prod/setup_prod_grok_and_cron.sh
+# Prefer API key on server: XAI_API_KEY in /etc/rse/catalog.env
+# Or COPY_GROK_AUTH=1 to scp ~/.grok/auth.json (owner-only 600)
+```
 
 ## Smart Contract
 

@@ -6,6 +6,8 @@
   'use strict';
 
   const API_URL = 'https://rse-api.com:5003';
+  /** Marketing site (hamburger menu opens these in the system browser). */
+  const SITE_BASE = 'https://theservicesexchange.com/';
   /** Public profile pages live on the marketing site (opaque slug, not username). */
   const PUBLIC_PROFILE_BASE =
     'https://theservicesexchange.com/profile.html?pid=';
@@ -81,6 +83,8 @@
     nearbyStatus: $('nearbyStatus'),
     nearbyError: $('nearbyError'),
     nearbyList: $('nearbyList'),
+    nearbyEvents: $('nearbyEvents'),
+    nearbyMapLinks: $('nearbyMapLinks'),
     nearbyMap: $('nearbyMap'),
     refreshNearby: $('refreshNearby'),
     privacyForm: $('privacyForm'),
@@ -466,6 +470,26 @@
     if (name === 'feedback') loadFeedback();
   }
 
+  function setSiteMenuOpen(open) {
+    const drawer = $('siteMenuDrawer');
+    const backdrop = $('siteMenuBackdrop');
+    const btn = $('headerMenuBtn');
+    if (!drawer || !backdrop) return;
+    drawer.hidden = !open;
+    backdrop.hidden = !open;
+    if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    document.body.classList.toggle('site-menu-open', open);
+  }
+
+  function openSitePage(pathOrUrl) {
+    let url = pathOrUrl;
+    if (pathOrUrl && !/^https?:\/\//i.test(pathOrUrl)) {
+      url = SITE_BASE + String(pathOrUrl).replace(/^\//, '');
+    }
+    setSiteMenuOpen(false);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
   // ── Auth UI ──────────────────────────────────────────────────────
   function setAuthMode(mode) {
     state.authMode = mode;
@@ -841,15 +865,24 @@
         body: JSON.stringify(body),
       });
       const services = data.services || [];
+      const maps = data.maps || null;
+      const events = data.events || (maps && maps.events) || [];
       if (els.nearbyStatus) {
         const where = address
           ? address
           : `GPS (${Number(body.lat).toFixed(3)}, ${Number(body.lon).toFixed(3)})`;
-        els.nearbyStatus.textContent = `${services.length} open within ${state.nearby.radius} mi of ${where}`;
+        const placeHint =
+          maps && maps.reverse_geocode && maps.reverse_geocode.city
+            ? ` · ${maps.reverse_geocode.city}`
+            : '';
+        els.nearbyStatus.textContent = `${services.length} open within ${state.nearby.radius} mi of ${where}${placeHint}`;
       }
+      renderNearbyMapLinks(maps);
+      renderNearbyEvents(events);
       if (!services.length) {
         els.nearbyList.innerHTML =
           '<div class="empty">No open physical/hybrid requests in this radius.</div>';
+        renderNearbyMap(services, body, maps);
         return;
       }
       els.nearbyList.innerHTML = services
@@ -883,7 +916,7 @@
           </div>`;
         })
         .join('');
-      renderNearbyMap(services, body);
+      renderNearbyMap(services, body, maps);
     } catch (err) {
       els.nearbyList.innerHTML = `<div class="empty">${escapeHtml(
         err.message || 'Nearby search failed'
@@ -905,6 +938,56 @@
     nearbyMapMarkers = [];
   }
 
+  function renderNearbyMapLinks(maps) {
+    if (!els.nearbyMapLinks) return;
+    const links = (maps && maps.map_links) || null;
+    if (!links) {
+      els.nearbyMapLinks.hidden = true;
+      els.nearbyMapLinks.innerHTML = '';
+      return;
+    }
+    const labels = [
+      ['google_maps', 'Google Maps'],
+      ['apple_maps', 'Apple Maps'],
+      ['bing_maps', 'Bing Maps'],
+      ['yahoo_maps', 'Yahoo Maps'],
+      ['openstreetmap', 'OpenStreetMap'],
+      ['mapbox', 'Mapbox'],
+    ];
+    els.nearbyMapLinks.innerHTML = labels
+      .filter(([k]) => links[k])
+      .map(
+        ([k, label]) =>
+          `<a href="${escapeHtml(links[k])}" target="_blank" rel="noopener">${escapeHtml(
+            label
+          )}</a>`
+      )
+      .join('');
+    els.nearbyMapLinks.hidden = false;
+  }
+
+  function renderNearbyEvents(events) {
+    if (!els.nearbyEvents) return;
+    if (!events || !events.length) {
+      els.nearbyEvents.innerHTML =
+        '<div class="empty">No activity items for this area yet.</div>';
+      return;
+    }
+    els.nearbyEvents.innerHTML = events
+      .slice(0, 30)
+      .map((ev) => {
+        const type = escapeHtml(ev.type || 'event');
+        const title = escapeHtml(ev.title || '');
+        const text = escapeHtml(ev.text || '');
+        return `<div class="event-row">
+          <div class="event-type">${type}</div>
+          <div class="event-title">${title}</div>
+          <div class="event-text">${text}</div>
+        </div>`;
+      })
+      .join('');
+  }
+
   function ensureNearbyMap(center) {
     if (!els.nearbyMap || typeof mapboxgl === 'undefined') return null;
     mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -921,7 +1004,7 @@
     return nearbyMap;
   }
 
-  function renderNearbyMap(services, queryBody) {
+  function renderNearbyMap(services, queryBody, maps) {
     if (!els.nearbyMap) return;
     if (typeof mapboxgl === 'undefined') {
       els.nearbyMap.innerHTML =
@@ -1758,6 +1841,27 @@
     if (els.headerAccountBtn) {
       els.headerAccountBtn.addEventListener('click', () => navigate('account'));
     }
+    const menuBtn = $('headerMenuBtn');
+    const menuClose = $('siteMenuClose');
+    const menuBackdrop = $('siteMenuBackdrop');
+    if (menuBtn) {
+      menuBtn.addEventListener('click', () => {
+        const open = menuBtn.getAttribute('aria-expanded') !== 'true';
+        setSiteMenuOpen(open);
+      });
+    }
+    if (menuClose) menuClose.addEventListener('click', () => setSiteMenuOpen(false));
+    if (menuBackdrop) menuBackdrop.addEventListener('click', () => setSiteMenuOpen(false));
+    document.querySelectorAll('.site-menu-link').forEach((a) => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        const path = a.getAttribute('data-site-path') || a.getAttribute('href');
+        openSitePage(path);
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') setSiteMenuOpen(false);
+    });
     if (els.profileForm) {
       els.profileForm.addEventListener('submit', handleProfileSave);
     }

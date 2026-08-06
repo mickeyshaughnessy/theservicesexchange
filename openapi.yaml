@@ -578,24 +578,160 @@ paths:
           description: Jobs grouped by status, with per-job role, share, and party rosters
         '401': { description: Missing or invalid token }
 
+  /bid:
+    post:
+      tags: [Marketplace]
+      summary: Post a service request or create a recurring subscription bid (autobidding)
+      description: |
+        **Canonical demand endpoint.** Creates either:
+
+        1. **One-shot bid** — open request supply can match via `/grab_job`
+           (`service`, `price`; `end_time` or `expires_in_hours`).
+        2. **Recurring subscription bid (autobidding)** — set `recurring: true`
+           (or `subscription: true`) with a `cadence`. Stores a template that
+           re-posts open requests on schedule. **Autobidding is only created
+           on this endpoint** (not campaigns, grab_job, cosmetics, etc.).
+
+        **Time-bound spending limits** apply to recurring bids via
+        `spending_limits: { max_amount, period: daily|weekly|monthly }`.
+        When omitted, a default of 4× unit price per cadence period is applied.
+        Processing skips posts that would exceed the period budget.
+
+        **Optional payment integrations** (`payment_method` + optional
+        `payment_integration`): cash, stripe, xmoney, paypal, phantom, etc.
+        Live charge only when provider config keys are set and `charge_now` is true;
+        otherwise fields are settlement hints for the counterparty.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [service, price]
+              properties:
+                service:
+                  type: string
+                  description: What you want done
+                price:
+                  type: number
+                  exclusiveMinimum: 0
+                currency: { type: string, default: USD }
+                payment_method:
+                  type: string
+                  default: cash
+                  description: cash | stripe | xmoney | paypal | phantom | venmo | wire | …
+                payment_integration:
+                  type: object
+                  description: Optional provider metadata (no secrets)
+                  properties:
+                    provider: { type: string }
+                    account_id: { type: string }
+                    merchant_id: { type: string }
+                    email: { type: string }
+                    wallet_address: { type: string }
+                    xmoney_account: { type: string }
+                    charge_now: { type: boolean, default: false }
+                end_time:
+                  type: integer
+                  description: Unix expiry for one-shot bids (default now+expires_in_hours)
+                expires_in_hours:
+                  type: integer
+                  default: 24
+                  description: Open-request lifetime (1–168) for one-shot or each auto post
+                recurring:
+                  type: boolean
+                  description: If true, create a subscription / auto-bid template
+                subscription:
+                  type: boolean
+                  description: Alias for recurring
+                cadence:
+                  type: string
+                  enum: [daily, weekly, biweekly, monthly]
+                  description: Required for recurring subscription bids
+                name:
+                  type: string
+                  description: Label for the recurring template
+                spending_limits:
+                  type: object
+                  description: Time-bound spend cap for recurring bids
+                  properties:
+                    max_amount: { type: number, exclusiveMinimum: 0 }
+                    period: { type: string, enum: [daily, weekly, monthly] }
+                    currency: { type: string }
+                post_now:
+                  type: boolean
+                  default: true
+                  description: When recurring, immediately process due post
+                preferred_local_hour: { type: integer, minimum: 0, maximum: 23 }
+                location_type:
+                  type: string
+                  enum: [physical, remote, hybrid]
+                  default: physical
+                lat: { type: number }
+                lon: { type: number }
+                address: { type: string }
+                start_address: { type: string, description: Rideshare pickup address }
+                end_address: { type: string, description: Rideshare dropoff address }
+                start_lat: { type: number }
+                start_lon: { type: number }
+                end_lat: { type: number }
+                end_lon: { type: number }
+            examples:
+              one_shot:
+                summary: One-shot open request
+                value:
+                  service: "Lawn mowing, 0.25 acre"
+                  price: 45
+                  payment_method: cash
+                  location_type: physical
+                  address: "123 Main St, Denver, CO"
+                  expires_in_hours: 24
+              recurring:
+                summary: Weekly subscription bid with spending limit
+                value:
+                  recurring: true
+                  cadence: weekly
+                  name: "Weekly lawn care"
+                  service: "Lawn mowing, 0.25 acre"
+                  price: 45
+                  payment_method: stripe
+                  payment_integration: { provider: stripe, charge_now: false }
+                  location_type: physical
+                  address: "123 Main St, Denver, CO"
+                  spending_limits: { max_amount: 200, period: monthly }
+                  post_now: true
+      responses:
+        '200':
+          description: One-shot bid created
+          content:
+            application/json:
+              example: { bid_id: uuid, kind: bid, recurring: false }
+        '201':
+          description: Recurring subscription bid (auto-bid) created
+          content:
+            application/json:
+              example:
+                kind: subscription_bid
+                recurring: true
+                bid_id: uuid
+                auto_bid: { id: uuid, cadence: weekly }
+                spending_limits: { max_amount: 200, period: monthly }
+        '400': { description: Validation error }
+        '401': { description: Missing or invalid token }
+        '403': { description: Only demand-type accounts can submit bids }
+
   /submit_bid:
     post:
       tags: [Marketplace]
-      summary: Post a service request (buyer / demand)
+      summary: Post a one-shot service request (legacy alias)
       description: |
-        Creates an open **bid** (service request) that supply accounts can match
-        via `/grab_job`. **Demand-type accounts only.**
+        Legacy one-shot alias for `POST /bid`. **Does not create recurring
+        subscription / autobids** — use `POST /bid` with `recurring: true` for that.
 
-        Required: `service` (what you want), `price` (>0), `end_time` (future Unix
-        timestamp when the request expires).
-
-        Location:
-        - `location_type` physical/hybrid needs `lat`+`lon` or `address` (geocoded).
-        - Rideshare-style jobs may use `start_address` / `end_address` (and optional
-          start/end coordinates); pickup becomes the match location.
-
-        Payment fields (`currency`, `payment_method`) are informational for the
-        counterparty — the exchange does not escrow funds.
+        Required: `service`, `price`, `end_time` (future Unix timestamp).
+        Payment fields are informational unless optional integrations are configured.
       security:
         - bearerAuth: []
       requestBody:
@@ -807,6 +943,17 @@ paths:
         optional `radius` in miles, returns open physical/hybrid bids sorted nearest
         first. Does not require authentication — useful for maps and "work near me"
         UIs before login.
+
+        **Privacy:** Matching uses private exact coordinates server-side. The response
+        only includes privacy-projected pins (Gaussian geo noise by `privacy_level`),
+        coarsened addresses, and redacted service text. Buyer identity, contact info,
+        and payment methods are never included.
+
+        **Maps enrichment (default on):** When `enrich` is true (default), the response
+        also includes `maps` with deep links for Google Maps, Apple Maps, Bing Maps,
+        Yahoo Maps, OpenStreetMap, and Mapbox; optional reverse geocode (Mapbox token
+        or Nominatim); Overpass places; static/embed map hints; and an `events` text
+        feed (services + community bulletins + landmarks) similar to the demo dashboard.
       requestBody:
         required: true
         content:
@@ -823,9 +970,17 @@ paths:
                   type: number
                   default: 10
                   description: Search radius in miles
+                enrich:
+                  type: boolean
+                  default: true
+                  description: >
+                    When true (default), attach maps deep-links, reverse geocode,
+                    places, map display hints, and a text events feed.
       responses:
         '200':
-          description: Open physical/hybrid requests within radius, nearest first
+          description: |
+            Open physical/hybrid requests within radius, nearest first, plus optional
+            `maps` / `events` enrichment and a `privacy_note`.
         '400': { description: Location required or address could not be geocoded }
 
   /exchange_data:

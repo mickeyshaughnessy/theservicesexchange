@@ -13,7 +13,8 @@
     --danger: #ff3333;
     --text: #b0c8ff;
     --text-bright: #ffffff;
-    --text-dim: #5566aa;
+    /* Muted labels/disclaimers — must stay readable on --bg-deep / --bg-panel */
+    --text-dim: #8a9fd8;
     --gold: #ffd700;
     --silver: #c0c0ff;
     --success: #39ff14;
@@ -21,7 +22,7 @@
     --dark: #0a0a2e;
     --dark-lighter: #0f0f4a;
     --light: #0a0a2e;
-    --gray: #5566aa;
+    --gray: #8a9fd8;
     --radius-md: 2px;
     --radius-lg: 2px;
     --radius-xl: 4px;

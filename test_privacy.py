@@ -33,12 +33,38 @@ def test_project_nearby():
         "address": "123 Main St, Denver, CO",
         "buyer_reputation": 4.0,
         "privacy_level": "neighborhood",
+        "username": "secret_buyer",
+        "payment_method": "cash",
+        "contact_info": "secret@example.com",
     }
     out = privacy.project_nearby_service(bid, 1.2)
     assert out["distance"] == 1.2
     assert "lat" in out and "lon" in out
     assert "555" not in (out.get("service") or "")
     assert "123 Main" not in (out.get("address") or "")
+    # Private fields must never leak on public projection
+    assert "username" not in out
+    assert "payment_method" not in out
+    assert "contact_info" not in out
+    # Pin should not equal exact private coordinates
+    assert out["lat"] != 39.74 or out["lon"] != -104.99
+
+
+def test_public_profile_strips_contact():
+    user = {
+        "display_name": "Ada",
+        "about": "Hello call 303-555-1212",
+        "location": "123 Main St, Denver, CO",
+        "contact_info": "ada@example.com",
+        "wallet_address": "0xabc",
+        "privacy_profile_level": "neighborhood",
+    }
+    out = privacy.project_public_profile(user, username="ada")
+    assert out["username"] == "ada"
+    assert "contact_info" not in out
+    assert "wallet_address" not in out
+    assert "555" not in (out.get("about") or "")
+    assert out.get("location") is None or "123" not in out["location"]
 
 
 if __name__ == "__main__":
@@ -46,4 +72,5 @@ if __name__ == "__main__":
     test_hidden_omits_coords()
     test_coarsen_city()
     test_project_nearby()
+    test_public_profile_strips_contact()
     print("ok")

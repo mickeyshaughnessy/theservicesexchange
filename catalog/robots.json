@@ -1,0 +1,2928 @@
+{
+  "version": 1,
+  "updated_at": 1786057627,
+  "updated_at_iso": "2026-08-06T23:07:07Z",
+  "source": "feedback_x_enrichment",
+  "count": 172,
+  "robots": [
+    {
+      "id": "tesla-optimus",
+      "maker": "Tesla",
+      "name": "Optimus",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/tesla-optimus.jpg",
+      "tags": [
+        "Humanoid",
+        "General Purpose"
+      ],
+      "desc": "Tesla's general-purpose humanoid for household help, retail floor work, and light logistics.",
+      "earnings": "$350 \u2013 $700 / week",
+      "price": "~$20,000\u201330,000 (expected)",
+      "status": "planned",
+      "statusLabel": "Planned",
+      "buyUrl": "https://www.tesla.com/AI",
+      "category": "Humanoid"
+    },
+    {
+      "id": "tesla-cybercab",
+      "maker": "Tesla",
+      "name": "Robotaxi (Cybercab)",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/tesla-cybercab.jpg",
+      "tags": [
+        "Autonomous Vehicle",
+        "Rideshare"
+      ],
+      "desc": "Two-seat autonomous vehicle for remnant seat-hours on rideshare requests.",
+      "earnings": "$800 \u2013 $1,500 / week",
+      "price": "Under $30,000",
+      "status": "preorder",
+      "statusLabel": "Coming 2026",
+      "buyUrl": "https://www.tesla.com/cybercab",
+      "category": "Autonomous Vehicle"
+    },
+    {
+      "id": "figure-02",
+      "maker": "Figure",
+      "name": "Figure 02",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/figure-02.jpg",
+      "tags": [
+        "Humanoid",
+        "Industrial"
+      ],
+      "desc": "Industrial humanoid deployed in BMW and logistics pilot lines.",
+      "earnings": "$400 \u2013 $800 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://www.figure.ai/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "figure-03",
+      "maker": "Figure",
+      "name": "Figure 03",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/figure-03.jpg",
+      "tags": [
+        "Humanoid",
+        "Home"
+      ],
+      "desc": "Home-focused humanoid running Helix VLA. Limited home deployments targeting late 2026.",
+      "earnings": "$300 \u2013 $600 / week",
+      "price": "~$20,000 (expected)",
+      "status": "planned",
+      "statusLabel": "Waitlist",
+      "buyUrl": "https://www.figure.ai/figure",
+      "category": "Humanoid"
+    },
+    {
+      "id": "1x-neo",
+      "maker": "1X",
+      "name": "NEO",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/1x-neo.jpg",
+      "tags": [
+        "Humanoid",
+        "Home"
+      ],
+      "desc": "Soft-bodied home humanoid for doors, fetch, tidy, and laundry. US deliveries began 2026.",
+      "earnings": "$200 \u2013 $450 / week",
+      "price": "$20,000 or $499/mo",
+      "status": "preorder",
+      "statusLabel": "Pre-Order",
+      "buyUrl": "https://www.1x.tech/order",
+      "category": "Humanoid"
+    },
+    {
+      "id": "1x-eve",
+      "maker": "1X",
+      "name": "EVE",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/1x-eve.jpg",
+      "tags": [
+        "Humanoid",
+        "Logistics"
+      ],
+      "desc": "Wheeled humanoid for logistics and facility work from 1X.",
+      "earnings": "$250 \u2013 $500 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.1x.tech/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "bd-atlas",
+      "maker": "Boston Dynamics",
+      "name": "Atlas",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/bd-atlas.jpg",
+      "tags": [
+        "Humanoid",
+        "Industrial"
+      ],
+      "desc": "All-electric production Atlas for industrial partners; new orders opening over time.",
+      "earnings": "$1,500 \u2013 $3,000 / week",
+      "price": "Contact sales",
+      "status": "planned",
+      "statusLabel": "Orders 2027",
+      "buyUrl": "https://bostondynamics.com/products/atlas/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "agility-digit",
+      "maker": "Agility Robotics",
+      "name": "Digit",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/agility-digit.jpg",
+      "tags": [
+        "Humanoid",
+        "Logistics"
+      ],
+      "desc": "Biped logistics humanoid for tote moves and warehouse floor work.",
+      "earnings": "$600 \u2013 $1,200 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://agilityrobotics.com/digit",
+      "category": "Humanoid"
+    },
+    {
+      "id": "apptronik-apollo",
+      "maker": "Apptronik",
+      "name": "Apollo",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/apptronik-apollo.jpg",
+      "tags": [
+        "Humanoid",
+        "General Purpose"
+      ],
+      "desc": "General-purpose humanoid for manufacturing and logistics pilots.",
+      "earnings": "$500 \u2013 $1,000 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://apptronik.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "sanctuary-phoenix",
+      "maker": "Sanctuary AI",
+      "name": "Phoenix",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/sanctuary-phoenix.jpg",
+      "tags": [
+        "Humanoid",
+        "General Purpose"
+      ],
+      "desc": "Carbon-fiber humanoid with haptic control for complex manipulation tasks.",
+      "earnings": "$500 \u2013 $1,100 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://www.sanctuary.ai/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "fourier-gr2",
+      "maker": "Fourier Intelligence",
+      "name": "GR-2",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/fourier-gr2.jpg",
+      "tags": [
+        "Humanoid",
+        "Research"
+      ],
+      "desc": "Research and commercial humanoid platform with open developer ecosystem.",
+      "earnings": "$200 \u2013 $450 / week",
+      "price": "From ~$30,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.fftai.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "fourier-gr1",
+      "maker": "Fourier Intelligence",
+      "name": "GR-1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/fourier-gr1.jpg",
+      "tags": [
+        "Humanoid",
+        "Research"
+      ],
+      "desc": "Earlier GR-series humanoid popular with labs and demo fleets.",
+      "earnings": "$150 \u2013 $350 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.fftai.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "unitree-g1",
+      "maker": "Unitree",
+      "name": "G1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-g1.jpg",
+      "tags": [
+        "Humanoid"
+      ],
+      "desc": "Affordable full-size humanoid for research, activations, and light repetitive tasks.",
+      "earnings": "$250 \u2013 $500 / week",
+      "price": "From $13,500",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://shop.unitree.com/products/unitree-g1",
+      "category": "Humanoid"
+    },
+    {
+      "id": "unitree-h1",
+      "maker": "Unitree",
+      "name": "H1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-h1.jpg",
+      "tags": [
+        "Humanoid"
+      ],
+      "desc": "High-performance humanoid with strong locomotion for demos and research.",
+      "earnings": "$300 \u2013 $600 / week",
+      "price": "From ~$90,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.unitree.com/h1",
+      "category": "Humanoid"
+    },
+    {
+      "id": "unitree-r1",
+      "maker": "Unitree",
+      "name": "R1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-r1.jpg",
+      "tags": [
+        "Humanoid",
+        "Entry Level"
+      ],
+      "desc": "Entry-level humanoid \u2014 cheapest ticket into humanoid labor for demos and simple tasks.",
+      "earnings": "$150 \u2013 $350 / week",
+      "price": "From $4,900",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://shop.unitree.com/products/unitree-r1",
+      "category": "Humanoid"
+    },
+    {
+      "id": "ubtech-walker-s",
+      "maker": "UBTECH",
+      "name": "Walker S",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ubtech-walker-s.jpg",
+      "tags": [
+        "Humanoid",
+        "Industrial"
+      ],
+      "desc": "Industrial humanoid for automotive and factory line assistance.",
+      "earnings": "$400 \u2013 $900 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://www.ubtrobot.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "ubtech-walker-x",
+      "maker": "UBTECH",
+      "name": "Walker X",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ubtech-walker-x.jpg",
+      "tags": [
+        "Humanoid",
+        "Service"
+      ],
+      "desc": "Service humanoid for hospitality and guided tours.",
+      "earnings": "$250 \u2013 $550 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.ubtrobot.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "ea-ameca",
+      "maker": "Engineered Arts",
+      "name": "Ameca",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ea-ameca.jpg",
+      "tags": [
+        "Humanoid",
+        "Entertainment"
+      ],
+      "desc": "Expressive humanoid for events, museums, and brand experiences.",
+      "earnings": "$400 \u2013 $1,000 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.engineeredarts.co.uk/robot/ameca/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "ea-mesmer",
+      "maker": "Engineered Arts",
+      "name": "Mesmer",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ea-mesmer.jpg",
+      "tags": [
+        "Humanoid",
+        "Entertainment"
+      ],
+      "desc": "Hyper-realistic head/face platform for interactive exhibits.",
+      "earnings": "$300 \u2013 $700 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.engineeredarts.co.uk/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "softbank-pepper",
+      "maker": "SoftBank Robotics",
+      "name": "Pepper",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/softbank-pepper.jpg",
+      "tags": [
+        "Humanoid",
+        "Service"
+      ],
+      "desc": "Classic service robot for retail greeters and info kiosks.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "Used market varies",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.softbankrobotics.com/pepper/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "softbank-nao",
+      "maker": "SoftBank Robotics",
+      "name": "NAO",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/softbank-nao.jpg",
+      "tags": [
+        "Humanoid",
+        "Education"
+      ],
+      "desc": "Educational humanoid widely used in STEM and research.",
+      "earnings": "$50 \u2013 $150 / week",
+      "price": "From ~$8,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.aldebaran.com/en/nao",
+      "category": "Humanoid"
+    },
+    {
+      "id": "honda-asimo",
+      "maker": "Honda",
+      "name": "ASIMO (legacy)",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/honda-asimo.jpg",
+      "tags": [
+        "Humanoid",
+        "Research"
+      ],
+      "desc": "Legacy research humanoid \u2014 historical reference; not for new sale.",
+      "earnings": "N/A",
+      "price": "Not for sale",
+      "status": "planned",
+      "statusLabel": "Legacy",
+      "buyUrl": "https://global.honda/en/robotics/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "toyota-thr3",
+      "maker": "Toyota",
+      "name": "T-HR3",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/toyota-thr3.jpg",
+      "tags": [
+        "Humanoid",
+        "Teleoperation"
+      ],
+      "desc": "Teleoperated humanoid research platform for remote presence.",
+      "earnings": "$200 \u2013 $500 / week",
+      "price": "Research only",
+      "status": "planned",
+      "statusLabel": "Research",
+      "buyUrl": "https://www.toyota-global.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "kawasaki-kaleido",
+      "maker": "Kawasaki",
+      "name": "Kaleido",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/kawasaki-kaleido.jpg",
+      "tags": [
+        "Humanoid",
+        "Research"
+      ],
+      "desc": "Research humanoid exploring industrial dual-arm tasks.",
+      "earnings": "$200 \u2013 $450 / week",
+      "price": "Contact sales",
+      "status": "planned",
+      "statusLabel": "Research",
+      "buyUrl": "https://robotics.kawasaki.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "xiaomi-cyberone",
+      "maker": "Xiaomi",
+      "name": "CyberOne",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/xiaomi-cyberone.jpg",
+      "tags": [
+        "Humanoid",
+        "Research"
+      ],
+      "desc": "Xiaomi full-size humanoid concept platform.",
+      "earnings": "$150 \u2013 $350 / week",
+      "price": "Not retail",
+      "status": "planned",
+      "statusLabel": "Concept",
+      "buyUrl": "https://www.mi.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "xiaomi-cyberdog2",
+      "maker": "Xiaomi",
+      "name": "CyberDog 2",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/xiaomi-cyberdog2.jpg",
+      "tags": [
+        "Quadruped",
+        "Consumer"
+      ],
+      "desc": "Consumer quadruped companion and developer platform.",
+      "earnings": "$50 \u2013 $120 / week",
+      "price": "From ~$1,500",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.mi.com/",
+      "category": "Quadruped"
+    },
+    {
+      "id": "agibot-a2",
+      "maker": "Agibot",
+      "name": "A2",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/agibot-a2.jpg",
+      "tags": [
+        "Humanoid",
+        "General Purpose"
+      ],
+      "desc": "Chinese general-purpose humanoid targeting service and light industry.",
+      "earnings": "$200 \u2013 $450 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Pre-Order",
+      "buyUrl": "https://www.agibot.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "galbot-g1",
+      "maker": "Galbot",
+      "name": "G1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/galbot-g1.jpg",
+      "tags": [
+        "Humanoid",
+        "Mobile Manipulator"
+      ],
+      "desc": "Mobile manipulator humanoid for retail and warehouse pilots.",
+      "earnings": "$250 \u2013 $550 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://www.galbot.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "kepler-forerunner",
+      "maker": "Kepler",
+      "name": "Forerunner",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/kepler-forerunner.jpg",
+      "tags": [
+        "Humanoid",
+        "Industrial"
+      ],
+      "desc": "Industrial humanoid targeting factory deployment at scale.",
+      "earnings": "$300 \u2013 $700 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://www.kepler-robot.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "robotera-star1",
+      "maker": "Robot Era",
+      "name": "STAR1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/robotera-star1.jpg",
+      "tags": [
+        "Humanoid"
+      ],
+      "desc": "Full-size humanoid platform for research and commercial trials.",
+      "earnings": "$250 \u2013 $500 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://www.robotera.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "limx-cl1",
+      "maker": "LimX Dynamics",
+      "name": "CL-1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/limx-cl1.jpg",
+      "tags": [
+        "Humanoid"
+      ],
+      "desc": "Dynamic humanoid focused on robust locomotion.",
+      "earnings": "$200 \u2013 $450 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://www.limxdynamics.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "pnd-adam",
+      "maker": "PNDbotics",
+      "name": "Adam",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/pnd-adam.jpg",
+      "tags": [
+        "Humanoid"
+      ],
+      "desc": "Open-ish humanoid platform aimed at developers and labs.",
+      "earnings": "$150 \u2013 $350 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.pndbotics.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "booster-t1",
+      "maker": "Booster Robotics",
+      "name": "T1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/booster-t1.jpg",
+      "tags": [
+        "Humanoid",
+        "Entry Level"
+      ],
+      "desc": "Compact humanoid for education and light demos.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "From ~$5,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.boosterobotics.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "mentee-bot",
+      "maker": "Mentee Robotics",
+      "name": "MenteeBot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/mentee-bot.jpg",
+      "tags": [
+        "Humanoid",
+        "Home"
+      ],
+      "desc": "Home-oriented humanoid from founders of Mobileye lineage.",
+      "earnings": "$250 \u2013 $500 / week",
+      "price": "Planned",
+      "status": "planned",
+      "statusLabel": "Planned",
+      "buyUrl": "https://www.menteebot.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "neura-4ne1",
+      "maker": "Neura Robotics",
+      "name": "4NE-1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/neura-4ne1.jpg",
+      "tags": [
+        "Humanoid",
+        "Cognitive"
+      ],
+      "desc": "Cognitive robot platform for industrial and service environments.",
+      "earnings": "$400 \u2013 $900 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://neura-robotics.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "pal-reem-c",
+      "maker": "PAL Robotics",
+      "name": "REEM-C",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/pal-reem-c.jpg",
+      "tags": [
+        "Humanoid",
+        "Research"
+      ],
+      "desc": "Research humanoid used across European labs.",
+      "earnings": "$150 \u2013 $350 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://pal-robotics.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "pal-tiago",
+      "maker": "PAL Robotics",
+      "name": "TIAGo",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/pal-tiago.jpg",
+      "tags": [
+        "Mobile Manipulator",
+        "Research"
+      ],
+      "desc": "Mobile manipulator for research and light service tasks.",
+      "earnings": "$150 \u2013 $350 / week",
+      "price": "From ~$40,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://pal-robotics.com/robots/tiago/",
+      "category": "Mobile Manipulator"
+    },
+    {
+      "id": "pal-ari",
+      "maker": "PAL Robotics",
+      "name": "ARI",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/pal-ari.jpg",
+      "tags": [
+        "Social Robot",
+        "Service"
+      ],
+      "desc": "Social robot for reception, guidance, and HRI research.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://pal-robotics.com/robots/ari/",
+      "category": "Social Robot"
+    },
+    {
+      "id": "bd-spot",
+      "maker": "Boston Dynamics",
+      "name": "Spot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/bd-spot.jpg",
+      "tags": [
+        "Quadruped",
+        "Inspection"
+      ],
+      "desc": "Proven industrial quadruped for autonomous inspection and site documentation.",
+      "earnings": "$700 \u2013 $1,200 / week",
+      "price": "~$75,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://bostondynamics.com/products/spot/",
+      "category": "Quadruped"
+    },
+    {
+      "id": "unitree-go2",
+      "maker": "Unitree",
+      "name": "Go2",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-go2.png",
+      "tags": [
+        "Quadruped",
+        "Patrol",
+        "Inspection"
+      ],
+      "desc": "Compact quadruped for patrol loops, site walk-throughs, and light inspection.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "From $1,600",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://shop.unitree.com/products/unitree-go2",
+      "category": "Quadruped"
+    },
+    {
+      "id": "unitree-b2",
+      "maker": "Unitree",
+      "name": "B2",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-b2.jpg",
+      "tags": [
+        "Quadruped",
+        "Industrial"
+      ],
+      "desc": "Heavy-duty industrial quadruped: IP-rated, long endurance, high payload.",
+      "earnings": "$500 \u2013 $900 / week",
+      "price": "Contact for quote",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://shop.unitree.com/products/unitree-b2",
+      "category": "Quadruped"
+    },
+    {
+      "id": "unitree-a1",
+      "maker": "Unitree",
+      "name": "A1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-a1.jpg",
+      "tags": [
+        "Quadruped",
+        "Research"
+      ],
+      "desc": "Earlier Unitree quadruped still common in research fleets.",
+      "earnings": "$80 \u2013 $180 / week",
+      "price": "Used market",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.unitree.com/",
+      "category": "Quadruped"
+    },
+    {
+      "id": "unitree-aliengo",
+      "maker": "Unitree",
+      "name": "AlienGo",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unitree-aliengo.jpg",
+      "tags": [
+        "Quadruped"
+      ],
+      "desc": "Mid-size Unitree quadruped for inspection and education.",
+      "earnings": "$120 \u2013 $280 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.unitree.com/",
+      "category": "Quadruped"
+    },
+    {
+      "id": "anybotics-anymal",
+      "maker": "ANYbotics",
+      "name": "ANYmal D",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/anybotics-anymal.jpg",
+      "tags": [
+        "Quadruped",
+        "Inspection"
+      ],
+      "desc": "Industrial inspection quadruped for oil & gas, energy, and mining.",
+      "earnings": "$800 \u2013 $1,500 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.anybotics.com/anymal/",
+      "category": "Quadruped"
+    },
+    {
+      "id": "anybotics-anymal-x",
+      "maker": "ANYbotics",
+      "name": "ANYmal X",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/anybotics-anymal-x.jpg",
+      "tags": [
+        "Quadruped",
+        "Ex-proof"
+      ],
+      "desc": "Ex-certified quadruped for hazardous industrial zones.",
+      "earnings": "$1,000 \u2013 $2,000 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.anybotics.com/",
+      "category": "Quadruped"
+    },
+    {
+      "id": "ghost-vision60",
+      "maker": "Ghost Robotics",
+      "name": "Vision 60",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ghost-vision60.jpg",
+      "tags": [
+        "Quadruped",
+        "Defense"
+      ],
+      "desc": "Rugged quadruped for defense, public safety, and industrial inspection.",
+      "earnings": "$700 \u2013 $1,400 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.ghostrobotics.io/",
+      "category": "Quadruped"
+    },
+    {
+      "id": "deep-x30",
+      "maker": "Deep Robotics",
+      "name": "X30",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/deep-x30.jpg",
+      "tags": [
+        "Quadruped",
+        "Industrial"
+      ],
+      "desc": "Industrial quadruped for power inspection and public safety.",
+      "earnings": "$400 \u2013 $800 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.deeprobotics.cn/",
+      "category": "Quadruped"
+    },
+    {
+      "id": "deep-lite3",
+      "maker": "Deep Robotics",
+      "name": "Lite3",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/deep-lite3.jpg",
+      "tags": [
+        "Quadruped"
+      ],
+      "desc": "Lighter Deep Robotics quadruped for research and patrol.",
+      "earnings": "$150 \u2013 $350 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.deeprobotics.cn/",
+      "category": "Quadruped"
+    },
+    {
+      "id": "swiss-mile",
+      "maker": "Swiss-Mile",
+      "name": "Swiss-Mile Robot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/swiss-mile.jpg",
+      "tags": [
+        "Quadruped",
+        "Wheeled"
+      ],
+      "desc": "Wheeled-legged robot for last-mile and industrial mobility research.",
+      "earnings": "$300 \u2013 $700 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://www.swiss-mile.com/",
+      "category": "Quadruped"
+    },
+    {
+      "id": "bd-stretch",
+      "maker": "Boston Dynamics",
+      "name": "Stretch",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/bd-stretch.jpg",
+      "tags": [
+        "Logistics",
+        "Warehouse"
+      ],
+      "desc": "Case-handling robot that unloads trucks and moves boxes all shift.",
+      "earnings": "$1,500 \u2013 $2,500 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://bostondynamics.com/products/stretch/",
+      "category": "Logistics"
+    },
+    {
+      "id": "locus-origin",
+      "maker": "Locus Robotics",
+      "name": "Locus Origin",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/locus-origin.jpg",
+      "tags": [
+        "AMR",
+        "Warehouse"
+      ],
+      "desc": "Collaborative AMR for piece-picking warehouse workflows.",
+      "earnings": "$400 \u2013 $900 / week",
+      "price": "Fleet / contact",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://locusrobotics.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "locus-vector",
+      "maker": "Locus Robotics",
+      "name": "Locus Vector",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/locus-vector.jpg",
+      "tags": [
+        "AMR",
+        "Warehouse"
+      ],
+      "desc": "Higher-payload Locus AMR for case and cart moves.",
+      "earnings": "$450 \u2013 $950 / week",
+      "price": "Fleet / contact",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://locusrobotics.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "zebra-freight500",
+      "maker": "Fetch Robotics (Zebra)",
+      "name": "Freight500",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/zebra-freight500.jpg",
+      "tags": [
+        "AMR",
+        "Warehouse"
+      ],
+      "desc": "Autonomous freight AMR under Zebra Technologies.",
+      "earnings": "$350 \u2013 $750 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.zebra.com/us/en/products/autonomous-mobile-robots.html",
+      "category": "AMR"
+    },
+    {
+      "id": "zebra-cartconnect",
+      "maker": "Fetch Robotics (Zebra)",
+      "name": "Fetch CartConnect",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/zebra-cartconnect.jpg",
+      "tags": [
+        "AMR",
+        "Warehouse"
+      ],
+      "desc": "Cart-towing AMR for flexible warehouse material flow.",
+      "earnings": "$300 \u2013 $650 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.zebra.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "6river-chuck",
+      "maker": "6 River Systems",
+      "name": "Chuck",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/6river-chuck.jpg",
+      "tags": [
+        "AMR",
+        "Warehouse"
+      ],
+      "desc": "Collaborative fulfillment AMR (Shopify / 6RS).",
+      "earnings": "$350 \u2013 $700 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://6river.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "geekplus-p800",
+      "maker": "Geek+",
+      "name": "P800",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/geekplus-p800.jpg",
+      "tags": [
+        "AMR",
+        "Goods-to-Person"
+      ],
+      "desc": "Shelf-moving goods-to-person AMR popular in e-commerce DCs.",
+      "earnings": "$300 \u2013 $700 / week",
+      "price": "Fleet / contact",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.geekplus.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "geekplus-s20c",
+      "maker": "Geek+",
+      "name": "S20C",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/geekplus-s20c.jpg",
+      "tags": [
+        "AMR",
+        "Sorting"
+      ],
+      "desc": "Sorting AMR for parcel and e-commerce sortation.",
+      "earnings": "$250 \u2013 $550 / week",
+      "price": "Fleet / contact",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.geekplus.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "greyorange-ranger",
+      "maker": "GreyOrange",
+      "name": "Ranger GTP",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/greyorange-ranger.jpg",
+      "tags": [
+        "AMR",
+        "Warehouse"
+      ],
+      "desc": "Goods-to-person ranger robots for high-throughput fulfillment.",
+      "earnings": "$350 \u2013 $800 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.greyorange.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "hai-a42",
+      "maker": "Hai Robotics",
+      "name": "HAIPICK A42",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/hai-a42.jpg",
+      "tags": [
+        "ACR",
+        "Warehouse"
+      ],
+      "desc": "Autonomous case-handling robot for dense tote storage.",
+      "earnings": "$400 \u2013 $900 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.hairobotics.com/",
+      "category": "ACR"
+    },
+    {
+      "id": "autostore-r5",
+      "maker": "AutoStore",
+      "name": "R5 Robot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/autostore-r5.jpg",
+      "tags": [
+        "Cube Storage",
+        "Warehouse"
+      ],
+      "desc": "Grid robot for ultra-dense cube storage systems.",
+      "earnings": "System / contact",
+      "price": "System quote",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.autostore.com/",
+      "category": "Cube Storage"
+    },
+    {
+      "id": "ocado-600",
+      "maker": "Ocado",
+      "name": "600 Series Bot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ocado-600.jpg",
+      "tags": [
+        "Grid",
+        "Grocery"
+      ],
+      "desc": "Grocery grid bot used in Ocado-style CFC systems.",
+      "earnings": "System / contact",
+      "price": "System quote",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.ocadogroup.com/",
+      "category": "Grid"
+    },
+    {
+      "id": "amazon-proteus",
+      "maker": "Amazon Robotics",
+      "name": "Proteus",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/amazon-proteus.jpg",
+      "tags": [
+        "AMR",
+        "Warehouse"
+      ],
+      "desc": "Autonomous mobile robot for Amazon-style warehouse floors (limited external sale).",
+      "earnings": "Internal fleets",
+      "price": "Not retail",
+      "status": "planned",
+      "statusLabel": "Internal",
+      "buyUrl": "https://www.amazon.science/",
+      "category": "AMR"
+    },
+    {
+      "id": "amazon-sparrow",
+      "maker": "Amazon Robotics",
+      "name": "Sparrow",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/amazon-sparrow.jpg",
+      "tags": [
+        "Manipulation",
+        "Warehouse"
+      ],
+      "desc": "AI-powered robotic arm for item handling in fulfillment.",
+      "earnings": "Internal fleets",
+      "price": "Not retail",
+      "status": "planned",
+      "statusLabel": "Internal",
+      "buyUrl": "https://www.aboutamazon.com/",
+      "category": "Manipulation"
+    },
+    {
+      "id": "symbotic-bot",
+      "maker": "Symbotic",
+      "name": "Symbotic Bot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/symbotic-bot.jpg",
+      "tags": [
+        "Warehouse",
+        "AHS"
+      ],
+      "desc": "AI-powered warehouse automation bots for large grocery/retail DCs.",
+      "earnings": "System / contact",
+      "price": "System quote",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.symbotic.com/",
+      "category": "Warehouse"
+    },
+    {
+      "id": "exotec-skypod",
+      "maker": "Exotec",
+      "name": "Skypod",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/exotec-skypod.jpg",
+      "tags": [
+        "Warehouse",
+        "Goods-to-Person"
+      ],
+      "desc": "High-speed skypod robots for dense rack climbing fulfillment.",
+      "earnings": "$500 \u2013 $1,200 / week",
+      "price": "System quote",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.exotec.com/",
+      "category": "Warehouse"
+    },
+    {
+      "id": "invia-picker",
+      "maker": "inVia Robotics",
+      "name": "inVia Picker",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/invia-picker.jpg",
+      "tags": [
+        "AMR",
+        "Warehouse"
+      ],
+      "desc": "Goods-to-person AMR system for e-commerce fulfillment.",
+      "earnings": "$300 \u2013 $700 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.inviarobotics.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "vecna-palletjack",
+      "maker": "Vecna Robotics",
+      "name": "Pallet Jack AMR",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/vecna-palletjack.jpg",
+      "tags": [
+        "AMR",
+        "Pallet"
+      ],
+      "desc": "Autonomous pallet jack for warehouse and manufacturing floors.",
+      "earnings": "$400 \u2013 $900 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.vecnarobotics.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "seegrid-pallet",
+      "maker": "Seegrid",
+      "name": "Pallet Truck",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/seegrid-pallet.jpg",
+      "tags": [
+        "AMR",
+        "Tugger"
+      ],
+      "desc": "Vision-guided industrial AMRs for material handling.",
+      "earnings": "$350 \u2013 $800 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://seegrid.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "mir-250",
+      "maker": "MiR",
+      "name": "MiR250",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/mir-250.jpg",
+      "tags": [
+        "AMR",
+        "Manufacturing"
+      ],
+      "desc": "Collaborative AMR for factories and hospitals.",
+      "earnings": "$250 \u2013 $550 / week",
+      "price": "From ~$25,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.mobile-industrial-robots.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "mir-600",
+      "maker": "MiR",
+      "name": "MiR600",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/mir-600.jpg",
+      "tags": [
+        "AMR",
+        "Pallet"
+      ],
+      "desc": "Higher-payload MiR for pallet transport.",
+      "earnings": "$350 \u2013 $750 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.mobile-industrial-robots.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "otto-1500",
+      "maker": "OTTO Motors",
+      "name": "OTTO 1500",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/otto-1500.jpg",
+      "tags": [
+        "AMR",
+        "Heavy Payload"
+      ],
+      "desc": "Heavy payload AMR for industrial material transport.",
+      "earnings": "$500 \u2013 $1,100 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://ottomotors.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "clearpath-otto100",
+      "maker": "Clearpath",
+      "name": "OTTO 100",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/clearpath-otto100.jpg",
+      "tags": [
+        "AMR",
+        "Research"
+      ],
+      "desc": "Compact industrial AMR from OTTO/Clearpath family.",
+      "earnings": "$200 \u2013 $450 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://clearpathrobotics.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "otto-lifter",
+      "maker": "Fetchcore / OTTO",
+      "name": "OTTO Lifter",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/otto-lifter.jpg",
+      "tags": [
+        "AMR",
+        "Pallet"
+      ],
+      "desc": "Autonomous forklift-style AMR for pallet racking.",
+      "earnings": "$600 \u2013 $1,300 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://ottomotors.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "ur-5e",
+      "maker": "Universal Robots",
+      "name": "UR5e",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ur-5e.jpg",
+      "tags": [
+        "Cobot",
+        "Arm"
+      ],
+      "desc": "Mid-size collaborative arm for assembly, packaging, and machine tending.",
+      "earnings": "$200 \u2013 $500 / week",
+      "price": "From ~$35,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.universal-robots.com/products/ur5-robot/",
+      "category": "Cobot"
+    },
+    {
+      "id": "ur-10e",
+      "maker": "Universal Robots",
+      "name": "UR10e",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ur-10e.jpg",
+      "tags": [
+        "Cobot",
+        "Arm"
+      ],
+      "desc": "Larger UR cobot for palletizing and higher reach tasks.",
+      "earnings": "$250 \u2013 $600 / week",
+      "price": "From ~$45,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.universal-robots.com/products/ur10-robot/",
+      "category": "Cobot"
+    },
+    {
+      "id": "ur-20",
+      "maker": "Universal Robots",
+      "name": "UR20",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ur-20.jpg",
+      "tags": [
+        "Cobot",
+        "Arm"
+      ],
+      "desc": "High-payload UR cobot for heavy collaborative work.",
+      "earnings": "$300 \u2013 $700 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.universal-robots.com/",
+      "category": "Cobot"
+    },
+    {
+      "id": "abb-gofa",
+      "maker": "ABB",
+      "name": "GoFa",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/abb-gofa.jpg",
+      "tags": [
+        "Cobot",
+        "Arm"
+      ],
+      "desc": "ABB collaborative robot family for industrial cells.",
+      "earnings": "$250 \u2013 $550 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://new.abb.com/products/robotics/collaborative-robots",
+      "category": "Cobot"
+    },
+    {
+      "id": "abb-yumi",
+      "maker": "ABB",
+      "name": "YuMi",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/abb-yumi.jpg",
+      "tags": [
+        "Cobot",
+        "Dual Arm"
+      ],
+      "desc": "Dual-arm collaborative robot for small parts assembly.",
+      "earnings": "$200 \u2013 $450 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://new.abb.com/products/robotics/collaborative-robots/yumi",
+      "category": "Cobot"
+    },
+    {
+      "id": "fanuc-crx10",
+      "maker": "Fanuc",
+      "name": "CRX-10iA",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/fanuc-crx10.jpg",
+      "tags": [
+        "Cobot",
+        "Arm"
+      ],
+      "desc": "Fanuc collaborative arm popular in automotive suppliers.",
+      "earnings": "$250 \u2013 $600 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.fanucamerica.com/",
+      "category": "Cobot"
+    },
+    {
+      "id": "fanuc-lrmate",
+      "maker": "Fanuc",
+      "name": "LR Mate 200iD",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/fanuc-lrmate.jpg",
+      "tags": [
+        "Industrial Arm"
+      ],
+      "desc": "Compact industrial arm for high-speed pick and place.",
+      "earnings": "$200 \u2013 $500 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.fanucamerica.com/",
+      "category": "Industrial Arm"
+    },
+    {
+      "id": "kuka-lbr-iiwa",
+      "maker": "KUKA",
+      "name": "LBR iiwa",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/kuka-lbr-iiwa.jpg",
+      "tags": [
+        "Cobot",
+        "Arm"
+      ],
+      "desc": "Sensitive collaborative LBR for human-robot collaboration cells.",
+      "earnings": "$250 \u2013 $550 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.kuka.com/",
+      "category": "Cobot"
+    },
+    {
+      "id": "kuka-agilus",
+      "maker": "KUKA",
+      "name": "KR AGILUS",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/kuka-agilus.jpg",
+      "tags": [
+        "Industrial Arm"
+      ],
+      "desc": "Fast small industrial robots for packaging and assembly.",
+      "earnings": "$200 \u2013 $450 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.kuka.com/",
+      "category": "Industrial Arm"
+    },
+    {
+      "id": "yaskawa-hc10",
+      "maker": "Yaskawa",
+      "name": "HC10",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/yaskawa-hc10.jpg",
+      "tags": [
+        "Cobot",
+        "Arm"
+      ],
+      "desc": "Motoman collaborative robot for machine tending and assembly.",
+      "earnings": "$200 \u2013 $500 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.motoman.com/",
+      "category": "Cobot"
+    },
+    {
+      "id": "yaskawa-gp8",
+      "maker": "Yaskawa",
+      "name": "GP8",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/yaskawa-gp8.jpg",
+      "tags": [
+        "Industrial Arm"
+      ],
+      "desc": "High-speed GP-series industrial manipulator.",
+      "earnings": "$180 \u2013 $400 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.motoman.com/",
+      "category": "Industrial Arm"
+    },
+    {
+      "id": "doosan-a0509",
+      "maker": "Doosan Robotics",
+      "name": "A0509",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/doosan-a0509.jpg",
+      "tags": [
+        "Cobot",
+        "Arm"
+      ],
+      "desc": "Doosan collaborative arm for flexible manufacturing.",
+      "earnings": "$180 \u2013 $420 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.doosanrobotics.com/",
+      "category": "Cobot"
+    },
+    {
+      "id": "tm-5-700",
+      "maker": "Techman Robot",
+      "name": "TM5-700",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/tm-5-700.jpg",
+      "tags": [
+        "Cobot",
+        "Vision"
+      ],
+      "desc": "Built-in vision cobot for inspection and assembly.",
+      "earnings": "$180 \u2013 $400 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.tm-robot.com/",
+      "category": "Cobot"
+    },
+    {
+      "id": "franka-research3",
+      "maker": "Franka Emika",
+      "name": "Franka Research 3",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/franka-research3.jpg",
+      "tags": [
+        "Cobot",
+        "Research"
+      ],
+      "desc": "Sensitive research cobot widely used in AI labs.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "From ~$30,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://franka.de/",
+      "category": "Cobot"
+    },
+    {
+      "id": "rethink-sawyer",
+      "maker": "Rethink Robotics",
+      "name": "Sawyer",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/rethink-sawyer.jpg",
+      "tags": [
+        "Cobot",
+        "Arm"
+      ],
+      "desc": "Legacy high-performance cobot still on secondary markets.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "Used market",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.rethinkrobotics.com/",
+      "category": "Cobot"
+    },
+    {
+      "id": "kinova-gen3",
+      "maker": "Kinova",
+      "name": "Gen3",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/kinova-gen3.jpg",
+      "tags": [
+        "Arm",
+        "Research"
+      ],
+      "desc": "Lightweight ultra-sensitive arm for research and assistive apps.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.kinovarobotics.com/",
+      "category": "Arm"
+    },
+    {
+      "id": "ufactory-xarm6",
+      "maker": "UFactory",
+      "name": "xArm 6",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ufactory-xarm6.jpg",
+      "tags": [
+        "Arm",
+        "Affordable"
+      ],
+      "desc": "Affordable 6-axis arm for labs, makers, and light industry.",
+      "earnings": "$80 \u2013 $200 / week",
+      "price": "From ~$8,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.ufactory.cc/",
+      "category": "Arm"
+    },
+    {
+      "id": "ufactory-xarm7",
+      "maker": "UFactory",
+      "name": "xArm 7",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ufactory-xarm7.jpg",
+      "tags": [
+        "Arm",
+        "Affordable"
+      ],
+      "desc": "7-DOF xArm for research and collaborative cells.",
+      "earnings": "$90 \u2013 $220 / week",
+      "price": "From ~$10,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.ufactory.cc/",
+      "category": "Arm"
+    },
+    {
+      "id": "elephant-mycobot280",
+      "maker": "Elephant Robotics",
+      "name": "myCobot 280",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/elephant-mycobot280.jpg",
+      "tags": [
+        "Arm",
+        "Education"
+      ],
+      "desc": "Ultra-compact educational cobot arm.",
+      "earnings": "$20 \u2013 $60 / week",
+      "price": "From ~$600",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.elephantrobotics.com/",
+      "category": "Arm"
+    },
+    {
+      "id": "dobot-mg400",
+      "maker": "Dobot",
+      "name": "MG400",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/dobot-mg400.jpg",
+      "tags": [
+        "Arm",
+        "Desktop"
+      ],
+      "desc": "Desktop industrial arm for light automation and education.",
+      "earnings": "$40 \u2013 $100 / week",
+      "price": "From ~$2,500",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.dobot-robots.com/",
+      "category": "Arm"
+    },
+    {
+      "id": "carbon-laserweeder",
+      "maker": "Carbon Robotics",
+      "name": "LaserWeeder G2",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/carbon-laserweeder.webp",
+      "tags": [
+        "Agriculture",
+        "Laser Weeding"
+      ],
+      "desc": "Laser weeding at up to 60-foot swaths; premium in-season acreage rates.",
+      "earnings": "$8,000 \u2013 $15,000 / week (in season)",
+      "price": "From ~$1.4M",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://carbonrobotics.com/laserweeder-g2",
+      "category": "Agriculture"
+    },
+    {
+      "id": "deere-see-spray",
+      "maker": "John Deere",
+      "name": "See & Spray Ultimate",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/deere-see-spray.jpg",
+      "tags": [
+        "Agriculture",
+        "Spraying"
+      ],
+      "desc": "Computer-vision precision sprayer reducing chemical use.",
+      "earnings": "$2,000 \u2013 $5,000 / week (in season)",
+      "price": "Equipment package",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.deere.com/",
+      "category": "Agriculture"
+    },
+    {
+      "id": "deere-autonomy",
+      "maker": "John Deere",
+      "name": "Autonomy Tractor Kit",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/deere-autonomy.jpg",
+      "tags": [
+        "Agriculture",
+        "Autonomy"
+      ],
+      "desc": "Autonomous tractor kits for large-acre grain operations.",
+      "earnings": "$1,500 \u2013 $4,000 / week (in season)",
+      "price": "Kit + tractor",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.deere.com/autonomous",
+      "category": "Agriculture"
+    },
+    {
+      "id": "naio-oz",
+      "maker": "Na\u00efo Technologies",
+      "name": "Oz",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/naio-oz.jpg",
+      "tags": [
+        "Agriculture",
+        "Weeding"
+      ],
+      "desc": "Compact autonomous weeder for specialty crops.",
+      "earnings": "$400 \u2013 $900 / week (in season)",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.naio-technologies.com/",
+      "category": "Agriculture"
+    },
+    {
+      "id": "naio-ted",
+      "maker": "Na\u00efo Technologies",
+      "name": "Ted",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/naio-ted.jpg",
+      "tags": [
+        "Agriculture",
+        "Vineyard"
+      ],
+      "desc": "Vineyard robot for weeding between vines.",
+      "earnings": "$500 \u2013 $1,100 / week (in season)",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.naio-technologies.com/",
+      "category": "Agriculture"
+    },
+    {
+      "id": "farmwise-titan",
+      "maker": "FarmWise",
+      "name": "Titan",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/farmwise-titan.jpg",
+      "tags": [
+        "Agriculture",
+        "Weeding"
+      ],
+      "desc": "Autonomous mechanical weeding for vegetable growers.",
+      "earnings": "$1,000 \u2013 $2,500 / week (in season)",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://farmwise.io/",
+      "category": "Agriculture"
+    },
+    {
+      "id": "ironox-angus",
+      "maker": "Iron Ox",
+      "name": "Angus",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ironox-angus.jpg",
+      "tags": [
+        "Agriculture",
+        "Greenhouse"
+      ],
+      "desc": "Greenhouse automation robot for hydroponic facilities.",
+      "earnings": "$500 \u2013 $1,200 / week",
+      "price": "Contact sales",
+      "status": "planned",
+      "statusLabel": "Limited",
+      "buyUrl": "https://ironox.com/",
+      "category": "Agriculture"
+    },
+    {
+      "id": "burro",
+      "maker": "Burro",
+      "name": "Burro",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/burro.jpg",
+      "tags": [
+        "Agriculture",
+        "Transport"
+      ],
+      "desc": "Follow-me crop transport robot for farms and nurseries.",
+      "earnings": "$200 \u2013 $500 / week",
+      "price": "From ~$20,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.goburro.com/",
+      "category": "Agriculture"
+    },
+    {
+      "id": "tortuga-harvest",
+      "maker": "Tortuga AgTech",
+      "name": "Harvest Robot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/tortuga-harvest.jpg",
+      "tags": [
+        "Agriculture",
+        "Harvesting"
+      ],
+      "desc": "Berry harvesting robots for greenhouse production.",
+      "earnings": "$800 \u2013 $2,000 / week (in season)",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.tortugaagtech.com/",
+      "category": "Agriculture"
+    },
+    {
+      "id": "advanced-farm-apple",
+      "maker": "Advanced Farm",
+      "name": "Apple Harvester",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/advanced-farm-apple.jpg",
+      "tags": [
+        "Agriculture",
+        "Harvesting"
+      ],
+      "desc": "Autonomous apple harvesting system for orchards.",
+      "earnings": "$1,500 \u2013 $4,000 / week (in season)",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.advanced.farm/",
+      "category": "Agriculture"
+    },
+    {
+      "id": "traptic-strawberry",
+      "maker": "Traptic",
+      "name": "Strawberry Harvester",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/traptic-strawberry.jpg",
+      "tags": [
+        "Agriculture",
+        "Harvesting"
+      ],
+      "desc": "Soft-fruit harvesting robot for strawberries.",
+      "earnings": "$700 \u2013 $1,800 / week (in season)",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://www.traptic.com/",
+      "category": "Agriculture"
+    },
+    {
+      "id": "softbank-whiz",
+      "maker": "SoftBank Robotics",
+      "name": "Whiz",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/softbank-whiz.jpg",
+      "tags": [
+        "Cleaning",
+        "Vacuum"
+      ],
+      "desc": "Autonomous commercial vacuum for offices and facilities.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "From ~$7,000 lease",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.softbankrobotics.com/whiz/",
+      "category": "Cleaning"
+    },
+    {
+      "id": "avidbots-neo",
+      "maker": "Avidbots",
+      "name": "Neo",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/avidbots-neo.jpg",
+      "tags": [
+        "Cleaning",
+        "Scrubber"
+      ],
+      "desc": "Autonomous floor scrubber for airports, malls, warehouses.",
+      "earnings": "$300 \u2013 $700 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.avidbots.com/",
+      "category": "Cleaning"
+    },
+    {
+      "id": "brain-scrubber",
+      "maker": "Brain Corp",
+      "name": "BrainOS Scrubber",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/brain-scrubber.jpg",
+      "tags": [
+        "Cleaning",
+        "Autonomy Kit"
+      ],
+      "desc": "Autonomy kits powering major scrubber brands (Tennant, etc.).",
+      "earnings": "$200 \u2013 $500 / week",
+      "price": "Via OEM",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.braincorp.com/",
+      "category": "Cleaning"
+    },
+    {
+      "id": "gaussian-scrubber50",
+      "maker": "Gaussian Robotics",
+      "name": "Scrubber 50",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/gaussian-scrubber50.jpg",
+      "tags": [
+        "Cleaning",
+        "Scrubber"
+      ],
+      "desc": "Commercial autonomous scrubbers widely deployed in Asia/EU.",
+      "earnings": "$200 \u2013 $450 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.gaussianrobotics.com/",
+      "category": "Cleaning"
+    },
+    {
+      "id": "pudu-cc1",
+      "maker": "Pudu Robotics",
+      "name": "CC1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/pudu-cc1.jpg",
+      "tags": [
+        "Cleaning",
+        "Service"
+      ],
+      "desc": "Multifunction commercial cleaning robot.",
+      "earnings": "$150 \u2013 $350 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.pudurobotics.com/",
+      "category": "Cleaning"
+    },
+    {
+      "id": "pudu-bellabot",
+      "maker": "Pudu Robotics",
+      "name": "BellaBot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/pudu-bellabot.jpg",
+      "tags": [
+        "Service",
+        "Delivery"
+      ],
+      "desc": "Cat-eared service delivery robot for restaurants.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "From ~$8,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.pudurobotics.com/",
+      "category": "Service"
+    },
+    {
+      "id": "pudu-kettybot",
+      "maker": "Pudu Robotics",
+      "name": "KettyBot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/pudu-kettybot.jpg",
+      "tags": [
+        "Service",
+        "Greeting"
+      ],
+      "desc": "Greeting and leading robot for retail and hospitality.",
+      "earnings": "$80 \u2013 $200 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.pudurobotics.com/",
+      "category": "Service"
+    },
+    {
+      "id": "keenon-t8",
+      "maker": "Keenon Robotics",
+      "name": "T8",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/keenon-t8.jpg",
+      "tags": [
+        "Service",
+        "Delivery"
+      ],
+      "desc": "Hotel/restaurant delivery robot for indoor last meters.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.keenonrobot.com/",
+      "category": "Service"
+    },
+    {
+      "id": "bear-servi",
+      "maker": "Bear Robotics",
+      "name": "Servi",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/bear-servi.jpg",
+      "tags": [
+        "Service",
+        "Delivery"
+      ],
+      "desc": "Restaurant server robot popular in US hospitality.",
+      "earnings": "$120 \u2013 $280 / week",
+      "price": "Lease programs",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.bearrobotics.ai/",
+      "category": "Service"
+    },
+    {
+      "id": "diligent-moxi",
+      "maker": "Diligent Robotics",
+      "name": "Moxi",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/diligent-moxi.jpg",
+      "tags": [
+        "Healthcare",
+        "Mobile Manipulator"
+      ],
+      "desc": "Hospital mobile manipulator for supply runs and logistics.",
+      "earnings": "$500 \u2013 $1,200 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.diligentrobots.com/",
+      "category": "Healthcare"
+    },
+    {
+      "id": "aethon-tug",
+      "maker": "Aethon",
+      "name": "TUG",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/aethon-tug.jpg",
+      "tags": [
+        "Healthcare",
+        "AMR"
+      ],
+      "desc": "Hospital autonomous delivery for meds, meals, linens.",
+      "earnings": "$400 \u2013 $900 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://aethon.com/",
+      "category": "Healthcare"
+    },
+    {
+      "id": "starship-delivery",
+      "maker": "Starship Technologies",
+      "name": "Delivery Robot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/starship-delivery.jpg",
+      "tags": [
+        "Delivery",
+        "Sidewalk"
+      ],
+      "desc": "Sidewalk delivery robots for campuses and cities.",
+      "earnings": "$150 \u2013 $400 / week",
+      "price": "Fleet programs",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.starship.xyz/",
+      "category": "Delivery"
+    },
+    {
+      "id": "serve-delivery",
+      "maker": "Serve Robotics",
+      "name": "Serve Delivery",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/serve-delivery.jpg",
+      "tags": [
+        "Delivery",
+        "Sidewalk"
+      ],
+      "desc": "Autonomous sidewalk delivery (Uber Eats partner markets).",
+      "earnings": "$150 \u2013 $400 / week",
+      "price": "Fleet programs",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.serverobotics.com/",
+      "category": "Delivery"
+    },
+    {
+      "id": "nuro-r3",
+      "maker": "Nuro",
+      "name": "R3",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/nuro-r3.jpg",
+      "tags": [
+        "Delivery",
+        "AV"
+      ],
+      "desc": "On-road autonomous delivery vehicle for goods.",
+      "earnings": "$500 \u2013 $1,500 / week",
+      "price": "Fleet / partner",
+      "status": "preorder",
+      "statusLabel": "Partner",
+      "buyUrl": "https://www.nuro.ai/",
+      "category": "Delivery"
+    },
+    {
+      "id": "kiwibot",
+      "maker": "Kiwibot",
+      "name": "Kiwibot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/kiwibot.jpg",
+      "tags": [
+        "Delivery",
+        "Campus"
+      ],
+      "desc": "Campus delivery bots for food and small parcels.",
+      "earnings": "$80 \u2013 $200 / week",
+      "price": "Fleet programs",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.kiwibot.com/",
+      "category": "Delivery"
+    },
+    {
+      "id": "amazon-scout",
+      "maker": "Amazon",
+      "name": "Scout (legacy)",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/amazon-scout.jpg",
+      "tags": [
+        "Delivery",
+        "Sidewalk"
+      ],
+      "desc": "Legacy Amazon sidewalk robot program (reference listing).",
+      "earnings": "N/A",
+      "price": "Not retail",
+      "status": "planned",
+      "statusLabel": "Legacy",
+      "buyUrl": "https://www.amazon.com/",
+      "category": "Delivery"
+    },
+    {
+      "id": "waymo-driver",
+      "maker": "Waymo",
+      "name": "Waymo Driver",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/waymo-driver.jpg",
+      "tags": [
+        "Autonomous Vehicle",
+        "Rideshare"
+      ],
+      "desc": "Robotaxi platform in select US metros \u2014 ride-hail capacity on RSE-style markets.",
+      "earnings": "$800 \u2013 $2,000 / week",
+      "price": "Not retail vehicle",
+      "status": "available",
+      "statusLabel": "Service areas",
+      "buyUrl": "https://waymo.com/",
+      "category": "Autonomous Vehicle"
+    },
+    {
+      "id": "cruise-origin",
+      "maker": "Cruise",
+      "name": "Origin (legacy)",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/cruise-origin.jpg",
+      "tags": [
+        "Autonomous Vehicle"
+      ],
+      "desc": "Legacy AV program listing for market completeness.",
+      "earnings": "N/A",
+      "price": "Not retail",
+      "status": "planned",
+      "statusLabel": "Legacy",
+      "buyUrl": "https://www.getcruise.com/",
+      "category": "Autonomous Vehicle"
+    },
+    {
+      "id": "zoox-robotaxi",
+      "maker": "Zoox",
+      "name": "Zoox Robotaxi",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/zoox-robotaxi.jpg",
+      "tags": [
+        "Autonomous Vehicle",
+        "Rideshare"
+      ],
+      "desc": "Purpose-built bidirectional robotaxi (Amazon Zoox).",
+      "earnings": "$800 \u2013 $1,800 / week",
+      "price": "Not retail",
+      "status": "planned",
+      "statusLabel": "Service",
+      "buyUrl": "https://zoox.com/",
+      "category": "Autonomous Vehicle"
+    },
+    {
+      "id": "dji-matrice350",
+      "maker": "DJI",
+      "name": "Matrice 350 RTK",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/dji-matrice350.jpg",
+      "tags": [
+        "Drone",
+        "Enterprise"
+      ],
+      "desc": "Enterprise drone for inspection, mapping, and public safety.",
+      "earnings": "$300 \u2013 $800 / week",
+      "price": "From ~$12,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.dji.com/matrice-350-rtk",
+      "category": "Drone"
+    },
+    {
+      "id": "dji-mavic3e",
+      "maker": "DJI",
+      "name": "Mavic 3 Enterprise",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/dji-mavic3e.jpg",
+      "tags": [
+        "Drone",
+        "Inspection"
+      ],
+      "desc": "Portable enterprise drone for site surveys and inspection.",
+      "earnings": "$150 \u2013 $400 / week",
+      "price": "From ~$3,500",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.dji.com/mavic-3-enterprise",
+      "category": "Drone"
+    },
+    {
+      "id": "dji-agras-t50",
+      "maker": "DJI",
+      "name": "Agras T50",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/dji-agras-t50.jpg",
+      "tags": [
+        "Drone",
+        "Agriculture"
+      ],
+      "desc": "Agricultural spray drone for crop protection.",
+      "earnings": "$400 \u2013 $1,000 / week (in season)",
+      "price": "From ~$15,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.dji.com/agras-t50",
+      "category": "Drone"
+    },
+    {
+      "id": "skydio-x10",
+      "maker": "Skydio",
+      "name": "X10",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/skydio-x10.jpg",
+      "tags": [
+        "Drone",
+        "Autonomous"
+      ],
+      "desc": "Autonomous US-made drone for inspection and public safety.",
+      "earnings": "$400 \u2013 $900 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.skydio.com/",
+      "category": "Drone"
+    },
+    {
+      "id": "skydio-dock",
+      "maker": "Skydio",
+      "name": "Dock",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/skydio-dock.jpg",
+      "tags": [
+        "Drone",
+        "Docked"
+      ],
+      "desc": "Remote docked drone system for persistent site monitoring.",
+      "earnings": "$500 \u2013 $1,200 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.skydio.com/",
+      "category": "Drone"
+    },
+    {
+      "id": "wing-delivery",
+      "maker": "Wing (Alphabet)",
+      "name": "Wing Delivery Drone",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/wing-delivery.jpg",
+      "tags": [
+        "Drone",
+        "Delivery"
+      ],
+      "desc": "Aerial package delivery in partner markets.",
+      "earnings": "Fleet programs",
+      "price": "Not retail",
+      "status": "available",
+      "statusLabel": "Service areas",
+      "buyUrl": "https://wing.com/",
+      "category": "Drone"
+    },
+    {
+      "id": "zipline-p2",
+      "maker": "Zipline",
+      "name": "Platform 2",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/zipline-p2.jpg",
+      "tags": [
+        "Drone",
+        "Delivery"
+      ],
+      "desc": "Long-range delivery drones for medical and retail logistics.",
+      "earnings": "Fleet programs",
+      "price": "Partner",
+      "status": "available",
+      "statusLabel": "Partner",
+      "buyUrl": "https://www.zipline.com/",
+      "category": "Drone"
+    },
+    {
+      "id": "hydromea-exray",
+      "maker": "Hydromea",
+      "name": "EXRAY",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/hydromea-exray.jpg",
+      "tags": [
+        "Underwater",
+        "Inspection"
+      ],
+      "desc": "Wireless underwater inspection drone for tanks and hulls.",
+      "earnings": "$400 \u2013 $1,000 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.hydromea.com/",
+      "category": "Underwater"
+    },
+    {
+      "id": "bluerov2",
+      "maker": "Blue Robotics",
+      "name": "BlueROV2",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/bluerov2.jpg",
+      "tags": [
+        "Underwater",
+        "ROV"
+      ],
+      "desc": "Popular observation-class ROV for inspection and research.",
+      "earnings": "$150 \u2013 $400 / week",
+      "price": "From ~$4,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://bluerobotics.com/",
+      "category": "Underwater"
+    },
+    {
+      "id": "saildrone-explorer",
+      "maker": "Saildrone",
+      "name": "Explorer",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/saildrone-explorer.jpg",
+      "tags": [
+        "Surface",
+        "Ocean"
+      ],
+      "desc": "Uncrewed surface vehicle for ocean data and maritime domain awareness.",
+      "earnings": "$1,000 \u2013 $3,000 / week",
+      "price": "Fleet / charter",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.saildrone.com/",
+      "category": "Surface"
+    },
+    {
+      "id": "ocean-infinity-armada",
+      "maker": "Ocean Infinity",
+      "name": "Armada Vessel",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ocean-infinity-armada.jpg",
+      "tags": [
+        "Surface",
+        "Survey"
+      ],
+      "desc": "Uncrewed survey vessels for offshore energy and mapping.",
+      "earnings": "Charter rates",
+      "price": "Charter",
+      "status": "available",
+      "statusLabel": "Charter",
+      "buyUrl": "https://oceaninfinity.com/",
+      "category": "Surface"
+    },
+    {
+      "id": "knightscope-k5",
+      "maker": "Knightscope",
+      "name": "K5",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/knightscope-k5.jpg",
+      "tags": [
+        "Security",
+        "Patrol"
+      ],
+      "desc": "Autonomous outdoor security robot for parking lots and campuses.",
+      "earnings": "$400 \u2013 $900 / week",
+      "price": "Lease programs",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.knightscope.com/",
+      "category": "Security"
+    },
+    {
+      "id": "knightscope-k1",
+      "maker": "Knightscope",
+      "name": "K1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/knightscope-k1.jpg",
+      "tags": [
+        "Security",
+        "Kiosk"
+      ],
+      "desc": "Stationary autonomous security kiosk with sensors and cameras.",
+      "earnings": "$200 \u2013 $450 / week",
+      "price": "Lease programs",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.knightscope.com/",
+      "category": "Security"
+    },
+    {
+      "id": "smp-s52",
+      "maker": "SMP Robotics",
+      "name": "S5.2",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/smp-s52.jpg",
+      "tags": [
+        "Security",
+        "Patrol"
+      ],
+      "desc": "Outdoor autonomous patrol robot for industrial sites.",
+      "earnings": "$350 \u2013 $800 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://smprobotics.com/",
+      "category": "Security"
+    },
+    {
+      "id": "cobalt-bot",
+      "maker": "Cobalt Robotics",
+      "name": "Cobalt Bot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/cobalt-bot.jpg",
+      "tags": [
+        "Security",
+        "Indoor"
+      ],
+      "desc": "Indoor security and facilities robot (service model).",
+      "earnings": "$400 \u2013 $900 / week",
+      "price": "Service contract",
+      "status": "available",
+      "statusLabel": "Service",
+      "buyUrl": "https://www.cobaltrobotics.com/",
+      "category": "Security"
+    },
+    {
+      "id": "built-exosystem",
+      "maker": "Built Robotics",
+      "name": "Exosystem",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/built-exosystem.jpg",
+      "tags": [
+        "Construction",
+        "Autonomy"
+      ],
+      "desc": "Autonomy kits for excavators and heavy equipment.",
+      "earnings": "$1,000 \u2013 $3,000 / week",
+      "price": "Kit + machine",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.builtrobotics.com/",
+      "category": "Construction"
+    },
+    {
+      "id": "dusty-fieldprinter",
+      "maker": "Dusty Robotics",
+      "name": "FieldPrinter",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/dusty-fieldprinter.jpg",
+      "tags": [
+        "Construction",
+        "Layout"
+      ],
+      "desc": "Autonomous layout robot printing construction plans on floors.",
+      "earnings": "$500 \u2013 $1,200 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.dustyrobotics.com/",
+      "category": "Construction"
+    },
+    {
+      "id": "canvas-drywall",
+      "maker": "Canvas",
+      "name": "Drywall Finisher",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/canvas-drywall.jpg",
+      "tags": [
+        "Construction",
+        "Finishing"
+      ],
+      "desc": "Autonomous drywall finishing robot for commercial builds.",
+      "earnings": "$800 \u2013 $2,000 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.canvas.build/",
+      "category": "Construction"
+    },
+    {
+      "id": "cr-sam100",
+      "maker": "Construction Robotics",
+      "name": "SAM100",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/cr-sam100.jpg",
+      "tags": [
+        "Construction",
+        "Bricklaying"
+      ],
+      "desc": "Semi-automated mason for commercial brickwork.",
+      "earnings": "$700 \u2013 $1,500 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.construction-robotics.com/",
+      "category": "Construction"
+    },
+    {
+      "id": "fbr-hadrianx",
+      "maker": "FBR",
+      "name": "Hadrian X",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/fbr-hadrianx.jpg",
+      "tags": [
+        "Construction",
+        "Bricklaying"
+      ],
+      "desc": "Block-laying robot for residential construction.",
+      "earnings": "$1,000 \u2013 $2,500 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://www.fbr.com.au/",
+      "category": "Construction"
+    },
+    {
+      "id": "intuitive-davinci-xi",
+      "maker": "Intuitive Surgical",
+      "name": "da Vinci Xi",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/intuitive-davinci-xi.jpg",
+      "tags": [
+        "Medical",
+        "Surgery"
+      ],
+      "desc": "Market-leading surgical robot system (hospital capital equipment).",
+      "earnings": "Hospital use",
+      "price": "From ~$1M+",
+      "status": "available",
+      "statusLabel": "Hospital",
+      "buyUrl": "https://www.intuitive.com/",
+      "category": "Medical"
+    },
+    {
+      "id": "intuitive-ion",
+      "maker": "Intuitive Surgical",
+      "name": "Ion",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/intuitive-ion.jpg",
+      "tags": [
+        "Medical",
+        "Bronchoscopy"
+      ],
+      "desc": "Robotic-assisted bronchoscopy platform.",
+      "earnings": "Hospital use",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Hospital",
+      "buyUrl": "https://www.intuitive.com/ion",
+      "category": "Medical"
+    },
+    {
+      "id": "stryker-mako",
+      "maker": "Stryker",
+      "name": "Mako",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/stryker-mako.jpg",
+      "tags": [
+        "Medical",
+        "Orthopedics"
+      ],
+      "desc": "Robotic-arm assisted orthopedic surgery system.",
+      "earnings": "Hospital use",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Hospital",
+      "buyUrl": "https://www.stryker.com/mako",
+      "category": "Medical"
+    },
+    {
+      "id": "siemens-corpath",
+      "maker": "Siemens Healthineers",
+      "name": "Corindus CorPath",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/siemens-corpath.jpg",
+      "tags": [
+        "Medical",
+        "Vascular"
+      ],
+      "desc": "Robotic-assisted vascular intervention system.",
+      "earnings": "Hospital use",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Hospital",
+      "buyUrl": "https://www.siemens-healthineers.com/",
+      "category": "Medical"
+    },
+    {
+      "id": "auris-monarch",
+      "maker": "Auris Health",
+      "name": "Monarch",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/auris-monarch.jpg",
+      "tags": [
+        "Medical",
+        "Endoscopy"
+      ],
+      "desc": "Robotic endoscopy platform (J&J).",
+      "earnings": "Hospital use",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Hospital",
+      "buyUrl": "https://www.jnjmedtech.com/",
+      "category": "Medical"
+    },
+    {
+      "id": "irobot-roomba-j9",
+      "maker": "iRobot",
+      "name": "Roomba j9+",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/irobot-roomba-j9.jpg",
+      "tags": [
+        "Consumer",
+        "Cleaning"
+      ],
+      "desc": "Consumer robot vacuum \u2014 sell remnant commercial cleaning hours via fleets.",
+      "earnings": "$20 \u2013 $50 / week",
+      "price": "From ~$800",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.irobot.com/",
+      "category": "Consumer"
+    },
+    {
+      "id": "irobot-braava",
+      "maker": "iRobot",
+      "name": "Braava jet",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/irobot-braava.jpg",
+      "tags": [
+        "Consumer",
+        "Mopping"
+      ],
+      "desc": "Robot mop for light commercial and multi-unit operators.",
+      "earnings": "$15 \u2013 $40 / week",
+      "price": "From ~$300",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.irobot.com/",
+      "category": "Consumer"
+    },
+    {
+      "id": "roborock-s8",
+      "maker": "Roborock",
+      "name": "S8 Pro Ultra",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/roborock-s8.jpg",
+      "tags": [
+        "Consumer",
+        "Cleaning"
+      ],
+      "desc": "Premium robot vacuum/mop platform.",
+      "earnings": "$20 \u2013 $50 / week",
+      "price": "From ~$1,200",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://us.roborock.com/",
+      "category": "Consumer"
+    },
+    {
+      "id": "ecovacs-x2",
+      "maker": "Ecovacs",
+      "name": "Deebot X2",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/ecovacs-x2.jpg",
+      "tags": [
+        "Consumer",
+        "Cleaning"
+      ],
+      "desc": "Consumer cleaning robot with strong global install base.",
+      "earnings": "$15 \u2013 $45 / week",
+      "price": "From ~$900",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.ecovacs.com/",
+      "category": "Consumer"
+    },
+    {
+      "id": "solar-panel-cleaner",
+      "maker": "SolarFarm Robotics",
+      "name": "Solar Panel Cleaner",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/solar-panel-cleaner.jpg",
+      "tags": [
+        "Energy",
+        "Cleaning"
+      ],
+      "desc": "Autonomous solar farm panel cleaning robots.",
+      "earnings": "$400 \u2013 $1,000 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.solarcleaningrobots.com/",
+      "category": "Energy"
+    },
+    {
+      "id": "sarcos-guardian-xo",
+      "maker": "Sarcos",
+      "name": "Guardian XO",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/sarcos-guardian-xo.jpg",
+      "tags": [
+        "Exoskeleton",
+        "Industrial"
+      ],
+      "desc": "Full-body powered exoskeleton for industrial lifting (program status varies).",
+      "earnings": "$300 \u2013 $800 / week",
+      "price": "Contact sales",
+      "status": "planned",
+      "statusLabel": "Limited",
+      "buyUrl": "https://www.sarcos.com/",
+      "category": "Exoskeleton"
+    },
+    {
+      "id": "german-bionic-apogee",
+      "maker": "German Bionic",
+      "name": "Apogee",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/german-bionic-apogee.jpg",
+      "tags": [
+        "Exoskeleton",
+        "Industrial"
+      ],
+      "desc": "Powered back-support exosuit for logistics and manufacturing.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "From ~$8,000",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.germanbionic.com/",
+      "category": "Exoskeleton"
+    },
+    {
+      "id": "hyundai-dale",
+      "maker": "Hyundai",
+      "name": "DAL-e",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/hyundai-dale.jpg",
+      "tags": [
+        "Service",
+        "Reception"
+      ],
+      "desc": "Service robot for dealership and facility reception.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.hyundai.com/",
+      "category": "Service"
+    },
+    {
+      "id": "lg-cloi-servebot",
+      "maker": "LG",
+      "name": "CLOi ServeBot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/lg-cloi-servebot.jpg",
+      "tags": [
+        "Service",
+        "Delivery"
+      ],
+      "desc": "LG commercial serving robot for hospitality.",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "Contact sales",
+      "status": "available",
+      "statusLabel": "Available Now",
+      "buyUrl": "https://www.lg.com/business",
+      "category": "Service"
+    },
+    {
+      "id": "samsung-bot-handy",
+      "maker": "Samsung",
+      "name": "Bot Handy",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/samsung-bot-handy.jpg",
+      "tags": [
+        "Home",
+        "Manipulation"
+      ],
+      "desc": "Home helper concept robot (limited commercial availability).",
+      "earnings": "$100 \u2013 $250 / week",
+      "price": "Planned",
+      "status": "planned",
+      "statusLabel": "Concept",
+      "buyUrl": "https://www.samsung.com/",
+      "category": "Home"
+    },
+    {
+      "id": "rainbow-rb-y1",
+      "maker": "Rainbow Robotics",
+      "name": "RB-Y1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/rainbow-rb-y1.jpg",
+      "tags": [
+        "Humanoid",
+        "Research"
+      ],
+      "desc": "Korea's dual-arm mobile humanoid platform for research and light industrial demos. Rainbow Robotics is among Asia's most valuable humanoid makers.",
+      "earnings": "$250 \u2013 $500 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://www.rainbow-robotics.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "galaxea-r1",
+      "maker": "Galaxea AI",
+      "name": "R1",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/galaxea-r1.jpg",
+      "tags": [
+        "Humanoid",
+        "Embodied AI"
+      ],
+      "desc": "Chinese embodied-AI humanoid focused on general-purpose manipulation and warehouse pilots.",
+      "earnings": "$300 \u2013 $600 / week",
+      "price": "Contact sales",
+      "status": "planned",
+      "statusLabel": "Pilot",
+      "buyUrl": "https://galaxea-ai.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "humanoid-uk-alpha",
+      "maker": "Humanoid",
+      "name": "HMND 01 Alpha",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/humanoid-uk-alpha.jpg",
+      "tags": [
+        "Humanoid",
+        "Commercial"
+      ],
+      "desc": "UK pure-play humanoid unicorn building commercial humanoids and the KinetIQ AI brain. Wheel-based units entering mass manufacturing; biped Beta targeted late 2026.",
+      "earnings": "$300 \u2013 $650 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Waitlist",
+      "buyUrl": "https://www.humanoid.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "sunday-robotics",
+      "maker": "Sunday",
+      "name": "Sunday Robot",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/sunday-robotics.jpg",
+      "tags": [
+        "Home",
+        "Humanoid"
+      ],
+      "desc": "US home-robotics company building consumer-facing robots for household work. Series B scale-up.",
+      "earnings": "$150 \u2013 $400 / week",
+      "price": "TBA",
+      "status": "planned",
+      "statusLabel": "Planned",
+      "buyUrl": "https://www.sunday.ai/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "enigma-control",
+      "maker": "Enigma",
+      "name": "Enigma Control Stack",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/enigma-control.jpg",
+      "tags": [
+        "Software",
+        "Fleet",
+        "Foundation Model"
+      ],
+      "desc": "Robot-agnostic foundation models and control interfaces. First public deployment puts 100+ physical robots online for real-world task data across hardware types.",
+      "earnings": "Platform / SaaS",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Seed ($71M)",
+      "buyUrl": "https://robots.online/",
+      "category": "Software"
+    },
+    {
+      "id": "delta-intelligence-d1",
+      "maker": "Delta Intelligence",
+      "name": "D1 + Foundation Models",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/delta-intelligence-d1.jpg",
+      "tags": [
+        "Humanoid",
+        "Foundation Model",
+        "Wearable"
+      ],
+      "desc": "Transferable humanoid foundation models with whole-body balance and force-position control. D1 wearable captures first-person video and joint trajectories for retargeting across AgiBot, Unitree, Galaxea and more.",
+      "earnings": "Platform / models",
+      "price": "Contact sales",
+      "status": "planned",
+      "statusLabel": "Angel++",
+      "buyUrl": "https://www.bigai.ai/",
+      "category": "Software"
+    },
+    {
+      "id": "quantum-dynamics-wms",
+      "maker": "Quantum Dynamics",
+      "name": "Physical AI Warehouse Stack",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/quantum-dynamics-wms.jpg",
+      "tags": [
+        "Logistics",
+        "Warehouse",
+        "AMR"
+      ],
+      "desc": "Deployment-driven Physical AI for warehouse replenishment, picking and packing \u2014 world-action models trained on live fleet data.",
+      "earnings": "$400 \u2013 $900 / week per cell",
+      "price": "Contact sales",
+      "status": "planned",
+      "statusLabel": "Seed",
+      "buyUrl": "https://www.quantumdynamics.ai/",
+      "category": "AMR"
+    },
+    {
+      "id": "xpeng-iron",
+      "maker": "XPeng",
+      "name": "IRON",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/xpeng-iron.jpg",
+      "tags": [
+        "Humanoid",
+        "Automotive"
+      ],
+      "desc": "XPeng Motors humanoid platform leveraging EV manufacturing scale for production-intent humanoid robots.",
+      "earnings": "$300 \u2013 $600 / week",
+      "price": "Contact sales",
+      "status": "planned",
+      "statusLabel": "Prototype",
+      "buyUrl": "https://www.xpeng.com/",
+      "category": "Humanoid"
+    },
+    {
+      "id": "aiforce-agri",
+      "maker": "AIForce Technology",
+      "name": "Agri Autonomy Platform",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/aiforce-agri.jpg",
+      "tags": [
+        "Agriculture",
+        "Autonomy"
+      ],
+      "desc": "Autonomous agricultural equipment and embodied farm robots. Large Series B2 financing for intelligent machinery.",
+      "earnings": "$500 \u2013 $1,200 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Series B2",
+      "buyUrl": "https://www.aiforce.tech/",
+      "category": "Agriculture"
+    },
+    {
+      "id": "standard-robots-amr",
+      "maker": "Standard Robots",
+      "name": "Industrial AMR",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/standard-robots-amr.jpg",
+      "tags": [
+        "AMR",
+        "Industrial"
+      ],
+      "desc": "Industrial autonomous mobile robots for factories and warehouses. Hong Kong listing applicant.",
+      "earnings": "$350 \u2013 $700 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Enterprise",
+      "buyUrl": "https://www.standard-robots.com/",
+      "category": "AMR"
+    },
+    {
+      "id": "axis-robotics-data",
+      "maker": "Axis Robotics",
+      "name": "Physical-AI Data Platform",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/axis-robotics-data.jpg",
+      "tags": [
+        "Software",
+        "Simulation",
+        "Data"
+      ],
+      "desc": "Physical-AI data infrastructure combining simulation, capture and post-training workflows for robot learning stacks.",
+      "earnings": "Platform / SaaS",
+      "price": "Contact sales",
+      "status": "planned",
+      "statusLabel": "Seed ($12M)",
+      "buyUrl": "https://www.axisrobotics.ai/",
+      "category": "Software"
+    },
+    {
+      "id": "unit-ai-warehouse",
+      "maker": "UNIT AI",
+      "name": "Modular Warehouse Automation",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/unit-ai-warehouse.jpg",
+      "tags": [
+        "Warehouse",
+        "AMR",
+        "Automation"
+      ],
+      "desc": "Modular warehouse automation designed for phased installation as facility needs change.",
+      "earnings": "$400 \u2013 $800 / week per module",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Funded",
+      "buyUrl": "https://www.unit.ai/",
+      "category": "AMR"
+    },
+    {
+      "id": "suind-drone",
+      "maker": "SUIND",
+      "name": "Autonomous Surveillance Drone",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/suind-drone.jpg",
+      "tags": [
+        "Drone",
+        "Security"
+      ],
+      "desc": "Autonomous surveillance drones for security, infrastructure and industrial applications (India).",
+      "earnings": "$200 \u2013 $500 / week",
+      "price": "Contact sales",
+      "status": "preorder",
+      "statusLabel": "Seed",
+      "buyUrl": "https://www.suind.com/",
+      "category": "Drone"
+    },
+    {
+      "id": "dopl-ultrasound",
+      "maker": "Dopl Technologies",
+      "name": "Telerobotic Ultrasound",
+      "image": "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/robots/dopl-ultrasound.jpg",
+      "tags": [
+        "Medical",
+        "Telepresence"
+      ],
+      "desc": "Telerobotic ultrasound system progressing toward US regulatory clearance and clinical deployment.",
+      "earnings": "Clinical / per-scan",
+      "price": "Contact sales",
+      "status": "planned",
+      "statusLabel": "Seed ($6.3M)",
+      "buyUrl": "https://www.dopltech.com/",
+      "category": "Medical"
+    }
+  ]
+}

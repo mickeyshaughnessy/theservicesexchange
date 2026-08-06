@@ -20,7 +20,40 @@
         <div class="brand-sub" id="headerUser">Demand</div>
       </div>
     </button>
+    <button type="button" class="header-menu-btn" id="headerMenuBtn" aria-label="Open site menu" aria-expanded="false" aria-controls="siteMenuDrawer">
+      <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
   </header>
+
+  <!-- Site pages drawer (marketing site — opens in browser) -->
+  <div id="siteMenuBackdrop" class="site-menu-backdrop" hidden></div>
+  <aside id="siteMenuDrawer" class="site-menu-drawer" hidden aria-label="Website pages">
+    <div class="site-menu-head">
+      <div>
+        <div class="site-menu-title">The RSE site</div>
+        <p class="muted small">Read website pages in your browser</p>
+      </div>
+      <button type="button" class="btn btn-sm" id="siteMenuClose" aria-label="Close menu">Close</button>
+    </div>
+    <nav class="site-menu-nav" aria-label="Website">
+      <p class="site-menu-label">Explore</p>
+      <a class="site-menu-link" data-site-path="index.html" href="https://theservicesexchange.com/">Home</a>
+      <a class="site-menu-link" data-site-path="robots.html" href="https://theservicesexchange.com/robots.html">Buy a Robot</a>
+      <a class="site-menu-link" data-site-path="garage.html" href="https://theservicesexchange.com/garage.html">Stonewright's Garage</a>
+      <a class="site-menu-link" data-site-path="investors.html" href="https://theservicesexchange.com/investors.html">Investors</a>
+      <a class="site-menu-link" data-site-path="portfolio.html" href="https://theservicesexchange.com/portfolio.html">Portfolio</a>
+      <a class="site-menu-link" data-site-path="campaigns.html" href="https://theservicesexchange.com/campaigns.html">Campaigns</a>
+      <a class="site-menu-link" data-site-path="examples.html" href="https://theservicesexchange.com/examples.html">Examples</a>
+      <a class="site-menu-link" data-site-path="about.html" href="https://theservicesexchange.com/about.html">About</a>
+      <p class="site-menu-label">Developers &amp; legal</p>
+      <a class="site-menu-link" data-site-path="api_docs.html" href="https://theservicesexchange.com/api_docs.html">API Docs</a>
+      <a class="site-menu-link" data-site-path="arazzo.html" href="https://theservicesexchange.com/arazzo.html">Arazzo</a>
+      <a class="site-menu-link" data-site-path="agents.html" href="https://theservicesexchange.com/agents.html">Agents</a>
+      <a class="site-menu-link" data-site-path="feedback.html" href="https://theservicesexchange.com/feedback.html">Feedback board</a>
+      <a class="site-menu-link" data-site-path="privacy-app.html" href="https://theservicesexchange.com/privacy-app.html">Privacy policy</a>
+      <a class="site-menu-link" data-site-path="grab_job.html" href="https://theservicesexchange.com/grab_job.html">Find Work (web)</a>
+    </nav>
+  </aside>
 
   <!-- Auth -->
   <section id="screen-auth" class="screen active" aria-label="Sign in">
@@ -359,6 +392,13 @@
 
     <div id="nearbyMap" class="nearby-map" aria-label="Nearby map"></div>
     <p class="muted small" id="nearbyMapHint">Map loads after a search. Privacy-projected pins only.</p>
+
+    <div id="nearbyMapLinks" class="nearby-map-links" hidden></div>
+
+    <h2 style="margin-top:1rem">Activity feed</h2>
+    <div id="nearbyEvents" class="nearby-events">
+      <div class="empty">Search to load nearby events.</div>
+    </div>
 
     <h2 style="margin-top:1rem">Open nearby</h2>
     <div id="nearbyList">

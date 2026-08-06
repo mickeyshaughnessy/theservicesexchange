@@ -1,90 +1,74 @@
-#!/bin/bash
-# Production Deployment Script
-# Deploys The Services Exchange to production server using git
+#!/usr/bin/env bash
+# Production deploy: commit already on origin/main → pull on server → restart.
+# See DEPLOYMENT_NOTES.md for the full playbook.
 
-set -e  # Exit on error
+set -euo pipefail
 
-# Configuration
-SERVER="root@143.110.131.237"
-SSH_KEY="~/.ssh/id_ed25519"
-DEPLOY_PATH="/var/www/theservicesexchange"
+SERVER="${RSE_PROD_SERVER:-root@143.110.131.237}"
+SSH_KEY="${RSE_SSH_KEY:-$HOME/.ssh/id_ed25519}"
+DEPLOY_PATH="${RSE_DEPLOY_PATH:-/var/www/theservicesexchange}"
 SERVICE_NAME="theservicesexchange.service"
+ROOT="$(cd "$(dirname "$0")" && pwd)"
 
-echo "🚀 Deploying The Services Exchange to production..."
-echo ""
+cd "$ROOT"
 
-# Step 1: Deploy .env file if it exists locally
-if [ -f ".env" ]; then
-    echo "📦 Deploying .env file..."
-    scp -i "$SSH_KEY" .env "$SERVER:$DEPLOY_PATH/.env"
-    echo "✓ .env deployed"
+echo "==> Preflight (git + quality)"
+if [[ -n "$(git status --porcelain 2>/dev/null || true)" ]]; then
+  echo "    WARN: dirty working tree — deploy will use whatever is already on origin/main"
+  echo "    Commit and push first if you meant to ship local changes."
+  git status -sb || true
+fi
+
+BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+if [[ "$BRANCH" != "main" ]]; then
+  echo "    WARN: you are on branch '$BRANCH' (playbook expects main)"
+fi
+
+echo "    py_compile…"
+python3 -m py_compile api_server.py handlers.py utils.py
+echo "    py_compile ok"
+
+if [[ -f ".env" ]]; then
+  echo "==> scp .env"
+  scp -i "$SSH_KEY" .env "${SERVER}:${DEPLOY_PATH}/.env"
+fi
+
+echo "==> Server git pull + restart"
+ssh -i "$SSH_KEY" "$SERVER" bash -s <<ENDSSH
+set -euo pipefail
+cd ${DEPLOY_PATH}
+echo "  before: \$(git rev-parse --short HEAD) (\$(git branch --show-current))"
+if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+  echo "  stashing local dirty files…"
+  git stash push -m "deploy.sh auto-stash \$(date -u +%Y%m%dT%H%M%SZ)" || true
+fi
+git fetch origin main
+git pull --ff-only origin main
+echo "  after:  \$(git rev-parse --short HEAD)"
+if systemctl list-unit-files | grep -q ${SERVICE_NAME}; then
+  systemctl restart ${SERVICE_NAME}
+  sleep 2
+  systemctl is-active ${SERVICE_NAME}
 else
-    echo "⚠️  No .env file found locally - skipping"
+  echo "  WARN: ${SERVICE_NAME} not found"
 fi
-
-echo ""
-echo "🔄 Pulling latest code from git..."
-
-# Step 2: SSH to server and pull latest code
-ssh -i "$SSH_KEY" "$SERVER" << 'ENDSSH'
-set -e
-
-cd /var/www/theservicesexchange
-
-echo "  Current branch: $(git branch --show-current)"
-echo "  Current commit: $(git rev-parse --short HEAD)"
-echo ""
-
-# Stash any local changes (like .env)
-if ! git diff-index --quiet HEAD --; then
-    echo "  Stashing local changes..."
-    git stash
-fi
-
-# Pull latest code
-echo "  Pulling from origin..."
-git pull origin main
-
-# Pop stashed changes if any
-if git stash list | grep -q "stash@{0}"; then
-    echo "  Restoring local changes..."
-    git stash pop || echo "  Note: Stash conflicts - .env should be preserved"
-fi
-
-echo ""
-echo "  New commit: $(git rev-parse --short HEAD)"
-echo "  ✓ Code updated"
-
 ENDSSH
 
-echo ""
-echo "🔄 Restarting service..."
-
-# Step 3: Restart the service
-ssh -i "$SSH_KEY" "$SERVER" << 'ENDSSH'
-set -e
-
-# Check if service exists
-if systemctl list-unit-files | grep -q theservicesexchange.service; then
-    echo "  Restarting theservicesexchange.service..."
-    systemctl restart theservicesexchange.service
-    sleep 2
-    systemctl status theservicesexchange.service --no-pager || true
+echo "==> Smoke"
+if curl -fsS --max-time 10 "https://rse-api.com:5003/ping" >/dev/null 2>&1 \
+  || curl -fsS --max-time 10 "https://rse-api.com:5003/stats" >/dev/null 2>&1; then
+  echo "  API ok"
 else
-    echo "  ⚠️  Service not found - may need manual restart"
-    echo "  Checking for running Python processes..."
-    ps aux | grep api_server.py | grep -v grep || echo "  No api_server.py process found"
+  echo "  WARN: API smoke failed — check journalctl on server"
 fi
 
-ENDSSH
+# Optional Grok note (never fails the deploy)
+if command -v grok >/dev/null 2>&1 && [[ "${RSE_DEPLOY_GROK_FEATURES:-0}" == "1" ]]; then
+  echo "==> Grok next-features (RSE_DEPLOY_GROK_FEATURES=1)"
+  bash "${ROOT}/scripts/prod/suggest_next_features.sh" || echo "  (skipped — grok failed)"
+else
+  echo "==> Tip: RSE_DEPLOY_GROK_FEATURES=1 ./deploy.sh  → run Grok 3-feature suggestions after deploy"
+fi
 
 echo ""
-echo "✅ Deployment complete!"
-echo ""
-echo "To verify:"
-echo "  ssh -i ~/.ssh/id_ed25519 root@143.110.131.237"
-echo "  cd /var/www/theservicesexchange"
-echo "  systemctl status theservicesexchange.service"
-echo ""
-echo "Or test the API:"
-echo "  curl https://rse-api.com:5003/ping"
+echo "Deploy complete. Playbook: DEPLOYMENT_NOTES.md"

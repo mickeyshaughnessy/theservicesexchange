@@ -71,6 +71,25 @@ RSE_PROOF_SIGNING_KEY = ''
 # Contact discovery: HMAC pepper for phone/email hashes (never commit a prod value)
 CONTACT_HASH_PEPPER = 'change-me-contact-discovery-pepper'
 
+# Optional Mapbox token for /nearby reverse geocode + static map URLs
+# (Public map deep-links work without this; token enables richer map_display.)
+MAPBOX_ACCESS_TOKEN = ''
+
+# -----------------------------------------------------------------------------
+# Optional payment integrations (POST /bid only for marketplace bids)
+# When unset, payment fields are settlement hints — no live charge.
+# -----------------------------------------------------------------------------
+STRIPE_SECRET_KEY = ''           # sk_live_... or sk_test_...
+STRIPE_WEBHOOK_SECRET = ''       # whsec_...
+XMONEY_API_KEY = ''
+XMONEY_MERCHANT_ID = ''
+PAYPAL_CLIENT_ID = ''
+PAYPAL_CLIENT_SECRET = ''
+
+# Robot catalog static DB on DO Spaces (Buy a Robot page)
+ROBOT_CATALOG_KEY = 'theservicesexchange/catalog/robots.json'
+ROBOT_CATALOG_URL = ''  # default: {DO_SPACES_URL}/{ROBOT_CATALOG_KEY}
+
 # Logging
 LOG_LEVEL = 'INFO'
 

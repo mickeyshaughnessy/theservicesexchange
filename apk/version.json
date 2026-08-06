@@ -1,10 +1,10 @@
 {
-  "versionCode": 6,
-  "versionName": "1.4.0",
-  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.4.0.apk",
-  "apkFile": "The-RSE-1.4.0.apk",
+  "versionCode": 7,
+  "versionName": "1.5.0",
+  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.5.0.apk",
+  "apkFile": "The-RSE-1.5.0.apk",
   "mandatory": false,
   "minSupportedVersionCode": 1,
-  "releaseNotes": "Phantom wallet for auto-bidding (paste Solana address), auto-request payment method Phantom/cash, prior privacy/nearby/contacts features.",
-  "sha256": "491f26c8fabef7f4a72d7f0f0ff655b7c60a05d47bf626c0dacd6a8c6ee58f9a"
+  "releaseNotes": "Hamburger menu for full website (Investors, Garage, Buy a Robot, API Docs, etc). Nearby maps deep-links + activity feed. Privacy hardening on public surfaces.",
+  "sha256": "eaa9705ec85da4f2458fa562cb34e5aeebb75dec1c7b52aaaa3c32162bcef8cb"
 }
