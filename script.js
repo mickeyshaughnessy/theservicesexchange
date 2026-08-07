@@ -316,6 +316,10 @@ function updateUIForLoggedInUser() {
     if (elements.chat) elements.chat.style.display = 'inline-block';
     if (elements.bulletin) elements.bulletin.style.display = 'inline-block';
 
+    const heroSignup = document.getElementById('heroSignupBtn');
+    if (heroSignup) heroSignup.style.display = 'none';
+    document.querySelectorAll('.hero-cta-foot').forEach((el) => { el.style.display = 'none'; });
+
     const foot = document.getElementById('homeBidFoot');
     if (foot && !getEditingBidId()) {
         foot.textContent = 'Your bid goes live for providers to grab.';
@@ -335,6 +339,10 @@ function updateUIForLoggedOutUser() {
     if (elements.account) elements.account.style.display = 'none';
     if (elements.chat) elements.chat.style.display = 'none';
     if (elements.bulletin) elements.bulletin.style.display = 'none';
+
+    const heroSignup = document.getElementById('heroSignupBtn');
+    if (heroSignup) heroSignup.style.display = '';
+    document.querySelectorAll('.hero-cta-foot').forEach((el) => { el.style.display = ''; });
 
     const strip = document.getElementById('userHomeStrip');
     if (strip) strip.style.display = 'none';

@@ -1,28 +1,14 @@
 # The RSE Mobile App
 
-Status: **v1.3.0 demand-side Android app shipped** (contacts discovery + prior v1.2 features).
+Demand-side Android app (`com.rse.app`). Code in `mobile/`; SPA in `mobile/www/`. API: **https://rse-api.com:5003** only — not a WebView of the marketing site.
 
-## What it is
+## Flows
 
-- **App ID:** `com.rse.app`
-- **Location:** `mobile/`
-- **Content:** Bundled SPA in `mobile/www/` (not the marketing website)
-- **Backend:** **https://rse-api.com:5003** only
-- **Role:** Demand (buyer) — register/login with `user_type: demand`, post requests, track jobs, rate completion
-
-Unlike GreenDial (which loads the live site in a WebView), this app is **independent of theservicesexchange.com**. All marketplace calls use Bearer tokens against the public API (see `openapi.yaml` / `api_docs.html`).
-
-## User flows (v1)
-
-1. Register or log in (demand only)
-2. Post a service request (`POST /submit_bid`)
-3. View / delete open bids (`GET /my_bids`, `POST /cancel_bid`)
-4. View active & completed jobs (`GET /my_jobs`)
-5. Sign and rate when work is done (`POST /sign_job`)
-6. Nearby discovery (`POST /nearby`) — GPS or address, radius 1–50 mi
-7. Product feedback board (`GET/POST /feedback`, `POST /feedback/{id}/reply`)
-8. Account: stats, edit profile (`GET/POST /profile`), share link (`GET /profile/share_link` → `profile.html?pid=…`), log out
-9. Auto-update (Android): fetch `apk/version.json`, download newer APK, system install prompt
+1. Register / log in (demand)
+2. Post request (`POST /submit_bid`); manage bids (`/my_bids`, `/cancel_bid`)
+3. Jobs: active/completed (`/my_jobs`), sign & rate (`/sign_job`)
+4. Nearby (`POST /nearby`) · feedback board · profile / share link
+5. Sideload auto-update via `apk/version.json`
 
 ## Auto-update
 

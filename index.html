@@ -15,7 +15,7 @@
 
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=25" rel="stylesheet">
+    <link href="styles.css?v=26" rel="stylesheet">
 <title>The RSE — Robot Labor, On Demand</title>
 </head>
 <body>
@@ -131,14 +131,64 @@
         </div>
     </nav>
 
-    <!-- Hero: bid-first -->
-    <section class="hero hero-light hero-bid-first" id="main-content" tabindex="-1">
+    <!-- Hero: account + app first -->
+    <section class="hero hero-light hero-cta-first" id="main-content" tabindex="-1">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-9 col-xl-8 text-center text-lg-start">
+                    <p class="hero-eyebrow">// Open robot labor marketplace</p>
+                    <h1 class="hero-title">Robot labor, on demand</h1>
+                    <p class="hero-subtitle">Post work. Grab work. Both sides rate. Free to use — settle payment between yourselves.</p>
+
+                    <div class="hero-cta-row">
+                        <button type="button" class="btn btn-hero-primary" id="heroSignupBtn"
+                                onclick="showAuth({ defaultTab: 'register', defaultType: 'demand' })">
+                            Create account
+                        </button>
+                        <a class="btn btn-hero-primary hero-app-download"
+                           href="apk/The-RSE-1.4.0.apk"
+                           download="The-RSE-1.4.0.apk"
+                           title="Android APK · demand-side app">
+                            Download app
+                        </a>
+                        <a class="btn btn-hero-secondary" href="#post-request">Post a request</a>
+                        <a class="btn btn-hero-secondary" href="grab_job.html">Find work</a>
+                    </div>
+                    <p class="hero-cta-foot d-none d-lg-block">Already have an account?
+                        <button type="button" class="btn btn-link p-0 align-baseline" onclick="showAuth({ defaultTab: 'login' })">Log in</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Returning / new user ops strip (filled when logged in) -->
+    <section id="userHomeStrip" class="user-home-strip" style="display: none;" aria-live="polite">
+        <div class="container">
+            <div class="user-home-card">
+                <div class="user-home-header">
+                    <div>
+                        <p class="user-home-eyebrow" id="userHomeEyebrow">// Your console</p>
+                        <h2 class="user-home-title" id="userHomeTitle">Welcome back</h2>
+                        <p class="user-home-sub" id="userHomeSub"></p>
+                    </div>
+                    <div class="user-home-actions" id="userHomeActions"></div>
+                </div>
+                <div class="user-home-grid" id="userHomeGrid"></div>
+                <div class="user-home-checklist" id="userHomeChecklist" style="display: none;"></div>
+                <div class="user-home-bids" id="userHomeBids" style="display: none;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Post a request (secondary) -->
+    <section class="home-bid-section" id="post-request">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-10 col-xl-9">
-                    <p class="hero-eyebrow text-center text-lg-start">// Automated workforce marketplace</p>
-                    <h1 class="hero-title text-center text-lg-start">What do you need done?</h1>
-                    <p class="hero-subtitle hero-subtitle-bid text-center text-lg-start">Post a service request. Robots and operators compete to match — transparent pricing, reputation-backed work.</p>
+                    <p class="hero-eyebrow text-center text-lg-start">// Demand</p>
+                    <h2 class="home-bid-section-title text-center text-lg-start">What do you need done?</h2>
+                    <p class="home-bid-section-sub text-center text-lg-start">Describe the job. Price and details can auto-fill. No account yet? We’ll make one when you bid.</p>
 
                     <div class="home-bid-panel" id="homeBidPanel">
                         <form id="homeBidForm" autocomplete="off">
@@ -150,7 +200,7 @@
                             <div class="home-bid-panel-header">
                                 <div class="home-bid-header-left">
                                     <span class="home-bid-kicker" id="homeBidKicker">// New bid</span>
-                                    <span class="home-bid-hint d-none d-md-inline" id="homeBidHint">Just describe the job — we fill the rest</span>
+                                    <span class="home-bid-hint d-none d-md-inline" id="homeBidHint">Describe the job — we fill the rest</span>
                                 </div>
                                 <div class="home-bid-header-actions">
                                     <button type="button" class="btn btn-cancel-bid" id="homeBidCancelBidTop" style="display:none;" onclick="cancelBidBeingEdited()" aria-label="Cancel and withdraw this bid">Cancel bid</button>
@@ -165,7 +215,7 @@
                                           name="service"
                                           required
                                           rows="3"
-                                          placeholder="Describe what you need… e.g. Mow a half-acre lawn this weekend"
+                                          placeholder="e.g. Mow a half-acre lawn this weekend"
                                           autocomplete="off"></textarea>
                                 <div id="homeServiceAcList" class="service-suggest-row" aria-label="Optional suggestions"></div>
                             </div>
@@ -232,30 +282,11 @@
         </div>
     </section>
 
-    <!-- Returning / new user ops strip (filled when logged in) -->
-    <section id="userHomeStrip" class="user-home-strip" style="display: none;" aria-live="polite">
-        <div class="container">
-            <div class="user-home-card">
-                <div class="user-home-header">
-                    <div>
-                        <p class="user-home-eyebrow" id="userHomeEyebrow">// Your console</p>
-                        <h2 class="user-home-title" id="userHomeTitle">Welcome back</h2>
-                        <p class="user-home-sub" id="userHomeSub"></p>
-                    </div>
-                    <div class="user-home-actions" id="userHomeActions"></div>
-                </div>
-                <div class="user-home-grid" id="userHomeGrid"></div>
-                <div class="user-home-checklist" id="userHomeChecklist" style="display: none;"></div>
-                <div class="user-home-bids" id="userHomeBids" style="display: none;"></div>
-            </div>
-        </div>
-    </section>
-
     <!-- Live Stats -->
     <section class="py-4 border-bottom" style="background: var(--bg-dark);">
         <div class="container">
-            <div class="text-center mb-4">
-                <h5 class="letter-spacing-2">// Live Market Stats</h5>
+            <div class="text-center mb-3">
+                <h5 class="letter-spacing-2">// Live market</h5>
             </div>
             <div class="row justify-content-center g-3">
                 <div class="col-auto">
@@ -273,13 +304,13 @@
                 <div class="col-auto">
                     <div class="stat-badge">
                         <span id="statActive" class="stat-number">-</span>
-                        <span class="stat-label">Active Requests</span>
+                        <span class="stat-label">Open requests</span>
                     </div>
                 </div>
                 <div class="col-auto">
                     <div class="stat-badge">
                         <span id="statCompleted" class="stat-number">-</span>
-                        <span class="stat-label">Jobs Completed</span>
+                        <span class="stat-label">Jobs done</span>
                     </div>
                 </div>
             </div>
@@ -289,42 +320,41 @@
     <!-- How it works -->
     <section class="py-5" style="background: var(--bg-deep);">
         <div class="container">
-            <div class="text-center mb-5">
+            <div class="text-center mb-4">
                 <h2 class="how-it-works-title">HOW IT WORKS</h2>
-                <p class="how-it-works-sub">// Deploy. Execute. Complete.</p>
             </div>
             <div class="row g-4">
                 <div class="col-md-4">
                     <div class="feature-card-new">
                         <div class="feature-number">01</div>
-                        <h3>Smart Matching</h3>
-                        <p>AI matching deploys the optimal robot unit for your task — based on capability rating, proximity, and mission history.</p>
+                        <h3>Match</h3>
+                        <p>Providers grab jobs that fit their capabilities and location. AI ranks the fit; reputation breaks ties.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card-new">
                         <div class="feature-number">02</div>
-                        <h3>Trusted Robots</h3>
-                        <p>Every robot is community-rated. Both sides rate each completed job, building a reputation record that keeps operators accountable.</p>
+                        <h3>Rate</h3>
+                        <p>Both sides sign with stars when the work is done. That score follows you on the next job.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card-new">
                         <div class="feature-number">03</div>
-                        <h3>Best Pricing</h3>
-                        <p>Open-market bidding drives competitive robot labor rates. Transparent pricing — no hidden fees, no intermediaries.</p>
+                        <h3>Price</h3>
+                        <p>You set the offer. Providers choose what to grab. No platform fee, no middleman cut.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Browse examples (secondary) -->
+    <!-- Browse examples -->
     <section class="py-5 service-browse-section" id="browse-services" style="background: var(--bg-dark); border-top: 1px solid rgba(0,255,255,0.2);">
         <div class="container">
             <div class="text-center mb-4">
-                <h2 class="how-it-works-title" style="font-size:0.9rem;">BROWSE EXAMPLES</h2>
-                <p class="how-it-works-sub">// Tap a category to fill your request above</p>
+                <h2 class="how-it-works-title" style="font-size:0.9rem;">EXAMPLE JOBS</h2>
+                <p class="how-it-works-sub">// Tap to fill the request form</p>
             </div>
             <div class="service-grid service-grid-bottom">
                 <div class="service-grid-item" tabindex="0" role="button" onclick="selectService('Security Patrol Bot')">
@@ -333,7 +363,7 @@
                 </div>
                 <div class="service-grid-item" tabindex="0" role="button" onclick="selectService('Lawn Mowing Bot')">
                     <span class="sg-icon" aria-hidden="true">🌿</span>
-                    <span>Lawn Mowing Bot</span>
+                    <span>Lawn Mowing</span>
                 </div>
                 <div class="service-grid-item" tabindex="0" role="button" onclick="selectService('Delivery Drone')">
                     <span class="sg-icon" aria-hidden="true">🚁</span>
@@ -349,12 +379,12 @@
                 </div>
             </div>
             <div class="hero-tags-row mt-4 text-center">
-                <p class="hero-tags-label">// more robot services</p>
+                <p class="hero-tags-label">// more</p>
                 <div>
-                    <span class="service-tag" tabindex="0" role="button" onclick="selectService('Automated Food Prep')">Food Prep Bot</span>
-                    <span class="service-tag" tabindex="0" role="button" onclick="selectService('Robotic Welding')">Robotic Welding</span>
+                    <span class="service-tag" tabindex="0" role="button" onclick="selectService('Automated Food Prep')">Food Prep</span>
+                    <span class="service-tag" tabindex="0" role="button" onclick="selectService('Robotic Welding')">Welding</span>
                     <span class="service-tag" tabindex="0" role="button" onclick="selectService('Geriatric Care Robot')">Care Robot</span>
-                    <span class="service-tag" tabindex="0" role="button" onclick="selectService('Industrial Inspection Bot')">Inspection Bot</span>
+                    <span class="service-tag" tabindex="0" role="button" onclick="selectService('Industrial Inspection Bot')">Inspection</span>
                     <span class="service-tag" tabindex="0" role="button" onclick="selectService('Agricultural Drone')">Agri Drone</span>
                 </div>
             </div>
@@ -379,7 +409,6 @@
                     <a href="api_docs.html">API Documentation</a>
                     <a href="investors.html">Investors</a>
                     <a href="feedback.html">Feedback</a>
-                    <a href="privacy-app.html">App Privacy</a>
                     <a href="privacy-app.html">App Privacy</a>
                 </div>
                 <div class="col-md-4">
@@ -654,7 +683,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js?v=22"></script>
+    <script src="script.js?v=23"></script>
     <script>
         // Deep link from a profile page's "Message" button: index.html?dm=<username>
         document.addEventListener('DOMContentLoaded', () => {

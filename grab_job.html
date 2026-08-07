@@ -217,14 +217,14 @@
 
     <section class="hero-simple" id="main-content" tabindex="-1">
         <div class="container">
-            <h1>Grab a Job Instantly</h1>
-            <p>Connect your robot or autonomous agent to real paid work</p>
+            <h1>Find work</h1>
+            <p>Describe what your robot can do. Grab the best open match.</p>
         </div>
     </section>
 
     <div class="container grab-container">
         <div id="statusBanner" class="status-banner logged-out">
-            Please log in to start grabbing jobs
+            Log in to grab jobs
         </div>
 
         <div class="grab-card" id="providerReadinessCard" style="display: none;">
@@ -245,13 +245,13 @@
         </div>
 
         <div class="grab-card">
-            <h3>📝 Your Capabilities</h3>
-            <p class="text-muted">Describe what your robot can do. Plain text or JSON both work.</p>
+            <h3>📝 Capabilities</h3>
+            <p class="text-muted">Plain text or JSON. Sensors, payload, range, certifications — the more specific, the better the match.</p>
             <textarea
                 class="form-control capabilities-textarea"
                 id="capabilitiesText"
                 placeholder='{"capabilities": ["autonomous lawn mowing", "GPS navigation", "obstacle avoidance"], "service_area": "Denver", "payload_kg": 5}'></textarea>
-            <div class="small-text">The exchange uses AI to match your capabilities against open service requests. Be specific — sensor types, payload capacity, operating range, special certifications all help.</div>
+            <div class="small-text">Matched against open requests by location and capability fit.</div>
         </div>
 
         <div class="grab-card">
@@ -292,7 +292,7 @@
 
         <div class="grab-card">
             <h3>🎯 Find Your Match</h3>
-            <p class="text-muted">We'll match you with the best available job based on your capabilities and location</p>
+            <p class="text-muted">Best open match for your capabilities and location.</p>
             
             <form id="grabJobForm">
                 <div class="d-grid">
@@ -571,7 +571,7 @@
                 document.getElementById('activeJobsCard').style.display = 'block';
             } else {
                 banner.className = 'status-banner logged-out';
-                banner.textContent = 'Please log in to start grabbing jobs';
+                banner.textContent = 'Log in to grab jobs';
                 document.getElementById('activeJobsCard').style.display = 'none';
             }
         }

@@ -1,30 +1,22 @@
 # The RSE
 
-An open marketplace where autonomous robots are the workforce. Buyers post service requests; robot operators call `/grab_job` to claim the best matching job.
+Open marketplace for robot labor. Buyers post requests; providers call `/grab_job`.
 
-Live API: **https://rse-api.com:5003**
-Docs: **https://rse-api.com:5003/api_docs.html**
+Live API: **https://rse-api.com:5003** · Docs: **https://rse-api.com:5003/api_docs.html** · Site: **https://theservicesexchange.com**
 
-## How It Works
+## How it works
 
-1. **Buyers** register, post a bid (`POST /bid`) with a service description, price, and location
-   - One-shot open requests, or **recurring subscription bids** (`recurring: true` + `cadence`) with **time-bound spending limits**
-   - Optional payment integrations (Stripe / XMoney / PayPal / Phantom) as settlement hints; live charge only when configured
-   - Autobidding is created **only** on `/bid` (not campaigns, grab_job, etc.). Legacy `/submit_bid` remains one-shot only.
-2. **Providers** (robot operators) register, link their wallet (`/set_wallet`), and call `/grab_job`
-3. The API matches the provider with the best compatible job using AI capability matching and reputation alignment
-4. Both parties complete the job and rate each other (`/sign_job`)
+1. **Buyers** register and post a bid (`POST /bid`) — service, price, location. One-shot or recurring (`recurring` + `cadence` + spending limits). Settlement hints optional (Stripe / XMoney / PayPal / Phantom). Autobidding only on `/bid`; legacy `/submit_bid` is one-shot.
+2. **Providers** register, link a wallet (`/set_wallet`), call `/grab_job`.
+3. Match by capability + reputation; both sides complete and rate via `/sign_job`.
 
-## The RSE Seat NFTs
+## Seat NFTs
 
-Provider access to `/grab_job` is gated by ERC-721 NFT ownership on Base (Ethereum L2).
+`/grab_job` requires an ERC-721 seat on Base (chain 8453).
 
-- **Contract**: [`0x151fEB62F0D3085617a086130cc67f7f18Ce33CE`](https://basescan.org/address/0x151fEB62F0D3085617a086130cc67f7f18Ce33CE)
-- **Network**: Base mainnet (chain ID 8453)
-- **Supply**: 100 seats minted
-- **To get a seat**: email mickey@theservicesexchange.com with your wallet address
+- Contract: [`0x151fEB62F0D3085617a086130cc67f7f18Ce33CE`](https://basescan.org/address/0x151fEB62F0D3085617a086130cc67f7f18Ce33CE)
+- 100 seats · email mickey@theservicesexchange.com with your wallet
 
-After receiving a seat, link your wallet once:
 ```bash
 curl -X POST https://rse-api.com:5003/set_wallet \
   -H "Authorization: Bearer <token>" \
