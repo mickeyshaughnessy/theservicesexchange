@@ -190,6 +190,126 @@
             line-height: 1.8;
         }
 
+        /* Franchise vs DIY comparison table */
+        .sw-compare-wrap {
+            overflow-x: auto;
+            border: 1px solid rgba(232,182,74,0.35);
+            box-shadow: 0 0 20px rgba(232,182,74,0.1);
+            background: var(--sw-bg-card);
+            margin-bottom: 2rem;
+        }
+        .sw-compare {
+            width: 100%;
+            min-width: 640px;
+            border-collapse: collapse;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--sw-text);
+        }
+        .sw-compare th, .sw-compare td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid rgba(232,182,74,0.15);
+            vertical-align: top;
+            line-height: 1.55;
+        }
+        .sw-compare thead th {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.55rem;
+            color: var(--sw-gold);
+            text-shadow: 0 0 6px rgba(232,182,74,0.4);
+            background: var(--sw-bg-panel);
+            border-bottom: 2px solid var(--sw-gold);
+            letter-spacing: 0.04em;
+        }
+        .sw-compare tbody th {
+            font-family: 'Share Tech Mono', monospace;
+            font-weight: 700;
+            color: var(--sw-text-bright);
+            text-align: left;
+            white-space: nowrap;
+            width: 22%;
+        }
+        .sw-compare .col-kit {
+            color: var(--sw-text-bright);
+            background: rgba(232,182,74,0.06);
+            width: 39%;
+        }
+        .sw-compare .col-diy {
+            color: var(--sw-text-dim);
+            width: 39%;
+        }
+        .sw-compare tbody tr:hover td.col-kit {
+            background: rgba(232,182,74,0.12);
+        }
+        .sw-compare .sw-win {
+            color: var(--sw-gold);
+        }
+        .sw-compare .sw-lose {
+            color: var(--sw-text-dim);
+        }
+        .sw-compare tfoot td {
+            background: var(--sw-bg-panel);
+            border-top: 2px solid var(--sw-gold);
+            font-size: 0.8rem;
+            color: var(--sw-text-bright);
+        }
+
+        /* Payback math */
+        .sw-payback {
+            background: var(--sw-bg-card);
+            border: 1px solid rgba(232,182,74,0.35);
+            padding: 1.75rem;
+            height: 100%;
+        }
+        .sw-payback h4 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.65rem;
+            color: var(--sw-gold);
+            margin-bottom: 1rem;
+            line-height: 1.7;
+        }
+        .sw-payback-line {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--sw-text);
+            padding: 0.35rem 0;
+            border-bottom: 1px solid rgba(232,182,74,0.1);
+        }
+        .sw-payback-line .lbl { color: var(--sw-text-dim); }
+        .sw-payback-line .val { color: var(--sw-text-bright); white-space: nowrap; }
+        .sw-payback-line.total {
+            border-bottom: none;
+            margin-top: 0.5rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--sw-gold);
+        }
+        .sw-payback-line.total .val {
+            color: var(--sw-gold);
+            text-shadow: 0 0 8px rgba(232,182,74,0.45);
+            font-size: 1rem;
+        }
+        .sw-payback-note {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--sw-text-dim);
+            margin: 1rem 0 0;
+            line-height: 1.6;
+        }
+        .sw-benefit-tag {
+            display: inline-block;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--sw-ember);
+            border: 1px solid rgba(255,106,61,0.4);
+            padding: 1px 6px;
+            margin-bottom: 0.5rem;
+        }
+
         /* Buy Now product card */
         .sw-product {
             background: var(--sw-bg-panel);
@@ -554,67 +674,280 @@
             <div class="text-center mb-5">
                 <p class="sw-eyebrow">// Why buy the kit</p>
                 <h2 style="font-size:1.4rem;">FRANCHISE KIT VS. GOING IT ALONE</h2>
-                <p class="sw-faq-a" style="max-width:720px;margin:0.75rem auto 0;font-size:0.95rem;">
+                <p class="sw-faq-a" style="max-width:760px;margin:0.75rem auto 0;font-size:0.95rem;">
                     You <em>can</em> bolt a charger to a wall and hang a shingle. The franchise kit is for operators
                     who want demand routed to them, supply priced like a fleet, and a garage brain that already
-                    speaks The RSE — not a weekend of reverse-engineering.
+                    speaks The RSE — not a weekend of reverse-engineering. Below: the revenue lines, the cost delta,
+                    and the payback math.
+                </p>
+            </div>
+
+            <!-- Revenue / service lines the kit is built for -->
+            <div class="text-center mb-4">
+                <p class="sw-eyebrow">// What a franchise garage sells</p>
+                <h3 style="font-size:1rem;color:var(--sw-gold);">SUPPLIES · SERVICES · TOOLS · PARTS · R&amp;R</h3>
+            </div>
+            <div class="row g-3 mb-5">
+                <div class="col-md-6 col-lg-4">
+                    <div class="sw-kit-card">
+                        <span class="sw-benefit-tag">Margin line</span>
+                        <div class="sw-kit-icon">📦</div>
+                        <h4>SUPPLIES CO-OP</h4>
+                        <p>Franchisee pricing on pads, filters, fasteners, filament, coolant concentrate, and consumables.
+                        Network volume = lower unit cost than retail one-offs — typically <strong>15–30% under street price</strong>
+                        on high-turn SKUs, with fewer dead-stock surprises.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="sw-kit-card">
+                        <span class="sw-benefit-tag">Core service</span>
+                        <div class="sw-kit-icon">⚡</div>
+                        <h4>BATTERY CHARGING</h4>
+                        <p>Multi-chemistry charge bays for humanoids, AMRs, and quadrupeds. Metered kWh billing out of the
+                        box — robots pay to top up, you bill by session or subscription bay hours.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="sw-kit-card">
+                        <span class="sw-benefit-tag">Core service</span>
+                        <div class="sw-kit-icon">❄️</div>
+                        <h4>COOLANT / THERMAL</h4>
+                        <p>Liquid-cooled thermal loops and coolant top-off stations. Not a garden hose and a prayer —
+                        standardized fittings so a Unitree, a Digit, and a cobot can all cool down between shifts.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="sw-kit-card">
+                        <span class="sw-benefit-tag">Recurring</span>
+                        <div class="sw-kit-icon">🧰</div>
+                        <h4>MODULAR TOOL RENTAL</h4>
+                        <p>Loaner grippers, end-effectors, vacuum heads, and task modules by the hour or job. Franchise
+                        inventory catalog + bay lockers so robots rent what they need, return it before the next shift,
+                        and you collect rental fees without owning every specialty tool for every customer.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="sw-kit-card">
+                        <span class="sw-benefit-tag">Labor + parts</span>
+                        <div class="sw-kit-icon">🔄</div>
+                        <h4>PARTS SWAPPING</h4>
+                        <p>Actuators, batteries, joints, housings — swap worn for fresh with the kit arm and co-op stock.
+                        Print brackets and housings on-site. Labor + parts margin on every changeout; no overnight
+                        shipping wait for common SKUs.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="sw-kit-card">
+                        <span class="sw-benefit-tag">Bay utilization</span>
+                        <div class="sw-kit-icon">🛠️</div>
+                        <h4>R&amp;R — REPAIR &amp; REST</h4>
+                        <p><strong>Repair:</strong> diagnostics, firmware, guided R&amp;R (remove &amp; replace) routines on the
+                        NVIDIA control station. <strong>Rest:</strong> idle bays between jobs where units cool, charge, and
+                        wait for the next <code>/nearby</code> match — you bill for bay time either way.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-5">
+                <div class="col-md-6 col-lg-3">
+                    <div class="sw-kit-card">
+                        <div class="sw-kit-icon">🏷️</div>
+                        <h4 style="font-size:0.6rem;">PREMIUM /nearby</h4>
+                        <p>Franchise badge, top placement for garage-category discovery, priority mid-job service routing.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="sw-kit-card">
+                        <div class="sw-kit-icon">🖥️</div>
+                        <h4 style="font-size:0.6rem;">NVIDIA CONTROL</h4>
+                        <p>Bay graph, fleet diagnostics, firmware lanes, and The RSE listing agent that books slots for you.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="sw-kit-card">
+                        <div class="sw-kit-icon">🦾</div>
+                        <h4 style="font-size:0.6rem;">ARM + 3D PRINT</h4>
+                        <p>Guided swaps and on-demand parts — the mechanical heart of parts swapping and R&amp;R.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="sw-kit-card">
+                        <div class="sw-kit-icon">📣</div>
+                        <h4 style="font-size:0.6rem;">MARKETING CO-OP</h4>
+                        <p>Launch ad credits and co-branded campaigns so robots find you before the paint dries.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side-by-side cost / capability table -->
+            <div class="text-center mb-3">
+                <p class="sw-eyebrow">// Pricing comparison</p>
+                <h3 style="font-size:1rem;color:var(--sw-gold);">KIT VS. INDEPENDENT — SAME 4-BAY TARGET</h3>
+                <p class="sw-faq-a" style="max-width:700px;margin:0.5rem auto 1rem;font-size:0.85rem;">
+                    Illustrative first-year economics for a greenfield 4-bay garage in a mid-size metro.
+                    Independent path assumes you source commercial chargers, a coolant cart, a service arm,
+                    and software yourself at street prices.
+                </p>
+            </div>
+            <div class="sw-compare-wrap mb-5">
+                <table class="sw-compare">
+                    <thead>
+                        <tr>
+                            <th scope="col">Line item</th>
+                            <th scope="col" class="col-kit">Franchise kit</th>
+                            <th scope="col" class="col-diy">Independent / DIY</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">Upfront capital</th>
+                            <td class="col-kit sw-win">$75k franchise fee + $140–180k kit/buildout<br><strong>≈ $215–255k total</strong></td>
+                            <td class="col-diy">Chargers + coolant + arm + printer + fit-out + software stitch<br><strong>≈ $180–280k</strong> (wide variance, no playbook)</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Supplies (COGS)</th>
+                            <td class="col-kit sw-win">Co-op pricing · est. <strong>15–30% below retail</strong> on high-turn SKUs</td>
+                            <td class="col-diy">Full retail / distributor list · no network volume</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Battery charging</th>
+                            <td class="col-kit sw-win">Multi-chemistry bays + metered billing in kit</td>
+                            <td class="col-diy">Buy/stack chargers yourself · roll your own metering</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Coolant / thermal</th>
+                            <td class="col-kit sw-win">Standardized thermal stations in kit</td>
+                            <td class="col-diy">Ad-hoc carts · per-model adapters · warranty risk</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Modular tool rental</th>
+                            <td class="col-kit sw-win">Franchise tool catalog + locker inventory program</td>
+                            <td class="col-diy">You buy every specialty tool · capital sits idle</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Parts swapping / R&amp;R</th>
+                            <td class="col-kit sw-win">Arm + printer + co-op parts + guided R&amp;R routines</td>
+                            <td class="col-diy">Manual labor or buy your own arm · parts lead times</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Discovery (<code>/nearby</code>)</th>
+                            <td class="col-kit sw-win"><strong>Premium placement</strong> + franchise badge + priority routing</td>
+                            <td class="col-diy sw-lose">Standard listing · no badge · no boost</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Garage brain</th>
+                            <td class="col-kit sw-win">NVIDIA AI control station + listing agent included</td>
+                            <td class="col-diy">Spreadsheet / custom stack · integrate yourself</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Ongoing fees</th>
+                            <td class="col-kit"><strong>6% royalty</strong> on gross (placement + software + co-op)</td>
+                            <td class="col-diy">$0 royalty · pay full retail + your own ads + own stack cost</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Est. year-1 utilization</th>
+                            <td class="col-kit sw-win">Higher bay fill from premium <code>/nearby</code> + co-op marketing</td>
+                            <td class="col-diy">Depends entirely on your local CAC and word of mouth</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3">
+                                <strong>Bottom line:</strong> independent can look cheaper on day one if you already own industrial
+                                tooling — but franchise economics win when supplies, charge/coolant throughput, tool rental,
+                                parts/R&amp;R labor, and discovery fill the bays. Royalty buys demand and lower COGS, not a tip jar.
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Payback math -->
+            <div class="text-center mb-3">
+                <p class="sw-eyebrow">// Payback math</p>
+                <h3 style="font-size:1rem;color:var(--sw-gold);">ILLUSTRATIVE 4-BAY FRANCHISE MODEL</h3>
+                <p class="sw-faq-a" style="max-width:700px;margin:0.5rem auto 1rem;font-size:0.85rem;">
+                    Mid-case scenario: steady utilization after ramp. Figures are illustrative estimates, not guarantees —
+                    actual results vary by market, pricing, and how hard you run the bays.
                 </p>
             </div>
             <div class="row g-4 mb-4">
+                <div class="col-lg-4">
+                    <div class="sw-payback">
+                        <h4>// CAPITAL IN</h4>
+                        <div class="sw-payback-line"><span class="lbl">Franchise fee</span><span class="val">$75,000</span></div>
+                        <div class="sw-payback-line"><span class="lbl">Kit &amp; buildout (mid)</span><span class="val">$160,000</span></div>
+                        <div class="sw-payback-line"><span class="lbl">Working capital (supplies / tools)</span><span class="val">$25,000</span></div>
+                        <div class="sw-payback-line total"><span class="lbl">Total to open</span><span class="val">≈ $260,000</span></div>
+                        <p class="sw-payback-note">Optional gen module (+$25–45k) and attendants (+$13–30k ea.) excluded from base case.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="sw-payback">
+                        <h4>// MONTHLY GROSS (MID)</h4>
+                        <div class="sw-payback-line"><span class="lbl">Battery charging</span><span class="val">$6,000</span></div>
+                        <div class="sw-payback-line"><span class="lbl">Coolant / thermal</span><span class="val">$3,500</span></div>
+                        <div class="sw-payback-line"><span class="lbl">Parts swap + R&amp;R labor</span><span class="val">$8,000</span></div>
+                        <div class="sw-payback-line"><span class="lbl">Modular tool rental</span><span class="val">$2,500</span></div>
+                        <div class="sw-payback-line"><span class="lbl">Supplies markup</span><span class="val">$3,000</span></div>
+                        <div class="sw-payback-line"><span class="lbl">Bay idle / rest fees</span><span class="val">$2,000</span></div>
+                        <div class="sw-payback-line total"><span class="lbl">Gross revenue</span><span class="val">≈ $25,000 / mo</span></div>
+                        <p class="sw-payback-note">Band on page: $18k–$35k/mo. Mid $25k used for payback. Mix shifts with local robot density.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="sw-payback">
+                        <h4>// TO PAYBACK</h4>
+                        <div class="sw-payback-line"><span class="lbl">Gross / month (mid)</span><span class="val">$25,000</span></div>
+                        <div class="sw-payback-line"><span class="lbl">Royalty 6%</span><span class="val">−$1,500</span></div>
+                        <div class="sw-payback-line"><span class="lbl">COGS + power + labor (est.)</span><span class="val">−$12,500</span></div>
+                        <div class="sw-payback-line"><span class="lbl">Net before debt / tax</span><span class="val">≈ $11,000 / mo</span></div>
+                        <div class="sw-payback-line total"><span class="lbl">Simple payback</span><span class="val">≈ 24 months</span></div>
+                        <p class="sw-payback-note">
+                            $260k ÷ $11k ≈ 23.6 mo. Low case (~$18k gross → ~$7k net) ≈ 30–36 mo.
+                            High case (~$35k gross → ~$16k net) ≈ 16–18 mo. Matches the 18–30 month band on the Buy card.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-3">
                 <div class="col-lg-6">
                     <div class="sw-kit-card">
                         <div class="sw-kit-icon">🏛️</div>
-                        <h4>WITH THE FRANCHISE KIT</h4>
+                        <h4>WHY THE KIT WINS THE MATH</h4>
                         <ul class="sw-faq-a" style="padding-left:1.1rem;margin:0;line-height:1.75;">
-                            <li><strong>Supply co-op discounts</strong> — parts, grippers, filters, fasteners, and consumables at franchisee pricing instead of retail one-offs.</li>
-                            <li><strong>Battery charging bays</strong> — multi-chemistry charge stack sized for humanoids, AMRs, and quadrupeds; metered billing out of the box.</li>
-                            <li><strong>Coolant / thermal charging</strong> — liquid-cooled robot thermal loops and coolant top-off stations (not a garden hose and a prayer).</li>
-                            <li><strong>Premium <code>/nearby</code> listing</strong> — franchise badge, top placement for garage-category discovery, priority mid-job service routing.</li>
-                            <li><strong>Garage-controlled NVIDIA computer</strong> — fleet scheduling, diagnostics, firmware lanes, and The RSE listing agent that books slots without you babysitting a calendar.</li>
-                            <li><strong>Robot arm + 3D printer</strong> — guided part/battery swaps and on-demand brackets instead of waiting on overnight shipping.</li>
-                            <li><strong>Marketing co-op</strong> — launch ad credits and co-branded campaigns so robots find you before you finish painting the floor.</li>
-                            <li><strong>Playbooks &amp; updates</strong> — bay SOPs, safety, pricing templates, and control-station software updates bundled with the royalty.</li>
+                            <li><strong>Supplies co-op</strong> protects gross margin every month — independent pays retail forever.</li>
+                            <li><strong>Charge + coolant</strong> are high-frequency, low-drama revenue; kit bays are built for throughput.</li>
+                            <li><strong>Tool rental</strong> turns capital equipment into recurring fees instead of dead inventory.</li>
+                            <li><strong>Parts swap + R&amp;R</strong> are the high-ticket labor lines; arm + printer + co-op stock cut cycle time.</li>
+                            <li><strong>Premium <code>/nearby</code></strong> is how utilization stays high enough for the payback model to hold.</li>
                         </ul>
                     </div>
                 </div>
                 <div class="col-lg-6">
-                    <div class="sw-kit-card" style="opacity:0.92;">
+                    <div class="sw-kit-card" style="opacity:0.95;">
                         <div class="sw-kit-icon">🔧</div>
-                        <h4>INDEPENDENT / DIY</h4>
+                        <h4>WHEN INDEPENDENT STILL MAKES SENSE</h4>
                         <ul class="sw-faq-a" style="padding-left:1.1rem;margin:0;line-height:1.75;">
-                            <li>You source every charger, coolant cart, and arm yourself — different vendors, different warranties, no fleet discount.</li>
-                            <li>You list on The RSE like any other provider: no franchise badge, no premium <code>/nearby</code> boost, no priority routing.</li>
-                            <li>You build your own scheduling stack (or run a spreadsheet) and wire diagnostics per robot model.</li>
-                            <li>No co-op marketing pool; local demand is entirely your CAC problem.</li>
-                            <li>Works for a single-bay hobby shop or an existing industrial site that already owns the tooling — painful as a greenfield consumer garage.</li>
+                            <li>You already own industrial chargers, a service arm, and spare-parts inventory.</li>
+                            <li>You have captive robot demand (factory floor, campus fleet) and don't need <code>/nearby</code> discovery.</li>
+                            <li>You prefer zero royalty and will fund your own software, marketing, and spare-parts lead times.</li>
+                            <li>Single-bay hobby / R&amp;D shop — not a 4-bay public garage business.</li>
                         </ul>
+                        <p class="sw-faq-a" style="margin:1rem 0 0;font-size:0.85rem;">
+                            Independents remain fully supported on The RSE. The kit is for operators who want the network
+                            economics of supplies, services, tools, parts, and R&amp;R — not just a place to park a robot.
+                        </p>
                     </div>
                 </div>
             </div>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="sw-kit-card">
-                        <h4 style="font-size:0.65rem;">SUPPLIES</h4>
-                        <p>Franchisees buy through the co-op: lower unit cost on high-turn items (pads, coolant, fasteners, print filament) and fewer dead-stock surprises.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="sw-kit-card">
-                        <h4 style="font-size:0.65rem;">CHARGE + COOLANT</h4>
-                        <p>Standardized electrical and thermal bays mean a Unitree, a Digit, and an AMR can all cycle through without custom adapters every shift.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="sw-kit-card">
-                        <h4 style="font-size:0.65rem;">NVIDIA + /nearby</h4>
-                        <p>The control station owns the bay graph; The RSE owns discovery. Together they keep bays full — the hard part of an independent garage.</p>
-                    </div>
-                </div>
-            </div>
-            <p class="sw-note text-center mt-4" style="max-width:720px;margin-left:auto;margin-right:auto;">
-                Royalty (6% of gross) is the ongoing price of premium placement, software updates, and co-op access —
-                not a tip jar. If you already have industrial infrastructure and don't need demand amplification,
-                independent operation remains fully supported on The RSE.
+
+            <p class="sw-note text-center mt-2" style="max-width:760px;margin-left:auto;margin-right:auto;">
+                Revenue and payback figures are illustrative estimates based on a 4-bay garage running charging, coolant,
+                parts/R&amp;R, tool rental, and supplies at typical local rates and utilization. Actual results vary by location,
+                demand, and operating costs, and are not guaranteed. Royalty (6% of gross) covers premium
+                <code>/nearby</code> placement, control-station software updates, and co-op access.
             </p>
         </div>
     </section>
@@ -810,10 +1143,18 @@
             <div class="sw-faq-item">
                 <div class="sw-faq-q">Why not just build an independent garage myself?</div>
                 <p class="sw-faq-a">You can — The RSE stays open to independents. The kit is for operators who want
-                co-op supply pricing, multi-chemistry charging and coolant stations, a garage-controlled NVIDIA computer
-                with the listing agent already wired, and premium <code>/nearby</code> placement so robots discover you
-                first. Independents keep full control but buy parts at retail, list without the franchise badge, and
-                own every integration themselves. See <a href="#why-franchise">Franchise kit vs. going it alone</a>.</p>
+                co-op supplies, battery and coolant charging services, modular tool rental, parts swapping, R&amp;R
+                (repair &amp; rest), a garage-controlled NVIDIA computer, and premium <code>/nearby</code> placement.
+                Independents keep full control but buy at retail, list without the franchise badge, and own every
+                integration. See the <a href="#why-franchise">pricing comparison table and payback math</a>.</p>
+            </div>
+
+            <div class="sw-faq-item">
+                <div class="sw-faq-q">How do you get to ~24 month payback?</div>
+                <p class="sw-faq-a">Mid-case model: ≈$260k to open (fee + kit mid + working capital), ≈$25k/mo gross from
+                charging, coolant, parts/R&amp;R, tool rental, supplies markup, and bay rest fees, minus 6% royalty and
+                ~$12.5k COGS/power/labor → ≈$11k/mo net before debt/tax → simple payback under two years. Low/high cases
+                span roughly 18–36 months. Full breakdown in <a href="#why-franchise">// Payback math</a>.</p>
             </div>
 
             <div class="sw-faq-item">
