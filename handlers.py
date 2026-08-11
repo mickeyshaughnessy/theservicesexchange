@@ -615,7 +615,8 @@ def register_user(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'created_on': int(time.time()),
             'stars': 0,
             'total_ratings': 0,
-            'completed_jobs': 0
+            'completed_jobs': 0,
+            'username_public': True,
         }
         
         save_account(username, user_data)
@@ -877,6 +878,9 @@ def _profile_defaults(user_data: Dict[str, Any]) -> Dict[str, Any]:
     user_data.setdefault('auto_bids', [])
     user_data.setdefault('discoverable_by_contacts', False)
     user_data.setdefault('contact_hashes', [])
+    # Usernames are public by default so people can find/message friends on the exchange.
+    # Opt out via profile → username_public=false (hides from directory + /profile/u/ lookup).
+    user_data.setdefault('username_public', True)
     user_data.setdefault('privacy_level', privacy_mod.DEFAULT_PUBLIC_PRIVACY)
     user_data.setdefault('privacy_profile_level', privacy_mod.DEFAULT_PUBLIC_PRIVACY)
     user_data.setdefault('privacy_nearby_default', privacy_mod.DEFAULT_PUBLIC_PRIVACY)
@@ -986,6 +990,7 @@ def get_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'auto_bids': user_data.get('auto_bids') or [],
             'discoverable_by_contacts': bool(user_data.get('discoverable_by_contacts')),
             'contact_hash_count': len(user_data.get('contact_hashes') or []),
+            'username_public': bool(user_data.get('username_public', True)),
         }, 200
     except Exception as e:
         logger.error(f"Get profile error: {str(e)}")
@@ -1010,6 +1015,13 @@ def update_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             user_data['location'] = (data.get('location') or '').strip()[:120] or None
         if 'contact_info' in data:
             user_data['contact_info'] = (data.get('contact_info') or '').strip()[:300] or None
+        if 'username_public' in data:
+            # Accept bool or common string forms from HTML forms / JSON
+            raw = data.get('username_public')
+            if isinstance(raw, str):
+                user_data['username_public'] = raw.strip().lower() in ('1', 'true', 'yes', 'on')
+            else:
+                user_data['username_public'] = bool(raw)
         if 'privacy_level' in data:
             user_data['privacy_level'] = privacy_mod.normalize_privacy_level(
                 data.get('privacy_level')
@@ -1051,6 +1063,39 @@ def get_or_create_profile_slug(data: Dict[str, Any]) -> Tuple[Dict[str, Any], in
         return {"error": "Internal server error"}, 500
 
 
+def _is_username_public(user_data: Optional[Dict[str, Any]]) -> bool:
+    """Usernames are public by default (missing key ⇒ True)."""
+    if user_data is None:
+        return False
+    if 'username_public' not in user_data:
+        return True
+    return bool(user_data.get('username_public'))
+
+
+def _public_profile_payload(username: str, user_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Shared public profile fields (slug or username lookup)."""
+    _profile_defaults(user_data)
+    follows = get_follows(username)
+    base = privacy_mod.project_public_profile(user_data, username=username)
+    plvl = base['privacy_level']
+    return {
+        **base,
+        'username_public': _is_username_public(user_data),
+        'user_type': user_data.get('user_type'),
+        'reputation_score': round(calculate_reputation_score(user_data), 2),
+        'stars': user_data.get('stars', 0),
+        'total_ratings': user_data.get('total_ratings', 0),
+        'robots_owned': user_data.get('robots_owned') or [],
+        'cosmetics_equipped': user_data.get('cosmetics_equipped') or {},
+        'follower_count': len(follows['followers']),
+        'following_count': len(follows['following']),
+        'reputation_breakdown': _reputation_breakdown(username),
+        'endorsements': _endorsement_summary(username),
+        'privacy_level': plvl,
+        'profile_slug': user_data.get('profile_slug'),
+    }
+
+
 def get_public_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     """Get the public subset of a profile by its share slug. No auth required."""
     try:
@@ -1063,27 +1108,157 @@ def get_public_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         if not user_data:
             return {"error": "Profile not found"}, 404
 
-        _profile_defaults(user_data)
-        follows = get_follows(username)
-
-        # Public projection only — contact, wallets, hashes never included
-        base = privacy_mod.project_public_profile(user_data, username=username)
-        plvl = base['privacy_level']
-        return {
-            **base,
-            'reputation_score': round(calculate_reputation_score(user_data), 2),
-            'stars': user_data.get('stars', 0),
-            'total_ratings': user_data.get('total_ratings', 0),
-            'robots_owned': user_data.get('robots_owned') or [],
-            'cosmetics_equipped': user_data.get('cosmetics_equipped') or {},
-            'follower_count': len(follows['followers']),
-            'following_count': len(follows['following']),
-            'reputation_breakdown': _reputation_breakdown(username),
-            'endorsements': _endorsement_summary(username),
-            'privacy_level': plvl,
-        }, 200
+        return _public_profile_payload(username, user_data), 200
     except Exception as e:
         logger.error(f"Get public profile error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_public_profile_by_username(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """
+    Public profile lookup by username when the account has username_public
+    (default True). Private usernames return 404 to avoid confirmation.
+    """
+    try:
+        username = (data.get('username') or '').strip()
+        if not username:
+            return {"error": "Username required"}, 400
+        user_data = get_account(username)
+        if not user_data or not _is_username_public(user_data):
+            return {"error": "Profile not found"}, 404
+        return _public_profile_payload(username, user_data), 200
+    except Exception as e:
+        logger.error(f"Get public profile by username error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def _user_directory_card(
+    username: str,
+    user_data: Dict[str, Any],
+    *,
+    viewer: Optional[str] = None,
+    following_set: Optional[set] = None,
+) -> Dict[str, Any]:
+    """Compact public card for directory / friends lists."""
+    _profile_defaults(user_data)
+    card = {
+        'username': username,
+        'display_name': user_data.get('display_name') or username,
+        'avatar_url': user_data.get('avatar_url'),
+        'user_type': user_data.get('user_type'),
+        'location': privacy_mod.project_public_location_field(
+            user_data.get('location'),
+            privacy_mod.normalize_privacy_level(
+                user_data.get('privacy_profile_level') or user_data.get('privacy_level')
+            ),
+        ),
+        'about': privacy_mod.redact_public_text(
+            user_data.get('about'),
+            privacy_mod.normalize_privacy_level(
+                user_data.get('privacy_profile_level') or user_data.get('privacy_level')
+            ),
+        ),
+        'reputation_score': round(calculate_reputation_score(user_data), 2),
+        'stars': user_data.get('stars', 0),
+        'total_ratings': user_data.get('total_ratings', 0),
+        'profile_slug': user_data.get('profile_slug'),
+        'username_public': True,
+    }
+    if viewer and following_set is not None:
+        card['is_friend'] = username in following_set
+    return card
+
+
+def search_public_users(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """
+    Search the exchange directory for public usernames.
+    Default: every account is listed/searchable. Opt-out via username_public=false.
+    """
+    try:
+        q = (data.get('q') or data.get('query') or '').strip().lower()
+        limit = data.get('limit', 30)
+        try:
+            limit = max(1, min(int(limit), 50))
+        except (TypeError, ValueError):
+            limit = 30
+        viewer = data.get('viewer')  # optional authenticated username
+
+        following_set = set()
+        if viewer:
+            following_set = set(get_follows(viewer).get('following') or [])
+
+        results: List[Dict[str, Any]] = []
+        for uname, acc in get_all_accounts():
+            if not acc:
+                continue
+            if viewer and uname == viewer:
+                continue
+            if not _is_username_public(acc):
+                continue
+            dn = (acc.get('display_name') or '').strip().lower()
+            if q:
+                if q not in uname.lower() and q not in dn:
+                    continue
+            results.append(
+                _user_directory_card(
+                    uname, acc, viewer=viewer, following_set=following_set
+                )
+            )
+
+        # Prefer higher reputation, then username for stable ordering
+        results.sort(
+            key=lambda r: (-float(r.get('reputation_score') or 0), r.get('username') or '')
+        )
+        results = results[:limit]
+        return {
+            'users': results,
+            'count': len(results),
+            'query': q or None,
+            'note': 'Usernames are public by default. Hide yours in Profile settings.',
+        }, 200
+    except Exception as e:
+        logger.error(f"Search public users error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+def get_friends_enriched(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Followers/following as directory cards (friends = people you follow)."""
+    try:
+        username = data.get('username')
+        follows = get_follows(username)
+        following_names = follows.get('following') or []
+        follower_names = follows.get('followers') or []
+
+        def cards(names: List[str]) -> List[Dict[str, Any]]:
+            out = []
+            for n in names:
+                acc = get_account(n)
+                if not acc:
+                    # Still surface the username even if account blob missing
+                    out.append({
+                        'username': n,
+                        'display_name': n,
+                        'avatar_url': None,
+                        'reputation_score': None,
+                        'is_friend': n in following_names,
+                    })
+                    continue
+                if not _is_username_public(acc) and n not in following_names and n not in follower_names:
+                    continue
+                card = _user_directory_card(
+                    n, acc, viewer=username, following_set=set(following_names)
+                )
+                out.append(card)
+            return out
+
+        return {
+            'following': cards(following_names),
+            'followers': cards(follower_names),
+            'following_count': len(following_names),
+            'follower_count': len(follower_names),
+        }, 200
+    except Exception as e:
+        logger.error(f"Get friends enriched error: {str(e)}")
         return {"error": "Internal server error"}, 500
 
 
@@ -1158,7 +1333,11 @@ def follow_user(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         save_follows(follower, follower_follows)
         save_follows(followee, followee_follows)
 
-        return {"message": f"Now following {followee}"}, 200
+        return {
+            "message": f"Added {followee} as a friend",
+            "target_username": followee,
+            "is_friend": True,
+        }, 200
     except Exception as e:
         logger.error(f"Follow user error: {str(e)}")
         return {"error": "Internal server error"}, 500
@@ -1182,7 +1361,11 @@ def unfollow_user(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         save_follows(follower, follower_follows)
         save_follows(followee, followee_follows)
 
-        return {"message": f"Unfollowed {followee}"}, 200
+        return {
+            "message": f"Removed {followee} from friends",
+            "target_username": followee,
+            "is_friend": False,
+        }, 200
     except Exception as e:
         logger.error(f"Unfollow user error: {str(e)}")
         return {"error": "Internal server error"}, 500
@@ -3549,6 +3732,7 @@ def get_conversations(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         job_filter = data.get('job_id')
         messages = get_user_messages(username)
         cursors = get_chat_cursors(username).get('by_peer') or {}
+        following = set(get_follows(username).get('following') or [])
         
         conversations = {}
         for msg in messages:
@@ -3564,6 +3748,7 @@ def get_conversations(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                     'unread': False,
                     'conversation_id': other_user,
                     'job_id': msg.get('job_id'),
+                    'is_friend': other_user in following,
                 }
             else:
                 if msg['sent_at'] > conversations[other_user]['timestamp']:
@@ -3575,6 +3760,16 @@ def get_conversations(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             peer_cursor = int(cursors.get(other_user) or 0)
             if msg.get('recipient') == username and int(msg.get('sent_at') or 0) > peer_cursor:
                 conversations[other_user]['unread'] = True
+
+        # Attach display names for public peers (and for friends even if private)
+        for other_user, conv in conversations.items():
+            acc = get_account(other_user)
+            if acc and (_is_username_public(acc) or other_user in following):
+                conv['display_name'] = acc.get('display_name') or other_user
+                conv['avatar_url'] = acc.get('avatar_url')
+            else:
+                conv['display_name'] = other_user
+                conv['avatar_url'] = None
                 
         conv_list = list(conversations.values())
         conv_list.sort(key=lambda x: x['timestamp'], reverse=True)
@@ -3620,17 +3815,45 @@ def send_reply(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 def get_bulletin_feed(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     """Get bulletin feed."""
     try:
+        viewer = data.get('username')  # optional
+        following = set()
+        if viewer:
+            following = set(get_follows(viewer).get('following') or [])
         bulletins = get_all_bulletins()
         posts = []
+        author_cache: Dict[str, Dict[str, Any]] = {}
         for b in bulletins:
+            author = b.get('username') or ''
+            if author and author not in author_cache:
+                acc = get_account(author)
+                if acc and _is_username_public(acc):
+                    author_cache[author] = {
+                        'display_name': acc.get('display_name') or author,
+                        'avatar_url': acc.get('avatar_url'),
+                        'profile_slug': acc.get('profile_slug'),
+                        'username_public': True,
+                    }
+                else:
+                    author_cache[author] = {
+                        'display_name': author,
+                        'avatar_url': None,
+                        'profile_slug': None,
+                        'username_public': bool(acc and _is_username_public(acc)),
+                    }
+            meta = author_cache.get(author) or {}
             posts.append({
                 'post_id': b['post_id'],
                 'title': b['title'],
                 'content': b['content'],
                 'category': b['category'],
-                'author': b['username'],
+                'author': author,
+                'author_display_name': meta.get('display_name') or author,
+                'author_avatar_url': meta.get('avatar_url'),
+                'author_public': bool(meta.get('username_public')),
+                'is_friend': author in following if viewer else False,
                 'timestamp': b['posted_at']
             })
+        posts.sort(key=lambda p: p.get('timestamp') or 0, reverse=True)
         return {"posts": posts}, 200
     except Exception as e:
         logger.error(f"Get bulletin feed error: {str(e)}")

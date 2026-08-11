@@ -336,7 +336,25 @@
     </div>
 
     <div class="card">
-      <div class="card-title">Find friends</div>
+      <div class="card-title">Find people</div>
+      <p class="muted small">
+        Usernames are public by default. Search the exchange directory to add friends or open a profile.
+      </p>
+      <label for="peopleSearchInput">Search username or display name</label>
+      <div class="btn-row" style="align-items:stretch">
+        <input id="peopleSearchInput" type="search" placeholder="e.g. alice" autocomplete="off" style="flex:1">
+        <button type="button" class="btn btn-sm btn-primary" id="peopleSearchBtn">Search</button>
+      </div>
+      <div id="peopleSearchList" class="contacts-match-list">
+        <div class="empty">Search to browse public accounts.</div>
+      </div>
+      <p class="muted small" id="friendsListStatus"></p>
+      <button type="button" class="btn btn-sm" id="loadFriendsBtn" style="width:100%;margin-top:0.5rem">Show my friends</button>
+      <div id="friendsList" class="contacts-match-list" style="margin-top:0.5rem"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Contact book discovery</div>
       <p class="muted small">
         Opt in so people who already have your phone or email in their address book can discover your RSE username.
         We only store one-way hashes — never your raw contact book.
@@ -356,6 +374,16 @@
       <div id="contactsMatchList" class="contacts-match-list">
         <div class="empty">No matches yet.</div>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Public username</div>
+      <p class="muted small">Off hides you from the directory and <code>/profile/u/…</code> links. Friends you already message can still reach you.</p>
+      <label class="check-row">
+        <input type="checkbox" id="usernamePublicCheck" checked>
+        <span>Username is public (default on)</span>
+      </label>
+      <button type="button" class="btn btn-sm btn-primary" id="usernamePublicSaveBtn" style="width:100%;margin-top:0.5rem">Save visibility</button>
     </div>
 
     <div class="card">

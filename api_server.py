@@ -53,6 +53,9 @@ from handlers import (
     update_profile,
     get_or_create_profile_slug,
     get_public_profile,
+    get_public_profile_by_username,
+    search_public_users,
+    get_friends_enriched,
     upload_avatar,
     follow_user,
     unfollow_user,
@@ -967,6 +970,18 @@ def profile_public(slug):
     response, status = get_public_profile({'slug': slug})
     return flask.jsonify(response), status
 
+
+@app.route('/profile/u/<username>', methods=['GET'])
+@limiter.limit(_STRICT_LIMIT)
+def profile_public_by_username(username):
+    """
+    Public profile by username when username_public is true (default).
+    Returns 404 if the user opted out or does not exist (no existence leak).
+    """
+    response, status = get_public_profile_by_username({'username': username})
+    return flask.jsonify(response), status
+
+
 @app.route('/profile/avatar', methods=['POST'])
 @token_required
 @limiter.limit(_STRICT_LIMIT)
@@ -978,8 +993,33 @@ def profile_avatar(current_user):
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
-# Follow / Followers Endpoints
+# People directory + friends (follow graph)
 # -----------------------------------------------------------------------------
+
+@app.route('/users', methods=['GET'])
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def users_directory(current_user):
+    """
+    Search public usernames on the exchange.
+    Query: ?q= partial match on username or display_name · ?limit=1..50
+    """
+    data = {
+        'q': flask.request.args.get('q') or flask.request.args.get('query') or '',
+        'limit': flask.request.args.get('limit', 30),
+        'viewer': current_user,
+    }
+    response, status = search_public_users(data)
+    return flask.jsonify(response), status
+
+
+@app.route('/friends', methods=['GET'])
+@token_required
+def friends_list(current_user):
+    """Enriched following/followers cards (friends = people you follow)."""
+    response, status = get_friends_enriched({'username': current_user})
+    return flask.jsonify(response), status
+
 
 @app.route('/follow', methods=['POST'])
 @token_required
@@ -1000,7 +1040,11 @@ def handle_unfollow(current_user):
 @app.route('/follows', methods=['GET'])
 @token_required
 def handle_get_follows(current_user):
-    response, status = get_follow_lists({'username': current_user})
+    # Prefer enriched cards when client asks ?enriched=1
+    if (flask.request.args.get('enriched') or '').lower() in ('1', 'true', 'yes'):
+        response, status = get_friends_enriched({'username': current_user})
+    else:
+        response, status = get_follow_lists({'username': current_user})
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------

@@ -111,6 +111,14 @@
     discoveryEmail: $('discoveryEmail'),
     discoveryEnableBtn: $('discoveryEnableBtn'),
     discoveryDisableBtn: $('discoveryDisableBtn'),
+    peopleSearchInput: $('peopleSearchInput'),
+    peopleSearchBtn: $('peopleSearchBtn'),
+    peopleSearchList: $('peopleSearchList'),
+    loadFriendsBtn: $('loadFriendsBtn'),
+    friendsList: $('friendsList'),
+    friendsListStatus: $('friendsListStatus'),
+    usernamePublicCheck: $('usernamePublicCheck'),
+    usernamePublicSaveBtn: $('usernamePublicSaveBtn'),
     importContactsBtn: $('importContactsBtn'),
     contactsMatchList: $('contactsMatchList'),
     tabLogin: $('tabLogin'),
@@ -1107,9 +1115,19 @@
     }
   }
 
+  function feedbackUserHtml(name) {
+    const raw = (name || 'Guest').trim() || 'Guest';
+    const un = escapeHtml(raw);
+    if (!raw || raw.toLowerCase() === 'guest') {
+      return `<span class="fb-user">@${un}</span>`;
+    }
+    const href =
+      SITE_BASE + 'profile.html?u=' + encodeURIComponent(raw);
+    return `<a class="fb-user" href="${escapeHtml(href)}" target="_blank" rel="noopener">@${un}</a>`;
+  }
+
   function renderFeedbackPost(post) {
     const id = escapeHtml(post.id);
-    const user = escapeHtml(post.username || 'Guest');
     const when = escapeHtml(formatIsoWhen(post.created));
     const message = escapeHtml(post.message || '');
     const replies = Array.isArray(post.replies) ? post.replies : [];
@@ -1119,7 +1137,7 @@
             (r) => `
           <div class="fb-reply">
             <div class="card-meta">
-              <span class="fb-user">@${escapeHtml(r.username || 'Guest')}</span>
+              ${feedbackUserHtml(r.username)}
               · ${escapeHtml(formatIsoWhen(r.created))}
             </div>
             <p class="fb-body" style="margin:0">${escapeHtml(r.message || '')}</p>
@@ -1131,7 +1149,7 @@
     return `
       <div class="card fb-post" data-fb-post="${id}">
         <div class="card-meta">
-          <span class="fb-user">@${user}</span>
+          ${feedbackUserHtml(post.username)}
           ${when ? ' · ' + when : ''}
         </div>
         <p class="fb-body">${message}</p>
@@ -1289,6 +1307,9 @@
         els.profileAbout.value = profile.about || '';
         els.profileLocation.value = profile.location || '';
         els.profileContact.value = profile.contact_info || '';
+      }
+      if (els.usernamePublicCheck) {
+        els.usernamePublicCheck.checked = profile.username_public !== false;
       }
       if (els.privacyNearby) {
         els.privacyNearby.value =
@@ -1686,6 +1707,26 @@
     }
   }
 
+  function personCardHtml(m, { friendLabel } = {}) {
+    const un = escapeHtml(m.username || '');
+    const dn = escapeHtml(m.display_name || m.username || '');
+    const rep =
+      m.reputation_score != null ? Number(m.reputation_score).toFixed(2) : '—';
+    const isFriend = !!m.is_friend;
+    const profileHref =
+      SITE_BASE + 'profile.html?u=' + encodeURIComponent(m.username || '');
+    const addLabel = friendLabel || (isFriend ? 'Friends ✓' : 'Add friend');
+    return `
+        <div class="card">
+          <div class="card-title">${dn}</div>
+          <div class="card-meta">@${un} · rep ${escapeHtml(rep)}</div>
+          <div class="btn-row">
+            <button type="button" class="btn btn-sm btn-primary" data-follow="${un}" data-is-friend="${isFriend ? '1' : '0'}">${escapeHtml(addLabel)}</button>
+            <a class="btn btn-sm" href="${escapeHtml(profileHref)}" target="_blank" rel="noopener">Profile</a>
+          </div>
+        </div>`;
+  }
+
   function renderContactMatches(matches) {
     if (!els.contactsMatchList) return;
     if (!matches.length) {
@@ -1693,35 +1734,113 @@
         '<div class="empty">No matches. Friends must enable discovery first.</div>';
       return;
     }
-    els.contactsMatchList.innerHTML = matches
-      .map((m) => {
-        const un = escapeHtml(m.username);
-        const dn = escapeHtml(m.display_name || m.username);
-        const rep =
-          m.reputation_score != null
-            ? Number(m.reputation_score).toFixed(2)
-            : '—';
-        return `
-        <div class="card">
-          <div class="card-title">${dn}</div>
-          <div class="card-meta">@${un} · rep ${escapeHtml(rep)}</div>
-          <div class="btn-row">
-            <button type="button" class="btn btn-sm btn-primary" data-follow="${un}">Follow</button>
-          </div>
-        </div>`;
-      })
-      .join('');
+    els.contactsMatchList.innerHTML = matches.map((m) => personCardHtml(m)).join('');
   }
 
-  async function followUser(username) {
+  function renderPeopleSearch(users) {
+    if (!els.peopleSearchList) return;
+    if (!users.length) {
+      els.peopleSearchList.innerHTML =
+        '<div class="empty">No public usernames match.</div>';
+      return;
+    }
+    els.peopleSearchList.innerHTML = users.map((m) => personCardHtml(m)).join('');
+  }
+
+  async function searchPeople() {
+    if (!state.token) {
+      toast('Log in to search people', 'error');
+      return;
+    }
+    const q = (els.peopleSearchInput && els.peopleSearchInput.value) || '';
+    if (els.peopleSearchList) {
+      els.peopleSearchList.innerHTML = '<div class="loading">Searching…</div>';
+    }
     try {
-      await api('/follow', {
-        method: 'POST',
-        body: JSON.stringify({ target_username: username }),
-      });
-      toast('Following @' + username, 'ok');
+      const data = await api(
+        '/users?limit=30' + (q.trim() ? '&q=' + encodeURIComponent(q.trim()) : '')
+      );
+      renderPeopleSearch(data.users || []);
     } catch (err) {
-      toast(err.message || 'Follow failed', 'error');
+      if (els.peopleSearchList) {
+        els.peopleSearchList.innerHTML = `<div class="empty">${escapeHtml(
+          err.message || 'Search failed'
+        )}</div>`;
+      }
+    }
+  }
+
+  async function loadFriendsMobile() {
+    if (!state.token) return;
+    if (els.friendsListStatus) els.friendsListStatus.textContent = 'Loading…';
+    try {
+      const data = await api('/friends');
+      const following = data.following || [];
+      if (els.friendsListStatus) {
+        els.friendsListStatus.textContent =
+          (data.following_count || following.length) +
+          ' friends · ' +
+          (data.follower_count || 0) +
+          ' followers';
+      }
+      if (els.friendsList) {
+        els.friendsList.innerHTML = following.length
+          ? following
+              .map((m) => personCardHtml({ ...m, is_friend: true }))
+              .join('')
+          : '<div class="empty">No friends yet — search above to add some.</div>';
+      }
+    } catch (err) {
+      if (els.friendsListStatus) {
+        els.friendsListStatus.textContent = err.message || 'Could not load friends';
+      }
+    }
+  }
+
+  async function followUser(username, currentlyFriend) {
+    try {
+      if (currentlyFriend) {
+        await api('/unfollow', {
+          method: 'POST',
+          body: JSON.stringify({ target_username: username }),
+        });
+        toast('Removed @' + username, 'ok');
+      } else {
+        await api('/follow', {
+          method: 'POST',
+          body: JSON.stringify({ target_username: username }),
+        });
+        toast('Added @' + username + ' as a friend', 'ok');
+      }
+      // Refresh open lists
+      if (els.peopleSearchList && els.peopleSearchList.querySelector('.card')) {
+        searchPeople();
+      }
+    } catch (err) {
+      toast(err.message || 'Friend update failed', 'error');
+    }
+  }
+
+  async function saveUsernamePublic() {
+    if (!state.token || !els.usernamePublicCheck) return;
+    setLoading(els.usernamePublicSaveBtn, true, 'Save visibility');
+    try {
+      await api('/profile', {
+        method: 'POST',
+        body: JSON.stringify({
+          username_public: !!els.usernamePublicCheck.checked,
+        }),
+      });
+      toast(
+        els.usernamePublicCheck.checked
+          ? 'Username is public'
+          : 'Username hidden from directory',
+        'ok'
+      );
+    } catch (err) {
+      toast(err.message || 'Could not save', 'error');
+    } finally {
+      setLoading(els.usernamePublicSaveBtn, false, 'Save visibility');
     }
   }
 
@@ -1905,6 +2024,23 @@
     if (els.discoveryDisableBtn) {
       els.discoveryDisableBtn.addEventListener('click', disableDiscovery);
     }
+    if (els.peopleSearchBtn) {
+      els.peopleSearchBtn.addEventListener('click', searchPeople);
+    }
+    if (els.peopleSearchInput) {
+      els.peopleSearchInput.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          searchPeople();
+        }
+      });
+    }
+    if (els.loadFriendsBtn) {
+      els.loadFriendsBtn.addEventListener('click', loadFriendsMobile);
+    }
+    if (els.usernamePublicSaveBtn) {
+      els.usernamePublicSaveBtn.addEventListener('click', saveUsernamePublic);
+    }
     if (els.importContactsBtn) {
       els.importContactsBtn.addEventListener('click', importAndMatchContacts);
     }
@@ -1973,7 +2109,8 @@
       }
       const followBtn = e.target.closest('[data-follow]');
       if (followBtn) {
-        followUser(followBtn.getAttribute('data-follow'));
+        const isFriend = followBtn.getAttribute('data-is-friend') === '1';
+        followUser(followBtn.getAttribute('data-follow'), isFriend);
       }
     });
 

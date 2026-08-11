@@ -245,6 +245,14 @@
                         <div class="col-md-12"><textarea class="form-control form-control-sm" id="editAbout" rows="3" placeholder="About you"></textarea></div>
                         <div class="col-md-6"><input class="form-control form-control-sm" id="editContactInfo" placeholder="Contact info (private)"></div>
                         <div class="col-md-6"><input type="file" class="form-control form-control-sm" id="editAvatarFile" accept="image/png,image/jpeg,image/webp"></div>
+                        <div class="col-12">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="editUsernamePublic" checked>
+                                <label class="form-check-label" for="editUsernamePublic">
+                                    Public username — discoverable in directory &amp; profile links (<code>?u=</code>). On by default.
+                                </label>
+                            </div>
+                        </div>
                         <div class="col-12"><button class="btn btn-sm btn-primary mt-2" onclick="saveProfileEdits()">Save Changes</button></div>
                     </div>
                     <div id="editSaveStatus" class="mt-2" style="font-size: 0.85rem;"></div>
@@ -425,12 +433,13 @@
         async function initProfilePage() {
             const params = new URLSearchParams(location.search);
             const pid = params.get('pid');
+            const byUsername = params.get('u') || params.get('user') || params.get('username');
 
-            if (!pid) {
+            if (!pid && !byUsername) {
                 if (!AppState.authToken) {
                     document.getElementById('profileLoading').style.display = 'none';
                     document.getElementById('profileError').style.display = 'block';
-                    document.getElementById('profileError').textContent = 'Log in to view your profile, or open a shared profile link.';
+                    document.getElementById('profileError').textContent = 'Log in to view your profile, or open a shared profile link / username.';
                     return;
                 }
                 // Own profile: resolve share slug then redirect to the canonical ?pid= URL
@@ -449,7 +458,9 @@
             }
 
             try {
-                const res = await fetch(`${PROFILE_API}/profile/public/${encodeURIComponent(pid)}`);
+                const res = pid
+                    ? await fetch(`${PROFILE_API}/profile/public/${encodeURIComponent(pid)}`)
+                    : await fetch(`${PROFILE_API}/profile/u/${encodeURIComponent(byUsername)}`);
                 if (!res.ok) {
                     throw new Error('not found');
                 }
@@ -457,7 +468,7 @@
             } catch (e) {
                 document.getElementById('profileLoading').style.display = 'none';
                 document.getElementById('profileError').style.display = 'block';
-                document.getElementById('profileError').textContent = 'Profile not found.';
+                document.getElementById('profileError').textContent = 'Profile not found (username may be private).';
                 return;
             }
 
@@ -560,11 +571,11 @@
         function renderViewerActions() {
             const actions = document.getElementById('profileHeaderActions');
             if (!AppState.authToken) {
-                actions.innerHTML = `<button class="btn btn-sm btn-light" onclick="showAuth()">Log in to follow</button>`;
+                actions.innerHTML = `<button class="btn btn-sm btn-light" onclick="showAuth()">Log in to add friend</button>`;
                 return;
             }
             actions.innerHTML = `
-                <button class="btn btn-sm btn-outline-light" id="followBtn">Follow</button>
+                <button class="btn btn-sm btn-outline-light" id="followBtn">Add friend</button>
                 <button class="btn btn-sm btn-outline-light" onclick="messageUser('${viewedProfile.username}')">Message</button>
             `;
             checkFollowState();
@@ -578,7 +589,7 @@
                 const following = (data.following || []).includes(viewedProfile.username);
                 const btn = document.getElementById('followBtn');
                 if (!btn) return;
-                btn.textContent = following ? 'Unfollow' : 'Follow';
+                btn.textContent = following ? 'Friends ✓' : 'Add friend';
                 btn.onclick = () => toggleFollow(!following);
             } catch (e) { /* ignore */ }
         }
@@ -614,6 +625,8 @@
                 document.getElementById('editLocation').value = p.location || '';
                 document.getElementById('editAbout').value = p.about || '';
                 document.getElementById('editContactInfo').value = p.contact_info || '';
+                const up = document.getElementById('editUsernamePublic');
+                if (up) up.checked = p.username_public !== false;
                 document.getElementById('walletAddressText').textContent = p.wallet_address || 'Not linked';
                 const seatEl = document.getElementById('seatStatusText');
                 if (seatEl) seatEl.textContent = p.seat_status || (p.wallet_address ? 'unknown' : 'no_wallet');
@@ -875,7 +888,8 @@
                         display_name: document.getElementById('editDisplayName').value,
                         location: document.getElementById('editLocation').value,
                         about: document.getElementById('editAbout').value,
-                        contact_info: document.getElementById('editContactInfo').value
+                        contact_info: document.getElementById('editContactInfo').value,
+                        username_public: !!(document.getElementById('editUsernamePublic') && document.getElementById('editUsernamePublic').checked),
                     })
                 });
                 if (!res.ok) throw new Error('save failed');

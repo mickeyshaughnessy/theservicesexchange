@@ -2018,7 +2018,207 @@ async function handleBidSubmission(e) {
     }
 }
 
-// Chat Functions
+// Chat + friends / people discovery
+function profileUrlForUser(username, profileSlug) {
+    if (profileSlug) {
+        return `profile.html?pid=${encodeURIComponent(profileSlug)}`;
+    }
+    return `profile.html?u=${encodeURIComponent(username)}`;
+}
+
+function usernameLinkHtml(username, displayName) {
+    if (!username) return '';
+    const label = displayName && displayName !== username
+        ? `${escapeHtml(displayName)} <span class="text-muted">@${escapeHtml(username)}</span>`
+        : `@${escapeHtml(username)}`;
+    return `<a href="${profileUrlForUser(username)}" class="user-link" title="View profile">${label}</a>`;
+}
+
+function peopleCardHtml(user) {
+    const un = user.username || '';
+    const dn = user.display_name || un;
+    const rep = user.reputation_score != null ? Number(user.reputation_score).toFixed(1) : '—';
+    const friend = !!user.is_friend;
+    const escUn = escapeHtml(un);
+    return `
+      <div class="people-card" data-username="${escUn}">
+        <div class="people-card-main">
+          <div class="people-card-name">${usernameLinkHtml(un, dn)}</div>
+          <div class="people-card-meta text-muted small">
+            rep ${escapeHtml(rep)}
+            ${user.user_type ? ` · ${escapeHtml(user.user_type)}` : ''}
+            ${user.location ? ` · ${escapeHtml(user.location)}` : ''}
+          </div>
+        </div>
+        <div class="people-card-actions btn-group btn-group-sm">
+          <button type="button" class="btn btn-outline-light" onclick="messageUserFromDirectory('${escUn}')">Message</button>
+          <button type="button" class="btn ${friend ? 'btn-secondary' : 'btn-primary'}"
+            onclick="toggleFriendFromDirectory('${escUn}', ${friend ? 'false' : 'true'})">
+            ${friend ? 'Friends ✓' : 'Add friend'}
+          </button>
+        </div>
+      </div>`;
+}
+
+async function addFriend(username) {
+    const response = await fetch(`${API_URL}/follow`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${AppState.authToken}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ target_username: username }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Could not add friend');
+    return data;
+}
+
+async function removeFriend(username) {
+    const response = await fetch(`${API_URL}/unfollow`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${AppState.authToken}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ target_username: username }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Could not remove friend');
+    return data;
+}
+
+async function toggleFriendFromDirectory(username, makeFriend) {
+    if (!AppState.authToken) {
+        showAuth();
+        return;
+    }
+    try {
+        if (makeFriend) {
+            await addFriend(username);
+            showToast(`Added @${username} as a friend`, 'success');
+        } else {
+            await removeFriend(username);
+            showToast(`Removed @${username} from friends`, 'success');
+        }
+        // Refresh open panels
+        if (document.getElementById('chatTabPeople')?.style.display !== 'none') {
+            await searchPeopleDirectory();
+        }
+        if (document.getElementById('chatTabFriends')?.style.display !== 'none') {
+            await loadFriendsLists();
+        }
+        await loadBulletinFeed();
+    } catch (err) {
+        showToast(err.message || 'Friend update failed', 'error');
+    }
+}
+
+function messageUserFromDirectory(username) {
+    if (!AppState.authToken) {
+        showAuth();
+        return;
+    }
+    switchChatTab('inbox');
+    showNewMessageForm();
+    const recipient = document.getElementById('chatRecipient');
+    if (recipient) {
+        recipient.value = username;
+        recipient.focus();
+    }
+}
+
+function switchChatTab(tab) {
+    const inbox = document.getElementById('chatTabInbox');
+    const people = document.getElementById('chatTabPeople');
+    const friends = document.getElementById('chatTabFriends');
+    const tabs = {
+        inbox: document.getElementById('tab-inbox'),
+        people: document.getElementById('tab-people'),
+        friends: document.getElementById('tab-friends'),
+    };
+    if (inbox) inbox.style.display = tab === 'inbox' ? 'block' : 'none';
+    if (people) people.style.display = tab === 'people' ? 'block' : 'none';
+    if (friends) friends.style.display = tab === 'friends' ? 'block' : 'none';
+    Object.entries(tabs).forEach(([k, el]) => {
+        if (!el) return;
+        el.classList.toggle('active', k === tab);
+    });
+    if (tab === 'people') {
+        searchPeopleDirectory();
+    }
+    if (tab === 'friends') {
+        loadFriendsLists();
+    }
+}
+
+async function searchPeopleDirectory() {
+    const resultsEl = document.getElementById('peopleSearchResults');
+    const input = document.getElementById('peopleSearchInput');
+    if (!resultsEl || !AppState.authToken) return;
+    const q = (input && input.value || '').trim();
+    resultsEl.innerHTML = '<p class="text-muted small">Searching…</p>';
+    try {
+        const url = `${API_URL}/users?limit=30${q ? `&q=${encodeURIComponent(q)}` : ''}`;
+        const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${AppState.authToken}` },
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            resultsEl.innerHTML = `<p class="text-danger small">${escapeHtml(data.error || 'Search failed')}</p>`;
+            return;
+        }
+        const users = data.users || [];
+        // Fill datalist for new-message form
+        const dl = document.getElementById('chatRecipientSuggestions');
+        if (dl) {
+            dl.innerHTML = users.map((u) => `<option value="${escapeHtml(u.username)}"></option>`).join('');
+        }
+        if (!users.length) {
+            resultsEl.innerHTML = `<p class="text-muted small">No public usernames match${q ? ` “${escapeHtml(q)}”` : ''}.</p>`;
+            return;
+        }
+        resultsEl.innerHTML = users.map(peopleCardHtml).join('');
+    } catch (e) {
+        resultsEl.innerHTML = '<p class="text-danger small">Network error</p>';
+    }
+}
+
+async function loadFriendsLists() {
+    const followingEl = document.getElementById('friendsFollowingList');
+    const followersEl = document.getElementById('friendsFollowersList');
+    if (!AppState.authToken) return;
+    if (followingEl) followingEl.innerHTML = '<p class="text-muted small">Loading…</p>';
+    if (followersEl) followersEl.innerHTML = '<p class="text-muted small">Loading…</p>';
+    try {
+        const response = await fetch(`${API_URL}/friends`, {
+            headers: { Authorization: `Bearer ${AppState.authToken}` },
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            const err = `<p class="text-danger small">${escapeHtml(data.error || 'Failed to load')}</p>`;
+            if (followingEl) followingEl.innerHTML = err;
+            if (followersEl) followersEl.innerHTML = err;
+            return;
+        }
+        const following = data.following || [];
+        const followers = data.followers || [];
+        if (followingEl) {
+            followingEl.innerHTML = following.length
+                ? following.map((u) => peopleCardHtml({ ...u, is_friend: true })).join('')
+                : '<p class="text-muted small">No friends yet — use Find people to add some.</p>';
+        }
+        if (followersEl) {
+            followersEl.innerHTML = followers.length
+                ? followers.map(peopleCardHtml).join('')
+                : '<p class="text-muted small">No followers yet.</p>';
+        }
+    } catch (e) {
+        if (followingEl) followingEl.innerHTML = '<p class="text-danger small">Network error</p>';
+        if (followersEl) followersEl.innerHTML = '<p class="text-danger small">Network error</p>';
+    }
+}
+
 async function loadConversations() {
     const inboxContainer = document.getElementById('chatInbox');
     const loadingSpinner = document.getElementById('conversationsLoading');
@@ -2053,20 +2253,24 @@ function updateConversationsDisplay() {
     if (!container) return;
     
     if (AppState.conversations.length === 0) {
-        container.innerHTML = '<p class="text-muted text-center p-3">No conversations yet</p>';
+        container.innerHTML = '<p class="text-muted text-center p-3">No conversations yet.<br><button type="button" class="btn btn-sm btn-outline-light mt-2" onclick="switchChatTab(\'people\')">Find people</button></p>';
         return;
     }
     
-    container.innerHTML = AppState.conversations.map((conv, index) => `
+    container.innerHTML = AppState.conversations.map((conv, index) => {
+        const label = conv.display_name && conv.display_name !== conv.user
+            ? `${escapeHtml(conv.display_name)} <span class="text-muted">@${escapeHtml(conv.user)}</span>`
+            : `@${escapeHtml(conv.user)}`;
+        return `
         <div class="conversation-item ${AppState.currentConversation === index ? 'active' : ''}" onclick="selectConversation(${index})">
             <div class="conversation-meta">
-                <span class="conversation-user">${escapeHtml(conv.user)}</span>
+                <span class="conversation-user">${label}${conv.is_friend ? ' <span class="badge bg-secondary">friend</span>' : ''}</span>
                 <span class="conversation-time">${formatTime(conv.timestamp * 1000)}</span>
             </div>
             <div class="conversation-preview">${escapeHtml(conv.lastMessage)}</div>
             ${conv.unread ? '<div class="badge bg-primary mt-1">New</div>' : ''}
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 function selectConversation(index) {
@@ -2088,8 +2292,43 @@ async function showConversationView(conversation) {
     if (views.conversation) views.conversation.style.display = 'block';
     if (views.newForm) views.newForm.style.display = 'none';
     if (views.placeholder) views.placeholder.style.display = 'none';
-    if (views.userHeader) views.userHeader.textContent = conversation.user;
+    const headerLabel = conversation.display_name && conversation.display_name !== conversation.user
+        ? `${conversation.display_name} (@${conversation.user})`
+        : `@${conversation.user}`;
+    if (views.userHeader) views.userHeader.textContent = headerLabel;
     if (views.replyForm) views.replyForm.style.display = 'block';
+
+    const profileBtn = document.getElementById('convProfileBtn');
+    const friendBtn = document.getElementById('convFriendBtn');
+    if (profileBtn) {
+        profileBtn.style.display = 'inline-block';
+        profileBtn.onclick = () => {
+            window.location.href = profileUrlForUser(conversation.user);
+        };
+    }
+    if (friendBtn) {
+        friendBtn.style.display = 'inline-block';
+        const isFriend = !!conversation.is_friend;
+        friendBtn.textContent = isFriend ? 'Friends ✓' : 'Add friend';
+        friendBtn.className = isFriend ? 'btn btn-sm btn-secondary' : 'btn btn-sm btn-outline-light';
+        friendBtn.onclick = async () => {
+            try {
+                if (isFriend) {
+                    await removeFriend(conversation.user);
+                    conversation.is_friend = false;
+                    showToast(`Removed @${conversation.user}`, 'success');
+                } else {
+                    await addFriend(conversation.user);
+                    conversation.is_friend = true;
+                    showToast(`Added @${conversation.user}`, 'success');
+                }
+                showConversationView(conversation);
+                updateConversationsDisplay();
+            } catch (err) {
+                showToast(err.message || 'Failed', 'error');
+            }
+        };
+    }
     
     if (views.history) {
         views.history.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm"></div> Loading messages...</div>';
@@ -2112,7 +2351,7 @@ async function showConversationView(conversation) {
                 
                 views.history.innerHTML = messages.map(msg => `
                     <div class="message-item ${msg.sender === AppState.currentUsername ? 'sent' : 'received'}">
-                        <div class="message-sender">${escapeHtml(msg.sender)}</div>
+                        <div class="message-sender">${msg.sender === AppState.currentUsername ? 'You' : usernameLinkHtml(msg.sender)}</div>
                         <div class="message-text">${escapeHtml(msg.message)}</div>
                         <div class="message-time">${formatTime(msg.timestamp * 1000)}</div>
                     </div>
@@ -2273,16 +2512,31 @@ function updateBulletinDisplay() {
         return;
     }
     
-    container.innerHTML = AppState.bulletinPosts.map(post => `
+    container.innerHTML = AppState.bulletinPosts.map(post => {
+        const author = post.author || '';
+        const dn = post.author_display_name || author;
+        const friend = !!post.is_friend;
+        const escAuthor = escapeHtml(author);
+        const actions = author && author !== AppState.currentUsername
+            ? `<div class="bulletin-actions mt-2 d-flex gap-1 flex-wrap">
+                 <button type="button" class="btn btn-sm btn-outline-light" onclick="messageUserFromDirectory('${escAuthor}')">Message</button>
+                 <button type="button" class="btn btn-sm ${friend ? 'btn-secondary' : 'btn-primary'}"
+                   onclick="toggleFriendFromDirectory('${escAuthor}', ${friend ? 'false' : 'true'})">
+                   ${friend ? 'Friends ✓' : 'Add friend'}
+                 </button>
+               </div>`
+            : '';
+        return `
         <div class="bulletin-item">
             <div class="bulletin-header">
                 <h6 class="bulletin-title">${escapeHtml(post.title)}</h6>
                 <span class="bulletin-category">${escapeHtml(post.category)}</span>
             </div>
-            <div class="bulletin-meta">By ${escapeHtml(post.author)} • ${formatTime(post.timestamp * 1000)}</div>
+            <div class="bulletin-meta">By ${usernameLinkHtml(author, dn)} • ${formatTime(post.timestamp * 1000)}</div>
             <div class="bulletin-content">${escapeHtml(post.content)}</div>
-        </div>
-    `).join('');
+            ${actions}
+        </div>`;
+    }).join('');
 }
 
 async function handleBulletinPost(e) {
@@ -2532,7 +2786,10 @@ async function showChat() {
     if (chatModal) {
         const modal = new bootstrap.Modal(chatModal);
         modal.show();
+        switchChatTab('inbox');
         await loadConversations();
+        // Prefetch a few directory names for the new-message datalist
+        searchPeopleDirectory().catch(() => {});
     }
 }
 
@@ -3332,6 +3589,14 @@ window.showAuth = showAuth;
 window.showBuyerForm = showBuyerForm;
 window.showChat = showChat;
 window.showBulletin = showBulletin;
+window.switchChatTab = switchChatTab;
+window.searchPeopleDirectory = searchPeopleDirectory;
+window.loadFriendsLists = loadFriendsLists;
+window.messageUserFromDirectory = messageUserFromDirectory;
+window.toggleFriendFromDirectory = toggleFriendFromDirectory;
+window.addFriend = addFriend;
+window.removeFriend = removeFriend;
+window.profileUrlForUser = profileUrlForUser;
 window.selectService = selectService;
 window.showToast = showToast;
 window.logout = logout;

@@ -46,7 +46,8 @@
             color: var(--text-dim);
             margin-bottom: 0.4rem;
         }
-        .fb-post-meta .fb-user { color: var(--secondary); }
+        .fb-post-meta .fb-user { color: var(--secondary); text-decoration: none; font-weight: 600; }
+        .fb-post-meta a.fb-user:hover { text-decoration: underline; color: var(--primary); }
         .fb-post-msg {
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.9rem;
@@ -250,15 +251,24 @@
         try { return new Date(iso).toLocaleString(); } catch (e) { return iso || ''; }
     }
 
+    function userLabelHtml(name) {
+        const n = (name || 'Guest').trim() || 'Guest';
+        if (!n || n.toLowerCase() === 'guest') {
+            return `<span class="fb-user">${esc(n)}</span>`;
+        }
+        // Public usernames link to profile; guests stay plain text
+        return `<a class="fb-user" href="profile.html?u=${encodeURIComponent(n)}" title="View profile">@${esc(n)}</a>`;
+    }
+
     function postHtml(p) {
         const replies = (p.replies || []).map(r => `
             <div class="fb-reply">
-                <div class="fb-post-meta"><span class="fb-user">${esc(r.username)}</span> · ${fmtDate(r.created)}</div>
+                <div class="fb-post-meta">${userLabelHtml(r.username)} · ${fmtDate(r.created)}</div>
                 <div class="fb-post-msg">${esc(r.message)}</div>
             </div>`).join('');
         return `
         <div class="fb-post" data-id="${esc(p.id)}">
-            <div class="fb-post-meta"><span class="fb-user">${esc(p.username)}</span> · ${fmtDate(p.created)}</div>
+            <div class="fb-post-meta">${userLabelHtml(p.username)} · ${fmtDate(p.created)}</div>
             <div class="fb-post-msg">${esc(p.message)}</div>
             ${replies ? `<div class="fb-replies">${replies}</div>` : ''}
             <button class="fb-reply-toggle" onclick="toggleReply('${esc(p.id)}')">↳ Reply</button>
