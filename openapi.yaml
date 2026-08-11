@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: The RSE API
-  version: 1.1.0
+  version: 1.2.0
   description: |
     # The RSE (Robot Services Exchange)
 
@@ -10,6 +10,14 @@ info:
     endpoints to claim work. The exchange provides matching, reputation, cooperation
     tools (job parties, campaigns), chat, and portable history — **payment is settled
     directly between parties** (cash, crypto, or other off-platform methods).
+
+    ## People and friends
+
+    **Usernames are public by default** (`username_public: true`). Authenticated clients
+    can search the directory (`GET /users`), open public profiles by username
+    (`GET /profile/u/{username}`), and treat the follow graph as friends
+    (`POST /follow`, `GET /friends`). Opt out of directory listing via
+    `POST /profile` with `username_public: false`.
 
     ## Core marketplace loop
 
@@ -40,7 +48,7 @@ info:
     Authorization: Bearer <access_token>
     ```
 
-    Tokens expire after **24 hours**. Re-login to refresh. Public endpoints
+    Tokens expire after **90 days**. Re-login to refresh. Public endpoints
     (discovery, feedback, financing partners, open campaigns list, public portfolios)
     do not require auth.
 
@@ -104,6 +112,11 @@ tags:
     description: |
       Direct messages between users, community bulletin board, mark-as-read cursors,
       and per-job channels (shared workspace for a matched job and its party).
+  - name: People
+    description: |
+      Public username directory, profile-by-username lookup, and friends (follow graph).
+      Usernames are public by default; set `username_public: false` on profile to hide
+      from `GET /users` and `GET /profile/u/{username}`.
   - name: Feedback
     description: |
       Public product feedback board (no login). Useful for site visitors and operators
@@ -144,6 +157,46 @@ components:
         error:
           type: string
           description: Human-readable error message
+    UserDirectoryCard:
+      type: object
+      description: Compact public person card for directory and friends lists
+      properties:
+        username: { type: string }
+        display_name: { type: string }
+        avatar_url: { type: string, nullable: true }
+        user_type: { type: string, enum: [demand, supply], nullable: true }
+        location: { type: string, nullable: true }
+        about: { type: string, nullable: true }
+        reputation_score: { type: number, nullable: true }
+        stars: { type: number }
+        total_ratings: { type: integer }
+        profile_slug: { type: string, nullable: true }
+        username_public: { type: boolean, default: true }
+        is_friend:
+          type: boolean
+          description: Whether the authenticated viewer follows this user
+    PublicProfile:
+      type: object
+      description: Privacy-filtered public profile (no contact, wallets, or hashes)
+      properties:
+        username: { type: string }
+        display_name: { type: string, nullable: true }
+        avatar_url: { type: string, nullable: true }
+        location: { type: string, nullable: true }
+        about: { type: string, nullable: true }
+        username_public: { type: boolean }
+        user_type: { type: string, nullable: true }
+        reputation_score: { type: number }
+        stars: { type: number }
+        total_ratings: { type: integer }
+        follower_count: { type: integer }
+        following_count: { type: integer }
+        profile_slug: { type: string, nullable: true }
+        privacy_level: { type: string }
+        robots_owned: { type: array, items: { type: object } }
+        cosmetics_equipped: { type: object }
+        reputation_breakdown: { type: object }
+        endorsements: { type: object }
     Job:
       type: object
       description: |
@@ -433,7 +486,7 @@ paths:
         `username` and `user_type`. Include the token on subsequent requests as
         `Authorization: Bearer <access_token>`.
 
-        Tokens expire after **24 hours**. There is no refresh-token endpoint —
+        Tokens expire after **90 days**. There is no refresh-token endpoint —
         call `/login` again. Rate limited to **20/minute**.
       requestBody:
         required: true
@@ -1052,12 +1105,33 @@ paths:
       summary: List my direct-message conversations
       description: |
         Returns conversation summaries for the authenticated user (peer username,
-        last message snippet/time), newest activity first. Use with
-        `POST /chat/messages` to load a full thread.
+        last message snippet/time), newest activity first. Each item may include
+        `display_name`, `avatar_url`, and `is_friend` when the peer is public or
+        already in your follow graph. Use with `POST /chat/messages` for the thread.
       security:
         - bearerAuth: []
       responses:
-        '200': { description: Conversations with last message, newest first }
+        '200':
+          description: Conversations with last message, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user: { type: string }
+                        conversation_id: { type: string }
+                        lastMessage: { type: string }
+                        timestamp: { type: integer }
+                        unread: { type: boolean }
+                        is_friend: { type: boolean }
+                        display_name: { type: string }
+                        avatar_url: { type: string, nullable: true }
+                        job_id: { type: string, nullable: true }
 
   /chat/messages:
     post:
@@ -1166,12 +1240,207 @@ paths:
       tags: [Communication]
       summary: Read the community bulletin feed
       description: |
-        Returns bulletin posts for authenticated users (newest/all as implemented
-        server-side). Use after login for the in-app community surface.
+        Returns bulletin posts for authenticated users (newest first). Authors
+        include public display metadata when available, plus `is_friend` relative
+        to the viewer for “Add friend” UI.
       security:
         - bearerAuth: []
       responses:
-        '200': { description: Bulletin posts }
+        '200':
+          description: Bulletin posts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        post_id: { type: string }
+                        title: { type: string }
+                        content: { type: string }
+                        category: { type: string }
+                        author: { type: string }
+                        author_display_name: { type: string }
+                        author_avatar_url: { type: string, nullable: true }
+                        author_public: { type: boolean }
+                        is_friend: { type: boolean }
+                        timestamp: { type: integer }
+
+  /users:
+    get:
+      tags: [People]
+      summary: Search public usernames on the exchange
+      description: |
+        Directory of accounts with `username_public` true (the **default** for all
+        accounts, including legacy ones missing the field). Optional `q` matches
+        username or display name (case-insensitive substring). Results are sorted by
+        reputation then username. Includes `is_friend` for the caller.
+
+        Rate limited to **20/minute**. Requires authentication.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema: { type: string }
+          description: Optional search string (username or display name)
+        - name: query
+          in: query
+          required: false
+          schema: { type: string }
+          description: Alias of `q`
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 50, default: 30 }
+      responses:
+        '200':
+          description: Matching public users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items: { $ref: '#/components/schemas/UserDirectoryCard' }
+                  count: { type: integer }
+                  query: { type: string, nullable: true }
+                  note: { type: string }
+        '401': { description: Missing or invalid token }
+
+  /friends:
+    get:
+      tags: [People]
+      summary: List my friends (following) and followers
+      description: |
+        Enriched follow graph. **Friends** = accounts you follow. Returns directory
+        cards with display name, reputation, and `is_friend` flags.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Following and followers cards
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  following:
+                    type: array
+                    items: { $ref: '#/components/schemas/UserDirectoryCard' }
+                  followers:
+                    type: array
+                    items: { $ref: '#/components/schemas/UserDirectoryCard' }
+                  following_count: { type: integer }
+                  follower_count: { type: integer }
+        '401': { description: Missing or invalid token }
+
+  /follow:
+    post:
+      tags: [People]
+      summary: Add a friend (follow a user)
+      description: |
+        One-way follow. UI labels this as “Add friend”. Idempotent if already
+        following. Target must be an existing account.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_username]
+              properties:
+                target_username:
+                  type: string
+                  description: Username to follow / add as friend
+      responses:
+        '200':
+          description: Now following
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  target_username: { type: string }
+                  is_friend: { type: boolean, example: true }
+        '400': { description: Missing target or self-follow }
+        '404': { description: User not found }
+
+  /unfollow:
+    post:
+      tags: [People]
+      summary: Remove a friend (unfollow)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_username]
+              properties:
+                target_username: { type: string }
+      responses:
+        '200':
+          description: Unfollowed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  target_username: { type: string }
+                  is_friend: { type: boolean, example: false }
+
+  /follows:
+    get:
+      tags: [People]
+      summary: Raw or enriched follow lists
+      description: |
+        Default response is `{ following: string[], followers: string[] }`.
+        Pass `enriched=1` for the same shape as `GET /friends`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: enriched
+          in: query
+          required: false
+          schema: { type: string, enum: ['1', 'true', 'yes'] }
+      responses:
+        '200': { description: Follow lists }
+
+  /profile/u/{username}:
+    get:
+      tags: [People]
+      summary: Public profile by username
+      description: |
+        Unauthenticated public profile when the account has `username_public`
+        true (default). Returns **404** both for missing users and for private
+        usernames (no existence leak). Rate limited to **20/minute**.
+
+        Opaque share links remain available via `GET /profile/public/{slug}`
+        (authenticated slug creation with `GET /profile/share_link`).
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Public profile projection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicProfile' }
+        '404': { description: Profile not found or username private }
 
   /feedback:
     get:

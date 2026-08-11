@@ -1,10 +1,10 @@
 {
-  "versionCode": 9,
-  "versionName": "1.5.2",
-  "apkUrl": "https://therobotservicesexchange.com/apk/The-RSE-1.5.2.apk",
-  "apkFile": "The-RSE-1.5.2.apk",
+  "versionCode": 10,
+  "versionName": "1.5.3",
+  "apkUrl": "https://therobotservicesexchange.com/apk/The-RSE-1.5.3.apk",
+  "apkFile": "The-RSE-1.5.3.apk",
   "mandatory": false,
   "minSupportedVersionCode": 1,
-  "releaseNotes": "Stay signed in across app closes (90-day sessions). No login toast. Easier in-app updates from login + Account; re-checks when you return to the app.",
-  "sha256": "4dfbdd421c45fef5677f48ec44b4c8c798b38a4ca795cab0a2fb01ee98261b40"
+  "releaseNotes": "Find people on the exchange: public usernames by default, search directory, add friends, open profiles. New domain therobotservicesexchange.com for site links and APK updates. Feedback usernames link to profiles.",
+  "sha256": "44442c38fb57995731ed15dee40b260671b84a32f4b646eb641741ef3f1afd20"
 }

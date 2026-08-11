@@ -28,7 +28,7 @@ Robot mascot art ships **only** in the mobile app (not the website):
 
 ## Download
 
-- Homepage top-left: **Download The RSE App** → `apk/The-RSE-1.5.2.apk`
+- Homepage top-left: **Download The RSE App** → `apk/The-RSE-1.5.3.apk`
 - Play AAB: `mobile/dist/` (see `mobile/PLAY_STORE.md`)
 - Update manifest: `apk/version.json` and `GET /app/version` on the API
 - In-app updates: app checks on launch + resume; **Check for updates** on login and Account screens
