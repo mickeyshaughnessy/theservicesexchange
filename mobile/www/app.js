@@ -7,18 +7,20 @@
 
   const API_URL = 'https://rse-api.com:5003';
   /** Marketing site (hamburger menu opens these in the system browser). */
-  const SITE_BASE = 'https://theservicesexchange.com/';
+  const SITE_BASE = 'https://therobotservicesexchange.com/';
   /** Public profile pages live on the marketing site (opaque slug, not username). */
   const PUBLIC_PROFILE_BASE =
-    'https://theservicesexchange.com/profile.html?pid=';
+    'https://therobotservicesexchange.com/profile.html?pid=';
   /**
    * Update manifest: prefer API (CORS + same host as marketplace).
    * Fallbacks: static site paths.
    */
   const UPDATE_MANIFEST_URLS = [
     // filled at runtime: API_URL + '/app/version'
+    'https://therobotservicesexchange.com/apk/version.json',
+    'https://www.therobotservicesexchange.com/apk/version.json',
+    // legacy domain (301 → new host) for resilience during cut-over
     'https://theservicesexchange.com/apk/version.json',
-    'https://www.theservicesexchange.com/apk/version.json',
   ];
   /** Public Mapbox token (same as website demos) */
   const MAPBOX_TOKEN =
@@ -540,7 +542,7 @@
       saveSession(data.access_token, data.username || username);
       els.password.value = '';
       await bootstrapApp();
-      toast('Logged in', 'ok');
+      // Stay quiet on success — no "Logged in" toast; session is already obvious in the app.
     } catch (err) {
       showError(els.authError, err.message || 'Auth failed');
     } finally {
@@ -1879,6 +1881,12 @@
         checkForAppUpdate({ force: true });
       });
     }
+    const authCheckUpdateBtn = $('authCheckUpdateBtn');
+    if (authCheckUpdateBtn) {
+      authCheckUpdateBtn.addEventListener('click', () => {
+        checkForAppUpdate({ force: true });
+      });
+    }
     if (els.privacyForm) {
       els.privacyForm.addEventListener('submit', handlePrivacySave);
     }
@@ -2213,11 +2221,7 @@
   }
 
   // ── Boot ─────────────────────────────────────────────────────────
-  async function init() {
-    bindEvents();
-    setAuthMode('login');
-    if (state.username) els.username.value = state.username;
-
+  function wireUpdateUi() {
     if (els.updateRetryBtn) {
       els.updateRetryBtn.addEventListener('click', async () => {
         if (!pendingManifest) {
@@ -2257,6 +2261,37 @@
         updateInFlight = false;
       });
     }
+  }
+
+  /** Re-check for APK updates when the app comes back to the foreground. */
+  function wireAppResumeUpdateCheck() {
+    try {
+      const Cap = window.Capacitor;
+      const App = Cap && Cap.Plugins && Cap.Plugins.App;
+      if (App && typeof App.addListener === 'function') {
+        App.addListener('appStateChange', (state) => {
+          if (state && state.isActive) {
+            checkForAppUpdate().catch(() => {});
+          }
+        });
+        return;
+      }
+    } catch {
+      /* fall through to visibility */
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkForAppUpdate().catch(() => {});
+      }
+    });
+  }
+
+  async function init() {
+    bindEvents();
+    wireUpdateUi();
+    wireAppResumeUpdateCheck();
+    setAuthMode('login');
+    if (state.username) els.username.value = state.username;
 
     // Quick connectivity check (non-blocking)
     fetch(`${API_URL}/ping`).catch(() => {
@@ -2266,11 +2301,17 @@
     // Auto-update check as early as possible on native builds
     checkForAppUpdate().catch(() => {});
 
+    // Restore session from localStorage — stay signed in across app closes.
+    // Only clear credentials on a confirmed 401 (handled in api()); network
+    // blips must not force a re-login.
     if (state.token) {
+      showApp('request');
       try {
-        await bootstrapApp();
+        await loadAccount();
       } catch {
-        clearSession();
+        /* loadAccount / api already handle 401 via clearSession */
+      }
+      if (!state.token) {
         showAuth();
       }
     } else {

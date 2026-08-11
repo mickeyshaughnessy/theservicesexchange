@@ -12,7 +12,7 @@ Demand-side Android app (`com.rse.app`). Code in `mobile/`; SPA in `mobile/www/`
 
 ## Auto-update
 
-Sideloaded releases self-update via native `AppUpdate` plugin + hosted `https://theservicesexchange.com/apk/version.json`.  
+Sideloaded releases self-update via native `AppUpdate` plugin + hosted `https://therobotservicesexchange.com/apk/version.json`.  
 See `mobile/README.md` § Auto-update for shipping steps.
 
 ## Branding (app only)
@@ -28,9 +28,11 @@ Robot mascot art ships **only** in the mobile app (not the website):
 
 ## Download
 
-- Homepage top-left: **Download The RSE App** → `apk/The-RSE-1.4.0.apk`
-- Play AAB: `mobile/dist/The-RSE-1.4.0.aab` (see `mobile/PLAY_STORE.md`)
+- Homepage top-left: **Download The RSE App** → `apk/The-RSE-1.5.2.apk`
+- Play AAB: `mobile/dist/` (see `mobile/PLAY_STORE.md`)
 - Update manifest: `apk/version.json` and `GET /app/version` on the API
+- In-app updates: app checks on launch + resume; **Check for updates** on login and Account screens
+- Sessions: stay signed in across app closes (API tokens up to 90 days, sliding renewal)
 - Build docs: `mobile/README.md`
 
 ## Out of scope (v1)

@@ -1,7 +1,7 @@
 # The RSE Android (Capacitor)
 
 Native Android shell that loads a **bundled demand-side SPA** from `www/`.  
-The app talks **only** to **https://rse-api.com:5003** — it does **not** load theservicesexchange.com.
+The app talks **only** to **https://rse-api.com:5003** — it does **not** load therobotservicesexchange.com.
 
 | | |
 |---|---|
@@ -86,7 +86,7 @@ npm run bundle
 The Android shell includes a native `AppUpdate` plugin. On launch the SPA:
 
 1. Reads installed `versionCode` / `versionName`
-2. Fetches `https://theservicesexchange.com/apk/version.json` (no-cache)
+2. Fetches `https://therobotservicesexchange.com/apk/version.json` (no-cache)
 3. If remote `versionCode` is higher, downloads `apkUrl` and opens the system installer
 
 **Android always shows a system Install confirmation** — fully silent install is not allowed for normal consumer apps. The download and installer launch are automatic.
@@ -103,7 +103,7 @@ The Android shell includes a native `AppUpdate` plugin. On launch the SPA:
 {
   "versionCode": 2,
   "versionName": "1.1.0",
-  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.1.0.apk",
+  "apkUrl": "https://therobotservicesexchange.com/apk/The-RSE-1.1.0.apk",
   "apkFile": "The-RSE-1.1.0.apk",
   "mandatory": false,
   "minSupportedVersionCode": 1,

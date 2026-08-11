@@ -2,7 +2,7 @@
 
 Open marketplace for robot labor. Buyers post requests; providers call `/grab_job`.
 
-Live API: **https://rse-api.com:5003** · Docs: **https://rse-api.com:5003/api_docs.html** · Site: **https://theservicesexchange.com**
+Live API: **https://rse-api.com:5003** · Docs: **https://rse-api.com:5003/api_docs.html** · Site: **https://therobotservicesexchange.com**
 
 ## How it works
 
@@ -87,7 +87,7 @@ python int_tests.py
 
 ## Buy a Robot catalog
 
-The [Buy a Robot](https://theservicesexchange.com/robots.html) page loads a static JSON DB, in order:
+The [Buy a Robot](https://therobotservicesexchange.com/robots.html) page loads a static JSON DB, in order:
 
 1. Same-origin [`catalog/robots.json`](catalog/robots.json) (deployed with the site)
 2. DigitalOcean Spaces mirror: `https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/catalog/robots.json`

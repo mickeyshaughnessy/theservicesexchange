@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-UA = "RSE-NearbyMaps/1.0 (+https://theservicesexchange.com)"
+UA = "RSE-NearbyMaps/1.0 (+https://therobotservicesexchange.com)"
 
 
 def _cfg(name: str, default: str = "") -> str:

@@ -8,7 +8,7 @@ from pathlib import Path
 METADATA_DIR = Path(__file__).parent / "metadata"
 
 IMAGE_URL = "https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/RSE.png"
-EXTERNAL_URL = "https://theservicesexchange.com"
+EXTERNAL_URL = "https://therobotservicesexchange.com"
 DESCRIPTION = (
     "A permanent provider seat on the Robot Services Exchange. "
     "Grants the holder access to /grab_job on rse-api.com. "

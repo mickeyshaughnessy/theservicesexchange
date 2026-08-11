@@ -1,10 +1,10 @@
 {
-  "versionCode": 8,
-  "versionName": "1.5.1",
-  "apkUrl": "https://theservicesexchange.com/apk/The-RSE-1.5.1.apk",
-  "apkFile": "The-RSE-1.5.1.apk",
+  "versionCode": 9,
+  "versionName": "1.5.2",
+  "apkUrl": "https://therobotservicesexchange.com/apk/The-RSE-1.5.2.apk",
+  "apkFile": "The-RSE-1.5.2.apk",
   "mandatory": false,
   "minSupportedVersionCode": 1,
-  "releaseNotes": "Hamburger menu always available (including login). Full site pages: Investors, Garage, Dashboard, Demo, Rideshare, Invest, Profile, etc.",
-  "sha256": "c70d31149b2faf52b84d6b61e5c1681aa052ef67039857b9df87d1901436b509"
+  "releaseNotes": "Stay signed in across app closes (90-day sessions). No login toast. Easier in-app updates from login + Account; re-checks when you return to the app.",
+  "sha256": "4dfbdd421c45fef5677f48ec44b4c8c798b38a4ca795cab0a2fb01ee98261b40"
 }

@@ -9,9 +9,9 @@ This guide starts the Play listing. **You** complete Console account, identity v
 | Default language | English (US) |
 | Category | Business (or Productivity) |
 | Free / paid | Free |
-| Privacy policy URL | **https://theservicesexchange.com/privacy-app.html** |
-| Support URL | https://theservicesexchange.com/feedback.html |
-| Marketing site | https://theservicesexchange.com |
+| Privacy policy URL | **https://therobotservicesexchange.com/privacy-app.html** |
+| Support URL | https://therobotservicesexchange.com/feedback.html |
+| Marketing site | https://therobotservicesexchange.com |
 
 ---
 
@@ -152,7 +152,7 @@ Sideload APKs on the website can continue in parallel; Play builds report `fromP
 
 ## 9. Checklist before first production submit
 
-- [ ] Privacy policy live at https://theservicesexchange.com/privacy-app.html
+- [ ] Privacy policy live at https://therobotservicesexchange.com/privacy-app.html
 - [ ] AAB built & signed (`versionCode` ≥ current Play)
 - [ ] Store listing text + 2+ screenshots + feature graphic
 - [ ] Data safety completed

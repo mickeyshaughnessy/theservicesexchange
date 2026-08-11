@@ -6,11 +6,15 @@ Keep this short. Ship from `main` only.
 
 | Surface | URL | On box |
 |---------|-----|--------|
-| Website + API app root | https://theservicesexchange.com · API https://rse-api.com:5003 | `/var/www/theservicesexchange` |
-| Server | `root@143.110.131.237` | SSH key `~/.ssh/id_ed25519` |
+| Website + API app root | https://therobotservicesexchange.com · API https://rse-api.com:5003 | `/var/www/theservicesexchange` |
+| Legacy site domain | https://theservicesexchange.com → moved page / 301s | same tree (`moved.html`) |
+| Server | `root@143.110.131.237` (floating IP `134.199.181.27`) | SSH key `~/.ssh/id_ed25519` |
 | Service | `theservicesexchange.service` | gunicorn on `:5004` (nginx terminates TLS) |
+| Nginx site configs | `deploy/nginx-therobotservicesexchange.com.conf`, `deploy/nginx-theservicesexchange.com.conf` | `/etc/nginx/sites-available/` |
 
 Same tree serves HTML and API. `config.py` is **gitignored** — never commit it; edit on the server (or scp) if secrets change.
+
+**Domain cut-over (2026):** marketing site is **therobotservicesexchange.com**. API **rse-api.com** is unchanged. Old domain serves `moved.html` on `/` and 301s other paths (including `/apk/*`) to the new host.
 
 ## Before you deploy (laptop)
 
@@ -56,7 +60,7 @@ curl -sS https://rse-api.com:5003/ping
 
 ## After deploy — check
 
-- Site: https://theservicesexchange.com  
+- Site: https://therobotservicesexchange.com  
 - API: `curl -sS https://rse-api.com:5003/stats | head`  
 - Logs: `journalctl -u theservicesexchange.service -n 50 --no-pager`
 

@@ -36,7 +36,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 LOCAL_CATALOG = os.path.join(ROOT, "data", "catalog", "robots.json")
-USER_AGENT = "RSE-RobotCatalogBot/1.0 (+https://theservicesexchange.com/robots.html; weekly catalog refresh)"
+USER_AGENT = "RSE-RobotCatalogBot/1.0 (+https://therobotservicesexchange.com/robots.html; weekly catalog refresh)"
 
 # Seed product / news pages worth scraping for new model names
 CRAWL_URLS = [
@@ -256,7 +256,7 @@ def merge_robot(existing_by_id: Dict[str, Dict], robot: Dict[str, Any]) -> None:
         "price": robot.get("price") or "Contact for quote",
         "status": robot.get("status") if robot.get("status") in ("available", "preorder", "planned") else "planned",
         "statusLabel": robot.get("statusLabel") or "Discovered",
-        "buyUrl": robot.get("buyUrl") or robot.get("source_url") or "https://theservicesexchange.com/robots.html",
+        "buyUrl": robot.get("buyUrl") or robot.get("source_url") or "https://therobotservicesexchange.com/robots.html",
         "category": robot.get("category") or "Discovered",
         "discovered_via": robot.get("discovered_via") or robot.get("source") or "crawl",
         "last_seen_at": int(time.time()),

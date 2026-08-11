@@ -325,7 +325,7 @@ def call_openrouter_llm(
         headers = {
             "Authorization": f"Bearer {config.OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://theservicesexchange.com",
+            "HTTP-Referer": "https://therobotservicesexchange.com",
             "X-Title": "The Services Exchange"
         }
 
