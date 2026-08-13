@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a2e">
+    <meta name="description" content="Hiring at The RSE — help build the open marketplace for robot labor. Equity, family housing, and a team that actually spends time outside.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="The RSE">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+    <title>The RSE — Hiring</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css?v=25" rel="stylesheet">
+    <style>
+        .hire-prose {
+            max-width: 760px;
+            margin: 0 auto 2.5rem;
+        }
+        .hire-prose p {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text);
+            font-size: 0.95rem;
+            line-height: 1.9;
+        }
+        .hire-prose p.lede {
+            font-size: 1.05rem;
+            color: var(--text-bright, var(--text));
+        }
+        .hire-section-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.85rem;
+            color: var(--primary);
+            text-shadow: 0 0 12px rgba(0,255,255,0.5);
+            text-align: center;
+            margin: 0 0 1.75rem;
+            line-height: 1.8;
+        }
+        .hire-card {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.3);
+            box-shadow: 0 0 20px rgba(0,255,255,0.08);
+            padding: 1.5rem 1.6rem;
+            height: 100%;
+        }
+        .hire-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 30px rgba(0,255,255,0.18);
+        }
+        .hire-card h3 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.62rem;
+            color: var(--primary);
+            text-shadow: 0 0 8px rgba(0,255,255,0.5);
+            line-height: 1.7;
+            margin-bottom: 0.75rem;
+        }
+        .hire-card p {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text);
+            font-size: 0.88rem;
+            line-height: 1.7;
+            margin-bottom: 0;
+        }
+        .hire-why {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.3);
+            padding: 2rem;
+            max-width: 760px;
+            margin: 0 auto 2rem;
+        }
+        .hire-why h3 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.65rem;
+            color: var(--secondary);
+            line-height: 1.7;
+            margin-bottom: 0.85rem;
+        }
+        .hire-why p {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text);
+            font-size: 0.92rem;
+            line-height: 1.85;
+            margin-bottom: 0;
+        }
+        .hire-close {
+            max-width: 760px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .hire-close p {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text);
+            font-size: 0.95rem;
+            line-height: 1.9;
+        }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">The RSE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html?open=bid">Get Something</a></li>
+                    <li class="nav-item"><a class="nav-link" href="grab_job.html">Find Work</a></li>
+                    <li class="nav-item"><a class="nav-link" href="campaigns.html">Campaigns</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="hiring.html" aria-current="page">Hiring</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navMore" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navMore">
+                            <li><a class="dropdown-item" href="portfolio.html">Portfolio</a></li>
+                            <li><a class="dropdown-item" href="robots.html">Buy a Robot</a></li>
+                            <li><a class="dropdown-item" href="examples.html">Examples</a></li>
+                            <li><a class="dropdown-item" href="api_docs.html">API Docs</a></li>
+                            <li><a class="dropdown-item" href="about.html">About</a></li>
+                            <li><a class="dropdown-item" href="garage.html">Garage</a></li>
+                            <li><a class="dropdown-item" href="investors.html">Investors</a></li>
+                            <li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <div class="nav-actions d-flex align-items-center flex-wrap gap-2 ms-lg-3 mt-2 mt-lg-0">
+                <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
+                <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
+
+                <div id="accountDropdown" class="account-dropdown ms-3" style="display: none;">
+                    <button class="account-btn">
+                        <span id="accountUsername">Account</span> ▼
+                    </button>
+                    <div class="account-window">
+                        <div class="account-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" id="accountDisplayName">Loading...</h5>
+                                <button class="logout-btn" onclick="logout()">Logout</button>
+                            </div>
+                            <div class="reputation-display">
+                                <span class="star-rating" id="starDisplay">★★★★★</span>
+                                <span id="ratingText">4.5 (12 ratings)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="loginButton" class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero" style="padding: 100px 0 60px;" id="main-content" tabindex="-1">
+        <div class="container">
+            <h1>Hiring</h1>
+            <p>Help build the open marketplace for robot labor.</p>
+        </div>
+    </section>
+
+    <section class="py-5" style="background: var(--bg-deep);">
+        <div class="container">
+            <div class="hire-prose">
+                <p class="lede">Buyers post work. Providers — robots and the people who run them — grab matches by capability, location, reputation, and price. Both sides rate the job. Liquidity compounds the way it does on any two-sided market: more density, better matches, higher trust, lower friction.</p>
+                <p>We are not building another closed fleet or vertical SaaS. We are building the neutral exchange layer — the match loop, the job channel, ratings, seats, and the primitives that let anyone request or deploy physical work. The goal is a liquid, reputation-backed market that runs itself as volume grows.</p>
+            </div>
+
+            <h2 class="hire-section-title">THE EXCHANGE</h2>
+            <div class="row g-4 mb-5" style="max-width:960px;margin:0 auto 3rem;">
+                <div class="col-md-6">
+                    <div class="hire-card">
+                        <h3>Demand posts a bid</h3>
+                        <p>Service, price, location — one-shot or recurring. Open until a provider takes it.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="hire-card">
+                        <h3>Supply grabs the fit</h3>
+                        <p>AI ranks capability, proximity, and price. Reputation breaks ties. A seat — an ERC-721 on Base — is what lets a provider take work.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="hire-card">
+                        <h3>Both sides sign</h3>
+                        <p>Completion and ratings travel through <code>/sign_job</code>. Scores follow you onto the next job. Settlement stays between the parties.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="hire-card">
+                        <h3>The market densifies</h3>
+                        <p>Rated jobs raise the signal. Better matches bring volume. Volume brings seats. Take-rate appears only as the network fills in. Everything is API-first.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="hire-section-title">WHY JOIN</h2>
+            <div class="hire-prose">
+                <p>We hire people who want to ship that infrastructure — and who want the team itself to be high-agency, high-trust, and fun.</p>
+            </div>
+
+            <div class="hire-why">
+                <h3>Own a piece of the exchange</h3>
+                <p>Competitive salary so you can focus, and meaningful equity so early team members have real upside as the market scales — not headcount theater.</p>
+            </div>
+            <div class="hire-why">
+                <h3>Meet the people deploying robots</h3>
+                <p>High-signal introductions across operators, hardware teams, investors, and builders already in the network. You will meet the people buying and selling robot labor, not just the conference circuit.</p>
+            </div>
+            <div class="hire-why">
+                <h3>Live where the team actually is</h3>
+                <p>Family housing support in Lakewood, Destin, Camas, and Missoula — Destin being Florida’s top fishing destination, the “World’s Luckiest Fishing Village.” These are not abstract stipends. They exist so you and your family can be in the same physical places without fighting short-term housing.</p>
+            </div>
+            <div class="hire-why">
+                <h3>Most in-person time is outside</h3>
+                <p>Mountain biking, river floating, fishing, hunting, hiking, adventure travel. Not a wellness program. The team spends real time under physical load, solving problems and having fun together.</p>
+            </div>
+
+            <div class="hire-prose" style="margin-top:2.5rem;">
+                <p>Every benefit exists for one reason: so we can have fun together. High-trust groups form when people repeatedly do hard and enjoyable things in the same towns. Cash, equity, housing, and time outside are the infrastructure that lets this team last.</p>
+            </div>
+
+            <div class="hire-close py-4">
+                <p>If that mix of mission and lifestyle fits, reach out.</p>
+                <a href="mailto:mickey@theservicesexchange.com?subject=Hiring" class="btn btn-primary btn-lg">mickey@theservicesexchange.com</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>The RSE</h5>
+                    <p>Open robot labor marketplace.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Links</h5>
+                    <a href="index.html">Home</a>
+                    <a href="hiring.html">Hiring</a>
+                    <a href="about.html">About</a>
+                    <a href="api_docs.html">API Documentation</a>
+                </div>
+                <div class="col-md-4">
+                    <h5>Connect</h5>
+                    <a href="mailto:mickey@theservicesexchange.com">Email</a>
+                    <a href="https://github.com/mickeyshaughnessy/theservicesexchange">GitHub</a>
+                </div>
+            </div>
+            <div class="mt-5 pt-4 border-top border-secondary text-center">
+                <p class="mb-0">&copy; 2026 The RSE Protocol. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal fade" id="authModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Get Started</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="authError" class="error-message" style="display: none;"></div>
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#login">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#register">Register</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="login">
+                            <form id="loginForm">
+                                <div class="mb-3"><input type="text" class="form-control" placeholder="Username" id="loginUsername" required></div>
+                                <div class="mb-3"><input type="password" class="form-control" placeholder="Password" id="loginPassword" required></div>
+                                <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">Login</button>
+                            </form>
+                        </div>
+                        <div class="tab-pane" id="register">
+                            <form id="registerForm">
+                                <div class="mb-3"><input type="text" class="form-control" placeholder="Username" id="regUsername" required></div>
+                                <div class="mb-3"><input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required></div>
+                                <div class="mb-3">
+                                    <label class="form-label">I want to:</label>
+                                    <div class="user-type-selector">
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="demand" id="typeDemand" required>
+                                            <span class="user-type-card"><strong>Buy Services</strong><small>Post requests and hire providers</small></span>
+                                        </label>
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="supply" id="typeSupply">
+                                            <span class="user-type-card"><strong>Provide Services</strong><small>Find work and earn money</small></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">Register</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js?v=25"></script>
+</body>
+</html>
