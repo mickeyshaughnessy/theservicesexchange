@@ -662,7 +662,7 @@ function updateReturningUserHome() {
                     <h3 class="user-home-check-title">// Provider checklist</h3>
                     <ol class="user-home-check-list">
                         <li>Describe capabilities on <a href="grab_job.html">Find Work</a></li>
-                        <li>Link wallet + seat on <a href="profile.html">Profile</a> (email mickey@theservicesexchange.com for a seat)</li>
+                        <li>Link wallet + seat on <a href="profile.html">Profile</a> (message <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">@MichaelSha10041</a> on X for a seat)</li>
                         <li>Tap <strong>Grab Job</strong> to get matched</li>
                         <li>Complete &amp; rate when the job is done</li>
                     </ol>
@@ -3456,7 +3456,7 @@ async function handleGrabJobSubmission(e) {
         } else {
             let errMsg = data.error || data.message || 'Unable to grab a job right now.';
             if (/wallet|seat|NFT/i.test(errMsg)) {
-                errMsg += ' Link your wallet on Profile after you have a seat (email mickey@theservicesexchange.com).';
+                errMsg += ' Link your wallet on Profile after you have a seat (message @MichaelSha10041 on X).';
             }
             if (/supply-type|Only supply/i.test(errMsg)) {
                 errMsg = 'This account is not a provider account. Register a Provide Services account or use Find Work with a supply login.';

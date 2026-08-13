@@ -15,7 +15,7 @@ Live API: **https://rse-api.com:5003** · Docs: **https://rse-api.com:5003/api_d
 `/grab_job` requires an ERC-721 seat on Base (chain 8453).
 
 - Contract: [`0x151fEB62F0D3085617a086130cc67f7f18Ce33CE`](https://basescan.org/address/0x151fEB62F0D3085617a086130cc67f7f18Ce33CE)
-- 100 seats · email mickey@theservicesexchange.com with your wallet
+- 100 seats · message [@MichaelSha10041](https://x.com/MichaelSha10041) on X with your wallet
 
 ```bash
 curl -X POST https://rse-api.com:5003/set_wallet \
