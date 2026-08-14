@@ -150,6 +150,11 @@ components:
       description: |
         Access token returned as `access_token` from `POST /login`.
         Send as `Authorization: Bearer <access_token>`.
+    adminKey:
+      type: apiKey
+      in: header
+      name: X-Admin-Key
+      description: Shared admin secret (`ADMIN_API_KEY` in config).
   schemas:
     Error:
       type: object
@@ -1591,6 +1596,62 @@ paths:
                     status: pending
                     note: Application queued — partner integration pending. You will be contacted by email.
         '400': { description: Validation error }
+
+  /hiring/apply:
+    post:
+      tags: [Hiring]
+      summary: Submit a hiring / join application (public)
+      description: |
+        Public join form from `hiring.html`. Validates ~10 contact and background
+        fields, then stores the application as JSON on DigitalOcean Spaces
+        (`hiring/applications.json`). If SMTP is configured, also emails
+        `HIRING_NOTIFY_EMAIL`. Honeypot field `website` is silently accepted.
+
+        Rate limited to **20/minute**. No authentication required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                [name, email, phone, social, address, dob, family_status, preferred_location, role_interest, experience]
+              properties:
+                name: { type: string, maxLength: 120 }
+                email: { type: string, format: email }
+                phone: { type: string, maxLength: 40 }
+                social: { type: string, maxLength: 200, description: X / GitHub / LinkedIn / URL }
+                address: { type: string, maxLength: 400 }
+                dob: { type: string, format: date, description: YYYY-MM-DD }
+                family_status:
+                  type: string
+                  enum: [single, partnered, family, prefer_not]
+                preferred_location:
+                  type: string
+                  enum: [lakewood, destin, camas, missoula, other]
+                role_interest: { type: string, maxLength: 200 }
+                experience: { type: string, maxLength: 8000 }
+      responses:
+        '201':
+          description: Application stored
+          content:
+            application/json:
+              example:
+                application_id: uuid
+                status: submitted
+                notified: false
+        '400': { description: Validation error }
+
+  /admin/hiring:
+    get:
+      tags: [Hiring]
+      summary: List hiring applications (admin)
+      security:
+        - adminKey: []
+      responses:
+        '200':
+          description: Applications newest first
+        '401': { description: Missing or invalid X-Admin-Key }
 
   /jobs/{job_id}/party/invite:
     post:

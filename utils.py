@@ -104,6 +104,7 @@ MESSAGES_PREFIX = f"{S3_PREFIX}/messages"
 BULLETINS_PREFIX = f"{S3_PREFIX}/bulletins"
 FEEDBACK_KEY = f"{S3_PREFIX}/feedback/posts.json"
 FINANCING_KEY = f"{S3_PREFIX}/financing/applications.json"
+HIRING_KEY = f"{S3_PREFIX}/hiring/applications.json"
 FOLLOWS_PREFIX = f"{S3_PREFIX}/follows"
 SLUGS_PREFIX = f"{S3_PREFIX}/slugs"
 AVATARS_PREFIX = f"{S3_PREFIX}/avatars"
@@ -691,6 +692,19 @@ def save_financing_applications(applications: List[Dict[str, Any]]) -> None:
     """Persist financing applications list to S3."""
     if not _s3_put(FINANCING_KEY, {'applications': applications}):
         logger.error("Failed to save financing applications")
+
+def get_hiring_applications() -> List[Dict[str, Any]]:
+    """Retrieve hiring applications from DigitalOcean Spaces (JSON object)."""
+    data = _s3_get(HIRING_KEY)
+    if isinstance(data, dict):
+        apps = data.get('applications', [])
+        return apps if isinstance(apps, list) else []
+    return []
+
+def save_hiring_applications(applications: List[Dict[str, Any]]) -> None:
+    """Persist hiring applications as JSON on DigitalOcean Spaces."""
+    if not _s3_put(HIRING_KEY, {'applications': applications}):
+        logger.error("Failed to save hiring applications to Spaces")
 
 # -----------------------------------------------------------------------------
 # Follows Management

@@ -15,134 +15,200 @@
 
     <title>The RSE — Hiring</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=27" rel="stylesheet">
+    <link href="styles.css?v=28" rel="stylesheet">
     <style>
-        .hire-prose {
-            max-width: 760px;
-            margin: 0 auto 2.5rem;
+        .hire-page { background: var(--bg-deep); }
+        .hire-hero {
+            padding: 7rem 0 2.75rem;
+            border-bottom: 1px solid rgba(0,255,255,0.22);
+            background:
+                radial-gradient(ellipse 80% 60% at 80% 0%, rgba(255,0,255,0.12), transparent 55%),
+                radial-gradient(ellipse 70% 50% at 10% 80%, rgba(0,255,255,0.1), transparent 50%),
+                var(--bg-dark);
         }
-        .hire-prose p {
+        .hire-kicker {
             font-family: 'Share Tech Mono', monospace;
-            color: var(--text);
-            font-size: 0.95rem;
-            line-height: 1.9;
+            font-size: 0.78rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 0.85rem;
         }
-        .hire-prose p.lede {
-            font-size: 1.05rem;
-            color: var(--text-bright, var(--text));
-        }
-        .hire-section-title {
+        .hire-hero h1 {
             font-family: 'Press Start 2P', monospace;
-            font-size: 0.85rem;
-            color: var(--primary);
-            text-shadow: 0 0 12px rgba(0,255,255,0.5);
-            text-align: center;
-            margin: 0 0 1.75rem;
+            font-size: clamp(1.05rem, 3.4vw, 1.7rem);
+            line-height: 1.55;
+            color: var(--text-bright);
+            text-shadow: 0 0 18px rgba(0,255,255,0.35);
+            margin-bottom: 1rem;
+        }
+        .hire-hero .lede {
+            max-width: 40rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.05rem;
+            color: var(--text);
             line-height: 1.8;
         }
+        .hire-hero-actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 1.6rem; }
+        .hire-rail {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(10,10,46,0.92);
+            border-bottom: 1px solid rgba(0,255,255,0.2);
+            backdrop-filter: blur(8px);
+        }
+        .hire-rail nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            padding: 0.65rem 0;
+        }
+        .hire-rail a {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.74rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text);
+            text-decoration: none;
+            border: 1px solid rgba(0,255,255,0.28);
+            padding: 0.32rem 0.65rem;
+        }
+        .hire-rail a:hover { color: var(--text-bright); border-color: var(--primary); }
+        .hire-section {
+            padding: 4rem 0;
+            border-bottom: 1px solid rgba(0,255,255,0.12);
+            scroll-margin-top: 3.5rem;
+        }
+        .hire-step {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.55rem;
+            color: var(--secondary);
+            letter-spacing: 0.08em;
+            margin-bottom: 0.7rem;
+        }
+        .hire-section h2 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(0.78rem, 2.2vw, 1.05rem);
+            color: var(--primary);
+            text-shadow: 0 0 12px rgba(0,255,255,0.4);
+            line-height: 1.7;
+            margin-bottom: 1.1rem;
+        }
+        .hire-copy { max-width: 42rem; }
+        .hire-copy p {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text);
+            font-size: 0.97rem;
+            line-height: 1.9;
+            margin-bottom: 1rem;
+        }
+        .hire-copy p.bright { color: var(--text-bright); font-size: 1.05rem; }
+        .hire-grid { display: grid; gap: 1rem; }
+        @media (min-width: 768px) { .hire-grid.cols-2 { grid-template-columns: 1fr 1fr; } }
+        @media (min-width: 992px) { .hire-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; } }
         .hire-card {
             background: var(--bg-panel);
-            border: 1px solid rgba(0,255,255,0.3);
-            box-shadow: 0 0 20px rgba(0,255,255,0.08);
-            padding: 1.5rem 1.6rem;
+            border: 1px solid rgba(0,255,255,0.28);
+            box-shadow: 0 0 18px rgba(0,255,255,0.06);
+            padding: 1.25rem 1.35rem;
             height: 100%;
         }
-        .hire-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 0 30px rgba(0,255,255,0.18);
+        .hire-card:hover { border-color: var(--primary); }
+        .hire-card .n {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.5rem;
+            color: var(--accent);
+            margin-bottom: 0.55rem;
         }
         .hire-card h3 {
             font-family: 'Press Start 2P', monospace;
-            font-size: 0.62rem;
+            font-size: 0.58rem;
             color: var(--primary);
-            text-shadow: 0 0 8px rgba(0,255,255,0.5);
-            line-height: 1.7;
-            margin-bottom: 0.75rem;
+            line-height: 1.65;
+            margin-bottom: 0.6rem;
         }
-        .hire-card p {
+        .hire-card p, .hire-card li {
             font-family: 'Share Tech Mono', monospace;
             color: var(--text);
             font-size: 0.88rem;
             line-height: 1.7;
             margin-bottom: 0;
         }
-        .hire-why {
-            background: var(--bg-panel);
-            border: 1px solid rgba(0,255,255,0.3);
-            padding: 2rem;
-            max-width: 760px;
-            margin: 0 auto 2rem;
+        .hire-card ul { margin: 0.4rem 0 0; padding-left: 1.1rem; }
+        .hire-card li { margin-bottom: 0.35rem; }
+        .hire-callout {
+            border-left: 3px solid var(--accent);
+            background: rgba(57,255,20,0.06);
+            padding: 1rem 1.15rem;
+            margin: 1.25rem 0 0;
+            max-width: 42rem;
         }
-        .hire-why h3 {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.65rem;
-            color: var(--secondary);
-            line-height: 1.7;
-            margin-bottom: 0.85rem;
-        }
-        .hire-why p, .hire-why li {
+        .hire-callout p {
             font-family: 'Share Tech Mono', monospace;
             color: var(--text);
             font-size: 0.92rem;
-            line-height: 1.85;
-        }
-        .hire-why p { margin-bottom: 0.85rem; }
-        .hire-why p:last-child { margin-bottom: 0; }
-        .hire-why ul {
-            margin: 0.5rem 0 0;
-            padding-left: 1.2rem;
-        }
-        .hire-why li { margin-bottom: 0.4rem; }
-        .hire-scale {
-            border-color: rgba(57,255,20,0.4);
-        }
-        .hire-scale h3 {
-            color: var(--accent);
+            line-height: 1.8;
+            margin: 0;
         }
         .hire-horizon {
-            max-width: 760px;
-            margin: 0 auto 1.25rem;
-            background: var(--bg-panel);
-            border: 1px solid rgba(0,255,255,0.3);
-            padding: 1.4rem 1.6rem;
+            display: grid;
+            gap: 0.75rem;
         }
-        .hire-horizon .when {
+        @media (min-width: 768px) { .hire-horizon { grid-template-columns: 1fr 1fr; } }
+        .hire-year {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.25);
+            padding: 1.1rem 1.2rem;
+        }
+        .hire-year .when {
             font-family: 'Press Start 2P', monospace;
-            font-size: 0.55rem;
+            font-size: 0.5rem;
             color: var(--primary);
-            letter-spacing: 0.04em;
-            margin-bottom: 0.55rem;
+            margin-bottom: 0.5rem;
             line-height: 1.6;
         }
-        .hire-horizon p {
+        .hire-year p {
             font-family: 'Share Tech Mono', monospace;
+            font-size: 0.84rem;
             color: var(--text);
-            font-size: 0.9rem;
-            line-height: 1.8;
-            margin-bottom: 0;
+            line-height: 1.7;
+            margin: 0;
         }
         .hire-note {
-            max-width: 760px;
-            margin: 0 auto 2.5rem;
             font-family: 'Share Tech Mono', monospace;
             color: var(--text-dim);
-            font-size: 0.82rem;
-            line-height: 1.7;
+            font-size: 0.8rem;
+            line-height: 1.65;
+            margin-top: 1rem;
+            max-width: 42rem;
         }
-        .hire-close {
+        .hire-form-wrap {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.35);
+            box-shadow: 0 0 28px rgba(0,255,255,0.08);
+            padding: 1.6rem 1.5rem 1.8rem;
             max-width: 760px;
-            margin: 0 auto;
-            text-align: center;
         }
-        .hire-close p {
+        .hire-form-wrap label {
             font-family: 'Share Tech Mono', monospace;
-            color: var(--text);
-            font-size: 0.95rem;
-            line-height: 1.9;
+            font-size: 0.78rem;
+            color: var(--text-bright);
+            letter-spacing: 0.03em;
+            margin-bottom: 0.3rem;
         }
+        .hire-form-wrap .hint {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-top: 0.2rem;
+        }
+        .hire-hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+        #hireStatus { font-family: 'Share Tech Mono', monospace; font-size: 0.88rem; margin-top: 0.9rem; }
+        #hireStatus.ok { color: var(--accent); }
+        #hireStatus.err { color: #ff8a8a; }
     </style>
 </head>
-<body>
+<body class="hire-page">
     <a class="skip-link" href="#main-content">Skip to content</a>
 
     <nav class="navbar navbar-expand-lg navbar-dark">
@@ -203,160 +269,235 @@
         </div>
     </nav>
 
-    <section class="hero" style="padding: 100px 0 60px;" id="main-content" tabindex="-1">
+    <header class="hire-hero" id="main-content" tabindex="-1">
         <div class="container">
-            <h1>Hiring</h1>
-            <p>The Robot Services Exchange (RSE)</p>
+            <p class="hire-kicker">The Robot Services Exchange</p>
+            <h1>Join the team building the market for robot labor</h1>
+            <p class="lede">Buyers post work. Robots and operators grab it. Both sides rate. We are hiring people who want to ship that matching layer — and who want the team itself to be high-trust, high-agency, and fun.</p>
+            <div class="hire-hero-actions">
+                <a class="btn btn-primary btn-lg" href="#apply">Apply to join</a>
+                <a class="btn btn-outline-light btn-lg" href="#exchange">Read the story</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="hire-rail">
+        <div class="container">
+            <nav aria-label="Hiring sections">
+                <a href="#exchange">01 Exchange</a>
+                <a href="#building">02 What we’re doing</a>
+                <a href="#team">03 The team</a>
+                <a href="#you-get">04 What you get</a>
+                <a href="#apply">05 Apply</a>
+            </nav>
+        </div>
+    </div>
+
+    <section class="hire-section" id="exchange">
+        <div class="container">
+            <p class="hire-step">01 / The exchange</p>
+            <h2>What this is</h2>
+            <div class="hire-copy">
+                <p class="bright">The RSE is the open marketplace for robot labor. Demand posts a bid. Supply grabs a match by capability, location, reputation, and price. Both sides sign and rate. Liquidity compounds the same way it does on any two-sided market: more density, better matches, higher trust, lower friction.</p>
+                <p>We are not building another closed fleet or vertical SaaS. We are building the neutral exchange layer — match loop, job channel, ratings, seats, and the primitives that let anyone request or deploy physical work. The goal is a liquid, reputation-backed market that runs itself as volume grows.</p>
+            </div>
+            <div class="hire-callout">
+                <p>Human labor GMV sits in the tens of trillions (~$60T reported in 2025). Making robot labor liquid is one of the highest-leverage ways to shift physical work from scarce human hours to abundant machine capacity. The exchange is the matching layer that makes that shift compound. The public model on <a href="investors.html">investors</a> sets robot-labor GMV at ~$30T by 2035 — half that surface.</p>
+            </div>
         </div>
     </section>
 
-    <section class="py-5" style="background: var(--bg-deep);">
+    <section class="hire-section" id="building">
         <div class="container">
-            <h2 class="hire-section-title">MISSION</h2>
-            <div class="hire-prose">
-                <p class="lede">Build the open marketplace for robot labor. Buyers post work. Providers (robots + operators) grab matches by capability, location, reputation, and price. Both sides rate completion. The system compounds liquidity the same way any two-sided market does—more density, better matches, higher trust, lower friction.</p>
-                <p>We are not building another closed fleet or vertical SaaS. We are building the neutral exchange layer: match loop, job channel, ratings, seats, and the primitives that let anyone deploy or request physical work at scale. The goal is a liquid, reputation-backed market for robot services that runs itself as volume grows.</p>
+            <p class="hire-step">02 / What we’re doing</p>
+            <h2>Ship the matching layer</h2>
+            <div class="hire-copy">
+                <p>The work is infrastructure: make posting, grabbing, rating, and seating so reliable that fleets, operators, and agents can plug in natively. Everything is API-first.</p>
             </div>
-            <div class="hire-why hire-scale">
-                <h3>Why it scales on Earth</h3>
-                <p>Human labor GMV sits in the tens of trillions. Making robot labor liquid and reputation-backed is one of the highest-leverage ways to shift physical work from scarce human hours to abundant machine capacity. The result is higher productivity, lower marginal cost for maintenance and infrastructure, and more human time available for everything that is not pure toil. The exchange is the matching layer that makes that shift compound.</p>
-            </div>
-
-            <h2 class="hire-section-title">THE SYSTEM</h2>
-            <div class="row g-4 mb-5" style="max-width:960px;margin:0 auto 3rem;">
-                <div class="col-md-6">
-                    <div class="hire-card">
-                        <h3>Demand posts a bid</h3>
-                        <p>Service, price, location, one-shot or recurring.</p>
-                    </div>
+            <div class="hire-grid cols-3 mt-4">
+                <div class="hire-card">
+                    <div class="n">01</div>
+                    <h3>Demand posts</h3>
+                    <p>Service, price, location — one-shot or recurring.</p>
                 </div>
-                <div class="col-md-6">
-                    <div class="hire-card">
-                        <h3>Supply grabs the fit</h3>
-                        <p>Jobs that match capability, reputation, and proximity. AI ranks fit; reputation breaks ties.</p>
-                    </div>
+                <div class="hire-card">
+                    <div class="n">02</div>
+                    <h3>Supply grabs</h3>
+                    <p>AI ranks capability, proximity, and price. Reputation breaks ties.</p>
                 </div>
-                <div class="col-md-6">
-                    <div class="hire-card">
-                        <h3>Both sides rate</h3>
-                        <p>Complete and rate via <code>/sign_job</code>. Scores travel with the next job.</p>
-                    </div>
+                <div class="hire-card">
+                    <div class="n">03</div>
+                    <h3>Both sides rate</h3>
+                    <p>Complete via <code>/sign_job</code>. Scores travel with the next job.</p>
                 </div>
-                <div class="col-md-6">
-                    <div class="hire-card">
-                        <h3>Settlement stays between parties</h3>
-                        <p>Platform take-rate and the other streams (seats, hardware referrals, attention, franchises, fund fees, insurance/SLA, design services) appear as density grows. Seat primary issuance is the bulk of modeled project revenue.</p>
-                    </div>
+                <div class="hire-card">
+                    <div class="n">04</div>
+                    <h3>Settlement stays between parties</h3>
+                    <p>Take-rate and the other streams appear as density grows. Seat issuance is the bulk of modeled project revenue.</p>
                 </div>
-                <div class="col-md-6">
-                    <div class="hire-card">
-                        <h3>Seats gate supply</h3>
-                        <p>Supply seats are limited ERC-721 tokens on Base. Providers need a seat to grab work.</p>
-                    </div>
+                <div class="hire-card">
+                    <div class="n">05</div>
+                    <h3>Seats gate supply</h3>
+                    <p>Limited ERC-721 tokens on Base. Providers need a seat to grab work.</p>
                 </div>
-                <div class="col-md-6">
-                    <div class="hire-card">
-                        <h3>API-first</h3>
-                        <p>Operators, manufacturers, and agents integrate directly.</p>
-                    </div>
+                <div class="hire-card">
+                    <div class="n">06</div>
+                    <h3>API-first</h3>
+                    <p>Operators, manufacturers, and agents integrate directly.</p>
                 </div>
             </div>
-            <div class="hire-prose">
-                <p>The flywheel is simple: more completed, rated jobs → higher reputation signal → better matching → more volume → more seats and density.</p>
+            <div class="hire-copy mt-4">
+                <p>The flywheel: more completed, rated jobs → higher reputation signal → better matching → more volume → more seats and density.</p>
             </div>
+        </div>
+    </section>
 
-            <h2 class="hire-section-title">WHY JOIN</h2>
-            <div class="hire-prose">
-                <p>We are hiring people who want to ship the infrastructure for physical work markets—and who want the team itself to be high-agency, high-trust, and fun.</p>
-            </div>
-
-            <div class="hire-why">
-                <h3>Compensation &amp; Ownership</h3>
-                <p>Competitive salary.</p>
-                <p>Meaningful equity. Early team members own a real piece of the exchange layer as it scales.</p>
-                <p>Direct upside tied to the marketplace succeeding.</p>
-            </div>
-
-            <h2 class="hire-section-title">ILLUSTRATIVE EQUITY OUTCOMES</h2>
-            <div class="hire-prose">
-                <p>Down-the-middle case, aligned to the <a href="investors.html">public model</a>.</p>
-                <p>The investor model starts from the reported ~$60T of human labor GMV in 2025 and sets robot labor at ~$30T GMV by 2035 — half that surface — with a 5% take-rate. Primary seat issuance peaks near ~$50T around 2030 ($100k × 500M new seats that year, ~1B seats over 2026–2030). Those are the default dials used for the long-term projections across eight streams: take-rate, seats, hardware, attention, franchises, Hyperion, insurance/SLA, and design services.</p>
-                <p>Assume ~30% of total equity is shared among the first 5–6 employees (roughly 5% each on average, with natural variation by role and timing). The numbers below are not promises or forecasts—they simply translate that ownership stake against the scale the public model already shows if the exchange becomes the default matching layer for a large share of robot labor.</p>
-            </div>
-
-            <div class="hire-horizon">
-                <div class="when">1-year · ≈2027</div>
-                <p>Product is live, early density is forming, the first slice of the 1B-seat primary issuance and first hardware referrals are beginning. Equity remains highly illiquid paper. Valuation is still early-stage. A successful seed/Series A outcome keeps individual early stakes in the low-to-mid single-digit millions of dollars on paper at best—still high-risk, high-ownership.</p>
-            </div>
-            <div class="hire-horizon">
-                <div class="when">5-year · ≈2031</div>
-                <p>Seat primary issuance is in or just past its peak window (~2030 in the base case, ~$50T that year). GMV is climbing steeply toward the multi-trillion range. Take-rate, seats, and hardware are generating very large absolute revenue; insurance and design are smaller, rougher overlays. In a successful realization of the model, a ~5% early-employee stake can already represent hundreds of millions to low billions of dollars on paper (or in secondary liquidity), driven primarily by the seat ramp and early network effects.</p>
-            </div>
-            <div class="hire-horizon">
-                <div class="when">10-year · ≈2036</div>
-                <p>Robot labor GMV is at or past the ~$30T 2035 base and still climbing on the model’s 2040 path (~$96T). Take-rate has become the dominant recurring engine; seats have largely plateaued after the ~2030 primary-issuance peak. The exchange is infrastructure-scale. A ~5% early stake in a successful outcome sits in the multi-billion-dollar range, with the exact figure depending on realized take-rate, capital structure, and how much of the modeled GMV the platform actually clears.</p>
-            </div>
-            <div class="hire-horizon">
-                <div class="when">20-year · ≈2046</div>
-                <p>The marketplace is mature utility infrastructure. Ongoing take-rate on a large fraction of global robot labor, residual seat economics, hardware referrals, attention products, franchises, fund fees, insurance/SLA, and design services produce durable, high-margin cash flow. Early equity at the ~5% level compounds into generational (or larger) wealth in the successful long-tail case that tracks the model’s ambition. Ordinary risks of markets, competition, regulation, and execution remain.</p>
-            </div>
-            <p class="hire-note">These outcomes assume the team executes and the exchange captures a durable position at the scale the public model already displays. Many paths are smaller; some could be larger. The point of early equity is alignment: the people who build the core system own a meaningful share of what they create.</p>
-
-            <div class="hire-why">
-                <h3>Social Capital</h3>
-                <p>High-signal introductions across robotics operators, hardware teams, investors, and builders already in the network. You meet the people actually deploying robots and buying robot labor.</p>
-            </div>
-            <div class="hire-why">
-                <h3>Manufacturer Partnerships</h3>
-                <p>We actively develop relationships with robot OEMs, fleets, and hardware partners. As a team member you get:</p>
-                <ul>
-                    <li>Early access to new models for evaluation, testing, and field trials.</li>
-                    <li>Preferential pricing and allocation when acquiring hardware for personal or side use.</li>
-                    <li>Factory, R&amp;D, and operator site visits.</li>
-                    <li>Direct channels to manufacturer support and training.</li>
-                    <li>Opportunities to run or oversee joint demos and real-world deployments that feed back into the exchange.</li>
-                </ul>
-                <p>This is practical access to the supply side of the market we are building, including the hardware referral layer.</p>
-            </div>
-            <div class="hire-why">
-                <h3>Robot Service Credits</h3>
-                <p>Monthly credits (or zero-fee access) on the exchange for you and immediate family. Use the marketplace the same way customers do—lawn, delivery, inspection, cleaning, etc. Live inside the product.</p>
-            </div>
-            <div class="hire-why">
-                <h3>Hardware Access &amp; Lab Time</h3>
-                <p>Shared tools, spare parts, and test robots so you can wrench, prototype, and break things. Rotating physical access tied to the places we actually gather.</p>
-            </div>
-            <div class="hire-why">
-                <h3>Priority Seats</h3>
-                <p>Favorable terms on supply seats (the ERC-721 tokens required to grab work). Early team members get aligned exposure to the supply side of the marketplace.</p>
-            </div>
-            <div class="hire-why">
-                <h3>Family Housing Support</h3>
-                <p>Family housing benefits in the places we spend time together:</p>
-                <ul>
-                    <li>Lakewood</li>
-                    <li>Destin (Florida’s top fishing destination)</li>
-                    <li>Camas</li>
-                    <li>Missoula</li>
-                </ul>
-                <p>These exist so the team and families can be present in the same physical places without the usual housing friction.</p>
-            </div>
-            <div class="hire-why">
-                <h3>Fun</h3>
-                <p>Most in-person time is outdoor and active by design: mountain biking, river floating, fishing, hunting, hiking, and other adventure travel. The point is shared time outside, under load, solving problems and having fun together.</p>
-            </div>
-
-            <h2 class="hire-section-title">WHY THE BENEFITS EXIST</h2>
-            <div class="hire-prose">
-                <p>Every benefit above exists for one reason: to support the team having fun together.</p>
-                <p>High-trust, high-output groups form when people repeatedly do hard and enjoyable things in the same physical places. Cash, equity with real long-term upside at the scale the model already shows, manufacturer access, robot credits, seats, housing in the right towns, and shared adventure time are the practical infrastructure that makes that possible.</p>
+    <section class="hire-section" id="team">
+        <div class="container">
+            <p class="hire-step">03 / The team</p>
+            <h2>High-agency, high-trust, fun</h2>
+            <div class="hire-copy">
+                <p class="bright">We hire people who want to ship infrastructure for physical work markets — and who want the team itself to last.</p>
+                <p>High-trust groups form when people repeatedly do hard and enjoyable things in the same physical places. Most in-person time is outdoor and active: mountain biking, river floating, fishing, hunting, hiking, adventure travel. Shared time outside, under load, solving problems.</p>
                 <p>The work is building an open robot labor market. The culture is the team that can sustain that work for years without burning out or turning into a typical remote company.</p>
             </div>
+        </div>
+    </section>
 
-            <div class="hire-close py-4">
-                <p>If that combination of mission + system + ownership + lifestyle fits, reach out.</p>
-                <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener" class="btn btn-primary btn-lg">@MichaelSha10041</a>
+    <section class="hire-section" id="you-get">
+        <div class="container">
+            <p class="hire-step">04 / What early members get</p>
+            <h2>Ownership, access, and a place to be</h2>
+            <div class="hire-copy">
+                <p>Competitive salary so you can focus. Meaningful equity so the people who build the core system own a real piece of it. Direct upside tied to the marketplace succeeding.</p>
+                <p>Assume ~30% of total equity is shared among the first 5–6 employees (roughly 5% each on average, with variation by role and timing). The figures below are not promises — they translate that stake against the <a href="investors.html">public model</a> if the exchange becomes the default matching layer for a large share of robot labor.</p>
             </div>
+            <div class="hire-horizon mt-3">
+                <div class="hire-year">
+                    <div class="when">1-year · ≈2027</div>
+                    <p>Product live, early density, first seat sales. Equity is illiquid paper. A successful seed/A keeps early stakes in the low-to-mid single-digit millions on paper — still high-risk, high-ownership.</p>
+                </div>
+                <div class="hire-year">
+                    <div class="when">5-year · ≈2031</div>
+                    <p>Seat issuance at or just past its ~2030 peak (~$50T that year in the base case). A ~5% early stake can represent hundreds of millions to low billions on paper if the model is realized.</p>
+                </div>
+                <div class="hire-year">
+                    <div class="when">10-year · ≈2036</div>
+                    <p>Robot labor GMV at or past the ~$30T 2035 base, climbing toward ~$96T by 2040. Take-rate is the recurring engine. A ~5% stake sits in the multi-billion range in a successful outcome.</p>
+                </div>
+                <div class="hire-year">
+                    <div class="when">20-year · ≈2046</div>
+                    <p>Mature utility infrastructure. Take-rate, residual seats, hardware, attention, franchises, fund fees, insurance, and design produce durable cash flow. Early ~5% equity compounds into generational wealth in the long-tail case. Ordinary market, competition, regulation, and execution risks remain.</p>
+                </div>
+            </div>
+            <p class="hire-note">Many paths are smaller; some could be larger. Early equity is alignment: you own a meaningful share of what you create.</p>
+
+            <div class="hire-grid cols-2 mt-4">
+                <div class="hire-card">
+                    <h3>Social capital</h3>
+                    <p>Introductions across operators, hardware teams, investors, and builders already in the network. You meet the people deploying robots and buying robot labor.</p>
+                </div>
+                <div class="hire-card">
+                    <h3>Manufacturer access</h3>
+                    <ul>
+                        <li>Early models for evaluation and field trials</li>
+                        <li>Preferential pricing and allocation</li>
+                        <li>Factory, R&amp;D, and operator visits</li>
+                        <li>Direct support, training, joint demos</li>
+                    </ul>
+                </div>
+                <div class="hire-card">
+                    <h3>Robot credits &amp; lab time</h3>
+                    <p>Monthly credits (or zero-fee access) on the exchange for you and immediate family. Shared tools, spare parts, and test robots so you can wrench, prototype, and break things.</p>
+                </div>
+                <div class="hire-card">
+                    <h3>Priority seats</h3>
+                    <p>Favorable terms on supply seats — the ERC-721 tokens required to grab work. Aligned exposure to the supply side of the market.</p>
+                </div>
+                <div class="hire-card">
+                    <h3>Family housing</h3>
+                    <p>Support in the places we spend time together: Lakewood, Destin (Florida’s top fishing destination), Camas, and Missoula. So families can be present without the usual housing friction.</p>
+                </div>
+                <div class="hire-card">
+                    <h3>Fun, on purpose</h3>
+                    <p>Every benefit exists so the team can have fun together. Cash, equity, hardware, credits, seats, housing, and time outside are the infrastructure that lets this last.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="hire-section" id="apply" style="border-bottom: none;">
+        <div class="container">
+            <p class="hire-step">05 / Apply</p>
+            <h2>How to join</h2>
+            <div class="hire-copy">
+                <p>If that mix of mission, system, ownership, and lifestyle fits, send the form. We read every application. You can also reach out on <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">X</a>.</p>
+            </div>
+
+            <form class="hire-form-wrap mt-4" id="hireForm" novalidate>
+                <div class="hire-hp" aria-hidden="true">
+                    <label for="hireWebsite">Website</label>
+                    <input type="text" id="hireWebsite" name="website" tabindex="-1" autocomplete="off">
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="hireName">Full name</label>
+                        <input class="form-control" id="hireName" name="name" required maxlength="120" autocomplete="name">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hireDob">Date of birth</label>
+                        <input class="form-control" id="hireDob" name="dob" type="date" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hireEmail">Email</label>
+                        <input class="form-control" id="hireEmail" name="email" type="email" required maxlength="160" autocomplete="email">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hirePhone">Phone</label>
+                        <input class="form-control" id="hirePhone" name="phone" type="tel" required maxlength="40" autocomplete="tel">
+                    </div>
+                    <div class="col-12">
+                        <label for="hireAddress">Address</label>
+                        <input class="form-control" id="hireAddress" name="address" required maxlength="400" autocomplete="street-address" placeholder="Street, city, region, country">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hireSocial">Social / profile</label>
+                        <input class="form-control" id="hireSocial" name="social" required maxlength="200" placeholder="X, GitHub, LinkedIn, or a URL">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hireFamily">Family status</label>
+                        <select class="form-control" id="hireFamily" name="family_status" required>
+                            <option value="">Select…</option>
+                            <option value="single">Single</option>
+                            <option value="partnered">Partnered</option>
+                            <option value="family">Family / kids</option>
+                            <option value="prefer_not">Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hireLocation">Preferred location</label>
+                        <select class="form-control" id="hireLocation" name="preferred_location" required>
+                            <option value="">Select…</option>
+                            <option value="lakewood">Lakewood</option>
+                            <option value="destin">Destin</option>
+                            <option value="camas">Camas</option>
+                            <option value="missoula">Missoula</option>
+                            <option value="other">Other / flexible</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hireRole">What you want to work on</label>
+                        <input class="form-control" id="hireRole" name="role_interest" required maxlength="200" placeholder="e.g. matching, seats, mobile, ops, hardware">
+                    </div>
+                    <div class="col-12">
+                        <label for="hireExp">Experience</label>
+                        <textarea class="form-control" id="hireExp" name="experience" required maxlength="8000" rows="6" placeholder="What you’ve shipped. What you’re good at. Why this market."></textarea>
+                        <div class="hint">Plain language. A few paragraphs is plenty.</div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg mt-4" id="hireSubmit">Submit application</button>
+                <div id="hireStatus" role="status"></div>
+            </form>
         </div>
     </section>
 
@@ -438,5 +579,63 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js?v=25"></script>
+    <script>
+    (function () {
+        const form = document.getElementById('hireForm');
+        const status = document.getElementById('hireStatus');
+        const btn = document.getElementById('hireSubmit');
+        if (!form) return;
+        const api = (typeof API_URL !== 'undefined' ? API_URL : 'https://rse-api.com:5003');
+
+        function setStatus(msg, ok) {
+            status.textContent = msg;
+            status.className = ok ? 'ok' : 'err';
+        }
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            setStatus('', true);
+            const payload = {
+                name: document.getElementById('hireName').value.trim(),
+                email: document.getElementById('hireEmail').value.trim(),
+                phone: document.getElementById('hirePhone').value.trim(),
+                social: document.getElementById('hireSocial').value.trim(),
+                address: document.getElementById('hireAddress').value.trim(),
+                dob: document.getElementById('hireDob').value.trim(),
+                family_status: document.getElementById('hireFamily').value,
+                preferred_location: document.getElementById('hireLocation').value,
+                role_interest: document.getElementById('hireRole').value.trim(),
+                experience: document.getElementById('hireExp').value.trim(),
+                website: document.getElementById('hireWebsite').value.trim()
+            };
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            btn.disabled = true;
+            const old = btn.textContent;
+            btn.textContent = 'Sending…';
+            try {
+                const res = await fetch(api + '/hiring/apply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json().catch(function () { return {}; });
+                if (!res.ok) {
+                    setStatus(data.error || 'Could not submit. Try again.', false);
+                    return;
+                }
+                setStatus('Received. We’ll be in touch.', true);
+                form.reset();
+            } catch (err) {
+                setStatus('Network error. Try again or write on X.', false);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = old;
+            }
+        });
+    })();
+    </script>
 </body>
 </html>

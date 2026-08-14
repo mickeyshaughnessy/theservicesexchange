@@ -49,6 +49,8 @@ from handlers import (
     handle_reply_feedback,
     handle_get_financing_partners,
     handle_submit_financing,
+    handle_submit_hiring_application,
+    handle_list_hiring_applications,
     get_profile,
     update_profile,
     get_or_create_profile_slug,
@@ -914,6 +916,24 @@ def financing_apply():
     """Public endpoint to submit a robot financing application."""
     data = flask.request.get_json() or {}
     response, status = handle_submit_financing(data)
+    return flask.jsonify(response), status
+
+
+@app.route('/hiring/apply', methods=['POST'])
+@limiter.limit(_STRICT_LIMIT)
+def hiring_apply():
+    """Public join form. Stores JSON on DigitalOcean Spaces."""
+    data = flask.request.get_json() or {}
+    response, status = handle_submit_hiring_application(data)
+    return flask.jsonify(response), status
+
+
+@app.route('/admin/hiring', methods=['GET'])
+def admin_hiring():
+    """List hiring applications (X-Admin-Key). Admin UI comes later."""
+    if not hmac.compare_digest(flask.request.headers.get('X-Admin-Key', ''), _ADMIN_KEY):
+        return flask.jsonify({"error": "Unauthorized"}), 401
+    response, status = handle_list_hiring_applications()
     return flask.jsonify(response), status
 
 

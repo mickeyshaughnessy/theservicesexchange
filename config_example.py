@@ -90,6 +90,16 @@ PAYPAL_CLIENT_SECRET = ''
 ROBOT_CATALOG_KEY = 'theservicesexchange/catalog/robots.json'
 ROBOT_CATALOG_URL = ''  # default: {DO_SPACES_URL}/{ROBOT_CATALOG_KEY}
 
+# Hiring applications — stored as JSON on DigitalOcean Spaces.
+# Optional SMTP: if SMTP_HOST is set, each apply also emails HIRING_NOTIFY_EMAIL.
+HIRING_NOTIFY_EMAIL = 'mickeyshaughnessy@gmail.com'
+SMTP_HOST = ''
+SMTP_PORT = 587
+SMTP_USER = ''
+SMTP_PASSWORD = ''
+SMTP_FROM = ''
+SMTP_USE_TLS = True
+
 # Logging
 LOG_LEVEL = 'INFO'
 

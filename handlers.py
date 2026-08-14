@@ -31,6 +31,7 @@ from utils import (
     save_bulletin, get_all_bulletins,
     get_feedback, save_feedback,
     get_financing_applications, save_financing_applications,
+    get_hiring_applications, save_hiring_applications,
     get_follows, save_follows,
     get_username_by_slug, save_slug_mapping,
     get_contact_hash_record, save_contact_hash_record, delete_contact_hash_record,
@@ -4021,6 +4022,154 @@ def handle_submit_financing(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         }, 201
     except Exception as e:
         logger.error(f"Financing application error: {str(e)}")
+        return {"error": "Internal server error"}, 500
+
+
+_HIRE_LOCATIONS = ("lakewood", "destin", "camas", "missoula", "other")
+_HIRE_FAMILY = ("single", "partnered", "family", "prefer_not")
+_HIRE_REQUIRED = (
+    "name", "email", "phone", "social", "address", "dob",
+    "family_status", "preferred_location", "role_interest", "experience",
+)
+
+
+def _notify_hiring_application(app: Dict[str, Any]) -> bool:
+    """Best-effort email to HIRING_NOTIFY_EMAIL. Never raises."""
+    to_addr = (getattr(config, "HIRING_NOTIFY_EMAIL", "") or "mickeyshaughnessy@gmail.com").strip()
+    if not to_addr or "@" not in to_addr:
+        return False
+    subject = f"[RSE hiring] {app.get('name', 'Applicant')} — {app.get('preferred_location', '')}"
+    lines = [
+        "New hiring application on therobotservicesexchange.com/hiring.html",
+        "",
+        f"id: {app.get('application_id')}",
+        f"submitted: {app.get('created')}",
+        f"name: {app.get('name')}",
+        f"email: {app.get('email')}",
+        f"phone: {app.get('phone')}",
+        f"social: {app.get('social')}",
+        f"address: {app.get('address')}",
+        f"dob: {app.get('dob')}",
+        f"family_status: {app.get('family_status')}",
+        f"preferred_location: {app.get('preferred_location')}",
+        f"role_interest: {app.get('role_interest')}",
+        "",
+        "experience:",
+        app.get("experience") or "",
+    ]
+    body = "\n".join(lines)
+    from_addr = (getattr(config, "SMTP_FROM", "") or to_addr).strip()
+    host = (getattr(config, "SMTP_HOST", "") or "").strip()
+    if host:
+        try:
+            import smtplib
+            from email.mime.text import MIMEText
+            msg = MIMEText(body, "plain", "utf-8")
+            msg["Subject"] = subject
+            msg["From"] = from_addr
+            msg["To"] = to_addr
+            port = int(getattr(config, "SMTP_PORT", 587) or 587)
+            user = getattr(config, "SMTP_USER", "") or ""
+            password = getattr(config, "SMTP_PASSWORD", "") or ""
+            use_tls = bool(getattr(config, "SMTP_USE_TLS", True))
+            with smtplib.SMTP(host, port, timeout=12) as smtp:
+                if use_tls:
+                    smtp.starttls()
+                if user:
+                    smtp.login(user, password)
+                smtp.sendmail(from_addr, [to_addr], msg.as_string())
+            logger.info("Hiring notify emailed to %s via SMTP", to_addr)
+            return True
+        except Exception as e:
+            logger.warning("Hiring SMTP notify failed: %s", e)
+    try:
+        import subprocess
+        raw = f"From: {from_addr}\nTo: {to_addr}\nSubject: {subject}\n\n{body}\n"
+        proc = subprocess.run(
+            ["sendmail", "-t"],
+            input=raw.encode("utf-8"),
+            timeout=8,
+            capture_output=True,
+        )
+        if proc.returncode == 0:
+            logger.info("Hiring notify emailed to %s via sendmail", to_addr)
+            return True
+        logger.warning("Hiring sendmail failed rc=%s", proc.returncode)
+    except Exception as e:
+        logger.warning("Hiring sendmail notify failed: %s", e)
+    return False
+
+
+def handle_submit_hiring_application(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Public join form. Persists JSON on DigitalOcean Spaces. Emails if mail is configured."""
+    if (data.get("website") or "").strip():
+        return {"status": "submitted"}, 201
+
+    fields: Dict[str, str] = {}
+    for key in _HIRE_REQUIRED:
+        val = (data.get(key) or "").strip()
+        if not val:
+            return {"error": f"{key} is required"}, 400
+        fields[key] = val
+
+    if "@" not in fields["email"] or "." not in fields["email"].split("@")[-1]:
+        return {"error": "Invalid email address"}, 400
+
+    loc = fields["preferred_location"].lower().replace(" ", "_")
+    if loc not in _HIRE_LOCATIONS:
+        return {"error": f"preferred_location must be one of {sorted(_HIRE_LOCATIONS)}"}, 400
+    fields["preferred_location"] = loc
+
+    fam = fields["family_status"].lower().replace(" ", "_")
+    if fam not in _HIRE_FAMILY:
+        return {"error": f"family_status must be one of {sorted(_HIRE_FAMILY)}"}, 400
+    fields["family_status"] = fam
+
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", fields["dob"]):
+        return {"error": "dob must be YYYY-MM-DD"}, 400
+
+    application = {
+        "application_id": str(uuid.uuid4()),
+        "created": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "name": fields["name"][:120],
+        "email": fields["email"][:160],
+        "phone": fields["phone"][:40],
+        "social": fields["social"][:200],
+        "address": fields["address"][:400],
+        "dob": fields["dob"][:10],
+        "family_status": fields["family_status"],
+        "preferred_location": fields["preferred_location"],
+        "role_interest": fields["role_interest"][:200],
+        "experience": fields["experience"][:8000],
+        "status": "submitted",
+    }
+    try:
+        apps = get_hiring_applications()
+        apps.insert(0, application)
+        save_hiring_applications(apps[:2000])
+    except Exception as e:
+        logger.error("Hiring application persist error: %s", e)
+        return {"error": "Could not save application"}, 500
+
+    emailed = _notify_hiring_application(application)
+    logger.info(
+        "Hiring application %s from %s emailed=%s",
+        application["application_id"], application["email"], emailed,
+    )
+    return {
+        "application_id": application["application_id"],
+        "status": "submitted",
+        "notified": emailed,
+    }, 201
+
+
+def handle_list_hiring_applications() -> Tuple[Dict[str, Any], int]:
+    """Admin listing of hiring applications stored on Spaces."""
+    try:
+        apps = get_hiring_applications()
+        return {"applications": apps, "count": len(apps)}, 200
+    except Exception as e:
+        logger.error("List hiring applications error: %s", e)
         return {"error": "Internal server error"}, 500
 
 def handle_reply_feedback(post_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
