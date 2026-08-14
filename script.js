@@ -72,6 +72,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up form event listeners
     setupEventListeners();
     initializeGrabJobPage();
+
+    // Ensure Inbox / Community modals exist on every page (buttons are site-wide)
+    ensureCommModals();
     
     // Load platform stats for homepage
     loadPlatformStats();
@@ -185,9 +188,8 @@ function setupEventListeners() {
         }
     }
     
-    if (forms.chat) forms.chat.addEventListener('submit', handleChatMessage);
-    if (forms.reply) forms.reply.addEventListener('submit', handleReply);
-    if (forms.bulletin) forms.bulletin.addEventListener('submit', handleBulletinPost);
+    // Chat/bulletin listeners are bound via bindCommFormListeners (supports injected modals)
+    bindCommFormListeners();
     if (forms.nearby) forms.nearby.addEventListener('submit', handleNearbySearch);
     if (forms.filter) forms.filter.addEventListener('submit', handleFilterApplication);
 
@@ -2019,6 +2021,256 @@ async function handleBidSubmission(e) {
 }
 
 // Chat + friends / people discovery
+// ---------------------------------------------------------------------------
+// Site-wide Inbox / Community modals (many pages only had the nav buttons)
+// ---------------------------------------------------------------------------
+
+function ensureCommModals() {
+    if (document.getElementById('chatModal') && document.getElementById('bulletinModal')) {
+        bindCommFormListeners();
+        return;
+    }
+
+    // Inject whichever piece is missing so every page can open Inbox / Community.
+    if (!document.getElementById('chatModal')) {
+        document.body.insertAdjacentHTML('beforeend', getChatModalHtml());
+    }
+    if (!document.getElementById('bulletinModal')) {
+        document.body.insertAdjacentHTML('beforeend', getBulletinModalHtml());
+    }
+    bindCommFormListeners();
+}
+
+function getChatModalHtml() {
+    return `
+<div class="modal fade" id="chatModal" tabindex="-1" aria-labelledby="chatModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content rse-comm-modal">
+      <div class="modal-header">
+        <h5 class="modal-title" id="chatModalTitle">Inbox</h5>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-sm btn-primary" onclick="showNewMessageForm()">New message</button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="modal-body p-0">
+        <ul class="nav nav-pills rse-comm-tabs px-3 pt-3 gap-1" id="chatTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active btn btn-sm" id="tab-inbox" type="button" onclick="switchChatTab('inbox')">Messages</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link btn btn-sm" id="tab-people" type="button" onclick="switchChatTab('people')">Find people</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link btn btn-sm" id="tab-friends" type="button" onclick="switchChatTab('friends')">Friends</button>
+          </li>
+        </ul>
+
+        <div id="chatTabInbox" class="rse-comm-inbox-wrap">
+          <div class="row g-0 rse-comm-layout" id="rseCommLayout">
+            <div class="col-md-4 chat-col-list">
+              <div class="rse-comm-list-head">
+                <button type="button" class="btn btn-sm btn-outline-light d-md-none rse-comm-back" id="chatBackToList" style="display:none;" onclick="chatShowList()">← Inbox</button>
+                <span class="small text-muted">Conversations</span>
+              </div>
+              <div class="chat-inbox" id="chatInbox">
+                <div class="loading-spinner" id="conversationsLoading">
+                  <div class="spinner-border spinner-border-sm" role="status"></div>
+                  <span class="ms-2">Loading…</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-8 chat-col-thread">
+              <div id="conversationView" style="display:none;" class="rse-comm-thread-pane">
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2 rse-comm-thread-head">
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-light d-md-none" onclick="chatShowList()">←</button>
+                    <h6 class="mb-0" id="currentConversationUser">Conversation</h6>
+                  </div>
+                  <div class="d-flex gap-1 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-outline-light" id="convProfileBtn" style="display:none;">Profile</button>
+                    <button type="button" class="btn btn-sm btn-outline-light" id="convFriendBtn" style="display:none;">Add friend</button>
+                  </div>
+                </div>
+                <div class="message-history" id="messageHistory"></div>
+                <form id="replyForm" style="display:none;" class="rse-comm-composer">
+                  <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Write a reply…" id="replyMessage" required autocomplete="off" enterkeyhint="send">
+                    <button type="submit" class="btn btn-primary">Send</button>
+                  </div>
+                </form>
+              </div>
+              <div id="newMessageForm" style="display:none;" class="rse-comm-thread-pane p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="mb-0">New message</h6>
+                  <button type="button" class="btn btn-sm btn-outline-light" onclick="hideNewMessageForm()">Cancel</button>
+                </div>
+                <form id="chatForm">
+                  <div class="mb-3">
+                    <label class="form-label small text-muted" for="chatRecipient">To</label>
+                    <input type="text" class="form-control" placeholder="Username" id="chatRecipient" required autocomplete="off" list="chatRecipientSuggestions">
+                    <datalist id="chatRecipientSuggestions"></datalist>
+                    <div class="form-text">Search under Find people, or type a public username.</div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small text-muted" for="chatMessage">Message</label>
+                    <textarea class="form-control" rows="3" placeholder="Your message" id="chatMessage" required></textarea>
+                  </div>
+                  <details class="mb-3">
+                    <summary class="small text-muted" style="cursor:pointer;">Link to a job (optional)</summary>
+                    <input type="text" class="form-control mt-2" placeholder="Job ID" id="chatJobId">
+                  </details>
+                  <button type="submit" class="btn btn-primary w-100">Send</button>
+                </form>
+              </div>
+              <div id="chatPlaceholder" class="rse-comm-thread-pane">
+                <div class="text-center text-muted p-4">
+                  <p class="mb-3">Pick a conversation or start a new one.</p>
+                  <div class="d-flex gap-2 justify-content-center flex-wrap">
+                    <button type="button" class="btn btn-primary" onclick="showNewMessageForm()">New message</button>
+                    <button type="button" class="btn btn-outline-light" onclick="switchChatTab('people')">Find people</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="chatTabPeople" style="display:none;" class="p-3">
+          <p class="text-muted small mb-2">Search public usernames. Message them or add as a friend.</p>
+          <div class="input-group mb-3">
+            <input type="search" class="form-control" id="peopleSearchInput" placeholder="Username or display name…" autocomplete="off">
+            <button type="button" class="btn btn-primary" id="peopleSearchBtn" onclick="searchPeopleDirectory()">Search</button>
+          </div>
+          <div id="peopleSearchResults" class="people-directory">
+            <p class="text-muted small">Type a few letters — or leave blank to browse recent accounts.</p>
+          </div>
+        </div>
+
+        <div id="chatTabFriends" style="display:none;" class="p-3">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <h6>Following</h6>
+              <div id="friendsFollowingList" class="people-directory"><p class="text-muted small">Loading…</p></div>
+            </div>
+            <div class="col-md-6">
+              <h6>Followers</h6>
+              <div id="friendsFollowersList" class="people-directory"><p class="text-muted small">Loading…</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+function getBulletinModalHtml() {
+    return `
+<div class="modal fade" id="bulletinModal" tabindex="-1" aria-labelledby="bulletinModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content rse-comm-modal">
+      <div class="modal-header">
+        <h5 class="modal-title" id="bulletinModalTitle">Community</h5>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-sm btn-primary" onclick="showNewPostForm()">New post</button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="bulletinFeed" class="bulletin-feed">
+          <div class="loading-spinner" id="bulletinLoading">
+            <div class="spinner-border spinner-border-sm" role="status"></div>
+            <span class="ms-2">Loading posts…</span>
+          </div>
+        </div>
+        <div id="newPostForm" style="display:none;" class="mt-3 p-3 border rounded rse-comm-new-post">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">New post</h6>
+            <button type="button" class="btn btn-sm btn-outline-light" onclick="hideNewPostForm()">Cancel</button>
+          </div>
+          <form id="bulletinForm">
+            <div class="mb-3">
+              <input type="text" class="form-control" placeholder="Title" id="bulletinTitle" required maxlength="120">
+            </div>
+            <div class="mb-3">
+              <select class="form-control" id="bulletinCategory">
+                <option value="general">General</option>
+                <option value="announcement">Announcement</option>
+                <option value="question">Question</option>
+                <option value="offer">Service offer</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <textarea class="form-control" rows="4" placeholder="What do you want to share?" id="bulletinContent" required maxlength="4000"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Post</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+function bindCommFormListeners() {
+    const chat = document.getElementById('chatForm');
+    if (chat && !chat.dataset.bound) {
+        chat.dataset.bound = '1';
+        chat.addEventListener('submit', handleChatMessage);
+    }
+    const reply = document.getElementById('replyForm');
+    if (reply && !reply.dataset.bound) {
+        reply.dataset.bound = '1';
+        reply.addEventListener('submit', handleReply);
+    }
+    const bulletin = document.getElementById('bulletinForm');
+    if (bulletin && !bulletin.dataset.bound) {
+        bulletin.dataset.bound = '1';
+        bulletin.addEventListener('submit', handleBulletinPost);
+    }
+    const peopleInput = document.getElementById('peopleSearchInput');
+    if (peopleInput && !peopleInput.dataset.bound) {
+        peopleInput.dataset.bound = '1';
+        peopleInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchPeopleDirectory();
+            }
+        });
+    }
+}
+
+function openBootstrapModal(el) {
+    if (!el) return null;
+    if (typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+        console.error('Bootstrap Modal not available');
+        showToast('UI components failed to load — refresh the page', 'error');
+        return null;
+    }
+    const modal = bootstrap.Modal.getOrCreateInstance(el);
+    modal.show();
+    return modal;
+}
+
+function chatShowList() {
+    const layout = document.getElementById('rseCommLayout') || document.querySelector('.rse-comm-layout');
+    if (layout) layout.classList.remove('thread-open');
+    AppState.currentConversation = null;
+    const conv = document.getElementById('conversationView');
+    const neu = document.getElementById('newMessageForm');
+    const ph = document.getElementById('chatPlaceholder');
+    if (conv) conv.style.display = 'none';
+    if (neu) neu.style.display = 'none';
+    if (ph) ph.style.display = 'block';
+    updateConversationsDisplay();
+}
+
+function chatShowThread() {
+    const layout = document.getElementById('rseCommLayout') || document.querySelector('.rse-comm-layout');
+    if (layout) layout.classList.add('thread-open');
+}
+
 function profileUrlForUser(username, profileSlug) {
     if (profileSlug) {
         return `profile.html?pid=${encodeURIComponent(profileSlug)}`;
@@ -2116,14 +2368,21 @@ async function toggleFriendFromDirectory(username, makeFriend) {
 
 function messageUserFromDirectory(username) {
     if (!AppState.authToken) {
-        showAuth();
+        showAuth({ intent: 'chat', title: 'Sign in to send a message' });
         return;
     }
+    // Close community if open, then open compose with recipient filled
+    const bulletinEl = document.getElementById('bulletinModal');
+    if (bulletinEl && typeof bootstrap !== 'undefined') {
+        bootstrap.Modal.getInstance(bulletinEl)?.hide();
+    }
+    ensureCommModals();
+    openBootstrapModal(document.getElementById('chatModal'));
     switchChatTab('inbox');
     showNewMessageForm();
     const recipient = document.getElementById('chatRecipient');
     if (recipient) {
-        recipient.value = username;
+        recipient.value = username || '';
         recipient.focus();
     }
 }
@@ -2276,6 +2535,7 @@ function updateConversationsDisplay() {
 function selectConversation(index) {
     AppState.currentConversation = index;
     updateConversationsDisplay();
+    chatShowThread();
     showConversationView(AppState.conversations[index]);
 }
 
@@ -2379,7 +2639,8 @@ async function handleChatMessage(e) {
         message: document.getElementById('chatMessage').value
     };
     
-    const jobId = document.getElementById('chatJobId').value.trim();
+    const jobIdEl = document.getElementById('chatJobId');
+    const jobId = jobIdEl ? jobIdEl.value.trim() : '';
     if (jobId) {
         data.job_id = jobId;
     }
@@ -2461,17 +2722,34 @@ async function handleReply(e) {
 }
 
 function showNewMessageForm() {
-    document.getElementById('conversationView').style.display = 'none';
-    document.getElementById('newMessageForm').style.display = 'block';
-    document.getElementById('chatPlaceholder').style.display = 'none';
+    ensureCommModals();
+    switchChatTab('inbox');
+    chatShowThread();
+    const conv = document.getElementById('conversationView');
+    const neu = document.getElementById('newMessageForm');
+    const ph = document.getElementById('chatPlaceholder');
+    if (conv) conv.style.display = 'none';
+    if (neu) neu.style.display = 'block';
+    if (ph) ph.style.display = 'none';
+    const recipient = document.getElementById('chatRecipient');
+    if (recipient) {
+        setTimeout(() => recipient.focus(), 50);
+    }
+    // Refresh username suggestions for the To: field
+    searchPeopleDirectory().catch(() => {});
 }
 
 function hideNewMessageForm() {
-    document.getElementById('newMessageForm').style.display = 'none';
+    const neu = document.getElementById('newMessageForm');
+    const conv = document.getElementById('conversationView');
+    const ph = document.getElementById('chatPlaceholder');
+    if (neu) neu.style.display = 'none';
     if (AppState.currentConversation !== null) {
-        document.getElementById('conversationView').style.display = 'block';
+        if (conv) conv.style.display = 'block';
+        chatShowThread();
     } else {
-        document.getElementById('chatPlaceholder').style.display = 'block';
+        if (ph) ph.style.display = 'block';
+        chatShowList();
     }
 }
 
@@ -2508,7 +2786,11 @@ function updateBulletinDisplay() {
     if (!container) return;
     
     if (AppState.bulletinPosts.length === 0) {
-        container.innerHTML = '<p class="text-muted text-center p-3">No posts yet</p>';
+        container.innerHTML = `
+          <div class="text-center text-muted p-4">
+            <p class="mb-3">No posts yet — be the first to share something with the community.</p>
+            <button type="button" class="btn btn-primary btn-sm" onclick="showNewPostForm()">New post</button>
+          </div>`;
         return;
     }
     
@@ -2572,14 +2854,18 @@ async function handleBulletinPost(e) {
 }
 
 function showNewPostForm() {
+    ensureCommModals();
     const form = document.getElementById('newPostForm');
-    if (form) form.style.display = 'block';
+    if (form) {
+        form.style.display = 'block';
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        document.getElementById('bulletinTitle')?.focus();
+    }
 }
 
 function hideNewPostForm() {
     const form = document.getElementById('newPostForm');
     const inputForm = document.getElementById('bulletinForm');
-    
     if (form) form.style.display = 'none';
     if (inputForm) inputForm.reset();
 }
@@ -2738,6 +3024,14 @@ async function resumePendingBuyerIntent() {
         } else if (!location.pathname.includes('grab_job')) {
             window.location.href = 'grab_job.html';
         }
+        return;
+    }
+    if (pendingIntent === 'chat') {
+        setTimeout(() => showChat(), 200);
+        return;
+    }
+    if (pendingIntent === 'bulletin') {
+        setTimeout(() => showBulletin(), 200);
     }
 }
 
@@ -2778,33 +3072,41 @@ async function loadPopularServices() {
 
 async function showChat() {
     if (!AppState.authToken) {
-        showAuth();
+        showAuth({ intent: 'chat', title: 'Sign in to open your inbox' });
         return;
     }
-    
+
+    ensureCommModals();
     const chatModal = document.getElementById('chatModal');
-    if (chatModal) {
-        const modal = new bootstrap.Modal(chatModal);
-        modal.show();
-        switchChatTab('inbox');
-        await loadConversations();
-        // Prefetch a few directory names for the new-message datalist
-        searchPeopleDirectory().catch(() => {});
+    if (!chatModal) {
+        showToast('Inbox is unavailable on this page', 'error');
+        return;
     }
+
+    openBootstrapModal(chatModal);
+    switchChatTab('inbox');
+    chatShowList();
+    await loadConversations();
+    // Prefetch directory names for the new-message datalist
+    searchPeopleDirectory().catch(() => {});
 }
 
 async function showBulletin() {
     if (!AppState.authToken) {
-        showAuth();
+        showAuth({ intent: 'bulletin', title: 'Sign in to join the community' });
         return;
     }
-    
+
+    ensureCommModals();
     const bulletinModal = document.getElementById('bulletinModal');
-    if (bulletinModal) {
-        const modal = new bootstrap.Modal(bulletinModal);
-        modal.show();
-        await loadBulletinFeed();
+    if (!bulletinModal) {
+        showToast('Community is unavailable on this page', 'error');
+        return;
     }
+
+    openBootstrapModal(bulletinModal);
+    hideNewPostForm();
+    await loadBulletinFeed();
 }
 
 function selectService(serviceName) {
@@ -3589,6 +3891,12 @@ window.showAuth = showAuth;
 window.showBuyerForm = showBuyerForm;
 window.showChat = showChat;
 window.showBulletin = showBulletin;
+window.showNewMessageForm = showNewMessageForm;
+window.hideNewMessageForm = hideNewMessageForm;
+window.showNewPostForm = showNewPostForm;
+window.hideNewPostForm = hideNewPostForm;
+window.selectConversation = selectConversation;
+window.chatShowList = chatShowList;
 window.switchChatTab = switchChatTab;
 window.searchPeopleDirectory = searchPeopleDirectory;
 window.loadFriendsLists = loadFriendsLists;

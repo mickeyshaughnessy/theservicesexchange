@@ -2710,7 +2710,75 @@ section[style*="background:#f"],
     color: var(--primary);
 }
 
-/* Chat modal stacks on small screens when using .chat-col classes */
+/* =====================
+   INBOX / COMMUNITY
+   ===================== */
+.rse-comm-modal .modal-body {
+    min-height: 420px;
+}
+
+.rse-comm-tabs {
+    border-bottom: 1px solid rgba(0, 255, 255, 0.12);
+    padding-bottom: 0.75rem !important;
+}
+
+.rse-comm-list-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.rse-comm-layout {
+    min-height: 380px;
+}
+
+.rse-comm-layout .chat-col-list {
+    border-right: 1px solid rgba(0, 255, 255, 0.12);
+}
+
+.rse-comm-layout .chat-inbox {
+    max-height: 420px;
+    border-right: none;
+}
+
+.rse-comm-thread-pane {
+    padding: 0.75rem 1rem 1rem;
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
+}
+
+.rse-comm-thread-pane .message-history {
+    flex: 1;
+    height: auto;
+    min-height: 220px;
+    max-height: 360px;
+}
+
+.rse-comm-composer {
+    margin-top: auto;
+}
+
+.rse-comm-new-post {
+    border-color: rgba(0, 255, 255, 0.2) !important;
+    background: rgba(0, 255, 255, 0.03);
+}
+
+.bulletin-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted, #8a9bb0);
+    margin-bottom: 0.5rem;
+}
+
+.bulletin-content {
+    font-size: 0.9rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+}
+
+/* Chat modal: mobile list ↔ thread panes */
 @media (max-width: 768px) {
     .chat-col-list,
     .chat-col-thread {
@@ -2718,11 +2786,36 @@ section[style*="background:#f"],
         max-width: 100%;
     }
 
-    .chat-inbox {
-        max-height: 200px;
+    .rse-comm-layout .chat-col-list {
         border-right: none;
-        border-bottom: 1px solid rgba(0,255,255,0.15);
-        margin-bottom: 1rem;
+    }
+
+    .rse-comm-layout .chat-inbox {
+        max-height: min(55vh, 360px);
+        border-right: none;
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .rse-comm-layout:not(.thread-open) .chat-col-thread {
+        display: none;
+    }
+
+    .rse-comm-layout.thread-open .chat-col-list {
+        display: none;
+    }
+
+    .rse-comm-layout.thread-open .chat-col-thread {
+        display: block;
+    }
+
+    .rse-comm-thread-pane {
+        min-height: 50vh;
+    }
+
+    .rse-comm-thread-pane .message-history {
+        max-height: 40vh;
+        min-height: 180px;
     }
 
     .message-history {

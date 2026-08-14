@@ -29,7 +29,7 @@ LLM_TEMPERATURE = 0.7
 LLM_MAX_TOKENS = 800
 
 # Application
-TOKEN_EXPIRY_SECONDS = 86400  # 24 hours
+TOKEN_EXPIRY_SECONDS = 7776000  # 90 days — stay signed in across app closes
 DEFAULT_MAX_DISTANCE_MILES = 10
 
 # RSE Seat NFT — ERC-721 on Base mainnet

@@ -279,12 +279,31 @@ def save_token(token: str, username: str, expiry: int) -> None:
         logger.error(f"Failed to save token")
 
 def get_token_username(token: str) -> Optional[str]:
-    """Retrieve username from valid token in S3."""
+    """Retrieve username from valid token in S3.
+
+    Sliding renewal: if the token is still valid but has fewer than 30 days
+    remaining, extend it to a full TOKEN_EXPIRY_SECONDS window so active users
+    stay signed in without re-logging in.
+    """
     key = f"{TOKENS_PREFIX}/{token}.json"
     data = _s3_get(key)
-    if data and data.get('expiry', 0) > time.time():
-        return data.get('username')
-    return None
+    if not data:
+        return None
+    expiry = data.get('expiry', 0) or 0
+    now = time.time()
+    if expiry <= now:
+        return None
+    username = data.get('username')
+    if not username:
+        return None
+    # Sliding session: renew when under 30 days left
+    full_ttl = int(getattr(config, 'TOKEN_EXPIRY_SECONDS', 7776000) or 7776000)
+    renew_threshold = min(30 * 86400, full_ttl // 2)
+    if expiry - now < renew_threshold:
+        new_expiry = int(now) + full_ttl
+        # Best-effort; auth still succeeds if write fails
+        save_token(token, username, new_expiry)
+    return username
 
 # -----------------------------------------------------------------------------
 # Agent tokens (sha256 lookup; secrets never stored)

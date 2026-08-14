@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a2e">
-    <meta name="description" content="Invest in The RSE — the open exchange for robot labor. How the marketplace works, six revenue streams, and interactive 15-year projections.">
+    <meta name="description" content="Invest in The RSE — the open exchange for robot labor. How the marketplace works, eight revenue streams, and interactive 15-year projections.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="The RSE">
@@ -13,7 +13,7 @@
     <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=25" rel="stylesheet">
+    <link href="styles.css?v=27" rel="stylesheet">
     <title>Invest — The RSE</title>
     <style>
         /* Lighter body copy for contrast on deep navy panels */
@@ -797,6 +797,35 @@
         #streams {
             scroll-margin-top: 1.25rem;
         }
+        .inv-doc-tabs {
+            background: var(--bg-dark);
+            border-bottom: 1px solid rgba(0,255,255,0.25);
+        }
+        .inv-doc-tabs .tab-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            padding: 0.65rem 0;
+        }
+        .inv-doc-tabs a {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--inv-text);
+            text-decoration: none;
+            border: 1px solid rgba(0,255,255,0.3);
+            padding: 0.35rem 0.7rem;
+        }
+        .inv-doc-tabs a:hover {
+            color: var(--text-bright);
+            border-color: var(--primary);
+        }
+        .inv-doc-tabs a.active {
+            color: var(--bg-deep);
+            background: var(--primary);
+            border-color: var(--primary);
+        }
     </style>
 </head>
 <body class="inv-page">
@@ -824,6 +853,8 @@
                             <li><a class="dropdown-item" href="api_docs.html">API Docs</a></li>
                             <li><a class="dropdown-item" href="about.html">About</a></li>
                             <li><a class="dropdown-item active" href="investors.html" aria-current="page">Investors</a></li>
+                            <li><a class="dropdown-item" href="business_plan.html">Business Plan</a></li>
+                            <li><a class="dropdown-item" href="investors_guide.html">Investors Guide</a></li>
                             <li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
                         </ul>
                     </li>
@@ -848,6 +879,16 @@
         </div>
     </nav>
 
+    <div class="inv-doc-tabs">
+        <div class="container">
+            <nav class="tab-row" aria-label="Investor documents">
+                <a class="active" href="investors.html" aria-current="page">Investors</a>
+                <a href="business_plan.html">Business Plan</a>
+                <a href="investors_guide.html">Investors Guide</a>
+            </nav>
+        </div>
+    </div>
+
     <header class="inv-hero" id="main-content" tabindex="-1">
         <div class="container">
             <p class="inv-kicker">Investor overview</p>
@@ -856,12 +897,15 @@
                 The RSE is an open marketplace for robot labor. Buyers post work; providers (robots and their operators)
                 claim matches; reputation tracks delivery. The exchange captures value as volume and density grow—
                 take-rate on jobs cleared, supply-side seats, hardware referrals, attention products, franchises,
-                and fund platform fees.
+                and fund platform fees. We raise permanent capital and grant preferred commercial rights that deepen
+                as the network compounds; founding seats and team equity use the same long horizon.
             </p>
             <div class="inv-cta-row">
                 <a class="btn btn-primary btn-lg" href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">Contact on X</a>
                 <a class="btn btn-outline-light btn-lg" href="#streams">Revenue streams</a>
                 <a class="btn btn-outline-light btn-lg" href="#projections">15-year model</a>
+                <a class="btn btn-outline-light btn-lg" href="business_plan.html">Business Plan</a>
+                <a class="btn btn-outline-light btn-lg" href="investors_guide.html">Investors Guide</a>
             </div>
             <nav class="inv-toc" aria-label="Page sections">
                 <a href="#snapshot">Live snapshot</a>
@@ -873,9 +917,12 @@
                 <a href="#nearby-ads">4. Nearby / ads</a>
                 <a href="#franchising">5. Franchising</a>
                 <a href="#hyperion">6. Hyperion Fund</a>
-                <a href="#costs">7. Costs</a>
+                <a href="#insurance">7. Insurance / SLA</a>
+                <a href="#design">8. Design services</a>
+                <a href="#costs">9. Costs</a>
                 <a href="#projections">Projections</a>
                 <a href="#capitaltable">Cap table explorer</a>
+                <a href="#permanent">Permanent partnership</a>
             </nav>
         </div>
     </header>
@@ -902,8 +949,9 @@
                 Demand posts a job. Supply grabs a match by capability, location, reputation, and price.
                 The platform runs the match loop, job channel, and ratings—the same flywheel that compounds
                 liquidity on any two-sided marketplace. Campaigns handle bulk demand; job parties cover multi-agent work.
-                As density rises, take-rate on cleared volume becomes the core recurring engine; seats, hardware,
-                ads, franchises, and fund fees diversify the stack.
+                Seat primary issuance is the bulk of modeled project revenue. As density rises, take-rate becomes
+                the durable recurring engine; hardware, attention, franchises, fund fees, insurance, and design
+                services sit as peers around that stack.
             </p>
             <div class="row g-3 mt-3">
                 <div class="col-md-4">
@@ -931,10 +979,12 @@
     <!-- ========== REVENUE STREAMS ========== -->
     <section class="inv-section" id="streams">
         <div class="container">
-            <h2>Six revenue streams</h2>
+            <h2>Eight revenue streams</h2>
             <p class="inv-stream-lede">
-                How the exchange makes money for investors. Each stream is a transparent formula.
-                Live figures track the scenario dials under <a href="#projections">Projections</a>
+                Eight streams, listed as peers. Each has a formula. Seat primary issuance is the bulk of
+                modeled project revenue (base peak near $50T around 2030 at $100k × 500M new seats);
+                the other seven compound around it. Live figures track the scenario dials under
+                <a href="#projections">Projections</a>
                 (2035 GMV, take-rate, seat price, network scale)—adjust them, then scroll back here to compare what moves.
             </p>
             <div class="row g-3">
@@ -1004,6 +1054,28 @@
                         <a class="stream-jump" href="#hyperion">Details &amp; chart →</a>
                     </div>
                 </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="inv-card">
+                        <span class="inv-pill">07 · Insurance</span>
+                        <h3>Insurance &amp; SLA</h3>
+                        <p class="formula-mini">GMV × 25% inst. × 1.8% premium × 15% cut</p>
+                        <div class="live-num" id="cardIns2035">—</div>
+                        <div class="live-label">Insurance revenue · 2035</div>
+                        <p class="cost-line"><strong>Cost load:</strong> 40% → 22% · rougher path</p>
+                        <a class="stream-jump" href="#insurance">Details &amp; chart →</a>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="inv-card">
+                        <span class="inv-pill">08 · Design</span>
+                        <h3>Design services</h3>
+                        <p class="formula-mini">Network-scaled professional services</p>
+                        <div class="live-num" id="cardDesign2035">—</div>
+                        <div class="live-label">Design revenue · 2035</div>
+                        <p class="cost-line"><strong>Cost load:</strong> 55% → 32% · rougher path</p>
+                        <a class="stream-jump" href="#design">Details &amp; chart →</a>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -1048,6 +1120,8 @@
             <p class="inv-stream-lede">
                 One-time primary sale of supply-side access (Base NFT when verification is on).
                 Network scale multiplies units sold; the seat-price dial sets dollars per seat.
+                The 1M founding-seat tranche includes Golden Seat allocations (examples: Amanda Jean 10k, Dr. Aftab 1k)
+                and is the same pool used for early team equity on the hiring page.
             </p>
             <div class="inv-stream-meta">
                 <div class="inv-metric"><div class="n" id="metricSeatPrice">—</div><div class="l">Price / seat (dial)</div></div>
@@ -1179,10 +1253,64 @@
         </div>
     </section>
 
-    <!-- 7. Costs -->
+    <!-- 7. Insurance -->
+    <section class="inv-section" id="insurance">
+        <div class="container">
+            <h2>7. Insurance &amp; SLA</h2>
+            <p class="inv-formula">Revenue ≈ <code>GMV</code> × <code>25% institutional</code> × <code>1.8% premium</code> × <code>15% platform cut</code>
+                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">Rougher than the first six — a planning overlay, not a priced book</span>
+            </p>
+            <p class="inv-stream-lede">
+                Partners that de-risk institutional volume and disputes. The platform’s take is a share of
+                attached premium on the institutional slice of cleared GMV. This is a first-cut attach model:
+                institutional mix, premium, and cut are fixed in the base case so the stream moves with the
+                GMV dial the same way take-rate does.
+            </p>
+            <div class="inv-stream-meta">
+                <div class="inv-metric"><div class="n" id="metricIns2030">—</div><div class="l">Revenue · 2030</div></div>
+                <div class="inv-metric"><div class="n" id="metricIns2035">—</div><div class="l">Revenue · 2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricIns2040">—</div><div class="l">Revenue · 2040</div></div>
+                <div class="inv-metric"><div class="n">40%→22%</div><div class="l">Cost as % of this rev</div></div>
+            </div>
+            <div class="inv-chart-box">
+                <h3>Insurance &amp; SLA platform revenue ($ / year)</h3>
+                <canvas id="chartInsurance" aria-label="Bar chart of insurance revenue by year"></canvas>
+            </div>
+            <p class="inv-chart-caption">Each bar = GMV × 0.25 × 0.018 × 0.15. Scales with the 2035 GMV dial. Not a licensed insurance product.</p>
+        </div>
+    </section>
+
+    <!-- 8. Design -->
+    <section class="inv-section" id="design">
+        <div class="container">
+            <h2>8. Design services</h2>
+            <p class="inv-formula">Revenue = network-scaled design / integration services
+                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">Task, workflow, multi-agent job-party, and capability-package design · rougher path</span>
+            </p>
+            <p class="inv-stream-lede">
+                Paid design of work that can be matched: specs, repeatable jobs, multi-agent parties, and
+                integration packages. High-margin professional services that seed density and feed the other
+                streams. The curve is a first-cut capacity path (not a utilization model); network scale
+                multiplies it.
+            </p>
+            <div class="inv-stream-meta">
+                <div class="inv-metric"><div class="n" id="metricDesign2030">—</div><div class="l">Revenue · 2030</div></div>
+                <div class="inv-metric"><div class="n" id="metricDesign2035">—</div><div class="l">Revenue · 2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricDesign2040">—</div><div class="l">Revenue · 2040</div></div>
+                <div class="inv-metric"><div class="n">55%→32%</div><div class="l">Cost as % of this rev</div></div>
+            </div>
+            <div class="inv-chart-box">
+                <h3>Design services revenue ($ / year)</h3>
+                <canvas id="chartDesign" aria-label="Bar chart of design services revenue by year"></canvas>
+            </div>
+            <p class="inv-chart-caption">Each bar = base design-capacity curve × network scale. Planning overlay — not a booked backlog.</p>
+        </div>
+    </section>
+
+    <!-- 9. Costs -->
     <section class="inv-section" id="costs">
         <div class="container">
-            <h2>7. Cost structure by stream</h2>
+            <h2>9. Cost structure by stream</h2>
             <p class="inv-stream-lede">
                 Profit = stream revenue − (cost % × revenue). Cost ratios fall as fixed platform spend is amortized
                 across growing volume. Combined P&amp;L is in the projections charts below.
@@ -1234,6 +1362,18 @@
                             <td class="num">50%</td>
                             <td class="num">30%</td>
                         </tr>
+                        <tr>
+                            <td>Insurance &amp; SLA</td>
+                            <td>Partner origination, claims desk, compliance (rougher)</td>
+                            <td class="num">40%</td>
+                            <td class="num">22%</td>
+                        </tr>
+                        <tr>
+                            <td>Design services</td>
+                            <td>Specialist labor, playbooks, integration (rougher)</td>
+                            <td class="num">55%</td>
+                            <td class="num">32%</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -1248,8 +1388,8 @@
             <p class="inv-prose mb-4">
                 Years <strong>2026–2040</strong>. Expand the scenario dials to re-tune GMV, take-rate, seats, network scale,
                 and equity assumptions—charts, the P&amp;L table, stream summaries above, and raise KPIs update live.
-                Seat primary issuance leads mid-ramp totals, then plateaus; exchange take-rate becomes the largest
-                recurring line by the mid-2030s.
+                Seat primary issuance is the bulk of modeled project revenue (base peak near $50T around 2030),
+                then plateaus. Exchange take-rate is the largest recurring line after that issuance window.
             </p>
 
             <div class="inv-dials" id="scenarioDials" aria-label="Scenario tuning dials">
@@ -1295,7 +1435,7 @@
                         <div class="inv-dial">
                             <label for="dialNetwork">Network scale <span class="val" id="dialNetworkVal">1.00×</span></label>
                             <input type="range" id="dialNetwork" min="25" max="300" step="5" value="100">
-                            <div class="hint">Multiplies seats, hardware, ads, franchises, and Hyperion AUM vs base.</div>
+                            <div class="hint">Multiplies seats, hardware, ads, franchises, Hyperion AUM, and design vs base. Insurance moves with the GMV dial.</div>
                         </div>
                     </div>
 
@@ -1359,6 +1499,8 @@
                             <th class="num">Ads</th>
                             <th class="num">Franchise</th>
                             <th class="num">Hyperion</th>
+                            <th class="num">Insurance</th>
+                            <th class="num">Design</th>
                             <th class="num">Revenue</th>
                             <th class="num">Cost</th>
                             <th class="num">Profit</th>
@@ -1426,7 +1568,7 @@
             </p>
             <p class="inv-prose mb-2">
                 Valuations are a <strong>DCF of the same 15-year projection curves</strong> used above
-                (exchange take-rate, seats, hardware, ads, franchising, Hyperion)—not a seed-stage rule of thumb.
+                (all eight streams)—not a seed-stage rule of thumb.
                 Cap-table makeup sets a <strong>risk premium per revenue stream</strong> (e.g. NVIDIA/Unitree de-risk
                 hardware; a16z/Sequoia de-risk marketplace take-rate; sovereigns/BlackRock de-risk Hyperion).
                 Live scenario dials under <a href="#projections">Projections</a> are sent for the focus scenario when you run the tool.
@@ -1540,6 +1682,8 @@
             <p class="inv-prose">
                 Design partners with fleet capacity or recurring facility demand (campus, logistics, inspection, security)
                 accelerate density—the input every revenue stream depends on. API integration for operators and agents is first-class.
+                Preferred commercial rights under the permanent-partnership structure can attach to these relationships and deepen
+                as density and volume grow.
             </p>
             <div class="inv-cta-row">
                 <a class="btn btn-primary" href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">Talk with us on X</a>
@@ -1551,6 +1695,27 @@
 
     <section class="inv-section" style="border-bottom: none;">
         <div class="container">
+            <h2 id="permanent">Permanent capital &amp; preferred partnership</h2>
+            <p class="inv-lede" style="max-width:44rem;margin-bottom:1.25rem;">
+                We structure investor commitments as permanent / long-dated capital (10–15+ years) with preferred commercial rights
+                that strengthen as network metrics improve — GMV, density, seats issued, jobs completed. Preferential routing,
+                data access, referral economics, or category preference expand only with measurable progress. This is the variable
+                deepening mechanism: both sides have incentive to grow the pie.
+            </p>
+            <p class="inv-lede" style="max-width:44rem;margin-bottom:1.25rem;">
+                Founding Partner seats also carry preferred hiring / advisory rights so capital and talent arrive together.
+                Key team equity uses a 10-year vesting schedule (1-year cliff, then monthly) and ordinary non-competes
+                (1–2 years, limited to direct competitive exchanges). See
+                <a href="hiring.html">hiring</a> for equity outcomes and team benefits, plus the
+                <a href="business_plan.html">business plan</a> and <a href="investors_guide.html">investor guide</a>.
+                Insurance/SLA and design services are the seventh and eighth streams — rougher overlays in the
+                live model, listed as peers with the original six. Seat primary issuance remains the bulk of
+                modeled project revenue.
+            </p>
+            <p class="inv-lede" style="max-width:44rem;margin-bottom:2rem;color:var(--inv-text-dim);font-size:0.9rem;">
+                Scenario planning only — not an offer, solicitation, or commitment. Not financial or legal advice.
+            </p>
+
             <h2>Contact</h2>
             <p class="inv-prose">
                 Mickey Shaughnessy · Creator<br>
@@ -1572,6 +1737,8 @@
                     <a href="index.html">Home</a>
                     <a href="hiring.html">Hiring</a>
                     <a href="investors.html">Investors</a>
+                    <a href="business_plan.html">Business Plan</a>
+                    <a href="investors_guide.html">Investors Guide</a>
                     <a href="garage.html">Garage</a>
                     <a href="robots.html">Buy a Robot</a>
                     <a href="feedback.html">Feedback</a>
@@ -1590,7 +1757,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <script src="script.js?v=24"></script>
+    <script src="script.js?v=25"></script>
     <script>
     (function () {
         'use strict';
@@ -1635,9 +1802,16 @@
             2031: 100e9, 2032: 220e9, 2033: 400e9, 2034: 650e9, 2035: 1e12,
             2036: 1.4e12, 2037: 1.85e12, 2038: 2.3e12, 2039: 2.8e12, 2040: 3.3e12
         };
+        // Rougher overlay: design-capacity path (network-scaled), not a booked backlog
+        const BASE_DESIGN = {
+            2026: 15e6, 2027: 60e6, 2028: 200e6, 2029: 600e6, 2030: 1.5e9,
+            2031: 3.5e9, 2032: 6e9, 2033: 9e9, 2034: 12e9, 2035: 15e9,
+            2036: 18e9, 2037: 21e9, 2038: 24e9, 2039: 27e9, 2040: 30e9
+        };
 
         const ASP = 25000, AFF = 0.03, FIN_ATTACH = 0.40, FIN_FEE = 0.015;
         const HYP_RATE = 0.028;
+        const INS_INST = 0.25, INS_PREMIUM = 0.018, INS_CUT = 0.15;
         const BASE_GMV_2035 = 10e12;
         const COST = {
             exchange:  [0.35, 0.12],
@@ -1645,7 +1819,9 @@
             hardware:  [0.25, 0.12],
             ads:       [0.45, 0.28],
             franchise: [0.55, 0.35],
-            hyperion:  [0.50, 0.30]
+            hyperion:  [0.50, 0.30],
+            insurance: [0.40, 0.22],
+            design:    [0.55, 0.32]
         };
 
         const PRESETS = {
@@ -1709,9 +1885,10 @@
             const n = p.network;
             const series = {
                 gmv: [], exchange: [], seats: [], seatUnits: [], hardware: [],
-                ads: [], franchise: [], hyperion: [],
+                ads: [], franchise: [], hyperion: [], insurance: [], design: [],
                 revenue: [], cost: [], profit: [],
-                pExchange: [], pSeats: [], pHardware: [], pAds: [], pFranchise: [], pHyperion: []
+                pExchange: [], pSeats: [], pHardware: [], pAds: [], pFranchise: [],
+                pHyperion: [], pInsurance: [], pDesign: []
             };
             // Active franchise sites: new openings fully open; 95% of prior active base retained each year
             let gActive = 0, lActive = 0;
@@ -1740,6 +1917,8 @@
                     + gActive * GARAGE_GROSS * GARAGE_ROYALTY
                     + lActive * LIGHTHOUSE_GROSS * LIGHTHOUSE_ROYALTY;
                 const hyperion = BASE_AUM[y] * n * HYP_RATE;
+                const insurance = gmv * INS_INST * INS_PREMIUM * INS_CUT;
+                const design = BASE_DESIGN[y] * n;
 
                 const costs = {
                     exchange: exchange * costRatio(y, ...COST.exchange),
@@ -1747,10 +1926,13 @@
                     hardware: hardware * costRatio(y, ...COST.hardware),
                     ads: ads * costRatio(y, ...COST.ads),
                     franchise: franchise * costRatio(y, ...COST.franchise),
-                    hyperion: hyperion * costRatio(y, ...COST.hyperion)
+                    hyperion: hyperion * costRatio(y, ...COST.hyperion),
+                    insurance: insurance * costRatio(y, ...COST.insurance),
+                    design: design * costRatio(y, ...COST.design)
                 };
-                const rev = exchange + seats + hardware + ads + franchise + hyperion;
-                const cost = costs.exchange + costs.seats + costs.hardware + costs.ads + costs.franchise + costs.hyperion;
+                const rev = exchange + seats + hardware + ads + franchise + hyperion + insurance + design;
+                const cost = costs.exchange + costs.seats + costs.hardware + costs.ads + costs.franchise
+                    + costs.hyperion + costs.insurance + costs.design;
 
                 series.gmv.push(gmv);
                 series.exchange.push(exchange);
@@ -1760,6 +1942,8 @@
                 series.ads.push(ads);
                 series.franchise.push(franchise);
                 series.hyperion.push(hyperion);
+                series.insurance.push(insurance);
+                series.design.push(design);
                 series.revenue.push(rev);
                 series.cost.push(cost);
                 series.profit.push(rev - cost);
@@ -1769,6 +1953,8 @@
                 series.pAds.push(ads - costs.ads);
                 series.pFranchise.push(franchise - costs.franchise);
                 series.pHyperion.push(hyperion - costs.hyperion);
+                series.pInsurance.push(insurance - costs.insurance);
+                series.pDesign.push(design - costs.design);
             });
             return series;
         }
@@ -1792,6 +1978,8 @@
             ads:       '#ffd166',
             franchise: '#c97c3d',
             hyperion:  '#a78bfa',
+            insurance: '#7dd3fc',
+            design:    '#f472b6',
             revenue:   '#00e5ff',
             cost:      '#ff6a6a',
             profit:    '#39ff14',
@@ -1897,20 +2085,26 @@
         makeBar('chartAds', [{ label: 'Nearby / ads revenue ($)', data: [], backgroundColor: COLORS.ads }], false);
         makeBar('chartFranchise', [{ label: 'Franchise fees + royalties ($)', data: [], backgroundColor: COLORS.franchise }], false);
         makeBar('chartHyperion', [{ label: 'Hyperion platform fees ($)', data: [], backgroundColor: COLORS.hyperion }], false);
+        makeBar('chartInsurance', [{ label: 'Insurance / SLA ($)', data: [], backgroundColor: COLORS.insurance }], false);
+        makeBar('chartDesign', [{ label: 'Design services ($)', data: [], backgroundColor: COLORS.design }], false);
         makeBar('chartRevenueStacked', [
             { label: 'Exchange', data: [], backgroundColor: COLORS.exchange, borderRadius: 0 },
             { label: 'Seats', data: [], backgroundColor: COLORS.seats, borderRadius: 0 },
             { label: 'Hardware', data: [], backgroundColor: COLORS.hardware, borderRadius: 0 },
             { label: 'Ads', data: [], backgroundColor: COLORS.ads, borderRadius: 0 },
             { label: 'Franchise', data: [], backgroundColor: COLORS.franchise, borderRadius: 0 },
-            { label: 'Hyperion', data: [], backgroundColor: COLORS.hyperion, borderRadius: 0 }
+            { label: 'Hyperion', data: [], backgroundColor: COLORS.hyperion, borderRadius: 0 },
+            { label: 'Insurance', data: [], backgroundColor: COLORS.insurance, borderRadius: 0 },
+            { label: 'Design', data: [], backgroundColor: COLORS.design, borderRadius: 0 }
         ], true);
         makeBar('chartRevenueExSeats', [
             { label: 'Exchange', data: [], backgroundColor: COLORS.exchange, borderRadius: 0 },
             { label: 'Hardware', data: [], backgroundColor: COLORS.hardware, borderRadius: 0 },
             { label: 'Ads', data: [], backgroundColor: COLORS.ads, borderRadius: 0 },
             { label: 'Franchise', data: [], backgroundColor: COLORS.franchise, borderRadius: 0 },
-            { label: 'Hyperion', data: [], backgroundColor: COLORS.hyperion, borderRadius: 0 }
+            { label: 'Hyperion', data: [], backgroundColor: COLORS.hyperion, borderRadius: 0 },
+            { label: 'Insurance', data: [], backgroundColor: COLORS.insurance, borderRadius: 0 },
+            { label: 'Design', data: [], backgroundColor: COLORS.design, borderRadius: 0 }
         ], true);
         makeBar('chartProfit', [
             { label: 'Revenue', data: [], backgroundColor: COLORS.revenue, borderRadius: 2 },
@@ -1923,7 +2117,9 @@
             { label: 'Hardware', data: [], backgroundColor: COLORS.hardware, borderRadius: 0 },
             { label: 'Ads', data: [], backgroundColor: COLORS.ads, borderRadius: 0 },
             { label: 'Franchise', data: [], backgroundColor: COLORS.franchise, borderRadius: 0 },
-            { label: 'Hyperion', data: [], backgroundColor: COLORS.hyperion, borderRadius: 0 }
+            { label: 'Hyperion', data: [], backgroundColor: COLORS.hyperion, borderRadius: 0 },
+            { label: 'Insurance', data: [], backgroundColor: COLORS.insurance, borderRadius: 0 },
+            { label: 'Design', data: [], backgroundColor: COLORS.design, borderRadius: 0 }
         ], true);
 
         function setText(id, text) {
@@ -2017,6 +2213,18 @@
             setMoney('metricHyp2035', series.hyperion[i2035]);
             setMoney('metricHyp2040', series.hyperion[i2040]);
             setMoney('cardHyp2035', series.hyperion[i2035]);
+
+            // Insurance
+            setMoney('metricIns2030', series.insurance[i2030]);
+            setMoney('metricIns2035', series.insurance[i2035]);
+            setMoney('metricIns2040', series.insurance[i2040]);
+            setMoney('cardIns2035', series.insurance[i2035]);
+
+            // Design
+            setMoney('metricDesign2030', series.design[i2030]);
+            setMoney('metricDesign2035', series.design[i2035]);
+            setMoney('metricDesign2040', series.design[i2040]);
+            setMoney('cardDesign2035', series.design[i2035]);
         }
 
         function updateCapitalKpis(p, series) {
@@ -2068,6 +2276,8 @@
                     fmtMoney(series.ads[i]),
                     fmtMoney(series.franchise[i]),
                     fmtMoney(series.hyperion[i]),
+                    fmtMoney(series.insurance[i]),
+                    fmtMoney(series.design[i]),
                     fmtMoney(series.revenue[i]),
                     fmtMoney(series.cost[i]),
                     fmtMoney(series.profit[i])
@@ -2095,7 +2305,9 @@
                 'GMV path anchors ' + fmtMoney(p.gmv2035) + ' in 2035 at ' + (p.takeRate * 100).toFixed(1) + '% take-rate. ' +
                 'Seats: ' + fmtMoney(p.seatPrice) + ' primary × network scale ' + p.network.toFixed(2) + '× (base ~1B seats over five years). ' +
                 'Hardware: $25k ASP, 3% affiliate, 40% finance attach × 1.5% referral (network-scaled). ' +
-                'Ads, franchise openings, and Hyperion AUM scale with network. ' +
+                'Ads, franchise openings, Hyperion AUM, and design services scale with network. ' +
+                'Insurance ≈ GMV × 25% institutional × 1.8% premium × 15% platform cut. ' +
+                'Seat primary issuance is the bulk of project revenue (base peak ~$50T around 2030). ' +
                 'Equity raise: ' + fmtMoney(p.capital) + ' across ' + p.partners + ' partners (~' +
                 fmtMoney(p.capital / p.partners) + ' average check). ' +
                 'Costs: per-stream ratios, linear improvement 2026→2035.' +
@@ -2131,15 +2343,20 @@
             setChartData('chartAds', [series.ads]);
             setChartData('chartFranchise', [series.franchise]);
             setChartData('chartHyperion', [series.hyperion]);
+            setChartData('chartInsurance', [series.insurance]);
+            setChartData('chartDesign', [series.design]);
             setChartData('chartRevenueStacked', [
-                series.exchange, series.seats, series.hardware, series.ads, series.franchise, series.hyperion
+                series.exchange, series.seats, series.hardware, series.ads, series.franchise,
+                series.hyperion, series.insurance, series.design
             ]);
             setChartData('chartRevenueExSeats', [
-                series.exchange, series.hardware, series.ads, series.franchise, series.hyperion
+                series.exchange, series.hardware, series.ads, series.franchise,
+                series.hyperion, series.insurance, series.design
             ]);
             setChartData('chartProfit', [series.revenue, series.cost, series.profit]);
             setChartData('chartProfitStacked', [
-                series.pExchange, series.pSeats, series.pHardware, series.pAds, series.pFranchise, series.pHyperion
+                series.pExchange, series.pSeats, series.pHardware, series.pAds, series.pFranchise,
+                series.pHyperion, series.pInsurance, series.pDesign
             ]);
         }
 

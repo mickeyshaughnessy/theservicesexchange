@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a2e">
+    <meta name="description" content="Business plan for The RSE — permanent capital, preferred partnership, and the open marketplace for robot labor.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="The RSE">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <title>The RSE — Business Plan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css?v=27" rel="stylesheet">
+    <style>
+
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  .rse-doc {
+    --ink: #0c1222;
+    --ink-soft: #2a3548;
+    --muted: #5a6a82;
+    --rule: #d8dee8;
+    --accent: #0a6e6e;
+    --accent-soft: #e6f4f4;
+    --highlight: #0d9488;
+    --page-w: 8.5in;
+    --page-h: 11in;
+    --margin: 0.62in;
+  }
+
+  .rse-doc, .rse-doc * { box-sizing: border-box; }
+
+  .rse-doc {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    color: var(--ink);
+    background: #e8ecf2;
+    line-height: 1.48;
+    font-size: 9.8pt;
+  }
+
+  .rse-doc .page {
+    width: var(--page-w);
+    min-height: var(--page-h);
+    margin: 0.35in auto;
+    padding: var(--margin);
+    background: #fff;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    position: relative;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+  }
+  .rse-doc .page:last-child { page-break-after: auto; }
+
+  @media print {
+    .site-chrome { display: none !important; }
+    .rse-doc { background: #fff; }
+    .rse-doc .page {
+      margin: 0;
+      box-shadow: none;
+      width: 100%;
+      min-height: 100vh;
+      padding: 0.55in 0.6in;
+    }
+  }
+
+  .rse-doc h1 {
+    font-size: 20pt;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+  }
+  .rse-doc h2 {
+    font-size: 11.5pt;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0.85em 0 0.35em;
+    letter-spacing: -0.01em;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0.15em;
+  }
+  .rse-doc h3 {
+    font-size: 10pt;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin: 0.65em 0 0.2em;
+  }
+  .rse-doc p { margin-bottom: 0.4em; }
+  .rse-doc .lede { font-size: 10.5pt; color: var(--ink-soft); line-height: 1.45; }
+  .rse-doc .muted { color: var(--muted); font-size: 8.8pt; }
+  .rse-doc .mono { font-family: 'IBM Plex Mono', monospace; font-size: 8.5pt; }
+
+  .rse-doc .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1.5px solid var(--ink);
+    padding-bottom: 0.3em;
+    margin-bottom: 0.75em;
+  }
+  .rse-doc .page-header .brand {
+    font-weight: 700;
+    font-size: 9.5pt;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .rse-doc .page-header .doc-label {
+    font-size: 8.5pt;
+    color: var(--muted);
+  }
+  .rse-doc .page-footer {
+    margin-top: auto;
+    padding-top: 0.45em;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    color: var(--muted);
+  }
+
+  .rse-doc .cover-kicker {
+    font-size: 8.5pt;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--highlight);
+    margin-bottom: 0.4em;
+  }
+  .rse-doc .cover-rule {
+    width: 2.8in;
+    height: 2.5px;
+    background: var(--ink);
+    margin: 0.7em 0 0.9em;
+  }
+
+  .rse-doc .box {
+    border: 1px solid var(--rule);
+    padding: 0.5em 0.7em;
+    margin: 0.45em 0;
+    background: #fafbfc;
+  }
+  .rse-doc .box.accent {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .rse-doc .box h3 { margin-top: 0; }
+
+  .rse-doc .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55em 0.9em;
+  }
+  .rse-doc .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5em;
+  }
+
+  .rse-doc .stream-list {
+    list-style: none;
+    margin: 0.25em 0 0.5em;
+  }
+  .rse-doc .stream-list li {
+    display: flex;
+    gap: 0.5em;
+    padding: 0.22em 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 9.2pt;
+  }
+  .rse-doc .stream-list li:last-child { border-bottom: none; }
+  .rse-doc .stream-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+    color: var(--highlight);
+    min-width: 1.5em;
+  }
+
+  .rse-doc table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin: 0.35em 0 0.6em;
+  }
+  .rse-doc th, .rse-doc td {
+    text-align: left;
+    padding: 0.28em 0.4em;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .rse-doc th {
+    font-weight: 600;
+    color: var(--ink-soft);
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .rse-doc .callout {
+    border-left: 3px solid var(--highlight);
+    padding: 0.35em 0 0.35em 0.75em;
+    margin: 0.5em 0;
+    background: #f7faf9;
+  }
+
+  .rse-doc ul.clean {
+    margin: 0.2em 0 0.5em 1em;
+  }
+  .rse-doc ul.clean li { margin-bottom: 0.18em; }
+
+  .rse-doc .tag {
+    display: inline-block;
+    font-size: 7.5pt;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0.12em 0.4em;
+    border-radius: 2px;
+  }
+
+  .rse-doc { padding: 0.5rem 0 2rem; }
+  @media (max-width: 900px) {
+    .rse-doc .page {
+      width: 100%;
+      min-height: auto;
+      margin: 0.75rem 0;
+      padding: 1.25rem;
+      box-shadow: none;
+    }
+    .rse-doc .grid-2,
+    .rse-doc .grid-3 { grid-template-columns: 1fr; }
+    .rse-doc .cover-rule { width: 40%; }
+  }
+  .inv-doc-tabs {
+    background: #0d0d3d;
+    border-bottom: 1px solid rgba(0,255,255,0.25);
+  }
+  .inv-doc-tabs .tab-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.65rem 0;
+  }
+  .inv-doc-tabs a {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #c8d6f5;
+    text-decoration: none;
+    border: 1px solid rgba(0,255,255,0.3);
+    padding: 0.35rem 0.7rem;
+  }
+  .inv-doc-tabs a:hover { color: #fff; border-color: #00ffff; }
+  .inv-doc-tabs a.active {
+    color: #0a0a2e;
+    background: #00ffff;
+    border-color: #00ffff;
+  }
+
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="site-chrome">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">The RSE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html?open=bid">Get Something</a></li>
+                    <li class="nav-item"><a class="nav-link" href="grab_job.html">Find Work</a></li>
+                    <li class="nav-item"><a class="nav-link" href="campaigns.html">Campaigns</a></li>
+                    <li class="nav-item"><a class="nav-link" href="hiring.html">Hiring</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="navMore" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navMore">
+                            <li><a class="dropdown-item" href="portfolio.html">Portfolio</a></li>
+                            <li><a class="dropdown-item" href="robots.html">Buy a Robot</a></li>
+                            <li><a class="dropdown-item" href="examples.html">Examples</a></li>
+                            <li><a class="dropdown-item" href="api_docs.html">API Docs</a></li>
+                            <li><a class="dropdown-item" href="about.html">About</a></li>
+                            <li><a class="dropdown-item" href="garage.html">Garage</a></li>
+                            <li><a class="dropdown-item" href="investors.html">Investors</a></li>
+                            <li><a class="dropdown-item active" href="business_plan.html" aria-current="page">Business Plan</a></li>
+                            <li><a class="dropdown-item" href="investors_guide.html">Investors Guide</a></li>
+                            <li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="nav-actions d-flex align-items-center flex-wrap gap-2 ms-lg-3 mt-2 mt-lg-0">
+                    <button id="loginButton" class="btn btn-light" onclick="showAuth()">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="inv-doc-tabs">
+        <div class="container">
+            <nav class="tab-row" aria-label="Investor documents">
+                <a href="investors.html">Investors</a>
+                <a class="active" aria-current="page" href="business_plan.html">Business Plan</a>
+                <a href="investors_guide.html">Investors Guide</a>
+            </nav>
+        </div>
+    </div>
+    </div>
+    <main id="main-content" class="rse-doc" tabindex="-1">
+
+
+<!-- ===================== PAGE 1: EXEC SUMMARY + PROBLEM/SOLUTION/MARKET ===================== -->
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">Business Plan · Confidential</span>
+  </div>
+
+  <p class="cover-kicker">Permanent Capital · Preferred Partnership</p>
+  <h1>Business Plan</h1>
+  <p style="font-size:11pt;color:var(--ink-soft);margin-top:0.15em;">The Robot Services Exchange — Open marketplace for robot labor</p>
+  <div class="cover-rule"></div>
+
+  <h2 style="margin-top:0;border:none;padding:0;">1. Executive summary</h2>
+  <p class="lede">
+    The RSE is the neutral exchange layer for robot labor: buyers post work in plain language; providers (robots and operators) grab matches by capability, location, reputation, and price; both sides rate delivery. The platform captures value as density grows through take-rate on cleared jobs, eternal supply seats, hardware referrals, attention products, franchises, fund platform fees, an insurance/SLA path for institutional volume, and design services.
+  </p>
+  <p>
+    We raise <strong>permanent / long-dated capital</strong> (10–15+ years) and grant <strong>preferred commercial rights that deepen only as network metrics improve</strong>. Founding Partner seats also carry preferred hiring rights so capital and talent arrive together. Key team equity uses a 10-year vesting schedule and ordinary non-competes. The structure is designed for a multi-decade compounding marketplace, not a forced 10-year exit clock.
+  </p>
+
+  <div class="grid-2">
+    <div class="box">
+      <h3>The ask (orientation)</h3>
+      <p style="margin-bottom:0;font-size:9.2pt;">Permanent or long-dated capital commitments under conservative / base / aggressive scenarios modeled on the investors page ($0.5T / $1.5T / $2.0T raise dials for planning). Preferred rights + optional Founding Partner hiring rights. Not a public offering.</p>
+    </div>
+    <div class="box">
+      <h3>Use of capital (high level)</h3>
+      <p style="margin-bottom:0;font-size:9.2pt;">Core exchange reliability &amp; escrow, density acceleration (supply + demand), seat issuance &amp; compliance, franchise rollout support, insurance/SLA partnerships, and team that can ship the open marketplace layer.</p>
+    </div>
+  </div>
+
+  <h2>2. Problem</h2>
+  <p>
+    Robot labor is arriving in the physical world, but the market for it is still fragmented: closed fleets, one-off integrations, opaque pricing, no portable reputation, and no neutral place where any buyer can post work and any capable provider can compete. Buyers cannot discover reliable capacity at transparent prices. Operators and fleets cannot efficiently fill underutilized robots. Hardware makers lack a liquid demand surface. The result is slower adoption, higher friction, and value captured by vertical silos instead of an open market.
+  </p>
+
+  <h2>3. Solution</h2>
+  <p>
+    An open, API-first exchange: demand posts a bid (service, price, location — one-shot or recurring); supply grabs the fit; both sides sign and rate via <span class="mono">/sign_job</span>. Seats (ERC-721 on Base when verification is on) gate provider access. Reputation is mutual and portable. Settlement can remain between parties while the exchange records price and builds the data needed for on-platform escrow and take-rate. Campaigns handle bulk demand; job parties cover multi-agent work. Everything is designed so machines and operators can participate natively, not only through a human UI.
+  </p>
+
+  <h2>4. Market opportunity</h2>
+  <p>
+    Physical work that can be specified, matched, and rated is the addressable surface. As robot capability and density rise, the same network effects that scaled digital labor and asset marketplaces apply: more supply improves match quality for demand; more demand improves utilization for supply; reputation and history raise trust and reduce friction. The investors-page base scenario orients around ~$10T robot-labor GMV in 2035 with a ~5% take-rate, plus eight streams. Seat primary issuance is the bulk of modeled project revenue (base peak near $50T around 2030 at $100k × 500M new seats). Actual outcomes depend on density, regulatory environment, and execution.
+  </p>
+
+  <div class="page-footer">
+    <span>therobotservicesexchange.com</span>
+    <span>Page 1 of 4</span>
+  </div>
+</section>
+
+<!-- ===================== PAGE 2: PRODUCT, TRACTION, MODEL, COMPETITION ===================== -->
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">Product · Traction · Model · Competition</span>
+  </div>
+
+  <h2 style="margin-top:0;">5. Product status → monetization path</h2>
+  <table>
+    <thead>
+      <tr><th>Layer</th><th>Today</th><th>Revenue path</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Matching</td>
+        <td>Location + AI capability match + reputation + price</td>
+        <td>Liquidity moat as job history densifies</td>
+      </tr>
+      <tr>
+        <td>Reputation</td>
+        <td>Mutual 1–5 star sign-off; public portfolios</td>
+        <td>Portable proofs; dual identity (seat / username)</td>
+      </tr>
+      <tr>
+        <td>Payments</td>
+        <td>Off-platform settlement; exchange records price</td>
+        <td>Escrow + take-rate (model corridor ~5% of GMV)</td>
+      </tr>
+      <tr>
+        <td>Disputes</td>
+        <td>Either party can file; admin review</td>
+        <td>Insurance &amp; SLA partners for institutional volume</td>
+      </tr>
+      <tr>
+        <td>Supply access</td>
+        <td>Optional RSE Seat (Base L2) for grab access</td>
+        <td>Primary seat sales + fleet partnerships</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted">
+    Live API and public counters are on the production stack. The product is built to densify first; take-rate and diversified streams scale with that density.
+  </p>
+
+  <h2>6. Business model — eight value streams</h2>
+  <ul class="stream-list">
+    <li><span class="stream-num">01</span><div><strong>Exchange take-rate</strong> — GMV × take-rate once payments/escrow are on-platform. Durable recurring engine after the seat issuance window.</div></li>
+    <li><span class="stream-num">02</span><div><strong>Eternal supply seats</strong> — Primary issuance; base price $100k. ~1B seats over 2026–2030 (peak year ~500M / ~$50T). 1M founding-seat tranche (incl. Golden Seats: Amanda Jean 10k, Dr. Aftab 1k). Bulk of modeled project revenue.</div></li>
+    <li><span class="stream-num">03</span><div><strong>Hardware affiliate + financing</strong> — Referral commission + financing attach on robots sold through the catalog ($25k ASP, 3% + 40% attach × 1.5%).</div></li>
+    <li><span class="stream-num">04</span><div><strong>/nearby &amp; attention</strong> — Two-sided discovery and placement spend as density rises.</div></li>
+    <li><span class="stream-num">05</span><div><strong>Franchises (Garage + Lighthouse)</strong> — New-site fees + royalties on MRO/R&amp;R and charging stations.</div></li>
+    <li><span class="stream-num">06</span><div><strong>Hyperion Fund fees</strong> — ~2.8% effective platform fee on fund AUM for qualified participants.</div></li>
+    <li><span class="stream-num">07</span><div><strong>Insurance &amp; SLA</strong> — Rougher overlay: GMV × 25% institutional × 1.8% premium × 15% platform cut. Partners that de-risk institutional volume and disputes.</div></li>
+    <li><span class="stream-num">08</span><div><strong>Design services</strong> — Rougher overlay: network-scaled professional services — task, workflow, multi-agent job-party, and capability-package design that seeds matchable demand.</div></li>
+  </ul>
+
+  <h2>7. Go-to-market &amp; density strategy</h2>
+  <div class="grid-2">
+    <div>
+      <ul class="clean">
+        <li>API-first so fleets, operators, and agents integrate natively</li>
+        <li>Seat issuance to gate and monetize supply access</li>
+        <li>Design partners with fleet capacity or recurring facility demand (campus, logistics, inspection, security)</li>
+        <li>Franchise rollout (Garage, Lighthouse) for physical density nodes</li>
+      </ul>
+    </div>
+    <div>
+      <ul class="clean">
+        <li>Campaigns for bulk demand; job parties for multi-agent work</li>
+        <li>Hardware catalog + financing referrals to lower buyer friction</li>
+        <li>Preferred commercial rights for capital partners who also accelerate supply or demand</li>
+        <li>Design services that turn vague demand into matchable, repeatable jobs</li>
+        <li>Public reputation and open matching to compound trust</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>8. Competition &amp; differentiation</h2>
+  <p>
+    Closed robot fleets and vertical SaaS optimize for one operator’s utilization or one buyer’s workflow. They do not create a liquid, reputation-backed market open to any capable provider. Pure software marketplaces for human services lack the seat, hardware, franchise, and physical-density mechanics required for robot labor. The RSE is positioned as the <strong>neutral exchange layer</strong>: open matching, portable reputation, eternal seats, and diversified monetization that does not require owning the robots or the end customers. Preferential rights for partners are earned by performance, not granted as permanent monopolies that would freeze liquidity.
+  </p>
+
+  <div class="page-footer">
+    <span>Live model: therobotservicesexchange.com/investors.html</span>
+    <span>Page 2 of 4</span>
+  </div>
+</section>
+
+<!-- ===================== PAGE 3: TEAM, CAPITAL STRUCTURE, ALIGNMENT ===================== -->
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">Team · Capital structure · Alignment</span>
+  </div>
+
+  <h2 style="margin-top:0;">9. Team &amp; hiring posture</h2>
+  <p>
+    <strong>Mickey Shaughnessy</strong> — Creator. The exchange, API, seat mechanics, and investor model are built and iterated in public. Early team members receive founding seats from the 1M primary issuance pool, competitive salary, and 10-year equity vesting. The hiring page frames the same permanent-partner horizon offered to capital so candidates and investors see one story.
+  </p>
+  <div class="grid-2">
+    <div class="box">
+      <h3>Founding seats &amp; Golden Seats</h3>
+      <p style="margin-bottom:0;font-size:9pt;">1M founding-seat tranche at base primary price ($100k). Golden Seat examples inside that tranche: Amanda Jean 10,000; Dr. Aftab 1,000. Team grants drawn from the same pool; equity side subject to 10-year vesting.</p>
+    </div>
+    <div class="box">
+      <h3>Retention terms</h3>
+      <p style="margin-bottom:0;font-size:9pt;">Key roles: 10-year vesting (1-year cliff, then monthly). Non-competes ordinary and limited — 1–2 years, direct competitive robot-labor exchanges or specific domain only, with reasonable carve-outs. Not onerous.</p>
+    </div>
+  </div>
+  <p>
+    <strong>Founding Partner seats</strong> (capital side) include preferred hiring / advisory rights and first-refusal on key hires in a partner’s focus area. The raise is explicitly designed to bring capital <em>and</em> talent.
+  </p>
+
+  <h2>10. Permanent capital &amp; preferred partnership (Direction 4)</h2>
+  <p>
+    Investor commitments are structured as permanent / evergreen or 15-year+ vehicles. There is no artificial distribution clock that forces exit of a compounding marketplace. In exchange, partners receive equity (or equity-like) ownership plus <strong>preferred commercial rights</strong> that function as the exclusivity layer without freezing the open market:
+  </p>
+  <ul class="clean">
+    <li>Priority matching or routing in defined categories or geographies</li>
+    <li>Preferential data access and referral economics</li>
+    <li>First-look on hardware referrals or franchise opportunities</li>
+    <li>Rights expand or strengthen <em>only</em> when agreed network metrics improve (GMV, density, seats issued, jobs completed)</li>
+  </ul>
+  <div class="callout">
+    <strong>Variable deepening.</strong> Preferential rights are not absolute territorial monopolies. Underperformance does not expand rights. Both the exchange and the partner share the incentive to compound density rather than protect a static franchise. Term of rights and capital lock-up: 10–15+ years, with performance-triggered step-ups.
+  </div>
+
+  <h2>11. Why this structure</h2>
+  <p>
+    Rigid 10-year fund clocks push platforms toward premature exits. Permanent capital (Sequoia-style long partnership, Berkshire-style multi-decade ownership) allows the exchange to optimize for density and reputation over decades. Preferred rights that ratchet with performance create alignment without the adverse selection of hard exclusivity. Bundling hiring rights turns the syndicate into a talent network. The combination matches the multi-decade horizon of a physical-labor marketplace.
+  </p>
+
+  <h2>12. Financial orientation</h2>
+  <table>
+    <thead>
+      <tr><th>Dial (investors page)</th><th>Base</th><th>Role</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>2035 GMV</td><td>$10.0T</td><td>Scales take-rate and density-linked streams</td></tr>
+      <tr><td>Take-rate</td><td>5.0%</td><td>Platform share of cleared GMV</td></tr>
+      <tr><td>Seat price</td><td>$100k</td><td>Primary issuance price per eternal seat</td></tr>
+      <tr><td>Network scale</td><td>1.00×</td><td>Multiplies seats, hardware, ads, franchises, Hyperion, design</td></tr>
+      <tr><td>Raise scenarios</td><td>$0.5T / $1.5T / $2.0T</td><td>Planning dials — conservative / base / aggressive</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">
+    Full 15-year projections (2026–2040), cost ratios by stream, and DCF-style valuation tooling are interactive on the investors page. Seat issuance is the bulk of modeled project revenue, then plateaus; take-rate is the largest recurring line after that window. Insurance and design are first-cut overlays. Figures are scenario planning, not guarantees.
+  </p>
+
+  <div class="page-footer">
+    <span>Compensation map: therobotservicesexchange.com/hiring.html</span>
+    <span>Page 3 of 4</span>
+  </div>
+</section>
+
+<!-- ===================== PAGE 4: RISKS, ASK, NEXT STEPS ===================== -->
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">Risks · Ask · Next steps</span>
+  </div>
+
+  <h2 style="margin-top:0;">13. Key risks (and how the structure responds)</h2>
+  <table>
+    <thead>
+      <tr><th>Risk</th><th>Response</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Density fails to materialize</td>
+        <td>Capital and preferred rights only deepen with metrics; underperformance does not expand exclusivity. Focus remains on open matching and API-first supply.</td>
+      </tr>
+      <tr>
+        <td>Payments / escrow delay take-rate</td>
+        <td>Seat issuance, hardware referrals, attention, and franchises can contribute before full on-platform settlement; path to escrow is explicit in the product table.</td>
+      </tr>
+      <tr>
+        <td>Hard exclusivity kills liquidity</td>
+        <td>Rights are preferential and performance-triggered, not absolute territorial monopolies. Open marketplace thesis is preserved outside preferred lanes.</td>
+      </tr>
+      <tr>
+        <td>Talent and capital misaligned horizons</td>
+        <td>Same 10–15+ year posture for capital and 10-year vesting for key team; Founding Partner hiring rights bind the raise to recruiting.</td>
+      </tr>
+      <tr>
+        <td>Regulatory / insurance friction</td>
+        <td>Insurance &amp; SLA partners are an explicit stream and institutional path; disputes already have an admin path that can mature into partnered coverage.</td>
+      </tr>
+      <tr>
+        <td>Model numbers are ambitious</td>
+        <td>All projections are interactive scenarios. Conservative dials exist. Structure does not require the aggressive case to justify permanent capital alignment.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>14. The ask</h2>
+  <div class="box accent">
+    <ul class="clean" style="margin-bottom:0;">
+      <li><strong>Financial commitment</strong> into a permanent or long-dated (10–15+ year) vehicle.</li>
+      <li><strong>Preferred commercial rights</strong> that deepen only with network performance — not static exclusivity.</li>
+      <li><strong>Optional Founding Partner seat</strong> with hiring / advisory rights so the raise also builds the team.</li>
+      <li><strong>Shared long horizon</strong> aligned with 10-year team vesting and ordinary non-competes.</li>
+    </ul>
+  </div>
+  <p>
+    Raise size orientation uses the investors-page dials (conservative / base / aggressive). Final structure, rights package, and any Founding Partner terms are set in definitive documents after diligence and discussion.
+  </p>
+
+  <h2>15. Use of funds (priority order)</h2>
+  <ol style="margin:0.2em 0 0.6em 1.15em;">
+    <li>Exchange reliability, matching quality, and path to on-platform escrow / take-rate</li>
+    <li>Density: supply (seats, fleets, operators) and demand (buyers, campaigns, institutional)</li>
+    <li>Compliance, seat issuance ops, and insurance / SLA partnerships</li>
+    <li>Franchise support (Garage, Lighthouse) and hardware referral infrastructure</li>
+    <li>Design services capacity (task/workflow design that seeds matchable demand)</li>
+    <li>Core team that can ship and maintain the open marketplace layer</li>
+  </ol>
+
+  <h2>16. Next steps</h2>
+  <ol style="margin:0.2em 0 0.7em 1.15em;">
+    <li>Review the live 15-year model, stream charts, and cap-table explorer at <span class="mono">therobotservicesexchange.com/investors.html</span></li>
+    <li>Review founding-seat posture, equity outcomes, and team terms at <span class="mono">therobotservicesexchange.com/hiring.html</span></li>
+    <li>Discuss permanent capital structure, preferred-rights package, and Founding Partner hiring rights with the creator</li>
+  </ol>
+
+  <div class="box">
+    <h3>Contact</h3>
+    <p style="margin-bottom:0.15em;"><strong>Mickey Shaughnessy</strong> · Creator</p>
+    <p class="mono" style="margin-bottom:0.15em;">@MichaelSha10041</p>
+    <p class="mono" style="margin-bottom:0;">therobotservicesexchange.com · API: rse-api.com</p>
+  </div>
+
+  <p class="muted" style="margin-top:0.9em;font-size:8pt;line-height:1.4;">
+    <strong>Disclaimer.</strong> This business plan is for discussion and scenario planning only. It is not an offer, solicitation, or indication of interest. No commitment is implied. Projections, valuations, seat economics, and raise dials are illustrative and derived from the interactive model on the investors page; they are not guarantees of future performance. Nothing herein is financial, legal, or tax advice. Preferred rights, founding seats, Golden Seats, equity grants, vesting, and non-competes are subject to definitive documentation and applicable law. Past or modeled performance is not indicative of future results.
+  </p>
+
+  <div class="page-footer">
+    <span>© 2026 The RSE Protocol</span>
+    <span>Page 4 of 4</span>
+  </div>
+</section>
+
+
+    </main>
+    <footer class="footer site-chrome">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>The RSE</h5>
+                    <p>Open robot labor marketplace.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Links</h5>
+                    <a href="index.html">Home</a>
+                    <a href="hiring.html">Hiring</a>
+                    <a href="investors.html">Investors</a>
+                    <a href="business_plan.html">Business Plan</a>
+                    <a href="investors_guide.html">Investors Guide</a>
+                    <a href="about.html">About</a>
+                </div>
+                <div class="col-md-4">
+                    <h5>Connect</h5>
+                    <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">X</a>
+                    <a href="https://github.com/mickeyshaughnessy/theservicesexchange">GitHub</a>
+                </div>
+            </div>
+            <div class="mt-5 pt-4 border-top border-secondary text-center">
+                <p class="mb-0">&copy; 2026 The RSE Protocol. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js?v=25"></script>
+</body>
+</html>

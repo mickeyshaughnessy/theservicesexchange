@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a2e">
-    <meta name="description" content="Hiring at The RSE — help build the open marketplace for robot labor. Equity, family housing, and a team that actually spends time outside.">
+    <meta name="description" content="Hiring at The RSE — help build the open marketplace for robot labor. Equity, manufacturer access, family housing, and a team that actually spends time outside.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="The RSE">
@@ -15,7 +15,7 @@
 
     <title>The RSE — Hiring</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=25" rel="stylesheet">
+    <link href="styles.css?v=27" rel="stylesheet">
     <style>
         .hire-prose {
             max-width: 760px;
@@ -80,12 +80,54 @@
             line-height: 1.7;
             margin-bottom: 0.85rem;
         }
-        .hire-why p {
+        .hire-why p, .hire-why li {
             font-family: 'Share Tech Mono', monospace;
             color: var(--text);
             font-size: 0.92rem;
             line-height: 1.85;
+        }
+        .hire-why p { margin-bottom: 0.85rem; }
+        .hire-why p:last-child { margin-bottom: 0; }
+        .hire-why ul {
+            margin: 0.5rem 0 0;
+            padding-left: 1.2rem;
+        }
+        .hire-why li { margin-bottom: 0.4rem; }
+        .hire-scale {
+            border-color: rgba(57,255,20,0.4);
+        }
+        .hire-scale h3 {
+            color: var(--accent);
+        }
+        .hire-horizon {
+            max-width: 760px;
+            margin: 0 auto 1.25rem;
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.3);
+            padding: 1.4rem 1.6rem;
+        }
+        .hire-horizon .when {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.55rem;
+            color: var(--primary);
+            letter-spacing: 0.04em;
+            margin-bottom: 0.55rem;
+            line-height: 1.6;
+        }
+        .hire-horizon p {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text);
+            font-size: 0.9rem;
+            line-height: 1.8;
             margin-bottom: 0;
+        }
+        .hire-note {
+            max-width: 760px;
+            margin: 0 auto 2.5rem;
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-dim);
+            font-size: 0.82rem;
+            line-height: 1.7;
         }
         .hire-close {
             max-width: 760px;
@@ -126,6 +168,8 @@
                             <li><a class="dropdown-item" href="about.html">About</a></li>
                             <li><a class="dropdown-item" href="garage.html">Garage</a></li>
                             <li><a class="dropdown-item" href="investors.html">Investors</a></li>
+                            <li><a class="dropdown-item" href="business_plan.html">Business Plan</a></li>
+                            <li><a class="dropdown-item" href="investors_guide.html">Investors Guide</a></li>
                             <li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
                         </ul>
                     </li>
@@ -162,73 +206,155 @@
     <section class="hero" style="padding: 100px 0 60px;" id="main-content" tabindex="-1">
         <div class="container">
             <h1>Hiring</h1>
-            <p>Help build the open marketplace for robot labor.</p>
+            <p>The Robot Services Exchange (RSE)</p>
         </div>
     </section>
 
     <section class="py-5" style="background: var(--bg-deep);">
         <div class="container">
+            <h2 class="hire-section-title">MISSION</h2>
             <div class="hire-prose">
-                <p class="lede">Buyers post work. Providers — robots and the people who run them — grab matches by capability, location, reputation, and price. Both sides rate the job. Liquidity compounds the way it does on any two-sided market: more density, better matches, higher trust, lower friction.</p>
-                <p>We are not building another closed fleet or vertical SaaS. We are building the neutral exchange layer — the match loop, the job channel, ratings, seats, and the primitives that let anyone request or deploy physical work. The goal is a liquid, reputation-backed market that runs itself as volume grows.</p>
+                <p class="lede">Build the open marketplace for robot labor. Buyers post work. Providers (robots + operators) grab matches by capability, location, reputation, and price. Both sides rate completion. The system compounds liquidity the same way any two-sided market does—more density, better matches, higher trust, lower friction.</p>
+                <p>We are not building another closed fleet or vertical SaaS. We are building the neutral exchange layer: match loop, job channel, ratings, seats, and the primitives that let anyone deploy or request physical work at scale. The goal is a liquid, reputation-backed market for robot services that runs itself as volume grows.</p>
+            </div>
+            <div class="hire-why hire-scale">
+                <h3>Why it scales on Earth</h3>
+                <p>Human labor GMV sits in the tens of trillions. Making robot labor liquid and reputation-backed is one of the highest-leverage ways to shift physical work from scarce human hours to abundant machine capacity. The result is higher productivity, lower marginal cost for maintenance and infrastructure, and more human time available for everything that is not pure toil. The exchange is the matching layer that makes that shift compound.</p>
             </div>
 
-            <h2 class="hire-section-title">THE EXCHANGE</h2>
+            <h2 class="hire-section-title">THE SYSTEM</h2>
             <div class="row g-4 mb-5" style="max-width:960px;margin:0 auto 3rem;">
                 <div class="col-md-6">
                     <div class="hire-card">
                         <h3>Demand posts a bid</h3>
-                        <p>Service, price, location — one-shot or recurring. Open until a provider takes it.</p>
+                        <p>Service, price, location, one-shot or recurring.</p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="hire-card">
                         <h3>Supply grabs the fit</h3>
-                        <p>AI ranks capability, proximity, and price. Reputation breaks ties. A seat — an ERC-721 on Base — is what lets a provider take work.</p>
+                        <p>Jobs that match capability, reputation, and proximity. AI ranks fit; reputation breaks ties.</p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="hire-card">
-                        <h3>Both sides sign</h3>
-                        <p>Completion and ratings travel through <code>/sign_job</code>. Scores follow you onto the next job. Settlement stays between the parties.</p>
+                        <h3>Both sides rate</h3>
+                        <p>Complete and rate via <code>/sign_job</code>. Scores travel with the next job.</p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="hire-card">
-                        <h3>The market densifies</h3>
-                        <p>Rated jobs raise the signal. Better matches bring volume. Volume brings seats. Take-rate appears only as the network fills in. Everything is API-first.</p>
+                        <h3>Settlement stays between parties</h3>
+                        <p>Platform take-rate and the other streams (seats, hardware referrals, attention, franchises, fund fees, insurance/SLA, design services) appear as density grows. Seat primary issuance is the bulk of modeled project revenue.</p>
                     </div>
                 </div>
+                <div class="col-md-6">
+                    <div class="hire-card">
+                        <h3>Seats gate supply</h3>
+                        <p>Supply seats are limited ERC-721 tokens on Base. Providers need a seat to grab work.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="hire-card">
+                        <h3>API-first</h3>
+                        <p>Operators, manufacturers, and agents integrate directly.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="hire-prose">
+                <p>The flywheel is simple: more completed, rated jobs → higher reputation signal → better matching → more volume → more seats and density.</p>
             </div>
 
             <h2 class="hire-section-title">WHY JOIN</h2>
             <div class="hire-prose">
-                <p>We hire people who want to ship that infrastructure — and who want the team itself to be high-agency, high-trust, and fun.</p>
+                <p>We are hiring people who want to ship the infrastructure for physical work markets—and who want the team itself to be high-agency, high-trust, and fun.</p>
             </div>
 
             <div class="hire-why">
-                <h3>Own a piece of the exchange</h3>
-                <p>Competitive salary so you can focus, and meaningful equity so early team members have real upside as the market scales — not headcount theater.</p>
-            </div>
-            <div class="hire-why">
-                <h3>Meet the people deploying robots</h3>
-                <p>High-signal introductions across operators, hardware teams, investors, and builders already in the network. You will meet the people buying and selling robot labor, not just the conference circuit.</p>
-            </div>
-            <div class="hire-why">
-                <h3>Live where the team actually is</h3>
-                <p>Family housing support in Lakewood, Destin, Camas, and Missoula — Destin being Florida’s top fishing destination, the “World’s Luckiest Fishing Village.” These are not abstract stipends. They exist so you and your family can be in the same physical places without fighting short-term housing.</p>
-            </div>
-            <div class="hire-why">
-                <h3>Most in-person time is outside</h3>
-                <p>Mountain biking, river floating, fishing, hunting, hiking, adventure travel. Not a wellness program. The team spends real time under physical load, solving problems and having fun together.</p>
+                <h3>Compensation &amp; Ownership</h3>
+                <p>Competitive salary.</p>
+                <p>Meaningful equity. Early team members own a real piece of the exchange layer as it scales.</p>
+                <p>Direct upside tied to the marketplace succeeding.</p>
             </div>
 
-            <div class="hire-prose" style="margin-top:2.5rem;">
-                <p>Every benefit exists for one reason: so we can have fun together. High-trust groups form when people repeatedly do hard and enjoyable things in the same towns. Cash, equity, housing, and time outside are the infrastructure that lets this team last.</p>
+            <h2 class="hire-section-title">ILLUSTRATIVE EQUITY OUTCOMES</h2>
+            <div class="hire-prose">
+                <p>Down-the-middle case, aligned to the <a href="investors.html">public model</a>.</p>
+                <p>The investor model on the site treats ~$60T of human labor GMV as the Earth-scale TAM, not a model input. The live base case assumes robot labor GMV of ~$10T by 2035 (5% take-rate) and primary seat issuance peaking near ~$50T around 2030 ($100k × 500M new seats that year, ~1B seats over 2026–2030). Those are the default dials used for the long-term projections across eight streams: take-rate, seats, hardware, attention, franchises, Hyperion, insurance/SLA, and design services.</p>
+                <p>Assume ~30% of total equity is shared among the first 5–6 employees (roughly 5% each on average, with natural variation by role and timing). The numbers below are not promises or forecasts—they simply translate that ownership stake against the scale the public model already shows if the exchange becomes the default matching layer for a large share of robot labor.</p>
+            </div>
+
+            <div class="hire-horizon">
+                <div class="when">1-year · ≈2027</div>
+                <p>Product is live, early density is forming, the first slice of the 1B-seat primary issuance and first hardware referrals are beginning. Equity remains highly illiquid paper. Valuation is still early-stage. A successful seed/Series A outcome keeps individual early stakes in the low-to-mid single-digit millions of dollars on paper at best—still high-risk, high-ownership.</p>
+            </div>
+            <div class="hire-horizon">
+                <div class="when">5-year · ≈2031</div>
+                <p>Seat primary issuance is in or just past its peak window (~2030 in the base case, ~$50T that year). GMV is climbing steeply toward the multi-trillion range. Take-rate, seats, and hardware are generating very large absolute revenue; insurance and design are smaller, rougher overlays. In a successful realization of the model, a ~5% early-employee stake can already represent hundreds of millions to low billions of dollars on paper (or in secondary liquidity), driven primarily by the seat ramp and early network effects.</p>
+            </div>
+            <div class="hire-horizon">
+                <div class="when">10-year · ≈2036</div>
+                <p>Robot labor GMV is at or past the ~$10T 2035 base and still climbing on the model’s 2040 path (~$32T). Take-rate has become the dominant recurring engine; seats have largely plateaued after the ~2030 primary-issuance peak. The exchange is infrastructure-scale. A ~5% early stake in a successful outcome sits in the multi-billion-dollar range, with the exact figure depending on realized take-rate, capital structure, and how much of the modeled GMV the platform actually clears.</p>
+            </div>
+            <div class="hire-horizon">
+                <div class="when">20-year · ≈2046</div>
+                <p>The marketplace is mature utility infrastructure. Ongoing take-rate on a large fraction of global robot labor, residual seat economics, hardware referrals, attention products, franchises, fund fees, insurance/SLA, and design services produce durable, high-margin cash flow. Early equity at the ~5% level compounds into generational (or larger) wealth in the successful long-tail case that tracks the model’s ambition. Ordinary risks of markets, competition, regulation, and execution remain.</p>
+            </div>
+            <p class="hire-note">These outcomes assume the team executes and the exchange captures a durable position at the scale the public model already displays. Many paths are smaller; some could be larger. The point of early equity is alignment: the people who build the core system own a meaningful share of what they create.</p>
+
+            <div class="hire-why">
+                <h3>Social Capital</h3>
+                <p>High-signal introductions across robotics operators, hardware teams, investors, and builders already in the network. You meet the people actually deploying robots and buying robot labor.</p>
+            </div>
+            <div class="hire-why">
+                <h3>Manufacturer Partnerships</h3>
+                <p>We actively develop relationships with robot OEMs, fleets, and hardware partners. As a team member you get:</p>
+                <ul>
+                    <li>Early access to new models for evaluation, testing, and field trials.</li>
+                    <li>Preferential pricing and allocation when acquiring hardware for personal or side use.</li>
+                    <li>Factory, R&amp;D, and operator site visits.</li>
+                    <li>Direct channels to manufacturer support and training.</li>
+                    <li>Opportunities to run or oversee joint demos and real-world deployments that feed back into the exchange.</li>
+                </ul>
+                <p>This is practical access to the supply side of the market we are building, including the hardware referral layer.</p>
+            </div>
+            <div class="hire-why">
+                <h3>Robot Service Credits</h3>
+                <p>Monthly credits (or zero-fee access) on the exchange for you and immediate family. Use the marketplace the same way customers do—lawn, delivery, inspection, cleaning, etc. Live inside the product.</p>
+            </div>
+            <div class="hire-why">
+                <h3>Hardware Access &amp; Lab Time</h3>
+                <p>Shared tools, spare parts, and test robots so you can wrench, prototype, and break things. Rotating physical access tied to the places we actually gather.</p>
+            </div>
+            <div class="hire-why">
+                <h3>Priority Seats</h3>
+                <p>Favorable terms on supply seats (the ERC-721 tokens required to grab work). Early team members get aligned exposure to the supply side of the marketplace.</p>
+            </div>
+            <div class="hire-why">
+                <h3>Family Housing Support</h3>
+                <p>Family housing benefits in the places we spend time together:</p>
+                <ul>
+                    <li>Lakewood</li>
+                    <li>Destin (Florida’s top fishing destination)</li>
+                    <li>Camas</li>
+                    <li>Missoula</li>
+                </ul>
+                <p>These exist so the team and families can be present in the same physical places without the usual housing friction.</p>
+            </div>
+            <div class="hire-why">
+                <h3>Fun</h3>
+                <p>Most in-person time is outdoor and active by design: mountain biking, river floating, fishing, hunting, hiking, and other adventure travel. The point is shared time outside, under load, solving problems and having fun together.</p>
+            </div>
+
+            <h2 class="hire-section-title">WHY THE BENEFITS EXIST</h2>
+            <div class="hire-prose">
+                <p>Every benefit above exists for one reason: to support the team having fun together.</p>
+                <p>High-trust, high-output groups form when people repeatedly do hard and enjoyable things in the same physical places. Cash, equity with real long-term upside at the scale the model already shows, manufacturer access, robot credits, seats, housing in the right towns, and shared adventure time are the practical infrastructure that makes that possible.</p>
+                <p>The work is building an open robot labor market. The culture is the team that can sustain that work for years without burning out or turning into a typical remote company.</p>
             </div>
 
             <div class="hire-close py-4">
-                <p>If that mix of mission and lifestyle fits, reach out.</p>
+                <p>If that combination of mission + system + ownership + lifestyle fits, reach out.</p>
                 <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener" class="btn btn-primary btn-lg">@MichaelSha10041</a>
             </div>
         </div>
@@ -245,6 +371,9 @@
                     <h5>Links</h5>
                     <a href="index.html">Home</a>
                     <a href="hiring.html">Hiring</a>
+                    <a href="investors.html">Investors</a>
+                    <a href="business_plan.html">Business Plan</a>
+                    <a href="investors_guide.html">Investors Guide</a>
                     <a href="about.html">About</a>
                     <a href="api_docs.html">API Documentation</a>
                 </div>

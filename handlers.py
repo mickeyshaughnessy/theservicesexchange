@@ -6152,11 +6152,19 @@ _BASE_AUM = {
     2031: 100e9, 2032: 220e9, 2033: 400e9, 2034: 650e9, 2035: 1e12,
     2036: 1.4e12, 2037: 1.85e12, 2038: 2.3e12, 2039: 2.8e12, 2040: 3.3e12,
 }
+_BASE_DESIGN = {
+    2026: 15e6, 2027: 60e6, 2028: 200e6, 2029: 600e6, 2030: 1.5e9,
+    2031: 3.5e9, 2032: 6e9, 2033: 9e9, 2034: 12e9, 2035: 15e9,
+    2036: 18e9, 2037: 21e9, 2038: 24e9, 2039: 27e9, 2040: 30e9,
+}
 _ASP = 25000.0
 _AFF = 0.03
 _FIN_ATTACH = 0.40
 _FIN_FEE = 0.015
 _HYP_RATE = 0.028
+_INS_INST = 0.25
+_INS_PREMIUM = 0.018
+_INS_CUT = 0.15
 _BASE_GMV_2035 = 10e12
 _COST_BANDS = {
     "exchange": (0.35, 0.12),
@@ -6165,8 +6173,12 @@ _COST_BANDS = {
     "ads": (0.45, 0.28),
     "franchise": (0.55, 0.35),
     "hyperion": (0.50, 0.30),
+    "insurance": (0.40, 0.22),
+    "design": (0.55, 0.32),
 }
-_STREAM_KEYS = ("exchange", "seats", "hardware", "ads", "franchise", "hyperion")
+_STREAM_KEYS = (
+    "exchange", "seats", "hardware", "ads", "franchise", "hyperion", "insurance", "design"
+)
 _STREAM_LABELS = {
     "exchange": "Exchange take-rate",
     "seats": "Eternal seats",
@@ -6174,6 +6186,8 @@ _STREAM_LABELS = {
     "ads": "Nearby / ads",
     "franchise": "Franchising",
     "hyperion": "Hyperion Fund fees",
+    "insurance": "Insurance & SLA",
+    "design": "Design services",
 }
 # Unmitigated path risk premium by stream (added to base discount)
 _STREAM_BASE_RISK = {
@@ -6183,6 +6197,8 @@ _STREAM_BASE_RISK = {
     "ads": 0.15,
     "franchise": 0.16,
     "hyperion": 0.13,
+    "insurance": 0.18,
+    "design": 0.17,
 }
 # Max fraction of stream risk that a perfectly aligned syndicate can remove
 _STREAM_MAX_MITIGATION = {
@@ -6192,44 +6208,46 @@ _STREAM_MAX_MITIGATION = {
     "ads": 0.45,
     "franchise": 0.40,
     "hyperion": 0.55,
+    "insurance": 0.35,
+    "design": 0.35,
 }
 # Investor → stream affinity weights (how strongly they de-risk each stream)
 _INVESTOR_STREAM_AFFINITY: Dict[str, Dict[str, float]] = {
-    "spacex_tesla": {"exchange": 0.9, "seats": 0.7, "hardware": 0.85, "ads": 0.2, "franchise": 0.25, "hyperion": 0.3},
-    "nvidia": {"exchange": 0.55, "seats": 0.35, "hardware": 1.0, "ads": 0.25, "franchise": 0.15, "hyperion": 0.35},
-    "unitree": {"exchange": 0.4, "seats": 0.45, "hardware": 1.0, "ads": 0.1, "franchise": 0.35, "hyperion": 0.15},
-    "boston_dynamics_hyundai": {"exchange": 0.55, "seats": 0.5, "hardware": 0.95, "ads": 0.15, "franchise": 0.45, "hyperion": 0.2},
-    "inqtel": {"exchange": 0.5, "seats": 0.25, "hardware": 0.35, "ads": 0.1, "franchise": 0.1, "hyperion": 0.2},
-    "google_alphabet": {"exchange": 0.75, "seats": 0.4, "hardware": 0.35, "ads": 1.0, "franchise": 0.2, "hyperion": 0.35},
-    "microsoft": {"exchange": 0.7, "seats": 0.35, "hardware": 0.4, "ads": 0.45, "franchise": 0.2, "hyperion": 0.4},
-    "amazon_aws": {"exchange": 0.85, "seats": 0.45, "hardware": 0.55, "ads": 0.5, "franchise": 0.25, "hyperion": 0.3},
-    "softbank": {"exchange": 0.6, "seats": 0.7, "hardware": 0.45, "ads": 0.35, "franchise": 0.4, "hyperion": 0.65},
-    "pif_saudi": {"exchange": 0.45, "seats": 0.55, "hardware": 0.4, "ads": 0.2, "franchise": 0.55, "hyperion": 0.8},
-    "nbim_norway": {"exchange": 0.35, "seats": 0.4, "hardware": 0.25, "ads": 0.2, "franchise": 0.3, "hyperion": 0.85},
-    "kic_korea": {"exchange": 0.4, "seats": 0.45, "hardware": 0.55, "ads": 0.25, "franchise": 0.35, "hyperion": 0.75},
-    "temasek": {"exchange": 0.5, "seats": 0.5, "hardware": 0.4, "ads": 0.3, "franchise": 0.4, "hyperion": 0.8},
-    "a16z": {"exchange": 0.9, "seats": 0.65, "hardware": 0.4, "ads": 0.45, "franchise": 0.35, "hyperion": 0.4},
-    "sequoia": {"exchange": 0.9, "seats": 0.7, "hardware": 0.4, "ads": 0.45, "franchise": 0.4, "hyperion": 0.4},
-    "benchmark": {"exchange": 0.95, "seats": 0.55, "hardware": 0.3, "ads": 0.5, "franchise": 0.3, "hyperion": 0.25},
-    "founders_fund": {"exchange": 0.7, "seats": 0.5, "hardware": 0.55, "ads": 0.25, "franchise": 0.25, "hyperion": 0.35},
-    "khosla": {"exchange": 0.65, "seats": 0.4, "hardware": 0.7, "ads": 0.25, "franchise": 0.25, "hyperion": 0.3},
-    "accel": {"exchange": 0.75, "seats": 0.55, "hardware": 0.35, "ads": 0.4, "franchise": 0.35, "hyperion": 0.3},
-    "lightspeed": {"exchange": 0.7, "seats": 0.5, "hardware": 0.35, "ads": 0.4, "franchise": 0.3, "hyperion": 0.3},
-    "index": {"exchange": 0.75, "seats": 0.5, "hardware": 0.3, "ads": 0.4, "franchise": 0.35, "hyperion": 0.3},
-    "general_catalyst": {"exchange": 0.75, "seats": 0.55, "hardware": 0.4, "ads": 0.35, "franchise": 0.35, "hyperion": 0.35},
-    "bessemer": {"exchange": 0.7, "seats": 0.5, "hardware": 0.3, "ads": 0.35, "franchise": 0.3, "hyperion": 0.3},
-    "coatue": {"exchange": 0.55, "seats": 0.55, "hardware": 0.35, "ads": 0.55, "franchise": 0.25, "hyperion": 0.5},
-    "tiger": {"exchange": 0.5, "seats": 0.55, "hardware": 0.3, "ads": 0.45, "franchise": 0.25, "hyperion": 0.5},
-    "insight": {"exchange": 0.6, "seats": 0.5, "hardware": 0.3, "ads": 0.4, "franchise": 0.3, "hyperion": 0.4},
-    "thrive": {"exchange": 0.7, "seats": 0.55, "hardware": 0.35, "ads": 0.5, "franchise": 0.3, "hyperion": 0.35},
-    "blackrock": {"exchange": 0.45, "seats": 0.5, "hardware": 0.3, "ads": 0.3, "franchise": 0.35, "hyperion": 1.0},
-    "bezos_expeditions": {"exchange": 0.65, "seats": 0.5, "hardware": 0.45, "ads": 0.3, "franchise": 0.35, "hyperion": 0.45},
-    "emerson_collective": {"exchange": 0.4, "seats": 0.35, "hardware": 0.25, "ads": 0.35, "franchise": 0.45, "hyperion": 0.35},
-    "walton_enterprises": {"exchange": 0.55, "seats": 0.4, "hardware": 0.35, "ads": 0.45, "franchise": 0.55, "hyperion": 0.4},
-    "caterpillar_ventures": {"exchange": 0.6, "seats": 0.4, "hardware": 0.75, "ads": 0.15, "franchise": 0.4, "hyperion": 0.2},
-    "lockheed_ventures": {"exchange": 0.55, "seats": 0.3, "hardware": 0.5, "ads": 0.1, "franchise": 0.15, "hyperion": 0.2},
-    "palantir": {"exchange": 0.7, "seats": 0.35, "hardware": 0.4, "ads": 0.2, "franchise": 0.2, "hyperion": 0.35},
-    "samsung_ventures": {"exchange": 0.4, "seats": 0.4, "hardware": 0.85, "ads": 0.3, "franchise": 0.3, "hyperion": 0.25},
+    "spacex_tesla": {"exchange": 0.9, "seats": 0.7, "hardware": 0.85, "ads": 0.2, "franchise": 0.25, "hyperion": 0.3, "insurance": 0.25, "design": 0.30},
+    "nvidia": {"exchange": 0.55, "seats": 0.35, "hardware": 1.0, "ads": 0.25, "franchise": 0.15, "hyperion": 0.35, "insurance": 0.25, "design": 0.30},
+    "unitree": {"exchange": 0.4, "seats": 0.45, "hardware": 1.0, "ads": 0.1, "franchise": 0.35, "hyperion": 0.15, "insurance": 0.25, "design": 0.30},
+    "boston_dynamics_hyundai": {"exchange": 0.55, "seats": 0.5, "hardware": 0.95, "ads": 0.15, "franchise": 0.45, "hyperion": 0.2, "insurance": 0.25, "design": 0.30},
+    "inqtel": {"exchange": 0.5, "seats": 0.25, "hardware": 0.35, "ads": 0.1, "franchise": 0.1, "hyperion": 0.2, "insurance": 0.65, "design": 0.30},
+    "google_alphabet": {"exchange": 0.75, "seats": 0.4, "hardware": 0.35, "ads": 1.0, "franchise": 0.2, "hyperion": 0.35, "insurance": 0.25, "design": 0.65},
+    "microsoft": {"exchange": 0.7, "seats": 0.35, "hardware": 0.4, "ads": 0.45, "franchise": 0.2, "hyperion": 0.4, "insurance": 0.25, "design": 0.70},
+    "amazon_aws": {"exchange": 0.85, "seats": 0.45, "hardware": 0.55, "ads": 0.5, "franchise": 0.25, "hyperion": 0.3, "insurance": 0.25, "design": 0.50},
+    "softbank": {"exchange": 0.6, "seats": 0.7, "hardware": 0.45, "ads": 0.35, "franchise": 0.4, "hyperion": 0.65, "insurance": 0.25, "design": 0.30},
+    "pif_saudi": {"exchange": 0.45, "seats": 0.55, "hardware": 0.4, "ads": 0.2, "franchise": 0.55, "hyperion": 0.8, "insurance": 0.60, "design": 0.30},
+    "nbim_norway": {"exchange": 0.35, "seats": 0.4, "hardware": 0.25, "ads": 0.2, "franchise": 0.3, "hyperion": 0.85, "insurance": 0.70, "design": 0.30},
+    "kic_korea": {"exchange": 0.4, "seats": 0.45, "hardware": 0.55, "ads": 0.25, "franchise": 0.35, "hyperion": 0.75, "insurance": 0.25, "design": 0.30},
+    "temasek": {"exchange": 0.5, "seats": 0.5, "hardware": 0.4, "ads": 0.3, "franchise": 0.4, "hyperion": 0.8, "insurance": 0.65, "design": 0.30},
+    "a16z": {"exchange": 0.9, "seats": 0.65, "hardware": 0.4, "ads": 0.45, "franchise": 0.35, "hyperion": 0.4, "insurance": 0.25, "design": 0.30},
+    "sequoia": {"exchange": 0.9, "seats": 0.7, "hardware": 0.4, "ads": 0.45, "franchise": 0.4, "hyperion": 0.4, "insurance": 0.25, "design": 0.30},
+    "benchmark": {"exchange": 0.95, "seats": 0.55, "hardware": 0.3, "ads": 0.5, "franchise": 0.3, "hyperion": 0.25, "insurance": 0.25, "design": 0.30},
+    "founders_fund": {"exchange": 0.7, "seats": 0.5, "hardware": 0.55, "ads": 0.25, "franchise": 0.25, "hyperion": 0.35, "insurance": 0.25, "design": 0.55},
+    "khosla": {"exchange": 0.65, "seats": 0.4, "hardware": 0.7, "ads": 0.25, "franchise": 0.25, "hyperion": 0.3, "insurance": 0.25, "design": 0.30},
+    "accel": {"exchange": 0.75, "seats": 0.55, "hardware": 0.35, "ads": 0.4, "franchise": 0.35, "hyperion": 0.3, "insurance": 0.25, "design": 0.30},
+    "lightspeed": {"exchange": 0.7, "seats": 0.5, "hardware": 0.35, "ads": 0.4, "franchise": 0.3, "hyperion": 0.3, "insurance": 0.25, "design": 0.30},
+    "index": {"exchange": 0.75, "seats": 0.5, "hardware": 0.3, "ads": 0.4, "franchise": 0.35, "hyperion": 0.3, "insurance": 0.25, "design": 0.30},
+    "general_catalyst": {"exchange": 0.75, "seats": 0.55, "hardware": 0.4, "ads": 0.35, "franchise": 0.35, "hyperion": 0.35, "insurance": 0.25, "design": 0.30},
+    "bessemer": {"exchange": 0.7, "seats": 0.5, "hardware": 0.3, "ads": 0.35, "franchise": 0.3, "hyperion": 0.3, "insurance": 0.25, "design": 0.30},
+    "coatue": {"exchange": 0.55, "seats": 0.55, "hardware": 0.35, "ads": 0.55, "franchise": 0.25, "hyperion": 0.5, "insurance": 0.25, "design": 0.30},
+    "tiger": {"exchange": 0.5, "seats": 0.55, "hardware": 0.3, "ads": 0.45, "franchise": 0.25, "hyperion": 0.5, "insurance": 0.25, "design": 0.30},
+    "insight": {"exchange": 0.6, "seats": 0.5, "hardware": 0.3, "ads": 0.4, "franchise": 0.3, "hyperion": 0.4, "insurance": 0.25, "design": 0.30},
+    "thrive": {"exchange": 0.7, "seats": 0.55, "hardware": 0.35, "ads": 0.5, "franchise": 0.3, "hyperion": 0.35, "insurance": 0.25, "design": 0.30},
+    "blackrock": {"exchange": 0.45, "seats": 0.5, "hardware": 0.3, "ads": 0.3, "franchise": 0.35, "hyperion": 1.0, "insurance": 0.85, "design": 0.30},
+    "bezos_expeditions": {"exchange": 0.65, "seats": 0.5, "hardware": 0.45, "ads": 0.3, "franchise": 0.35, "hyperion": 0.45, "insurance": 0.25, "design": 0.30},
+    "emerson_collective": {"exchange": 0.4, "seats": 0.35, "hardware": 0.25, "ads": 0.35, "franchise": 0.45, "hyperion": 0.35, "insurance": 0.25, "design": 0.30},
+    "walton_enterprises": {"exchange": 0.55, "seats": 0.4, "hardware": 0.35, "ads": 0.45, "franchise": 0.55, "hyperion": 0.4, "insurance": 0.25, "design": 0.30},
+    "caterpillar_ventures": {"exchange": 0.6, "seats": 0.4, "hardware": 0.75, "ads": 0.15, "franchise": 0.4, "hyperion": 0.2, "insurance": 0.25, "design": 0.30},
+    "lockheed_ventures": {"exchange": 0.55, "seats": 0.3, "hardware": 0.5, "ads": 0.1, "franchise": 0.15, "hyperion": 0.2, "insurance": 0.70, "design": 0.30},
+    "palantir": {"exchange": 0.7, "seats": 0.35, "hardware": 0.4, "ads": 0.2, "franchise": 0.2, "hyperion": 0.35, "insurance": 0.25, "design": 0.70},
+    "samsung_ventures": {"exchange": 0.4, "seats": 0.4, "hardware": 0.85, "ads": 0.3, "franchise": 0.3, "hyperion": 0.25, "insurance": 0.25, "design": 0.30},
 }
 
 
@@ -6345,6 +6363,8 @@ def _build_projection_series(p: Dict[str, float]) -> Dict[str, Any]:
             + l_active * lighthouse_gross * lighthouse_royalty
         )
         hyperion = _BASE_AUM[y] * n * _HYP_RATE
+        insurance = gmv * _INS_INST * _INS_PREMIUM * _INS_CUT
+        design = _BASE_DESIGN[y] * n
         revs = {
             "exchange": exchange,
             "seats": seats,
@@ -6352,6 +6372,8 @@ def _build_projection_series(p: Dict[str, float]) -> Dict[str, Any]:
             "ads": ads,
             "franchise": franchise,
             "hyperion": hyperion,
+            "insurance": insurance,
+            "design": design,
         }
         costs = {
             k: revs[k] * _cost_ratio(y, *_COST_BANDS[k]) for k in _STREAM_KEYS
@@ -6396,6 +6418,7 @@ def _stream_risk_from_cap_table(selected: List[Dict[str, Any]]) -> Dict[str, Any
         aff = _INVESTOR_STREAM_AFFINITY.get(iid) or {
             "exchange": 0.35, "seats": 0.35, "hardware": 0.3,
             "ads": 0.25, "franchise": 0.25, "hyperion": 0.3,
+            "insurance": 0.25, "design": 0.3,
         }
         # Larger checks / mega tiers de-risk more (capital + credibility)
         tier_boost = {
@@ -6705,7 +6728,7 @@ def _cap_table_heuristic(
         synergies.append({
             "theme": "Diversified capital stack",
             "strength": "medium",
-            "rationale": "Broad syndicate applies moderate risk mitigation across all six revenue streams.",
+            "rationale": "Broad syndicate applies moderate risk mitigation across all eight revenue streams.",
         })
 
     weak = [r for r in stream_risk.values() if r["mitigation_frac"] < 0.12]
@@ -6739,7 +6762,7 @@ def _cap_table_heuristic(
         f"{_fmt_usd_short(focus['pre_money_usd'])} pre / {_fmt_usd_short(focus['post_money_usd'])} post "
         f"(~{focus['equity_sold_pct']}% to investors, ~{focus['esop_pct']}% ESOP, "
         f"~{focus['founder_equity_pct']}% founders/prior). "
-        f"Cap-table makeup sets residual risk premia on each of the six streams. "
+        f"Cap-table makeup sets residual risk premia on each of the eight streams. "
     )
     if notes:
         summary += f"Planner notes considered: {notes[:240]}"
@@ -6902,7 +6925,7 @@ def analyze_cap_table_synergy(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int
     focus = result["scenarios"].get(scenario) or result["scenarios"]["base"]
     proj = focus.get("projection") or {}
     stream_bits = []
-    for row in (focus.get("stream_valuation") or [])[:6]:
+    for row in (focus.get("stream_valuation") or [])[:8]:
         stream_bits.append(
             f"{row['label']}: risk {row['risk_premium']*100:.1f}% "
             f"(was {row['base_risk_premium']*100:.1f}%), NPV {_fmt_usd_short(row['npv'])}"

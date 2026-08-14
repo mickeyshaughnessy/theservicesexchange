@@ -15,7 +15,7 @@
 
     <title>The RSE Arazzo Workflow Specifications — The RSE</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=25" rel="stylesheet">
+    <link href="styles.css?v=27" rel="stylesheet">
     <style>
         .arazzo-header {
             background-color: var(--bg-dark);
@@ -246,6 +246,9 @@
                     <li class="nav-item"><a class="nav-link" href="examples.html">Examples</a></li>
                     <li class="nav-item"><a class="nav-link" href="campaigns.html">Campaigns</a></li>
                     <li class="nav-item"><a class="nav-link" href="hiring.html">Hiring</a></li>
+                    <li class="nav-item"><a class="nav-link" href="investors.html">Investors</a></li>
+                    <li class="nav-item"><a class="nav-link" href="business_plan.html">Business Plan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="investors_guide.html">Investors Guide</a></li>
                     <li class="nav-item"><a class="nav-link" href="portfolio.html">Portfolio</a></li>
                     <li class="nav-item"><a class="nav-link" href="grab_job.html">Find Work</a></li>
                     <li class="nav-item"><a class="nav-link" href="api_docs.html">API Docs</a></li>
@@ -527,7 +530,7 @@ workflows:
       - stepId: login
         description: >
           Authenticate with the newly created credentials to receive
-          an access_token (UUID, valid 24 hours). All subsequent
+          an access_token (UUID, valid 90 days). All subsequent
           steps pass this token in the Authorization header as
           "Bearer {token}".
         operationPath: '{$sourceDescriptions.rse-api}#/paths/~1login/post'
@@ -2741,6 +2744,9 @@ workflows:
                     <h5>Links</h5>
                     <a href="index.html">Home</a>
                     <a href="hiring.html">Hiring</a>
+                    <a href="investors.html">Investors</a>
+                    <a href="business_plan.html">Business Plan</a>
+                    <a href="investors_guide.html">Investors Guide</a>
                     <a href="api_docs.html">API Documentation</a>
                     <a href="arazzo.html">Arazzo Specs</a>
                 </div>
