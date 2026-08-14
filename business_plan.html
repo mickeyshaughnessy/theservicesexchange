@@ -36,10 +36,24 @@
 
   .rse-doc {
     font-family: 'IBM Plex Sans', system-ui, sans-serif;
-    color: var(--ink);
+    color: #121820;
     background: #e8ecf2;
     line-height: 1.48;
     font-size: 9.8pt;
+  }
+  .rse-doc p,
+  .rse-doc li,
+  .rse-doc td,
+  .rse-doc th,
+  .rse-doc h1,
+  .rse-doc h2,
+  .rse-doc h3,
+  .rse-doc .lede,
+  .rse-doc .page,
+  .rse-doc .box,
+  .rse-doc .callout,
+  .rse-doc .stream-list {
+    color: #121820 !important;
   }
 
   .rse-doc .page {
@@ -77,7 +91,7 @@
   .rse-doc h2 {
     font-size: 11.5pt;
     font-weight: 600;
-    color: var(--ink);
+    color: #0c1222;
     margin: 0.85em 0 0.35em;
     letter-spacing: -0.01em;
     border-bottom: 1px solid var(--rule);
@@ -86,12 +100,12 @@
   .rse-doc h3 {
     font-size: 10pt;
     font-weight: 600;
-    color: var(--ink-soft);
+    color: #1a2332;
     margin: 0.65em 0 0.2em;
   }
-  .rse-doc p { margin-bottom: 0.4em; }
-  .rse-doc .lede { font-size: 10.5pt; color: var(--ink-soft); line-height: 1.45; }
-  .rse-doc .muted { color: var(--muted); font-size: 8.8pt; }
+  .rse-doc p { margin-bottom: 0.4em; color: #121820; }
+  .rse-doc .lede { font-size: 10.5pt; color: #1a2332; line-height: 1.45; }
+  .rse-doc .muted { color: #3d4a5c; font-size: 8.8pt; }
   .rse-doc .mono { font-family: 'IBM Plex Mono', monospace; font-size: 8.5pt; }
 
   .rse-doc .page-header {
@@ -278,7 +292,7 @@
                 <ul class="navbar-nav ms-auto align-items-lg-center">
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="index.html?open=bid">Get Something</a></li>
-                    <li class="nav-item"><a class="nav-link" href="grab_job.html">Find Work</a></li>
+                    <li class="nav-item"><a class="nav-link" href="grab_job.html">Grab Job (Robots Only)</a></li>
                     <li class="nav-item"><a class="nav-link" href="campaigns.html">Campaigns</a></li>
                     <li class="nav-item"><a class="nav-link" href="hiring.html">Hiring</a></li>
                     <li class="nav-item dropdown">
@@ -292,8 +306,7 @@
                             <li><a class="dropdown-item" href="garage.html">Garage</a></li>
                             <li><a class="dropdown-item" href="investors.html">Investors</a></li>
                             <li><a class="dropdown-item active" href="business_plan.html" aria-current="page">Business Plan</a></li>
-                            <li><a class="dropdown-item" href="investors_guide.html">Investors Guide</a></li>
-                            <li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
+<li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -308,7 +321,6 @@
             <nav class="tab-row" aria-label="Investor documents">
                 <a href="investors.html">Investors</a>
                 <a class="active" aria-current="page" href="business_plan.html">Business Plan</a>
-                <a href="investors_guide.html">Investors Guide</a>
             </nav>
         </div>
     </div>
@@ -354,7 +366,7 @@
 
   <h2>3. Solution</h2>
   <p>
-    An open, API-first exchange: demand posts a bid (service, price, location — one-shot or recurring); supply grabs the fit; both sides sign and rate via <span class="mono">/sign_job</span>. Seats (ERC-721 on Base when verification is on) gate provider access. Reputation is mutual and portable. Settlement can remain between parties while the exchange records price and builds the data needed for on-platform escrow and take-rate. Campaigns handle bulk demand; job parties cover multi-agent work. Everything is designed so machines and operators can participate natively, not only through a human UI.
+    An open, API-first exchange. Demand is people bidding for a service on the website (job, price, location — one-shot or recurring). Supply is robots grabbing the fit on Grab Job or via the API at rse-api.com. Both sides sign and rate via <span class="mono">/sign_job</span>. Seats (ERC-721 on Base when verification is on) gate robot grab access. Reputation is mutual and portable. Settlement stays between the parties while the platform records price. The website is the human marketplace; the API is how machines integrate.
   </p>
 
   <h2>4. Market opportunity</h2>
@@ -597,7 +609,7 @@
     <h3>Contact</h3>
     <p style="margin-bottom:0.15em;"><strong>Mickey Shaughnessy</strong> · Creator</p>
     <p class="mono" style="margin-bottom:0.15em;">@MichaelSha10041</p>
-    <p class="mono" style="margin-bottom:0;">therobotservicesexchange.com · API: rse-api.com</p>
+    <p class="mono" style="margin-bottom:0;">Website: therobotservicesexchange.com · API: rse-api.com</p>
   </div>
 
   <p class="muted" style="margin-top:0.9em;font-size:8pt;line-height:1.4;">
@@ -625,7 +637,6 @@
                     <a href="hiring.html">Hiring</a>
                     <a href="investors.html">Investors</a>
                     <a href="business_plan.html">Business Plan</a>
-                    <a href="investors_guide.html">Investors Guide</a>
                     <a href="about.html">About</a>
                 </div>
                 <div class="col-md-4">

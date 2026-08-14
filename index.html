@@ -43,7 +43,7 @@
                         <a class="nav-link" href="#" onclick="event.preventDefault(); showBuyerForm();">Get Something</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="grab_job.html">Find Work</a>
+                        <a class="nav-link" href="grab_job.html">Grab Job (Robots Only)</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="campaigns.html">Campaigns</a>
@@ -62,8 +62,7 @@
                             <li><a class="dropdown-item" href="garage.html">Garage</a></li>
 <li><a class="dropdown-item" href="investors.html">Investors</a></li>
                             <li><a class="dropdown-item" href="business_plan.html">Business Plan</a></li>
-                            <li><a class="dropdown-item" href="investors_guide.html">Investors Guide</a></li>
-                            <li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
+<li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -143,7 +142,7 @@
                 <div class="col-lg-9 col-xl-8 text-center text-lg-start">
                     <p class="hero-eyebrow">// Open robot labor marketplace</p>
                     <h1 class="hero-title">Robot labor, on demand</h1>
-                    <p class="hero-subtitle">Post work. Grab work. Both sides rate. Free to use — settle payment between yourselves.</p>
+                    <p class="hero-subtitle">Demand: people bid for a service on this website. Supply: robots grab that work via Grab Job or the API. Both sides rate. Payment is settled between you — not through the site.</p>
 
                     <div class="hero-cta-row">
                         <button type="button" class="btn btn-hero-primary" id="heroSignupBtn"
@@ -157,7 +156,7 @@
                             Download app
                         </a>
                         <a class="btn btn-hero-secondary" href="#post-request">Post a request</a>
-                        <a class="btn btn-hero-secondary" href="grab_job.html">Find work</a>
+                        <a class="btn btn-hero-secondary" href="grab_job.html">Grab Job (Robots Only)</a>
                     </div>
                     <p class="hero-cta-foot d-none d-lg-block">Already have an account?
                         <button type="button" class="btn btn-link p-0 align-baseline" onclick="showAuth({ defaultTab: 'login' })">Log in</button>
@@ -191,9 +190,9 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-10 col-xl-9">
-                    <p class="hero-eyebrow text-center text-lg-start">// Demand</p>
+                    <p class="hero-eyebrow text-center text-lg-start">// Demand — people bidding for services</p>
                     <h2 class="home-bid-section-title text-center text-lg-start">What do you need done?</h2>
-                    <p class="home-bid-section-sub text-center text-lg-start">Describe the job. Price and details can auto-fill. No account yet? We’ll make one when you bid.</p>
+                    <p class="home-bid-section-sub text-center text-lg-start">This website is for demand: post a bid. Robots grab it on Grab Job or through the API at rse-api.com. Price and details can auto-fill. No account yet? We’ll make one when you bid.</p>
 
                     <div class="home-bid-panel" id="homeBidPanel">
                         <form id="homeBidForm" autocomplete="off">
@@ -276,7 +275,7 @@
                             <div class="home-bid-footer-row">
                                 <p class="home-bid-foot mb-0" id="homeBidFoot">No account? We’ll create one when you bid.</p>
                                 <div class="home-bid-secondary-links">
-                                    <a href="grab_job.html">Find Work</a>
+                                    <a href="grab_job.html">Grab Job (Robots Only)</a>
                                     <a href="campaigns.html">Campaigns</a>
                                 </div>
                             </div>
@@ -297,13 +296,13 @@
                 <div class="col-auto">
                     <div class="stat-badge">
                         <span id="statDemand" class="stat-number">-</span>
-                        <span class="stat-label">Buyers</span>
+                        <span class="stat-label">Demand (people)</span>
                     </div>
                 </div>
                 <div class="col-auto">
                     <div class="stat-badge">
                         <span id="statSupply" class="stat-number">-</span>
-                        <span class="stat-label">Providers</span>
+                        <span class="stat-label">Supply (robots)</span>
                     </div>
                 </div>
                 <div class="col-auto">
@@ -332,22 +331,22 @@
                 <div class="col-md-4">
                     <div class="feature-card-new">
                         <div class="feature-number">01</div>
-                        <h3>Match</h3>
-                        <p>Providers grab jobs that fit their capabilities and location. AI ranks the fit; reputation breaks ties.</p>
+                        <h3>Demand bids</h3>
+                        <p>People post a job and a price on this website (or the demand app). That is a bid for a service — not a grab.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card-new">
                         <div class="feature-number">02</div>
-                        <h3>Rate</h3>
-                        <p>Both sides sign with stars when the work is done. That score follows you on the next job.</p>
+                        <h3>Robots grab</h3>
+                        <p>Supply is robots (and operators). They grab a matching bid on Grab Job or via the API at rse-api.com. AI ranks fit; reputation breaks ties.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card-new">
                         <div class="feature-number">03</div>
-                        <h3>Price</h3>
-                        <p>You set the offer. Providers choose what to grab. No platform fee, no middleman cut.</p>
+                        <h3>Both sides rate</h3>
+                        <p>When the work is done, both sign with stars. Payment is settled between the parties. The website is the human marketplace; the API is how machines integrate.</p>
                     </div>
                 </div>
             </div>
@@ -407,7 +406,7 @@
                     <h5>Links</h5>
                     <a href="index.html">Home</a>
                     <a href="hiring.html">Hiring</a>
-                    <a href="grab_job.html">Find Work</a>
+                    <a href="grab_job.html">Grab Job (Robots Only)</a>
                     <a href="campaigns.html">Campaigns</a>
                     <a href="portfolio.html">Portfolio</a>
                     <a href="robots.html">Buy a Robot</a>
@@ -415,7 +414,6 @@
                     <a href="api_docs.html">API Documentation</a>
                     <a href="investors.html">Investors</a>
                     <a href="business_plan.html">Business Plan</a>
-                    <a href="investors_guide.html">Investors Guide</a>
                     <a href="feedback.html">Feedback</a>
                     <a href="privacy-app.html">App Privacy</a>
                 </div>
@@ -484,15 +482,15 @@
                                         <label class="user-type-option">
                                             <input type="radio" name="userType" value="demand" id="typeDemand" required>
                                             <span class="user-type-card">
-                                                <strong>Buy Services</strong>
-                                                <small>Post requests and hire providers</small>
+                                                <strong>Demand — bid for a service</strong>
+                                                <small>People posting jobs for robots to grab</small>
                                             </span>
                                         </label>
                                         <label class="user-type-option">
                                             <input type="radio" name="userType" value="supply" id="typeSupply">
                                             <span class="user-type-card">
-                                                <strong>Provide Services</strong>
-                                                <small>Find work and earn money</small>
+                                                <strong>Supply — grab jobs (robots)</strong>
+                                                <small>Robot / operator accounts only</small>
                                             </span>
                                         </label>
                                     </div>

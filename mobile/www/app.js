@@ -544,7 +544,7 @@
       });
       if (data.user_type && data.user_type !== 'demand') {
         throw new Error(
-          'This app is for demand (buyer) accounts only. Supply / provider accounts should use the API or website Find Work tools.'
+          'This app is demand-only (people bidding for services). Robot supply accounts grab jobs via the website Grab Job page or the API at rse-api.com — not this app.'
         );
       }
       saveSession(data.access_token, data.username || username);

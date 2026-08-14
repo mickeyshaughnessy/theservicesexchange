@@ -645,7 +645,7 @@ function updateReturningUserHome() {
     if (actions) {
         if (isSupply) {
             actions.innerHTML = `
-                <a class="btn btn-hero-primary" href="grab_job.html">Find Work</a>
+                <a class="btn btn-hero-primary" href="grab_job.html">Grab Job (Robots Only)</a>
                 <button type="button" class="btn btn-hero-secondary" onclick="showChat()">Inbox</button>
                 <a class="btn btn-hero-secondary" href="profile.html">Profile</a>
             `;
@@ -689,7 +689,7 @@ function updateReturningUserHome() {
                 checklist.innerHTML = `
                     <h3 class="user-home-check-title">// Provider checklist</h3>
                     <ol class="user-home-check-list">
-                        <li>Describe capabilities on <a href="grab_job.html">Find Work</a></li>
+                        <li>Describe capabilities on <a href="grab_job.html">Grab Job (Robots Only)</a></li>
                         <li>Link wallet + seat on <a href="profile.html">Profile</a> (message <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">@MichaelSha10041</a> on X for a seat)</li>
                         <li>Tap <strong>Grab Job</strong> to get matched</li>
                         <li>Complete &amp; rate when the job is done</li>
@@ -851,7 +851,7 @@ function ensureAccountQuickLinks(typeLabel) {
                 <a class="btn btn-sm btn-outline-light" href="profile.html">Profile</a>
                 <a class="btn btn-sm btn-outline-light" href="portfolio.html">Portfolio</a>
                 ${isSupply
-                    ? '<a class="btn btn-sm btn-outline-light" href="grab_job.html">Find Work</a>'
+                    ? '<a class="btn btn-sm btn-outline-light" href="grab_job.html">Grab Job (Robots Only)</a>'
                     : '<button type="button" class="btn btn-sm btn-outline-light" onclick="showBuyerForm()">Post request</button>'}
                 <a class="btn btn-sm btn-outline-light" href="campaigns.html">Campaigns</a>
             </div>
@@ -987,7 +987,7 @@ function updateActiveJobsDisplay() {
     const coProviding = (AppState.partyInvites || []).filter(pi => pi.invite_status === 'accepted' && pi.job_status === 'accepted');
 
     if (AppState.activeJobs.length === 0 && invites.length === 0 && coProviding.length === 0) {
-        container.innerHTML = '<p class="text-muted mb-0">No active services yet. <a href="grab_job.html">Find work</a> or <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="showBuyerForm()">post a request</button>.</p>';
+        container.innerHTML = '<p class="text-muted mb-0">No active services yet. <a href="grab_job.html">Grab Job (Robots Only)</a> or <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="showBuyerForm()">post a request</button>.</p>';
         return;
     }
 
@@ -3787,7 +3787,7 @@ async function handleGrabJobSubmission(e) {
                 errMsg += ' Link your wallet on Profile after you have a seat (message @MichaelSha10041 on X).';
             }
             if (/supply-type|Only supply/i.test(errMsg)) {
-                errMsg = 'This account is not a provider account. Register a Provide Services account or use Find Work with a supply login.';
+                errMsg = 'This account is demand (people bidding for services). Grab Job is for supply — robot / operator accounts only. Register a supply account or log in as one.';
             }
             setGrabJobResult(errMsg, true);
         }
