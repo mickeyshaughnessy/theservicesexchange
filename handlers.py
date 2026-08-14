@@ -6083,7 +6083,7 @@ _CHECK_WEIGHT = {
 _PROJECTION_PRESETS = {
     "conservative": {
         "label": "Conservative",
-        "gmv": 25,          # → $2.5T 2035 GMV
+        "gmv": 25,          # → $7.5T 2035 GMV
         "take": 30,         # → 3.0% take-rate
         "seatPrice": 50,    # → $50k / seat
         "network": 40,      # → 0.40×
@@ -6093,7 +6093,7 @@ _PROJECTION_PRESETS = {
     },
     "base": {
         "label": "Base",
-        "gmv": 100,         # → $10T 2035 GMV
+        "gmv": 100,         # → $30T 2035 GMV
         "take": 50,         # → 5.0%
         "seatPrice": 100,   # → $100k
         "network": 100,     # → 1.0×
@@ -6103,7 +6103,7 @@ _PROJECTION_PRESETS = {
     },
     "aggressive": {
         "label": "Aggressive",
-        "gmv": 250,         # → $25T 2035 GMV
+        "gmv": 250,         # → $75T 2035 GMV
         "take": 70,         # → 7.0%
         "seatPrice": 120,   # → $120k
         "network": 180,     # → 1.8×
@@ -6118,9 +6118,9 @@ _SCENARIO_PARAMS = _PROJECTION_PRESETS
 
 # Base curves (absolute units at network scale = 1.0) — same as investors.html
 _BASE_GMV = {
-    2026: 1e9, 2027: 8e9, 2028: 40e9, 2029: 150e9, 2030: 450e9,
-    2031: 1.1e12, 2032: 2.4e12, 2033: 4.5e12, 2034: 7.0e12, 2035: 10e12,
-    2036: 13.5e12, 2037: 17.5e12, 2038: 22e12, 2039: 27e12, 2040: 32e12,
+    2026: 3e9, 2027: 24e9, 2028: 120e9, 2029: 450e9, 2030: 1.35e12,
+    2031: 3.3e12, 2032: 7.2e12, 2033: 13.5e12, 2034: 21e12, 2035: 30e12,
+    2036: 40.5e12, 2037: 52.5e12, 2038: 66e12, 2039: 81e12, 2040: 96e12,
 }
 _BASE_SEAT_NEW = {
     2026: 1e6, 2027: 9e6, 2028: 90e6, 2029: 400e6, 2030: 500e6,
@@ -6165,7 +6165,7 @@ _HYP_RATE = 0.028
 _INS_INST = 0.25
 _INS_PREMIUM = 0.018
 _INS_CUT = 0.15
-_BASE_GMV_2035 = 10e12
+_BASE_GMV_2035 = 30e12
 _COST_BANDS = {
     "exchange": (0.35, 0.12),
     "seats": (0.15, 0.05),
@@ -6277,7 +6277,7 @@ def _cost_ratio(year: int, early: float, late: float) -> float:
 def _dial_params_from_preset(preset: Dict[str, Any]) -> Dict[str, float]:
     """Convert UI dial integers to model parameters (matches investors.html readParams)."""
     return {
-        "gmv2035": (float(preset["gmv"]) / 10.0) * 1e12,
+        "gmv2035": (float(preset["gmv"]) / 10.0) * 3e12,
         "takeRate": float(preset["take"]) / 1000.0,
         "seatPrice": float(preset["seatPrice"]) * 1000.0,
         "network": float(preset["network"]) / 100.0,
@@ -6881,11 +6881,11 @@ def analyze_cap_table_synergy(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int
 
     projection_overrides = data.get("projection") or data.get("projection_params") or None
     if isinstance(projection_overrides, dict):
-        # Allow dial-style integers from the page (gmv 100 = $10T, etc.)
+        # Allow dial-style integers from the page (gmv 100 = $30T, etc.)
         po = dict(projection_overrides)
         if "gmv" in po and "gmv2035" not in po:
             try:
-                po["gmv2035"] = (float(po["gmv"]) / 10.0) * 1e12
+                po["gmv2035"] = (float(po["gmv"]) / 10.0) * 3e12
             except (TypeError, ValueError):
                 pass
         if "take" in po and "takeRate" not in po:

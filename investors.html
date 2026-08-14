@@ -848,10 +848,10 @@
                         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navMore">
                             <li><a class="dropdown-item" href="portfolio.html">Portfolio</a></li>
                             <li><a class="dropdown-item" href="robots.html">Buy a Robot</a></li>
-                            <li><a class="dropdown-item" href="garage.html">Stonewright's Garage</a></li>
                             <li><a class="dropdown-item" href="examples.html">Examples</a></li>
                             <li><a class="dropdown-item" href="api_docs.html">API Docs</a></li>
                             <li><a class="dropdown-item" href="about.html">About</a></li>
+                            <li><a class="dropdown-item" href="garage.html">Garage</a></li>
                             <li><a class="dropdown-item active" href="investors.html" aria-current="page">Investors</a></li>
                             <li><a class="dropdown-item" href="business_plan.html">Business Plan</a></li>
                             <li><a class="dropdown-item" href="investors_guide.html">Investors Guide</a></li>
@@ -1397,7 +1397,7 @@
                     <button type="button" class="inv-dials-toggle" id="dialsToggle"
                         aria-expanded="false" aria-controls="scenarioDialsBody">
                         <h3>Scenario dials</h3>
-                        <span class="inv-dials-summary" id="dialsSummary">Base · GMV $10.0T · take 5.0% · seats $100k · net 1.00×</span>
+                        <span class="inv-dials-summary" id="dialsSummary">Base · GMV $30.0T · take 5.0% · seats $100k · net 1.00×</span>
                         <span class="inv-dials-chevron" id="dialsChevron">Expand</span>
                     </button>
                     <div class="inv-presets" role="group" aria-label="Scenario presets">
@@ -1418,9 +1418,9 @@
                 <div class="inv-dials-body" id="scenarioDialsBody">
                     <div class="inv-dial-grid">
                         <div class="inv-dial">
-                            <label for="dialGmv">2035 GMV <span class="val" id="dialGmvVal">$10.0T</span></label>
-                            <input type="range" id="dialGmv" min="5" max="500" step="5" value="100" aria-valuetext="$10.0T">
-                            <div class="hint">Scales the full GMV path. Base = $10T in 2035.</div>
+                            <label for="dialGmv">2035 GMV <span class="val" id="dialGmvVal">$30.0T</span></label>
+                            <input type="range" id="dialGmv" min="5" max="500" step="5" value="100" aria-valuetext="$30.0T">
+                            <div class="hint">Scales the full GMV path. Base = $30T in 2035 (~half of ~$60T 2025 human labor GMV).</div>
                         </div>
                         <div class="inv-dial">
                             <label for="dialTake">Take-rate <span class="val" id="dialTakeVal">5.0%</span></label>
@@ -1768,9 +1768,9 @@
 
         // Base-case shape curves (absolute units at network scale = 1.0)
         const BASE_GMV = {
-            2026: 1e9, 2027: 8e9, 2028: 40e9, 2029: 150e9, 2030: 450e9,
-            2031: 1.1e12, 2032: 2.4e12, 2033: 4.5e12, 2034: 7.0e12, 2035: 10e12,
-            2036: 13.5e12, 2037: 17.5e12, 2038: 22e12, 2039: 27e12, 2040: 32e12
+            2026: 3e9, 2027: 24e9, 2028: 120e9, 2029: 450e9, 2030: 1.35e12,
+            2031: 3.3e12, 2032: 7.2e12, 2033: 13.5e12, 2034: 21e12, 2035: 30e12,
+            2036: 40.5e12, 2037: 52.5e12, 2038: 66e12, 2039: 81e12, 2040: 96e12
         };
         const BASE_SEAT_NEW = {
             2026: 1e6, 2027: 9e6, 2028: 90e6, 2029: 400e6, 2030: 500e6,
@@ -1812,7 +1812,7 @@
         const ASP = 25000, AFF = 0.03, FIN_ATTACH = 0.40, FIN_FEE = 0.015;
         const HYP_RATE = 0.028;
         const INS_INST = 0.25, INS_PREMIUM = 0.018, INS_CUT = 0.15;
-        const BASE_GMV_2035 = 10e12;
+        const BASE_GMV_2035 = 30e12;
         const COST = {
             exchange:  [0.35, 0.12],
             seats:     [0.15, 0.05],
@@ -1871,7 +1871,7 @@
 
         function readParams() {
             return {
-                gmv2035: (Number(document.getElementById('dialGmv').value) / 10) * 1e12, // 100 → $10T
+                gmv2035: (Number(document.getElementById('dialGmv').value) / 10) * 3e12, // 100 → $30T
                 takeRate: Number(document.getElementById('dialTake').value) / 1000,       // 50 → 5%
                 seatPrice: Number(document.getElementById('dialSeatPrice').value) * 1000, // 100 → $100k
                 network: Number(document.getElementById('dialNetwork').value) / 100,      // 100 → 1.0×

@@ -1,10 +1,10 @@
 {
-  "versionCode": 10,
-  "versionName": "1.5.3",
-  "apkUrl": "https://therobotservicesexchange.com/apk/The-RSE-1.5.3.apk",
-  "apkFile": "The-RSE-1.5.3.apk",
+  "versionCode": 11,
+  "versionName": "1.5.4",
+  "apkUrl": "https://therobotservicesexchange.com/apk/The-RSE-1.5.4.apk",
+  "apkFile": "The-RSE-1.5.4.apk",
   "mandatory": false,
   "minSupportedVersionCode": 1,
-  "releaseNotes": "Find people on the exchange: public usernames by default, search directory, add friends, open profiles. New domain therobotservicesexchange.com for site links and APK updates. Feedback usernames link to profiles.",
-  "sha256": "44442c38fb57995731ed15dee40b260671b84a32f4b646eb641741ef3f1afd20"
+  "releaseNotes": "Site menu now includes Business Plan and Investors Guide. Investor model default is $30T robot-labor GMV in 2035 (half of ~$60T 2025 human labor).",
+  "sha256": "767b5f981dec80cab24bca307cacff664f77a29c67d906e16bfae75c697d169c"
 }
