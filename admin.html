@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#0a0a2e">
+    <title>The RSE — Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css?v=28" rel="stylesheet">
+    <style>
+        .admin-hero { padding: 6.5rem 0 1.5rem; border-bottom: 1px solid rgba(0,255,255,0.22); background: var(--bg-dark); }
+        .admin-hero h1 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(0.95rem, 3vw, 1.4rem);
+            color: var(--text-bright);
+            line-height: 1.6;
+        }
+        .admin-kicker { font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+        .admin-gate, .admin-dash { padding: 2rem 0 3.5rem; }
+        .admin-card {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.28);
+            padding: 1.25rem 1.35rem;
+            height: 100%;
+        }
+        .admin-card h2, .admin-card h3 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.62rem;
+            color: var(--primary);
+            line-height: 1.6;
+            margin-bottom: 0.85rem;
+        }
+        .kpi { font-family: 'Share Tech Mono', monospace; }
+        .kpi .n { font-size: 1.45rem; color: var(--text-bright); }
+        .kpi .l { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+        .admin-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 1.25rem 0; }
+        .admin-tabs button {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text);
+            background: transparent;
+            border: 1px solid rgba(0,255,255,0.3);
+            padding: 0.35rem 0.7rem;
+        }
+        .admin-tabs button.active { background: var(--primary); color: var(--bg-deep); border-color: var(--primary); }
+        .admin-pane { display: none; }
+        .admin-pane.active { display: block; }
+        .admin-table { width: 100%; border-collapse: collapse; font-family: 'Share Tech Mono', monospace; font-size: 0.78rem; color: var(--text); }
+        .admin-table th { text-align: left; color: var(--text-dim); font-weight: 600; border-bottom: 1px solid rgba(0,255,255,0.25); padding: 0.4rem 0.45rem; }
+        .admin-table td { border-bottom: 1px solid rgba(0,255,255,0.1); padding: 0.4rem 0.45rem; vertical-align: top; }
+        .admin-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+        .app-item { border: 1px solid rgba(0,255,255,0.22); background: var(--bg-card); padding: 1rem 1.1rem; margin-bottom: 0.85rem; }
+        .app-item.starred { border-color: var(--gold); }
+        .app-meta { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.35rem; }
+        .app-item h3 { font-family: 'Share Tech Mono', monospace; font-size: 1rem; color: var(--text-bright); margin: 0 0 0.35rem; }
+        .app-exp { white-space: pre-wrap; font-size: 0.85rem; color: var(--text); line-height: 1.65; max-height: 8rem; overflow: auto; margin: 0.5rem 0; }
+        .pill { display: inline-block; font-size: 0.7rem; border: 1px solid rgba(0,255,255,0.35); padding: 0.1rem 0.4rem; margin-right: 0.3rem; }
+        .muted { color: var(--text-dim); font-size: 0.85rem; }
+        #adminStatus { font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; margin-top: 0.6rem; }
+        #adminStatus.err { color: #ff8a8a; }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">The RSE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html?open=bid">Get Something</a></li>
+                    <li class="nav-item"><a class="nav-link" href="grab_job.html">Find Work</a></li>
+                    <li class="nav-item"><a class="nav-link" href="campaigns.html">Campaigns</a></li>
+                    <li class="nav-item"><a class="nav-link" href="hiring.html">Hiring</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navMore" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navMore">
+                            <li><a class="dropdown-item" href="portfolio.html">Portfolio</a></li>
+                            <li><a class="dropdown-item" href="robots.html">Buy a Robot</a></li>
+                            <li><a class="dropdown-item" href="examples.html">Examples</a></li>
+                            <li><a class="dropdown-item" href="api_docs.html">API Docs</a></li>
+                            <li><a class="dropdown-item" href="about.html">About</a></li>
+                            <li><a class="dropdown-item" href="garage.html">Garage</a></li>
+                            <li><a class="dropdown-item" href="investors.html">Investors</a></li>
+                            <li><a class="dropdown-item" href="business_plan.html">Business Plan</a></li>
+                            <li><a class="dropdown-item" href="investors_guide.html">Investors Guide</a></li>
+                            <li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="admin-hero" id="main-content" tabindex="-1">
+        <div class="container">
+            <p class="admin-kicker">Internal</p>
+            <h1>Admin</h1>
+            <p class="muted mb-0">Applications, marketplace counts, API routes, latency, page views, clicks.</p>
+        </div>
+    </header>
+
+    <section class="admin-gate" id="adminGate">
+        <div class="container" style="max-width: 28rem;">
+            <div class="admin-card">
+                <h2>Sign in</h2>
+                <p class="muted">Restricted. Use your admin account.</p>
+                <form id="adminLoginForm">
+                    <div class="mb-3">
+                        <label class="form-label" for="adminUser">Username</label>
+                        <input class="form-control" id="adminUser" autocomplete="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="adminPass">Password</label>
+                        <input class="form-control" id="adminPass" type="password" autocomplete="current-password" required>
+                    </div>
+                    <button class="btn btn-primary w-100" type="submit">Enter</button>
+                    <div id="adminStatus"></div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <section class="admin-dash" id="adminDash" hidden>
+        <div class="container">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <p class="muted mb-0" id="adminWho"></p>
+                <div>
+                    <button class="btn btn-outline-light btn-sm" type="button" id="adminRefresh">Refresh</button>
+                    <button class="btn btn-outline-light btn-sm" type="button" id="adminLogout">Log out</button>
+                </div>
+            </div>
+            <div class="row g-3" id="kpiRow"></div>
+            <div class="admin-tabs" role="tablist">
+                <button type="button" class="active" data-pane="apps">Applications</button>
+                <button type="button" data-pane="api">API</button>
+                <button type="button" data-pane="traffic">Traffic</button>
+                <button type="button" data-pane="recent">Recent requests</button>
+            </div>
+
+            <div class="admin-pane active" id="pane-apps">
+                <div class="admin-card">
+                    <h2>Hiring applications</h2>
+                    <p class="muted" id="appsSummary"></p>
+                    <div id="appsList"></div>
+                </div>
+            </div>
+            <div class="admin-pane" id="pane-api">
+                <div class="admin-card">
+                    <h2>API by route</h2>
+                    <p class="muted">Counts and latency since worker start, merged across gunicorn workers (Spaces snapshots).</p>
+                    <div class="table-responsive">
+                        <table class="admin-table" id="apiTable">
+                            <thead>
+                                <tr><th>Route</th><th class="num">Reqs</th><th class="num">Err</th><th class="num">Err %</th><th class="num">Avg ms</th><th class="num">Min</th><th class="num">Max</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-pane" id="pane-traffic">
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <div class="admin-card">
+                            <h2>Page views</h2>
+                            <div class="table-responsive">
+                                <table class="admin-table" id="pagesTable">
+                                    <thead><tr><th>Path</th><th class="num">Views</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="admin-card">
+                            <h2>Clicks</h2>
+                            <div class="table-responsive">
+                                <table class="admin-table" id="clicksTable">
+                                    <thead><tr><th>Label</th><th class="num">Count</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="admin-card">
+                            <h2>Events</h2>
+                            <div class="table-responsive">
+                                <table class="admin-table" id="eventsTable">
+                                    <thead><tr><th>Event</th><th class="num">Count</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="admin-card">
+                            <h2>By day (UTC)</h2>
+                            <div class="table-responsive">
+                                <table class="admin-table" id="daysTable">
+                                    <thead><tr><th>Day</th><th class="num">Views</th><th class="num">Clicks</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-pane" id="pane-recent">
+                <div class="admin-card">
+                    <h2>Recent API requests</h2>
+                    <div class="table-responsive">
+                        <table class="admin-table" id="recentTable">
+                            <thead><tr><th>When</th><th>Route</th><th class="num">Status</th><th class="num">ms</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p class="mb-0">&copy; 2026 The RSE Protocol.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js?v=28"></script>
+    <script>
+    (function () {
+        const API = (typeof API_URL !== 'undefined' ? API_URL : 'https://rse-api.com:5003');
+        const TOKEN_KEY = 'rse_admin_token';
+        const USER_KEY = 'rse_admin_user';
+        const gate = document.getElementById('adminGate');
+        const dash = document.getElementById('adminDash');
+        const statusEl = document.getElementById('adminStatus');
+        let token = sessionStorage.getItem(TOKEN_KEY) || '';
+        let username = sessionStorage.getItem(USER_KEY) || '';
+
+        function authHeaders() {
+            return { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
+        }
+        function showGate(msg) {
+            gate.hidden = false;
+            dash.hidden = true;
+            if (msg) { statusEl.textContent = msg; statusEl.className = 'err'; }
+        }
+        function showDash() {
+            gate.hidden = true;
+            dash.hidden = false;
+            document.getElementById('adminWho').textContent = 'Signed in as ' + username;
+        }
+        function esc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function fmtTime(ts) {
+            if (!ts) return '—';
+            const n = Number(ts);
+            const d = n > 1e12 ? new Date(n) : new Date(n * 1000);
+            return isNaN(d.getTime()) ? String(ts) : d.toISOString().replace('T', ' ').slice(0, 19) + 'Z';
+        }
+
+        document.querySelectorAll('.admin-tabs button').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.admin-tabs button').forEach(function (b) { b.classList.toggle('active', b === btn); });
+                document.querySelectorAll('.admin-pane').forEach(function (p) {
+                    p.classList.toggle('active', p.id === 'pane-' + btn.getAttribute('data-pane'));
+                });
+            });
+        });
+
+        document.getElementById('adminLoginForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            statusEl.textContent = '';
+            const body = {
+                username: document.getElementById('adminUser').value.trim(),
+                password: document.getElementById('adminPass').value
+            };
+            try {
+                const res = await fetch(API + '/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json().catch(function () { return {}; });
+                if (!res.ok) {
+                    showGate(data.error || 'Could not sign in');
+                    return;
+                }
+                token = data.access_token;
+                username = data.username;
+                sessionStorage.setItem(TOKEN_KEY, token);
+                sessionStorage.setItem(USER_KEY, username);
+                showDash();
+                loadAll();
+            } catch (err) {
+                showGate('Network error');
+            }
+        });
+
+        document.getElementById('adminLogout').addEventListener('click', function () {
+            token = '';
+            username = '';
+            sessionStorage.removeItem(TOKEN_KEY);
+            sessionStorage.removeItem(USER_KEY);
+            showGate('');
+        });
+        document.getElementById('adminRefresh').addEventListener('click', loadAll);
+
+        async function api(path, opts) {
+            const res = await fetch(API + path, Object.assign({ headers: authHeaders() }, opts || {}));
+            const data = await res.json().catch(function () { return {}; });
+            if (res.status === 401 || res.status === 403) {
+                showGate(data.error || 'Session expired');
+                throw new Error('auth');
+            }
+            if (!res.ok) throw new Error(data.error || 'request failed');
+            return data;
+        }
+
+        function renderKpis(ov) {
+            const p = ov.platform || {};
+            const h = ov.hiring || {};
+            const api = ov.api || {};
+            const tr = ov.traffic || {};
+            const c = ov.counts || {};
+            const items = [
+                [p.total_users, 'Users'],
+                [p.demand_signups, 'Demand'],
+                [p.supply_signups, 'Supply'],
+                [p.active_requests, 'Open bids'],
+                [p.completed_jobs, 'Completed jobs'],
+                [h.count, 'Applications'],
+                [h.starred, 'Starred apps'],
+                [c.feedback, 'Feedback'],
+                [c.financing, 'Financing'],
+                [c.disputes, 'Disputes'],
+                [c.campaigns, 'Campaigns'],
+                [api.total_requests, 'API requests'],
+                [api.total_errors, 'API errors'],
+                [api.workers, 'API workers'],
+                [tr.page_views_total, 'Page views'],
+                [tr.clicks_total, 'Clicks']
+            ];
+            document.getElementById('kpiRow').innerHTML = items.map(function (it) {
+                const v = it[0] == null ? '—' : it[0];
+                return '<div class="col-6 col-md-3 col-xl-2"><div class="admin-card kpi"><div class="n">' + esc(v) + '</div><div class="l">' + esc(it[1]) + '</div></div></div>';
+            }).join('');
+        }
+
+        function renderApps(list) {
+            const host = document.getElementById('appsList');
+            const statuses = ['submitted', 'reviewed', 'talking', 'offer', 'hired', 'pass'];
+            if (!list.length) {
+                host.innerHTML = '<p class="muted">No applications yet.</p>';
+                return;
+            }
+            host.innerHTML = list.map(function (a) {
+                const id = a.application_id;
+                const st = a.status || 'submitted';
+                const opts = statuses.map(function (s) {
+                    return '<option value="' + s + '"' + (s === st ? ' selected' : '') + '>' + s + '</option>';
+                }).join('');
+                return (
+                    '<div class="app-item' + (a.starred ? ' starred' : '') + '" data-id="' + esc(id) + '">' +
+                    '<div class="app-meta">' + esc(a.created || '') + ' · ' + esc(id) +
+                    (a.starred ? ' · starred' : '') + '</div>' +
+                    '<h3>' + esc(a.name) + '</h3>' +
+                    '<div><span class="pill">' + esc(st) + '</span>' +
+                    '<span class="pill">' + esc(a.preferred_location) + '</span>' +
+                    '<span class="pill">' + esc(a.role_interest) + '</span></div>' +
+                    '<p class="muted mb-1">' + esc(a.email) + ' · ' + esc(a.phone) + ' · ' + esc(a.social) + '</p>' +
+                    '<p class="muted mb-1">' + esc(a.address) + ' · DOB ' + esc(a.dob) + ' · ' + esc(a.family_status) + '</p>' +
+                    '<div class="app-exp">' + esc(a.experience) + '</div>' +
+                    '<div class="row g-2 align-items-end">' +
+                    '<div class="col-md-3"><label class="form-label">Status</label><select class="form-control app-status">' + opts + '</select></div>' +
+                    '<div class="col-md-6"><label class="form-label">Notes</label><input class="form-control app-notes" value="' + esc(a.notes || '') + '"></div>' +
+                    '<div class="col-md-3"><label class="form-label"><input type="checkbox" class="app-star"' + (a.starred ? ' checked' : '') + '> Star</label>' +
+                    '<button type="button" class="btn btn-primary btn-sm w-100 app-save">Save mark</button></div>' +
+                    '</div></div>'
+                );
+            }).join('');
+            host.querySelectorAll('.app-save').forEach(function (btn) {
+                btn.addEventListener('click', async function () {
+                    const item = btn.closest('.app-item');
+                    const id = item.getAttribute('data-id');
+                    btn.disabled = true;
+                    try {
+                        await api('/admin/hiring/' + encodeURIComponent(id), {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                status: item.querySelector('.app-status').value,
+                                notes: item.querySelector('.app-notes').value,
+                                starred: item.querySelector('.app-star').checked
+                            })
+                        });
+                        btn.textContent = 'Saved';
+                        setTimeout(function () { btn.textContent = 'Save mark'; }, 1200);
+                    } catch (e) {
+                        btn.textContent = 'Error';
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            });
+        }
+
+        function fillTable(id, rowsHtml) {
+            const tb = document.querySelector('#' + id + ' tbody');
+            if (tb) tb.innerHTML = rowsHtml || '<tr><td colspan="8" class="muted">None yet</td></tr>';
+        }
+
+        function renderApi(api) {
+            const rows = (api.routes || []).map(function (r) {
+                return '<tr><td>' + esc(r.route) + '</td><td class="num">' + r.requests + '</td><td class="num">' + r.errors +
+                    '</td><td class="num">' + r.error_rate + '</td><td class="num">' + r.avg_ms + '</td><td class="num">' +
+                    r.min_ms + '</td><td class="num">' + r.max_ms + '</td></tr>';
+            }).join('');
+            fillTable('apiTable', rows);
+            const rec = (api.recent || []).map(function (r) {
+                return '<tr><td>' + esc(fmtTime(r.t)) + '</td><td>' + esc(r.route) + '</td><td class="num">' +
+                    esc(r.status) + '</td><td class="num">' + esc(r.ms) + '</td></tr>';
+            }).join('');
+            fillTable('recentTable', rec);
+        }
+
+        function renderTraffic(tr) {
+            fillTable('pagesTable', (tr.pages || []).map(function (p) {
+                return '<tr><td>' + esc(p.path) + '</td><td class="num">' + p.views + '</td></tr>';
+            }).join(''));
+            fillTable('clicksTable', (tr.clicks || []).map(function (c) {
+                return '<tr><td>' + esc(c.label) + (c.href ? ' <span class="muted">' + esc(c.href) + '</span>' : '') +
+                    '</td><td class="num">' + c.count + '</td></tr>';
+            }).join(''));
+            fillTable('eventsTable', (tr.events || []).map(function (e) {
+                return '<tr><td>' + esc(e.event) + '</td><td class="num">' + e.count + '</td></tr>';
+            }).join(''));
+            fillTable('daysTable', (tr.days || []).map(function (d) {
+                return '<tr><td>' + esc(d.day) + '</td><td class="num">' + (d.views || 0) + '</td><td class="num">' + (d.clicks || 0) + '</td></tr>';
+            }).join(''));
+        }
+
+        async function loadAll() {
+            const ov = await api('/admin/overview');
+            renderKpis(ov);
+            renderApi(ov.api || {});
+            renderTraffic(ov.traffic || {});
+            const hire = await api('/admin/hiring');
+            const apps = hire.applications || [];
+            document.getElementById('appsSummary').textContent = apps.length + ' stored on Spaces';
+            renderApps(apps);
+        }
+
+        if (token) {
+            showDash();
+            loadAll().catch(function () {});
+        }
+    })();
+    </script>
+</body>
+</html>

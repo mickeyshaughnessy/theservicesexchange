@@ -4172,6 +4172,105 @@ def handle_list_hiring_applications() -> Tuple[Dict[str, Any], int]:
         logger.error("List hiring applications error: %s", e)
         return {"error": "Internal server error"}, 500
 
+
+_HIRE_MARK_STATUSES = ("submitted", "reviewed", "talking", "offer", "hired", "pass")
+
+
+def handle_update_hiring_application(app_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Admin: mark a hiring application (status / notes / starred)."""
+    app_id = (app_id or "").strip()
+    if not app_id:
+        return {"error": "application_id required"}, 400
+    try:
+        apps = get_hiring_applications()
+        target = next((a for a in apps if a.get("application_id") == app_id), None)
+        if target is None:
+            return {"error": "Application not found"}, 404
+        if "status" in data and data.get("status") is not None:
+            st = str(data.get("status") or "").strip().lower()
+            if st not in _HIRE_MARK_STATUSES:
+                return {"error": f"status must be one of {list(_HIRE_MARK_STATUSES)}"}, 400
+            target["status"] = st
+        if "notes" in data:
+            target["notes"] = str(data.get("notes") or "")[:4000]
+        if "starred" in data:
+            target["starred"] = bool(data.get("starred"))
+        target["updated"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        save_hiring_applications(apps)
+        return {"application": target}, 200
+    except Exception as e:
+        logger.error("Update hiring application error: %s", e)
+        return {"error": "Internal server error"}, 500
+
+
+def handle_admin_login(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    """Dashboard login. Username must be an allowed admin; password is marketplace or ADMIN_DASHBOARD_PASSWORD."""
+    username = (data.get("username") or "").strip()
+    password = data.get("password") or ""
+    allowed = [u.lower() for u in getattr(config, "ADMIN_DASHBOARD_USERS", ["mickey"])]
+    if not username or not password:
+        return {"error": "Username and password required"}, 400
+    if username.lower() not in allowed:
+        return {"error": "Forbidden"}, 403
+    # Prefer the real account password when the user exists
+    result, status = login_user({"username": username, "password": password})
+    if status == 200:
+        return result, 200
+    dash_pw = getattr(config, "ADMIN_DASHBOARD_PASSWORD", None) or "11111111"
+    if hmac.compare_digest(str(password), str(dash_pw)):
+        token = str(uuid.uuid4())
+        expiry_time = int(time.time()) + config.TOKEN_EXPIRY_SECONDS
+        save_token(token, username, expiry_time)
+        return {"access_token": token, "username": username, "user_type": "admin"}, 200
+    return {"error": "Invalid credentials"}, 401
+
+
+def handle_admin_overview() -> Tuple[Dict[str, Any], int]:
+    """Bundle marketplace stats, hiring pipeline, API metrics, and traffic."""
+    try:
+        from analytics import snapshot_api, snapshot_traffic
+        plat, _ = get_platform_stats()
+        apps = get_hiring_applications()
+        by_status: Dict[str, int] = {}
+        starred = 0
+        for a in apps:
+            st = (a.get("status") or "submitted")
+            by_status[st] = by_status.get(st, 0) + 1
+            if a.get("starred"):
+                starred += 1
+        extra = {}
+        try:
+            extra["feedback"] = len(get_feedback() or [])
+        except Exception:
+            extra["feedback"] = None
+        try:
+            extra["financing"] = len(get_financing_applications() or [])
+        except Exception:
+            extra["financing"] = None
+        try:
+            extra["disputes"] = len(get_disputes() or [])
+        except Exception:
+            extra["disputes"] = None
+        try:
+            extra["campaigns"] = len(get_all_campaigns() or [])
+        except Exception:
+            extra["campaigns"] = None
+        return {
+            "generated": int(time.time()),
+            "platform": plat if isinstance(plat, dict) else {},
+            "hiring": {
+                "count": len(apps),
+                "starred": starred,
+                "by_status": by_status,
+            },
+            "counts": extra,
+            "api": snapshot_api(),
+            "traffic": snapshot_traffic(),
+        }, 200
+    except Exception as e:
+        logger.error("Admin overview error: %s", e)
+        return {"error": "Internal server error"}, 500
+
 def handle_reply_feedback(post_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     """Append a threaded reply to a feedback post. Open to anyone (like posting)."""
     message = (data.get('message') or '').strip()

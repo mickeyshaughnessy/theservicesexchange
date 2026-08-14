@@ -105,6 +105,8 @@ BULLETINS_PREFIX = f"{S3_PREFIX}/bulletins"
 FEEDBACK_KEY = f"{S3_PREFIX}/feedback/posts.json"
 FINANCING_KEY = f"{S3_PREFIX}/financing/applications.json"
 HIRING_KEY = f"{S3_PREFIX}/hiring/applications.json"
+ANALYTICS_TRAFFIC_KEY = f"{S3_PREFIX}/analytics/traffic.json"
+ANALYTICS_API_PREFIX = f"{S3_PREFIX}/analytics/api_workers"
 FOLLOWS_PREFIX = f"{S3_PREFIX}/follows"
 SLUGS_PREFIX = f"{S3_PREFIX}/slugs"
 AVATARS_PREFIX = f"{S3_PREFIX}/avatars"
@@ -705,6 +707,28 @@ def save_hiring_applications(applications: List[Dict[str, Any]]) -> None:
     """Persist hiring applications as JSON on DigitalOcean Spaces."""
     if not _s3_put(HIRING_KEY, {'applications': applications}):
         logger.error("Failed to save hiring applications to Spaces")
+
+def get_analytics_traffic() -> Dict[str, Any]:
+    data = _s3_get(ANALYTICS_TRAFFIC_KEY)
+    return data if isinstance(data, dict) else {}
+
+def save_analytics_traffic(payload: Dict[str, Any]) -> None:
+    if not _s3_put(ANALYTICS_TRAFFIC_KEY, payload):
+        logger.error("Failed to save analytics traffic to Spaces")
+
+def get_analytics_api_snapshots() -> List[Dict[str, Any]]:
+    """Load per-worker API metric snapshots from Spaces."""
+    out = []
+    for key in _s3_list(ANALYTICS_API_PREFIX + "/"):
+        data = _s3_get(key)
+        if isinstance(data, dict):
+            out.append(data)
+    return out
+
+def save_analytics_api_snapshot(worker_id: str, payload: Dict[str, Any]) -> None:
+    key = f"{ANALYTICS_API_PREFIX}/{worker_id}.json"
+    if not _s3_put(key, payload):
+        logger.error("Failed to save API analytics snapshot to Spaces")
 
 # -----------------------------------------------------------------------------
 # Follows Management

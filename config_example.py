@@ -64,6 +64,10 @@ AGENT_TOKEN_DEFAULT_EXPIRY_DAYS = 90
 # Admin API key for privileged routes (CHANGE IN PRODUCTION config.py — never commit real secrets)
 # Site access-code gate removed — public website is open.
 ADMIN_API_KEY = 'change-me-admin-key'
+# /admin.html — only these usernames. Password is the marketplace password
+# or ADMIN_DASHBOARD_PASSWORD (dashboard-only fallback).
+ADMIN_DASHBOARD_USERS = ['mickey']
+ADMIN_DASHBOARD_PASSWORD = '11111111'
 
 # Optional HMAC for job proofs (export/proof)
 RSE_PROOF_SIGNING_KEY = ''

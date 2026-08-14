@@ -121,10 +121,10 @@ function registerServiceWorker() {
     });
 }
 
-/** Lightweight funnel analytics (local + optional dataLayer). */
+/** Lightweight funnel analytics (local + API /track + optional dataLayer). */
 function rseTrack(event, props) {
     try {
-        const payload = Object.assign({ event, t: Date.now(), path: location.pathname }, props || {});
+        const payload = Object.assign({ event, t: Date.now(), path: location.pathname + location.search }, props || {});
         const key = 'rse_analytics_events';
         const prev = JSON.parse(localStorage.getItem(key) || '[]');
         prev.push(payload);
@@ -132,10 +132,36 @@ function rseTrack(event, props) {
         if (window.dataLayer && Array.isArray(window.dataLayer)) {
             window.dataLayer.push(payload);
         }
-        if (window.console && console.debug) console.debug('[rseTrack]', payload);
+        const body = JSON.stringify({
+            event: payload.event,
+            path: payload.path,
+            href: (props && props.href) || '',
+            label: (props && props.label) || ''
+        });
+        const url = API_URL + '/track';
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon(url, new Blob([body], { type: 'text/plain' }));
+        } else {
+            fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body, keepalive: true }).catch(function () {});
+        }
     } catch (e) { /* ignore */ }
 }
 window.rseTrack = rseTrack;
+
+if (!window.__rseTrackBound) {
+    window.__rseTrackBound = true;
+    document.addEventListener('DOMContentLoaded', function () {
+        rseTrack('page_view');
+        document.addEventListener('click', function (ev) {
+            const el = ev.target && ev.target.closest
+                ? ev.target.closest('a, button, [role="button"], .service-tag, .nav-link, .dropdown-item')
+                : null;
+            if (!el) return;
+            const text = (el.getAttribute('data-track') || el.id || (el.textContent || '').replace(/\s+/g, ' ').trim()).slice(0, 80);
+            rseTrack('click', { href: el.getAttribute('href') || '', label: text });
+        }, true);
+    });
+}
 
 // Load platform statistics
 async function loadPlatformStats() {

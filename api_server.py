@@ -51,6 +51,9 @@ from handlers import (
     handle_submit_financing,
     handle_submit_hiring_application,
     handle_list_hiring_applications,
+    handle_update_hiring_application,
+    handle_admin_login,
+    handle_admin_overview,
     get_profile,
     update_profile,
     get_or_create_profile_slug,
@@ -117,6 +120,7 @@ from handlers import (
     analyze_cap_table_synergy,
 )
 from utils import get_token_username, get_agent_token_record
+import analytics as analytics_mod
 
 # Configure logging
 logging.basicConfig(level=config.LOG_LEVEL)
@@ -188,6 +192,17 @@ def log_response(response):
     if response.status_code >= 400:
         metrics['errors'] += 1
         request_metrics['errors'] += 1
+
+    try:
+        analytics_mod.record_api(
+            flask.request.method,
+            flask.request.path,
+            response.status_code,
+            duration,
+            load_test=bool(getattr(flask.g, 'is_load_test', False)),
+        )
+    except Exception:
+        pass
     
     log_prefix = f"[LOAD_TEST:{flask.g.request_id}]" if flask.g.is_load_test else f"[{flask.g.request_id}]"
     logger.info(f"{log_prefix} Status: {response.status_code}, Duration: {duration:.3f}s")
@@ -272,6 +287,27 @@ def token_required(f):
 
 # Stopgap shared-secret admin gate (no admin-role system exists yet)
 _ADMIN_KEY = getattr(config, 'ADMIN_API_KEY', None) or 'tse-admin-9f1c7b2e'
+
+
+def admin_user_required(f):
+    """Allow X-Admin-Key or a bearer token for an ADMIN_DASHBOARD_USERS account (default: mickey)."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        key = flask.request.headers.get('X-Admin-Key', '')
+        if key and hmac.compare_digest(key, _ADMIN_KEY):
+            return f('mickey', *args, **kwargs)
+        auth_header = flask.request.headers.get('Authorization') or ''
+        if not auth_header.lower().startswith('bearer '):
+            return flask.jsonify({'error': 'Token is missing'}), 401
+        token = auth_header.split(None, 1)[1].strip()
+        username = get_token_username(token)
+        if not username:
+            return flask.jsonify({'error': 'Token is invalid or expired'}), 401
+        allowed = [u.lower() for u in getattr(config, 'ADMIN_DASHBOARD_USERS', ['mickey'])]
+        if username.lower() not in allowed:
+            return flask.jsonify({'error': 'Forbidden'}), 403
+        return f(username, *args, **kwargs)
+    return decorated
 
 # -----------------------------------------------------------------------------
 # System Endpoints
@@ -928,12 +964,57 @@ def hiring_apply():
     return flask.jsonify(response), status
 
 
+@app.route('/track', methods=['POST'])
+@limiter.limit("120 per minute")
+def track_event():
+    """Public page-view / click beacon. Body is JSON (or text/plain JSON for sendBeacon)."""
+    data = flask.request.get_json(silent=True)
+    if not isinstance(data, dict):
+        try:
+            data = json.loads(flask.request.get_data(as_text=True) or "{}")
+        except Exception:
+            data = {}
+    if not isinstance(data, dict):
+        return flask.jsonify({"ok": True}), 204
+    event = (data.get("event") or "event")[:64]
+    path = (data.get("path") or "/")[:240]
+    href = (data.get("href") or "")[:240]
+    label = (data.get("label") or "")[:120]
+    try:
+        analytics_mod.record_traffic(event, path, href=href, label=label)
+    except Exception:
+        pass
+    return flask.jsonify({"ok": True}), 204
+
+
+@app.route('/admin/login', methods=['POST'])
+@limiter.limit(_STRICT_LIMIT)
+def admin_login():
+    data = flask.request.get_json() or {}
+    response, status = handle_admin_login(data)
+    return flask.jsonify(response), status
+
+
+@app.route('/admin/overview', methods=['GET'])
+@admin_user_required
+def admin_overview(current_user):
+    response, status = handle_admin_overview()
+    return flask.jsonify(response), status
+
+
 @app.route('/admin/hiring', methods=['GET'])
-def admin_hiring():
-    """List hiring applications (X-Admin-Key). Admin UI comes later."""
-    if not hmac.compare_digest(flask.request.headers.get('X-Admin-Key', ''), _ADMIN_KEY):
-        return flask.jsonify({"error": "Unauthorized"}), 401
+@admin_user_required
+def admin_hiring(current_user):
+    """List hiring applications."""
     response, status = handle_list_hiring_applications()
+    return flask.jsonify(response), status
+
+
+@app.route('/admin/hiring/<app_id>', methods=['POST'])
+@admin_user_required
+def admin_hiring_update(current_user, app_id):
+    data = flask.request.get_json() or {}
+    response, status = handle_update_hiring_application(app_id, data)
     return flask.jsonify(response), status
 
 
