@@ -1,10 +1,10 @@
 {
-  "versionCode": 11,
-  "versionName": "1.5.4",
-  "apkUrl": "https://therobotservicesexchange.com/apk/The-RSE-1.5.4.apk",
-  "apkFile": "The-RSE-1.5.4.apk",
+  "versionCode": 12,
+  "versionName": "1.5.5",
+  "apkUrl": "https://therobotservicesexchange.com/apk/The-RSE-1.5.5.apk",
+  "apkFile": "The-RSE-1.5.5.apk",
   "mandatory": false,
   "minSupportedVersionCode": 1,
-  "releaseNotes": "Site menu now includes Business Plan and Investors Guide. Investor model default is $30T robot-labor GMV in 2035 (half of ~$60T 2025 human labor).",
-  "sha256": "767b5f981dec80cab24bca307cacff664f77a29c67d906e16bfae75c697d169c"
+  "releaseNotes": "Site menu includes Admin. Opens the live admin dashboard in the browser so you can review applications and stats from your phone.",
+  "sha256": "288cc27cc03d8d31ca23b9b4e710a12438acef97a4443cd99ec9d61957ab8d8c"
 }

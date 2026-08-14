@@ -1,6 +1,6 @@
 {
   "name": "rse-mobile",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "private": true,
   "description": "Capacitor Android app for The RSE (demand-side only, talks to rse-api.com)",
   "scripts": {
