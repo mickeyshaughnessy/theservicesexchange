@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a2e">
-    <meta name="description" content="Hiring at The RSE — help build the open marketplace for robot labor. Equity, manufacturer access, family housing, and a team that actually spends time outside.">
+    <meta name="description" content="Hiring at The RSE — help build the open marketplace for robot labor. Equity, family housing, and a team that actually spends time outside.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="The RSE">
@@ -17,171 +17,86 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css?v=28" rel="stylesheet">
     <style>
-        .hire-page { background: var(--bg-deep); }
-        .hire-hero {
-            padding: 7rem 0 2.75rem;
-            border-bottom: 1px solid rgba(0,255,255,0.22);
-            background:
-                radial-gradient(ellipse 80% 60% at 80% 0%, rgba(255,0,255,0.12), transparent 55%),
-                radial-gradient(ellipse 70% 50% at 10% 80%, rgba(0,255,255,0.1), transparent 50%),
-                var(--bg-dark);
+        .hire-prose {
+            max-width: 760px;
+            margin: 0 auto 2.5rem;
         }
-        .hire-kicker {
+        .hire-prose p {
             font-family: 'Share Tech Mono', monospace;
-            font-size: 0.78rem;
-            letter-spacing: 0.16em;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 0.85rem;
-        }
-        .hire-hero h1 {
-            font-family: 'Press Start 2P', monospace;
-            font-size: clamp(1.05rem, 3.4vw, 1.7rem);
-            line-height: 1.55;
-            color: var(--text-bright);
-            text-shadow: 0 0 18px rgba(0,255,255,0.35);
-            margin-bottom: 1rem;
-        }
-        .hire-hero .lede {
-            max-width: 40rem;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 1.05rem;
             color: var(--text);
+            font-size: 0.95rem;
+            line-height: 1.9;
+        }
+        .hire-prose p.lede {
+            font-size: 1.05rem;
+            color: var(--text-bright, var(--text));
+        }
+        .hire-section-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.85rem;
+            color: var(--primary);
+            text-shadow: 0 0 12px rgba(0,255,255,0.5);
+            text-align: center;
+            margin: 0 0 1.75rem;
             line-height: 1.8;
         }
-        .hire-hero-actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 1.6rem; }
-        .hire-rail {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            background: rgba(10,10,46,0.92);
-            border-bottom: 1px solid rgba(0,255,255,0.2);
-            backdrop-filter: blur(8px);
-        }
-        .hire-rail nav {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem;
-            padding: 0.65rem 0;
-        }
-        .hire-rail a {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.74rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--text);
-            text-decoration: none;
-            border: 1px solid rgba(0,255,255,0.28);
-            padding: 0.32rem 0.65rem;
-        }
-        .hire-rail a:hover { color: var(--text-bright); border-color: var(--primary); }
-        .hire-section {
-            padding: 4rem 0;
-            border-bottom: 1px solid rgba(0,255,255,0.12);
-            scroll-margin-top: 3.5rem;
-        }
-        .hire-step {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.55rem;
-            color: var(--secondary);
-            letter-spacing: 0.08em;
-            margin-bottom: 0.7rem;
-        }
-        .hire-section h2 {
-            font-family: 'Press Start 2P', monospace;
-            font-size: clamp(0.78rem, 2.2vw, 1.05rem);
-            color: var(--primary);
-            text-shadow: 0 0 12px rgba(0,255,255,0.4);
-            line-height: 1.7;
-            margin-bottom: 1.1rem;
-        }
-        .hire-copy { max-width: 42rem; }
-        .hire-copy p {
-            font-family: 'Share Tech Mono', monospace;
-            color: var(--text);
-            font-size: 0.97rem;
-            line-height: 1.9;
-            margin-bottom: 1rem;
-        }
-        .hire-copy p.bright { color: var(--text-bright); font-size: 1.05rem; }
-        .hire-grid { display: grid; gap: 1rem; }
-        @media (min-width: 768px) { .hire-grid.cols-2 { grid-template-columns: 1fr 1fr; } }
-        @media (min-width: 992px) { .hire-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; } }
         .hire-card {
             background: var(--bg-panel);
-            border: 1px solid rgba(0,255,255,0.28);
-            box-shadow: 0 0 18px rgba(0,255,255,0.06);
-            padding: 1.25rem 1.35rem;
+            border: 1px solid rgba(0,255,255,0.3);
+            box-shadow: 0 0 20px rgba(0,255,255,0.08);
+            padding: 1.5rem 1.6rem;
             height: 100%;
         }
-        .hire-card:hover { border-color: var(--primary); }
-        .hire-card .n {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.5rem;
-            color: var(--accent);
-            margin-bottom: 0.55rem;
+        .hire-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 30px rgba(0,255,255,0.18);
         }
         .hire-card h3 {
             font-family: 'Press Start 2P', monospace;
-            font-size: 0.58rem;
+            font-size: 0.62rem;
             color: var(--primary);
-            line-height: 1.65;
-            margin-bottom: 0.6rem;
+            text-shadow: 0 0 8px rgba(0,255,255,0.5);
+            line-height: 1.7;
+            margin-bottom: 0.75rem;
         }
-        .hire-card p, .hire-card li {
+        .hire-card p {
             font-family: 'Share Tech Mono', monospace;
             color: var(--text);
             font-size: 0.88rem;
             line-height: 1.7;
             margin-bottom: 0;
         }
-        .hire-card ul { margin: 0.4rem 0 0; padding-left: 1.1rem; }
-        .hire-card li { margin-bottom: 0.35rem; }
-        .hire-callout {
-            border-left: 3px solid var(--accent);
-            background: rgba(57,255,20,0.06);
-            padding: 1rem 1.15rem;
-            margin: 1.25rem 0 0;
-            max-width: 42rem;
+        .hire-why {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.3);
+            padding: 2rem;
+            max-width: 760px;
+            margin: 0 auto 2rem;
         }
-        .hire-callout p {
+        .hire-why h3 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.65rem;
+            color: var(--secondary);
+            line-height: 1.7;
+            margin-bottom: 0.85rem;
+        }
+        .hire-why p {
             font-family: 'Share Tech Mono', monospace;
             color: var(--text);
             font-size: 0.92rem;
-            line-height: 1.8;
-            margin: 0;
+            line-height: 1.85;
+            margin-bottom: 0;
         }
-        .hire-horizon {
-            display: grid;
-            gap: 0.75rem;
+        .hire-close {
+            max-width: 760px;
+            margin: 0 auto;
+            text-align: center;
         }
-        @media (min-width: 768px) { .hire-horizon { grid-template-columns: 1fr 1fr; } }
-        .hire-year {
-            background: var(--bg-panel);
-            border: 1px solid rgba(0,255,255,0.25);
-            padding: 1.1rem 1.2rem;
-        }
-        .hire-year .when {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.5rem;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-            line-height: 1.6;
-        }
-        .hire-year p {
+        .hire-close p {
             font-family: 'Share Tech Mono', monospace;
-            font-size: 0.84rem;
             color: var(--text);
-            line-height: 1.7;
-            margin: 0;
-        }
-        .hire-note {
-            font-family: 'Share Tech Mono', monospace;
-            color: var(--text-dim);
-            font-size: 0.8rem;
-            line-height: 1.65;
-            margin-top: 1rem;
-            max-width: 42rem;
+            font-size: 0.95rem;
+            line-height: 1.9;
         }
         .hire-form-wrap {
             background: var(--bg-panel);
@@ -189,6 +104,8 @@
             box-shadow: 0 0 28px rgba(0,255,255,0.08);
             padding: 1.6rem 1.5rem 1.8rem;
             max-width: 760px;
+            margin: 0 auto;
+            text-align: left;
         }
         .hire-form-wrap label {
             font-family: 'Share Tech Mono', monospace;
@@ -208,7 +125,7 @@
         #hireStatus.err { color: #ff8a8a; }
     </style>
 </head>
-<body class="hire-page">
+<body>
     <a class="skip-link" href="#main-content">Skip to content</a>
 
     <nav class="navbar navbar-expand-lg navbar-dark">
@@ -235,7 +152,7 @@
                             <li><a class="dropdown-item" href="garage.html">Garage</a></li>
                             <li><a class="dropdown-item" href="investors.html">Investors</a></li>
                             <li><a class="dropdown-item" href="business_plan.html">Business Plan</a></li>
-<li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
+                            <li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -268,173 +185,79 @@
         </div>
     </nav>
 
-    <header class="hire-hero" id="main-content" tabindex="-1">
+    <section class="hero" style="padding: 100px 0 60px;" id="main-content" tabindex="-1">
         <div class="container">
-            <p class="hire-kicker">The Robot Services Exchange</p>
-            <h1>Join the team building the market for robot labor</h1>
-            <p class="lede">A home-health aide visit still includes taking out the trash. That collection is a job on The RSE: posted through the API, grabbed by a robot through the API, signed and rated through the API. The website is how people look at the market. Every transaction is an API call. We are hiring people who want to ship that matching layer — and who want the team itself to be high-trust, high-agency, and fun.</p>
-            <div class="hire-hero-actions">
-                <a class="btn btn-primary btn-lg" href="#apply">Apply to join</a>
-                <a class="btn btn-outline-light btn-lg" href="#exchange">Read the story</a>
-            </div>
-        </div>
-    </header>
-
-    <div class="hire-rail">
-        <div class="container">
-            <nav aria-label="Hiring sections">
-                <a href="#exchange">01 Exchange</a>
-                <a href="#building">02 What we’re doing</a>
-                <a href="#team">03 The team</a>
-                <a href="#you-get">04 What you get</a>
-                <a href="#apply">05 Apply</a>
-            </nav>
-        </div>
-    </div>
-
-    <section class="hire-section" id="exchange">
-        <div class="container">
-            <p class="hire-step">01 / The exchange</p>
-            <h2>What this is</h2>
-            <div class="hire-copy">
-                <p class="bright">Start here: a home-health aide is with the client. The bins still need to go to the curb. That collection is a service bid on The RSE. A seated robot with the right capabilities and a good rating grabs it, does the route, and both sides sign. The family gets the trash out. The robot earns. Reputation moves.</p>
-                <p>The RSE is the open marketplace for robot labor. The website is a window — hiring, docs, a human way to inspect bids. The core system is the API at rse-api.com. Posting a bid, grabbing work, signing, rating: only the API is used for those transactions. UIs call it. Fleets call it. A home-health dispatcher’s software calls it. Nothing in the match loop lives only in a page.</p>
-                <p>We are not building another closed fleet or vertical SaaS. We are building the neutral exchange layer — match loop, job channel, ratings, seats, and the primitives that let anyone request or deploy physical work, including the unglamorous jobs inside a home-health visit. Liquidity compounds the same way it does on any two-sided market: more density, better matches, higher trust, lower friction.</p>
-            </div>
-            <div class="hire-callout">
-                <p>Human labor GMV sits in the tens of trillions (~$60T reported in 2025). Making robot labor liquid is one of the highest-leverage ways to shift physical work from scarce human hours to abundant machine capacity. The exchange is the matching layer that makes that shift compound. The public model on <a href="investors.html">investors</a> sets robot-labor GMV at ~$30T by 2040 — half that surface.</p>
-            </div>
+            <h1>Hiring</h1>
+            <p>Help build the open marketplace for robot labor.</p>
         </div>
     </section>
 
-    <section class="hire-section" id="building">
+    <section class="py-5" style="background: var(--bg-deep);">
         <div class="container">
-            <p class="hire-step">02 / What we’re doing</p>
-            <h2>Ship the matching layer</h2>
-            <div class="hire-copy">
-                <p>The work is infrastructure: make posting, grabbing, rating, and seating so reliable that a home-health dispatcher, a fleet, or an agent can plug in and a robot takes out that trash. Everything that moves a job or a rating is an API call. The website and Grab Job are clients of the same endpoints.</p>
-            </div>
-            <div class="hire-grid cols-3 mt-4">
-                <div class="hire-card">
-                    <div class="n">01</div>
-                    <h3>Demand posts</h3>
-                    <p>The aide service (or the family) posts the collection: service, price, location — one-shot or recurring. That post is an API call.</p>
-                </div>
-                <div class="hire-card">
-                    <div class="n">02</div>
-                    <h3>Supply grabs</h3>
-                    <p>A seated robot that can haul bins to the curb grabs via the API. AI ranks capability, proximity, and price. Reputation breaks ties.</p>
-                </div>
-                <div class="hire-card">
-                    <div class="n">03</div>
-                    <h3>Both sides rate</h3>
-                    <p>Complete via <code>/sign_job</code>. The collection’s score travels with the next job.</p>
-                </div>
-                <div class="hire-card">
-                    <div class="n">04</div>
-                    <h3>Settlement stays between parties</h3>
-                    <p>The family and the operator settle off-platform. Take-rate and the other streams appear as density grows. Seat issuance is the bulk of modeled project revenue.</p>
-                </div>
-                <div class="hire-card">
-                    <div class="n">05</div>
-                    <h3>Seats gate supply</h3>
-                    <p>Limited ERC-721 tokens on Base. A provider needs a seat to grab that collection — or any other job.</p>
-                </div>
-                <div class="hire-card">
-                    <div class="n">06</div>
-                    <h3>API is the exchange</h3>
-                    <p>Only the API is used for transactions. Operators, manufacturers, and agents integrate directly. Pages are a view, not a second marketplace.</p>
-                </div>
-            </div>
-            <div class="hire-copy mt-4">
-                <p>The flywheel: more completed, rated collections (and every other job like them) → higher reputation signal → better matching → more volume → more seats and density. The same loop that fills one trash run is what scales the market.</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="hire-section" id="team">
-        <div class="container">
-            <p class="hire-step">03 / The team</p>
-            <h2>High-agency, high-trust, fun</h2>
-            <div class="hire-copy">
-                <p class="bright">We hire people who want to ship infrastructure for physical work markets — and who want the team itself to last.</p>
-                <p>High-trust groups form when people repeatedly do hard and enjoyable things in the same physical places. Most in-person time is outdoor and active: mountain biking, river floating, fishing, hunting, hiking, adventure travel. Shared time outside, under load, solving problems.</p>
-                <p>The work is building an open robot labor market — the system that makes “a robot takes out the trash during a home-health visit” a boring, reliable default. The culture is the team that can sustain that work for years without burning out or turning into a typical remote company.</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="hire-section" id="you-get">
-        <div class="container">
-            <p class="hire-step">04 / What early members get</p>
-            <h2>Ownership, access, and a place to be</h2>
-            <div class="hire-copy">
-                <p>Competitive salary so you can focus. Meaningful equity so the people who build the core system own a real piece of it. Direct upside tied to the marketplace succeeding.</p>
-                <p>Assume ~30% of total equity is shared among the first 5–6 employees (roughly 5% each on average, with variation by role and timing). The figures below are not promises — they translate that stake against the <a href="investors.html">public model</a> if the exchange becomes the default matching layer for a large share of robot labor.</p>
-            </div>
-            <div class="hire-horizon mt-3">
-                <div class="hire-year">
-                    <div class="when">1-year · ≈2027</div>
-                    <p>Product live, early density, first seat sales. Equity is illiquid paper. A successful seed/A keeps early stakes in the low-to-mid single-digit millions on paper — still high-risk, high-ownership.</p>
-                </div>
-                <div class="hire-year">
-                    <div class="when">5-year · ≈2031</div>
-                    <p>Seat issuance at or just past its ~2035 peak (~$50T that year in the base case). A ~5% early stake can represent hundreds of millions to low billions on paper if the model is realized.</p>
-                </div>
-                <div class="hire-year">
-                    <div class="when">10-year · ≈2036</div>
-                    <p>Robot labor GMV at or past the ~$30T 2040 base. Take-rate is the recurring engine. A ~5% stake sits in the multi-billion range in a successful outcome.</p>
-                </div>
-                <div class="hire-year">
-                    <div class="when">20-year · ≈2046</div>
-                    <p>Mature utility infrastructure. Take-rate, residual seats, hardware, attention, franchises, fund fees, insurance, and design produce durable cash flow. Early ~5% equity compounds into generational wealth in the long-tail case. Ordinary market, competition, regulation, and execution risks remain.</p>
-                </div>
-            </div>
-            <p class="hire-note">Many paths are smaller; some could be larger. Early equity is alignment: you own a meaningful share of what you create.</p>
-
-            <div class="hire-grid cols-2 mt-4">
-                <div class="hire-card">
-                    <h3>Social capital</h3>
-                    <p>Introductions across operators, hardware teams, investors, and builders already in the network. You meet the people deploying robots and buying robot labor.</p>
-                </div>
-                <div class="hire-card">
-                    <h3>Manufacturer access</h3>
-                    <ul>
-                        <li>Early models for evaluation and field trials</li>
-                        <li>Preferential pricing and allocation</li>
-                        <li>Factory, R&amp;D, and operator visits</li>
-                        <li>Direct support, training, joint demos</li>
-                    </ul>
-                </div>
-                <div class="hire-card">
-                    <h3>Robot credits &amp; lab time</h3>
-                    <p>Monthly credits (or zero-fee access) on the exchange for you and immediate family — the same API path a dispatcher uses to get the trash collected. Shared tools, spare parts, and test robots so you can wrench, prototype, and break things.</p>
-                </div>
-                <div class="hire-card">
-                    <h3>Priority seats</h3>
-                    <p>Favorable terms on supply seats — the ERC-721 tokens required to grab work. Aligned exposure to the supply side of the market.</p>
-                </div>
-                <div class="hire-card">
-                    <h3>Family housing</h3>
-                    <p>Support in the places we spend time together: Lakewood, Destin (Florida’s top fishing destination), Camas, and Missoula. So families can be present without the usual housing friction.</p>
-                </div>
-                <div class="hire-card">
-                    <h3>Fun, on purpose</h3>
-                    <p>Every benefit exists so the team can have fun together. Cash, equity, hardware, credits, seats, housing, and time outside are the infrastructure that lets this last.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="hire-section" id="apply" style="border-bottom: none;">
-        <div class="container">
-            <p class="hire-step">05 / Apply</p>
-            <h2>How to join</h2>
-            <div class="hire-copy">
-                <p>If you want to ship the system that turns leftover work inside a home-health visit — take out the trash, light housekeeping, a ride to an appointment — into liquid robot labor, send the form. We read every application. You can also reach out on <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">X</a>.</p>
+            <div class="hire-prose">
+                <p class="lede">Buyers post work. Providers — robots and the people who run them — grab matches by capability, location, reputation, and price. Both sides rate the job. Liquidity compounds the way it does on any two-sided market: more density, better matches, higher trust, lower friction.</p>
+                <p>We are not building another closed fleet or vertical SaaS. We are building the neutral exchange layer — the match loop, the job channel, ratings, seats, and the primitives that let anyone request or deploy physical work. The goal is a liquid, reputation-backed market that runs itself as volume grows.</p>
             </div>
 
-            <form class="hire-form-wrap mt-4" id="hireForm" novalidate>
+            <h2 class="hire-section-title">THE EXCHANGE</h2>
+            <div class="row g-4 mb-5" style="max-width:960px;margin:0 auto 3rem;">
+                <div class="col-md-6">
+                    <div class="hire-card">
+                        <h3>Demand posts a bid</h3>
+                        <p>Service, price, location — one-shot or recurring. Open until a provider takes it.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="hire-card">
+                        <h3>Supply grabs the fit</h3>
+                        <p>AI ranks capability, proximity, and price. Reputation breaks ties. A seat — an ERC-721 on Base — is what lets a provider take work.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="hire-card">
+                        <h3>Both sides sign</h3>
+                        <p>Completion and ratings travel through <code>/sign_job</code>. Scores follow you onto the next job. Settlement stays between the parties.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="hire-card">
+                        <h3>The market densifies</h3>
+                        <p>Rated jobs raise the signal. Better matches bring volume. Volume brings seats. Take-rate appears only as the network fills in. Everything is API-first.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="hire-section-title">WHY JOIN</h2>
+            <div class="hire-prose">
+                <p>We hire people who want to ship that infrastructure — and who want the team itself to be high-agency, high-trust, and fun.</p>
+            </div>
+
+            <div class="hire-why">
+                <h3>Own a piece of the exchange</h3>
+                <p>Competitive salary so you can focus, and meaningful equity so early team members have real upside as the market scales — not headcount theater.</p>
+            </div>
+            <div class="hire-why">
+                <h3>Meet the people deploying robots</h3>
+                <p>High-signal introductions across operators, hardware teams, investors, and builders already in the network. You will meet the people buying and selling robot labor, not just the conference circuit.</p>
+            </div>
+            <div class="hire-why">
+                <h3>Live where the team actually is</h3>
+                <p>Family housing support in Lakewood, Destin, Camas, and Missoula — Destin being Florida’s top fishing destination, the “World’s Luckiest Fishing Village.” These are not abstract stipends. They exist so you and your family can be in the same physical places without fighting short-term housing.</p>
+            </div>
+            <div class="hire-why">
+                <h3>Most in-person time is outside</h3>
+                <p>Mountain biking, river floating, fishing, hunting, hiking, adventure travel. Not a wellness program. The team spends real time under physical load, solving problems and having fun together.</p>
+            </div>
+
+            <div class="hire-prose" style="margin-top:2.5rem;">
+                <p>Every benefit exists for one reason: so we can have fun together. High-trust groups form when people repeatedly do hard and enjoyable things in the same towns. Cash, equity, housing, and time outside are the infrastructure that lets this team last.</p>
+            </div>
+
+            <div class="hire-close py-4">
+                <p>If that mix of mission and lifestyle fits, apply below or reach out on <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">X</a>.</p>
+            </div>
+
+            <form class="hire-form-wrap" id="hireForm" novalidate>
                 <div class="hire-hp" aria-hidden="true">
                     <label for="hireWebsite">Website</label>
                     <input type="text" id="hireWebsite" name="website" tabindex="-1" autocomplete="off">
