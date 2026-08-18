@@ -272,7 +272,7 @@
         <div class="container">
             <p class="hire-kicker">The Robot Services Exchange</p>
             <h1>Join the team building the market for robot labor</h1>
-            <p class="lede">Demand is people bidding for services on the website. Supply is robots grabbing that work on Grab Job or the API. Both sides rate. We are hiring people who want to ship that matching layer — and who want the team itself to be high-trust, high-agency, and fun.</p>
+            <p class="lede">A home-health aide visit still includes taking out the trash. That collection is a job on The RSE: posted through the API, grabbed by a robot through the API, signed and rated through the API. The website is how people look at the market. Every transaction is an API call. We are hiring people who want to ship that matching layer — and who want the team itself to be high-trust, high-agency, and fun.</p>
             <div class="hire-hero-actions">
                 <a class="btn btn-primary btn-lg" href="#apply">Apply to join</a>
                 <a class="btn btn-outline-light btn-lg" href="#exchange">Read the story</a>
@@ -297,8 +297,9 @@
             <p class="hire-step">01 / The exchange</p>
             <h2>What this is</h2>
             <div class="hire-copy">
-                <p class="bright">The RSE is the open marketplace for robot labor. Demand is people bidding for a service on this website. Supply is robots grabbing that bid on Grab Job or the API. Both sides sign and rate. Liquidity compounds the same way it does on any two-sided market: more density, better matches, higher trust, lower friction.</p>
-                <p>We are not building another closed fleet or vertical SaaS. We are building the neutral exchange layer — match loop, job channel, ratings, seats, and the primitives that let anyone request or deploy physical work. The goal is a liquid, reputation-backed market that runs itself as volume grows.</p>
+                <p class="bright">Start here: a home-health aide is with the client. The bins still need to go to the curb. That collection is a service bid on The RSE. A seated robot with the right capabilities and a good rating grabs it, does the route, and both sides sign. The family gets the trash out. The robot earns. Reputation moves.</p>
+                <p>The RSE is the open marketplace for robot labor. The website is a window — hiring, docs, a human way to inspect bids. The core system is the API at rse-api.com. Posting a bid, grabbing work, signing, rating: only the API is used for those transactions. UIs call it. Fleets call it. A home-health dispatcher’s software calls it. Nothing in the match loop lives only in a page.</p>
+                <p>We are not building another closed fleet or vertical SaaS. We are building the neutral exchange layer — match loop, job channel, ratings, seats, and the primitives that let anyone request or deploy physical work, including the unglamorous jobs inside a home-health visit. Liquidity compounds the same way it does on any two-sided market: more density, better matches, higher trust, lower friction.</p>
             </div>
             <div class="hire-callout">
                 <p>Human labor GMV sits in the tens of trillions (~$60T reported in 2025). Making robot labor liquid is one of the highest-leverage ways to shift physical work from scarce human hours to abundant machine capacity. The exchange is the matching layer that makes that shift compound. The public model on <a href="investors.html">investors</a> sets robot-labor GMV at ~$30T by 2035 — half that surface.</p>
@@ -311,42 +312,42 @@
             <p class="hire-step">02 / What we’re doing</p>
             <h2>Ship the matching layer</h2>
             <div class="hire-copy">
-                <p>The work is infrastructure: make posting, grabbing, rating, and seating so reliable that fleets, operators, and agents can plug in natively. Everything is API-first.</p>
+                <p>The work is infrastructure: make posting, grabbing, rating, and seating so reliable that a home-health dispatcher, a fleet, or an agent can plug in and a robot takes out that trash. Everything that moves a job or a rating is an API call. The website and Grab Job are clients of the same endpoints.</p>
             </div>
             <div class="hire-grid cols-3 mt-4">
                 <div class="hire-card">
                     <div class="n">01</div>
                     <h3>Demand posts</h3>
-                    <p>Service, price, location — one-shot or recurring.</p>
+                    <p>The aide service (or the family) posts the collection: service, price, location — one-shot or recurring. That post is an API call.</p>
                 </div>
                 <div class="hire-card">
                     <div class="n">02</div>
                     <h3>Supply grabs</h3>
-                    <p>AI ranks capability, proximity, and price. Reputation breaks ties.</p>
+                    <p>A seated robot that can haul bins to the curb grabs via the API. AI ranks capability, proximity, and price. Reputation breaks ties.</p>
                 </div>
                 <div class="hire-card">
                     <div class="n">03</div>
                     <h3>Both sides rate</h3>
-                    <p>Complete via <code>/sign_job</code>. Scores travel with the next job.</p>
+                    <p>Complete via <code>/sign_job</code>. The collection’s score travels with the next job.</p>
                 </div>
                 <div class="hire-card">
                     <div class="n">04</div>
                     <h3>Settlement stays between parties</h3>
-                    <p>Take-rate and the other streams appear as density grows. Seat issuance is the bulk of modeled project revenue.</p>
+                    <p>The family and the operator settle off-platform. Take-rate and the other streams appear as density grows. Seat issuance is the bulk of modeled project revenue.</p>
                 </div>
                 <div class="hire-card">
                     <div class="n">05</div>
                     <h3>Seats gate supply</h3>
-                    <p>Limited ERC-721 tokens on Base. Providers need a seat to grab work.</p>
+                    <p>Limited ERC-721 tokens on Base. A provider needs a seat to grab that collection — or any other job.</p>
                 </div>
                 <div class="hire-card">
                     <div class="n">06</div>
-                    <h3>API-first</h3>
-                    <p>Operators, manufacturers, and agents integrate directly.</p>
+                    <h3>API is the exchange</h3>
+                    <p>Only the API is used for transactions. Operators, manufacturers, and agents integrate directly. Pages are a view, not a second marketplace.</p>
                 </div>
             </div>
             <div class="hire-copy mt-4">
-                <p>The flywheel: more completed, rated jobs → higher reputation signal → better matching → more volume → more seats and density.</p>
+                <p>The flywheel: more completed, rated collections (and every other job like them) → higher reputation signal → better matching → more volume → more seats and density. The same loop that fills one trash run is what scales the market.</p>
             </div>
         </div>
     </section>
@@ -358,7 +359,7 @@
             <div class="hire-copy">
                 <p class="bright">We hire people who want to ship infrastructure for physical work markets — and who want the team itself to last.</p>
                 <p>High-trust groups form when people repeatedly do hard and enjoyable things in the same physical places. Most in-person time is outdoor and active: mountain biking, river floating, fishing, hunting, hiking, adventure travel. Shared time outside, under load, solving problems.</p>
-                <p>The work is building an open robot labor market. The culture is the team that can sustain that work for years without burning out or turning into a typical remote company.</p>
+                <p>The work is building an open robot labor market — the system that makes “a robot takes out the trash during a home-health visit” a boring, reliable default. The culture is the team that can sustain that work for years without burning out or turning into a typical remote company.</p>
             </div>
         </div>
     </section>
@@ -407,7 +408,7 @@
                 </div>
                 <div class="hire-card">
                     <h3>Robot credits &amp; lab time</h3>
-                    <p>Monthly credits (or zero-fee access) on the exchange for you and immediate family. Shared tools, spare parts, and test robots so you can wrench, prototype, and break things.</p>
+                    <p>Monthly credits (or zero-fee access) on the exchange for you and immediate family — the same API path a dispatcher uses to get the trash collected. Shared tools, spare parts, and test robots so you can wrench, prototype, and break things.</p>
                 </div>
                 <div class="hire-card">
                     <h3>Priority seats</h3>
@@ -430,7 +431,7 @@
             <p class="hire-step">05 / Apply</p>
             <h2>How to join</h2>
             <div class="hire-copy">
-                <p>If that mix of mission, system, ownership, and lifestyle fits, send the form. We read every application. You can also reach out on <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">X</a>.</p>
+                <p>If you want to ship the system that turns leftover work inside a home-health visit — take out the trash, light housekeeping, a ride to an appointment — into liquid robot labor, send the form. We read every application. You can also reach out on <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">X</a>.</p>
             </div>
 
             <form class="hire-form-wrap mt-4" id="hireForm" novalidate>
