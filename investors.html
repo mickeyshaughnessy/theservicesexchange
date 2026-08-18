@@ -1007,7 +1007,7 @@
                         <p class="formula-mini">Revenue = seats sold × seat price</p>
                         <div class="live-num" id="cardSeatsPeak">—</div>
                         <div class="live-label">Peak year seat revenue</div>
-                        <p class="cost-line"><strong>Cost load:</strong> 15% → 5% · then plateaus</p>
+                        <p class="cost-line"><strong>Cost load:</strong> $100→$25 / seat + 1.0%→0.25% channel</p>
                         <a class="stream-jump" href="#seats">Details &amp; chart →</a>
                     </div>
                 </div>
@@ -1473,9 +1473,9 @@
                         </tr>
                         <tr>
                             <td>Seat sales</td>
-                            <td>Issuance ops, KYC/channel, legal, chain ops</td>
-                            <td class="num">15%</td>
-                            <td class="num">5%</td>
+                            <td>$ / new seat (KYC, legal, chain) + thin channel % of seat price</td>
+                            <td class="num">$100 + 1.0%</td>
+                            <td class="num">$25 + 0.25%</td>
                         </tr>
                         <tr>
                             <td>Hardware aff + fin</td>
@@ -1516,7 +1516,7 @@
                     </tbody>
                 </table>
             </div>
-            <p class="inv-note mt-3">Cost ratios interpolate linearly from 2026 early rates to 2040 mature rates, then hold.</p>
+            <p class="inv-note mt-3">Cost ratios interpolate linearly from 2026 early rates to 2040 mature rates, then hold. Seat cost is $ per new seat plus a thin % of seat revenue — not a fat % of the $100k price.</p>
         </div>
     </section>
 
@@ -1959,7 +1959,7 @@
         const BASE_GMV_2035 = 30e12; // dial 100 → $30T in 2040
         const COST = {
             exchange:  [0.35, 0.12],
-            seats:     [0.15, 0.05],
+            seats:     [0.01, 0.0025], // thin channel % of seat revenue
             hardware:  [0.25, 0.12],
             ads:       [0.45, 0.28],
             franchise: [0.55, 0.35],
@@ -1967,6 +1967,8 @@
             insurance: [0.40, 0.22],
             design:    [0.55, 0.32]
         };
+        // $ / new seat: KYC, legal, chain ops (not a % of the $100k price)
+        const SEAT_UNIT_COST = [100, 25];
 
         const PRESETS = {
             conservative: { gmv: 25, take: 30, seatPrice: 50, network: 40, capital: 50, partners: 5 },
@@ -2066,7 +2068,8 @@
 
                 const costs = {
                     exchange: exchange * costRatio(y, ...COST.exchange),
-                    seats: seats * costRatio(y, ...COST.seats),
+                    seats: seatUnits * costRatio(y, ...SEAT_UNIT_COST)
+                        + seats * costRatio(y, ...COST.seats),
                     hardware: hardware * costRatio(y, ...COST.hardware),
                     ads: ads * costRatio(y, ...COST.ads),
                     franchise: franchise * costRatio(y, ...COST.franchise),
@@ -2455,7 +2458,8 @@
                 'Seat primary issuance is the bulk of project revenue (base peak ~$50T in 2035). ' +
                 'Equity raise: ' + fmtMoney(p.capital) + ' across ' + p.partners + ' partners (~' +
                 fmtMoney(p.capital / p.partners) + ' average check). ' +
-                'Costs: per-stream ratios, linear improvement 2026→2040.' +
+                'Costs: per-stream ratios, linear improvement 2026→2040. ' +
+                'Seat cost is $100→$25 per new seat plus 1.0%→0.25% channel — not 5–15% of seat price.' +
                 '<br><br>Planning model only — not financial advice or a securities offering. ' +
                 'Outcomes depend on adoption, regulation, competition, and execution.'
             );

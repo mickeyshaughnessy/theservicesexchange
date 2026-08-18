@@ -529,7 +529,7 @@
         const BASE_GMV_2035 = 30e12; // dial 100 → $30T in 2040
         const COST = {
             exchange:  [0.35, 0.12],
-            seats:     [0.15, 0.05],
+            seats:     [0.01, 0.0025],
             hardware:  [0.25, 0.12],
             ads:       [0.45, 0.28],
             franchise: [0.55, 0.35],
@@ -537,6 +537,7 @@
             insurance: [0.40, 0.22],
             design:    [0.55, 0.32]
         };
+        const SEAT_UNIT_COST = [100, 25];
         const PRESETS = {
             conservative: { gmv2035: 7.5e12, takeRate: 0.03, seatPrice: 50000, network: 0.40, capital: 0.5e12, partners: 5 },
             base:         { gmv2035: 30e12,  takeRate: 0.05, seatPrice: 100000, network: 1.00, capital: 1.5e12, partners: 7 },
@@ -576,7 +577,8 @@
             YEARS.forEach(function (y) {
                 const gmv = BASE_GMV[y] * gmvScale;
                 const exchange = gmv * p.takeRate;
-                const seats = BASE_SEAT_NEW[y] * n * p.seatPrice;
+                const seatUnits = BASE_SEAT_NEW[y] * n;
+                const seats = seatUnits * p.seatPrice;
                 const robots = BASE_ROBOTS[y] * n;
                 const hardware = robots * ASP * AFF + robots * FIN_ATTACH * ASP * FIN_FEE;
                 const ads = BASE_ADS[y] * n;
@@ -592,7 +594,8 @@
                 const design = BASE_DESIGN[y] * n;
                 const costs = {
                     exchange: exchange * costRatio(y, COST.exchange[0], COST.exchange[1]),
-                    seats: seats * costRatio(y, COST.seats[0], COST.seats[1]),
+                    seats: seatUnits * costRatio(y, SEAT_UNIT_COST[0], SEAT_UNIT_COST[1])
+                        + seats * costRatio(y, COST.seats[0], COST.seats[1]),
                     hardware: hardware * costRatio(y, COST.hardware[0], COST.hardware[1]),
                     ads: ads * costRatio(y, COST.ads[0], COST.ads[1]),
                     franchise: franchise * costRatio(y, COST.franchise[0], COST.franchise[1]),
@@ -637,7 +640,7 @@
 
             const streams = [
                 ['01', 'Exchange take-rate', 'GMV × take-rate', 'exchange', '35% → 12%'],
-                ['02', 'Eternal seats', 'new seats × seat price', 'seats', '15% → 5%'],
+                ['02', 'Eternal seats', 'new seats × seat price', 'seats', '$100→$25/seat + 1.0%→0.25%'],
                 ['03', 'Hardware aff + fin', 'robots × ($25k × 3% + 40% × 1.5%)', 'hardware', '25% → 12%'],
                 ['04', '/nearby & ads', 'network-scaled placement spend', 'ads', '45% → 28%'],
                 ['05', 'Franchises', 'new-site fees + royalties', 'franchise', '55% → 35%'],

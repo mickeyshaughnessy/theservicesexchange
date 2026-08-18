@@ -6416,9 +6416,10 @@ _INS_INST = 0.25
 _INS_PREMIUM = 0.018
 _INS_CUT = 0.15
 _BASE_GMV_2035 = 30e12  # dial 100 → $30T in 2040
+_SEAT_UNIT_COST = (100.0, 25.0)  # $ / new seat: KYC, legal, chain
 _COST_BANDS = {
     "exchange": (0.35, 0.12),
-    "seats": (0.15, 0.05),
+    "seats": (0.01, 0.0025),  # thin channel % of seat revenue
     "hardware": (0.25, 0.12),
     "ads": (0.45, 0.28),
     "franchise": (0.55, 0.35),
@@ -6625,9 +6626,14 @@ def _build_projection_series(p: Dict[str, float]) -> Dict[str, Any]:
             "insurance": insurance,
             "design": design,
         }
-        costs = {
-            k: revs[k] * _cost_ratio(y, *_COST_BANDS[k]) for k in _STREAM_KEYS
-        }
+        costs = {}
+        for k in _STREAM_KEYS:
+            if k == "seats":
+                unit = _cost_ratio(y, *_SEAT_UNIT_COST)
+                pct = _cost_ratio(y, *_COST_BANDS["seats"])
+                costs[k] = seat_units * unit + revs[k] * pct
+            else:
+                costs[k] = revs[k] * _cost_ratio(y, *_COST_BANDS[k])
         profits = {k: revs[k] - costs[k] for k in _STREAM_KEYS}
         rev = sum(revs.values())
         cost = sum(costs.values())
