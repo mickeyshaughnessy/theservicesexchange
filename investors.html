@@ -983,10 +983,10 @@
             <h2>Eight revenue streams</h2>
             <p class="inv-stream-lede">
                 Eight streams, listed as peers. Each has a formula. Seat primary issuance is the bulk of
-                modeled project revenue (base peak near $50T around 2030 at $100k × 500M new seats);
+                modeled project revenue (base peak near $50T in 2035 at $100k × 500M new seats);
                 the other seven compound around it. Live figures track the scenario dials under
                 <a href="#projections">Projections</a>
-                (2035 GMV, take-rate, seat price, network scale)—adjust them, then scroll back here to compare what moves.
+                (2040 GMV, take-rate, seat price, network scale)—adjust them, then scroll back here to compare what moves.
             </p>
             <div class="row g-3">
                 <div class="col-md-6 col-lg-4">
@@ -1090,10 +1090,10 @@
             </p>
             <p class="inv-stream-lede">
                 Platform fee on transaction volume once payments and escrow are on-platform.
-                Dials set 2035 GMV and take-rate; each chart bar is GMV × take-rate for that year.
+                Dials set 2040 GMV and take-rate; each chart bar is GMV × take-rate for that year.
             </p>
             <div class="inv-stream-meta">
-                <div class="inv-metric"><div class="n" id="metricGmv2035">—</div><div class="l">GMV · 2035 (dial)</div></div>
+                <div class="inv-metric"><div class="n" id="metricGmv2035">—</div><div class="l">GMV · 2040 (dial)</div></div>
                 <div class="inv-metric"><div class="n" id="metricTakeRate">—</div><div class="l">Take-rate (dial)</div></div>
                 <div class="inv-metric"><div class="n" id="metricExch2035">—</div><div class="l">= GMV × take · 2035</div></div>
                 <div class="inv-metric"><div class="n" id="metricExch2040">—</div><div class="l">Revenue · 2040</div></div>
@@ -1127,9 +1127,9 @@
             </p>
             <div class="inv-stream-meta">
                 <div class="inv-metric"><div class="n" id="metricSeatPrice">—</div><div class="l">Price / seat (dial)</div></div>
-                <div class="inv-metric"><div class="n" id="metricSeatTarget">—</div><div class="l">Seats sold · first 5 yrs</div></div>
+                <div class="inv-metric"><div class="n" id="metricSeatTarget">—</div><div class="l">Seats sold · 2031–2035</div></div>
                 <div class="inv-metric"><div class="n" id="metricSeatsPeak">—</div><div class="l">Peak year revenue</div></div>
-                <div class="inv-metric"><div class="n" id="metricSeats2035">—</div><div class="l">Revenue · 2035 (post-plateau)</div></div>
+                <div class="inv-metric"><div class="n" id="metricSeats2035">—</div><div class="l">Revenue · 2035 (peak year)</div></div>
             </div>
             <div class="inv-chart-box">
                 <h3 id="titleChartSeatsRev">Seat sales revenue ($ / year)</h3>
@@ -1140,7 +1140,7 @@
                 <h3>New seats sold (units / year)</h3>
                 <canvas id="chartSeatsUnits" aria-label="Bar chart of seats sold by year"></canvas>
             </div>
-            <p class="inv-chart-caption">Base shape: 1M → 10M → 100M → 500M → 1B cumulative over 5 years (2026–2030), then taper. Scaled by network dial.</p>
+            <p class="inv-chart-caption">Founding tranche in 2026, then 1M → 10M → 100M → 500M → 1B cumulative over 2031–2035 (peak 2035), then taper. Scaled by network dial.</p>
         </div>
     </section>
 
@@ -1415,7 +1415,7 @@
                 <h3>Insurance &amp; SLA platform revenue ($ / year)</h3>
                 <canvas id="chartInsurance" aria-label="Bar chart of insurance revenue by year"></canvas>
             </div>
-            <p class="inv-chart-caption">Each bar = GMV × 0.25 × 0.018 × 0.15. Scales with the 2035 GMV dial. Not a licensed insurance product.</p>
+            <p class="inv-chart-caption">Each bar = GMV × 0.25 × 0.018 × 0.15. Scales with the 2040 GMV dial. Not a licensed insurance product.</p>
         </div>
     </section>
 
@@ -1461,7 +1461,7 @@
                             <th>Stream</th>
                             <th>Primary cost drivers</th>
                             <th class="num">Early (2026)</th>
-                            <th class="num">Mature (2035+)</th>
+                            <th class="num">Mature (2040+)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1516,7 +1516,7 @@
                     </tbody>
                 </table>
             </div>
-            <p class="inv-note mt-3">Cost ratios interpolate linearly from 2026 early rates to 2035 mature rates, then hold.</p>
+            <p class="inv-note mt-3">Cost ratios interpolate linearly from 2026 early rates to 2040 mature rates, then hold.</p>
         </div>
     </section>
 
@@ -1527,7 +1527,7 @@
             <p class="inv-prose mb-4">
                 Years <strong>2026–2040</strong>. Expand the scenario dials to re-tune GMV, take-rate, seats, network scale,
                 and equity assumptions—charts, the P&amp;L table, stream summaries above, and raise KPIs update live.
-                Seat primary issuance is the bulk of modeled project revenue (base peak near $50T around 2030),
+                Seat primary issuance is the bulk of modeled project revenue (base peak near $50T in 2035),
                 then plateaus. Exchange take-rate is the largest recurring line after that issuance window.
             </p>
 
@@ -1557,9 +1557,9 @@
                 <div class="inv-dials-body" id="scenarioDialsBody">
                     <div class="inv-dial-grid">
                         <div class="inv-dial">
-                            <label for="dialGmv">2035 GMV <span class="val" id="dialGmvVal">$30.0T</span></label>
+                            <label for="dialGmv">2040 GMV <span class="val" id="dialGmvVal">$30.0T</span></label>
                             <input type="range" id="dialGmv" min="5" max="500" step="5" value="100" aria-valuetext="$30.0T">
-                            <div class="hint">Scales the full GMV path. Base = $30T in 2035 (~half of ~$60T 2025 human labor GMV).</div>
+                            <div class="hint">Scales the full GMV path. Base = $30T in 2040 (~half of ~$60T 2025 human labor GMV).</div>
                         </div>
                         <div class="inv-dial">
                             <label for="dialTake">Take-rate <span class="val" id="dialTakeVal">5.0%</span></label>
@@ -1909,52 +1909,54 @@
         const YEAR_LABELS = YEARS.map(String);
 
         // Base-case shape curves (absolute units at network scale = 1.0)
+        // Paths shifted ~5 years later vs the prior base. Seat peak is 2035.
+        // GMV dial (100) still means $30T — now in 2040, not 2035.
         const BASE_GMV = {
-            2026: 3e9, 2027: 24e9, 2028: 120e9, 2029: 450e9, 2030: 1.35e12,
-            2031: 3.3e12, 2032: 7.2e12, 2033: 13.5e12, 2034: 21e12, 2035: 30e12,
-            2036: 40.5e12, 2037: 52.5e12, 2038: 66e12, 2039: 81e12, 2040: 96e12
+            2026: 80e6, 2027: 200e6, 2028: 500e6, 2029: 1.2e9, 2030: 2e9,
+            2031: 3e9, 2032: 24e9, 2033: 120e9, 2034: 450e9, 2035: 1.35e12,
+            2036: 3.3e12, 2037: 7.2e12, 2038: 13.5e12, 2039: 21e12, 2040: 30e12
         };
         const BASE_SEAT_NEW = {
-            2026: 1e6, 2027: 9e6, 2028: 90e6, 2029: 400e6, 2030: 500e6,
-            2031: 1e7, 2032: 2e6, 2033: 5e5, 2034: 2e5, 2035: 1e5,
-            2036: 5e4, 2037: 5e4, 2038: 5e4, 2039: 5e4, 2040: 5e4
+            2026: 1e6, 2027: 1.5e5, 2028: 2.5e5, 2029: 4e5, 2030: 7e5,
+            2031: 1e6, 2032: 9e6, 2033: 90e6, 2034: 400e6, 2035: 500e6,
+            2036: 1e7, 2037: 2e6, 2038: 5e5, 2039: 2e5, 2040: 1e5
         };
         const BASE_ROBOTS = {
-            2026: 5e4, 2027: 4e5, 2028: 2e6, 2029: 8e6, 2030: 25e6,
-            2031: 60e6, 2032: 110e6, 2033: 170e6, 2034: 230e6, 2035: 300e6,
-            2036: 360e6, 2037: 420e6, 2038: 480e6, 2039: 540e6, 2040: 600e6
+            2026: 2e3, 2027: 5e3, 2028: 1.2e4, 2029: 2.5e4, 2030: 4e4,
+            2031: 5e4, 2032: 4e5, 2033: 2e6, 2034: 8e6, 2035: 25e6,
+            2036: 60e6, 2037: 110e6, 2038: 170e6, 2039: 230e6, 2040: 300e6
         };
         const BASE_ADS = {
-            2026: 5e6, 2027: 40e6, 2028: 200e6, 2029: 800e6, 2030: 2.5e9,
-            2031: 6e9, 2032: 12e9, 2033: 20e9, 2034: 30e9, 2035: 45e9,
-            2036: 60e9, 2037: 75e9, 2038: 90e9, 2039: 105e9, 2040: 120e9
+            2026: 2e5, 2027: 5e5, 2028: 1.2e6, 2029: 2.5e6, 2030: 4e6,
+            2031: 5e6, 2032: 40e6, 2033: 200e6, 2034: 800e6, 2035: 2.5e9,
+            2036: 6e9, 2037: 12e9, 2038: 20e9, 2039: 30e9, 2040: 45e9
         };
         const BASE_G_NEW = {
-            2026: 20, 2027: 80, 2028: 250, 2029: 600, 2030: 1200,
-            2031: 2000, 2032: 2800, 2033: 3200, 2034: 3500, 2035: 3600,
-            2036: 3400, 2037: 3000, 2038: 2600, 2039: 2200, 2040: 1800
+            2026: 2, 2027: 4, 2028: 8, 2029: 12, 2030: 16,
+            2031: 20, 2032: 80, 2033: 250, 2034: 600, 2035: 1200,
+            2036: 2000, 2037: 2800, 2038: 3200, 2039: 3500, 2040: 3600
         };
         const BASE_L_NEW = {
-            2026: 50, 2027: 200, 2028: 700, 2029: 1800, 2030: 4000,
-            2031: 7000, 2032: 10000, 2033: 12000, 2034: 13000, 2035: 14000,
-            2036: 13000, 2037: 12000, 2038: 10000, 2039: 9000, 2040: 8000
+            2026: 5, 2027: 10, 2028: 18, 2029: 28, 2030: 40,
+            2031: 50, 2032: 200, 2033: 700, 2034: 1800, 2035: 4000,
+            2036: 7000, 2037: 10000, 2038: 12000, 2039: 13000, 2040: 14000
         };
         const BASE_AUM = {
-            2026: 50e6, 2027: 400e6, 2028: 2.5e9, 2029: 12e9, 2030: 40e9,
-            2031: 100e9, 2032: 220e9, 2033: 400e9, 2034: 650e9, 2035: 1e12,
-            2036: 1.4e12, 2037: 1.85e12, 2038: 2.3e12, 2039: 2.8e12, 2040: 3.3e12
+            2026: 5e6, 2027: 10e6, 2028: 18e6, 2029: 28e6, 2030: 40e6,
+            2031: 50e6, 2032: 400e6, 2033: 2.5e9, 2034: 12e9, 2035: 40e9,
+            2036: 100e9, 2037: 220e9, 2038: 400e9, 2039: 650e9, 2040: 1e12
         };
         // Rougher overlay: design-capacity path (network-scaled), not a booked backlog
         const BASE_DESIGN = {
-            2026: 15e6, 2027: 60e6, 2028: 200e6, 2029: 600e6, 2030: 1.5e9,
-            2031: 3.5e9, 2032: 6e9, 2033: 9e9, 2034: 12e9, 2035: 15e9,
-            2036: 18e9, 2037: 21e9, 2038: 24e9, 2039: 27e9, 2040: 30e9
+            2026: 1e6, 2027: 3e6, 2028: 6e6, 2029: 10e6, 2030: 12e6,
+            2031: 15e6, 2032: 60e6, 2033: 200e6, 2034: 600e6, 2035: 1.5e9,
+            2036: 3.5e9, 2037: 6e9, 2038: 9e9, 2039: 12e9, 2040: 15e9
         };
 
         const ASP = 25000, AFF = 0.03, FIN_ATTACH = 0.40, FIN_FEE = 0.015;
         const HYP_RATE = 0.028;
         const INS_INST = 0.25, INS_PREMIUM = 0.018, INS_CUT = 0.15;
-        const BASE_GMV_2035 = 30e12;
+        const BASE_GMV_2035 = 30e12; // dial 100 → $30T in 2040
         const COST = {
             exchange:  [0.35, 0.12],
             seats:     [0.15, 0.05],
@@ -1974,7 +1976,7 @@
         };
 
         function costRatio(y, early, late) {
-            const t = Math.min(1, Math.max(0, (y - 2026) / (2035 - 2026)));
+            const t = Math.min(1, Math.max(0, (y - 2026) / (2040 - 2026)));
             return early + (late - early) * t;
         }
 
@@ -2013,7 +2015,7 @@
 
         function readParams() {
             return {
-                gmv2035: (Number(document.getElementById('dialGmv').value) / 10) * 3e12, // 100 → $30T
+                gmv2035: (Number(document.getElementById('dialGmv').value) / 10) * 3e12, // 100 → $30T in 2040
                 takeRate: Number(document.getElementById('dialTake').value) / 1000,       // 50 → 5%
                 seatPrice: Number(document.getElementById('dialSeatPrice').value) * 1000, // 100 → $100k
                 network: Number(document.getElementById('dialNetwork').value) / 100,      // 100 → 1.0×
@@ -2311,13 +2313,14 @@
             setMoney('cardExch2035', series.exchange[i2035]);
             setText('titleChartExchange', 'Platform revenue = GMV × ' + (p.takeRate * 100).toFixed(1) + '%  ($ / year)');
             setHtml('captionExchange', withMag(
-                '2035: ' + fmtMoney(p.gmv2035) + ' GMV × ' + (p.takeRate * 100).toFixed(1) + '% = ' +
-                fmtMoney(series.exchange[i2035]) + ' platform revenue. Each bar is take-rate revenue, not full GMV.'
+                '2040: ' + fmtMoney(p.gmv2035) + ' GMV × ' + (p.takeRate * 100).toFixed(1) + '% = ' +
+                fmtMoney(series.exchange[i2040]) + ' platform revenue. Each bar is take-rate revenue, not full GMV.'
             ));
 
             // Seats
             setMoney('metricSeatPrice', p.seatPrice);
-            const seatTarget = series.seatUnits.slice(0, 5).reduce((a, b) => a + b, 0);
+            const i2031 = YEARS.indexOf(2031);
+            const seatTarget = series.seatUnits.slice(i2031, i2031 + 5).reduce((a, b) => a + b, 0);
             setUnits('metricSeatTarget', seatTarget);
             const seatPeak = peakOf(series.seats);
             setMoney('metricSeatsPeak', seatPeak.value);
@@ -2328,7 +2331,7 @@
             ));
             setHtml('captionSeats', withMag(
                 'Peak ' + seatPeak.year + ': ' + fmtMoney(seatPeak.value) +
-                '. First 5 yrs units: ' + fmtUnits(seatTarget) + ' × price from dial.'
+                '. 2031–2035 units: ' + fmtUnits(seatTarget) + ' × price from dial.'
             ));
 
             // Hardware
@@ -2444,15 +2447,15 @@
             if (!el) return;
             el.innerHTML = withMag(
                 '<strong>Live model assumptions</strong><br>' +
-                'GMV path anchors ' + fmtMoney(p.gmv2035) + ' in 2035 at ' + (p.takeRate * 100).toFixed(1) + '% take-rate. ' +
-                'Seats: ' + fmtMoney(p.seatPrice) + ' primary × network scale ' + p.network.toFixed(2) + '× (base ~1B seats over five years). ' +
+                'GMV path anchors ' + fmtMoney(p.gmv2035) + ' in 2040 at ' + (p.takeRate * 100).toFixed(1) + '% take-rate. ' +
+                'Seats: ' + fmtMoney(p.seatPrice) + ' primary × network scale ' + p.network.toFixed(2) + '× (base ~1B seats over 2031–2035). ' +
                 'Hardware: $25k ASP, 3% affiliate, 40% finance attach × 1.5% referral (network-scaled). ' +
                 'Ads, franchise openings, Hyperion AUM, and design services scale with network. ' +
                 'Insurance ≈ GMV × 25% institutional × 1.8% premium × 15% platform cut. ' +
-                'Seat primary issuance is the bulk of project revenue (base peak ~$50T around 2030). ' +
+                'Seat primary issuance is the bulk of project revenue (base peak ~$50T in 2035). ' +
                 'Equity raise: ' + fmtMoney(p.capital) + ' across ' + p.partners + ' partners (~' +
                 fmtMoney(p.capital / p.partners) + ' average check). ' +
-                'Costs: per-stream ratios, linear improvement 2026→2035.' +
+                'Costs: per-stream ratios, linear improvement 2026→2040.' +
                 '<br><br>Planning model only — not financial advice or a securities offering. ' +
                 'Outcomes depend on adoption, regulation, competition, and execution.'
             );

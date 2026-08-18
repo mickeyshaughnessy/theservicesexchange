@@ -234,7 +234,7 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td>2035 GMV</td>
+                            <td>2040 GMV</td>
                             <td class="n">$7.5T</td>
                             <td class="n">$30.0T</td>
                             <td class="n">$75.0T</td>
@@ -288,7 +288,7 @@
 
         <section class="sheet">
             <h2>2 · Eight streams</h2>
-            <p class="note">Seat issuance is the bulk of modeled project revenue (base peak ~$50T in 2030 at $100k × 500M seats). Take-rate is the durable line after that window.</p>
+            <p class="note">Seat issuance is the bulk of modeled project revenue (base peak ~$50T in 2035 at $100k × 500M seats). Take-rate is the durable line after that window.</p>
             <div class="sheet-wrap">
                 <table>
                     <thead>
@@ -347,8 +347,8 @@
                     </thead>
                     <tbody>
                         <tr><td>Avg check / partner</td><td class="n" id="kCheck">—</td><td>Raise ÷ partners</td></tr>
-                        <tr><td>Revenue · 2035</td><td class="n" id="kRev">—</td><td>All eight streams</td></tr>
-                        <tr><td>Profit · 2035</td><td class="n" id="kProfit">—</td><td>Revenue − stream costs</td></tr>
+                        <tr><td>Revenue · 2035</td><td class="n" id="kRev">—</td><td>Seat-peak year · all eight streams</td></tr>
+                        <tr><td>Profit · 2035</td><td class="n" id="kProfit">—</td><td>Seat-peak year · revenue − stream costs</td></tr>
                         <tr><td>15-yr cumulative profit</td><td class="n" id="kCum">—</td><td>2026–2040</td></tr>
                         <tr><td>Illustrative profit / capital</td><td class="n" id="kMoic">—</td><td>Cum. operating profit ÷ raise — not ownership MOIC</td></tr>
                         <tr><td>Years until cum. profit ≥ raise</td><td class="n" id="kPay">—</td><td>Model clock, not a distribution clock</td></tr>
@@ -483,50 +483,50 @@
         for (let y = 2026; y <= 2040; y++) YEARS.push(y);
 
         const BASE_GMV = {
-            2026: 3e9, 2027: 24e9, 2028: 120e9, 2029: 450e9, 2030: 1.35e12,
-            2031: 3.3e12, 2032: 7.2e12, 2033: 13.5e12, 2034: 21e12, 2035: 30e12,
-            2036: 40.5e12, 2037: 52.5e12, 2038: 66e12, 2039: 81e12, 2040: 96e12
+            2026: 80e6, 2027: 200e6, 2028: 500e6, 2029: 1.2e9, 2030: 2e9,
+            2031: 3e9, 2032: 24e9, 2033: 120e9, 2034: 450e9, 2035: 1.35e12,
+            2036: 3.3e12, 2037: 7.2e12, 2038: 13.5e12, 2039: 21e12, 2040: 30e12
         };
         const BASE_SEAT_NEW = {
-            2026: 1e6, 2027: 9e6, 2028: 90e6, 2029: 400e6, 2030: 500e6,
-            2031: 1e7, 2032: 2e6, 2033: 5e5, 2034: 2e5, 2035: 1e5,
-            2036: 5e4, 2037: 5e4, 2038: 5e4, 2039: 5e4, 2040: 5e4
+            2026: 1e6, 2027: 1.5e5, 2028: 2.5e5, 2029: 4e5, 2030: 7e5,
+            2031: 1e6, 2032: 9e6, 2033: 90e6, 2034: 400e6, 2035: 500e6,
+            2036: 1e7, 2037: 2e6, 2038: 5e5, 2039: 2e5, 2040: 1e5
         };
         const BASE_ROBOTS = {
-            2026: 5e4, 2027: 4e5, 2028: 2e6, 2029: 8e6, 2030: 25e6,
-            2031: 60e6, 2032: 110e6, 2033: 170e6, 2034: 230e6, 2035: 300e6,
-            2036: 360e6, 2037: 420e6, 2038: 480e6, 2039: 540e6, 2040: 600e6
+            2026: 2e3, 2027: 5e3, 2028: 1.2e4, 2029: 2.5e4, 2030: 4e4,
+            2031: 5e4, 2032: 4e5, 2033: 2e6, 2034: 8e6, 2035: 25e6,
+            2036: 60e6, 2037: 110e6, 2038: 170e6, 2039: 230e6, 2040: 300e6
         };
         const BASE_ADS = {
-            2026: 5e6, 2027: 40e6, 2028: 200e6, 2029: 800e6, 2030: 2.5e9,
-            2031: 6e9, 2032: 12e9, 2033: 20e9, 2034: 30e9, 2035: 45e9,
-            2036: 60e9, 2037: 75e9, 2038: 90e9, 2039: 105e9, 2040: 120e9
+            2026: 2e5, 2027: 5e5, 2028: 1.2e6, 2029: 2.5e6, 2030: 4e6,
+            2031: 5e6, 2032: 40e6, 2033: 200e6, 2034: 800e6, 2035: 2.5e9,
+            2036: 6e9, 2037: 12e9, 2038: 20e9, 2039: 30e9, 2040: 45e9
         };
         const BASE_G_NEW = {
-            2026: 20, 2027: 80, 2028: 250, 2029: 600, 2030: 1200,
-            2031: 2000, 2032: 2800, 2033: 3200, 2034: 3500, 2035: 3600,
-            2036: 3400, 2037: 3000, 2038: 2600, 2039: 2200, 2040: 1800
+            2026: 2, 2027: 4, 2028: 8, 2029: 12, 2030: 16,
+            2031: 20, 2032: 80, 2033: 250, 2034: 600, 2035: 1200,
+            2036: 2000, 2037: 2800, 2038: 3200, 2039: 3500, 2040: 3600
         };
         const BASE_L_NEW = {
-            2026: 50, 2027: 200, 2028: 700, 2029: 1800, 2030: 4000,
-            2031: 7000, 2032: 10000, 2033: 12000, 2034: 13000, 2035: 14000,
-            2036: 13000, 2037: 12000, 2038: 10000, 2039: 9000, 2040: 8000
+            2026: 5, 2027: 10, 2028: 18, 2029: 28, 2030: 40,
+            2031: 50, 2032: 200, 2033: 700, 2034: 1800, 2035: 4000,
+            2036: 7000, 2037: 10000, 2038: 12000, 2039: 13000, 2040: 14000
         };
         const BASE_AUM = {
-            2026: 50e6, 2027: 400e6, 2028: 2.5e9, 2029: 12e9, 2030: 40e9,
-            2031: 100e9, 2032: 220e9, 2033: 400e9, 2034: 650e9, 2035: 1e12,
-            2036: 1.4e12, 2037: 1.85e12, 2038: 2.3e12, 2039: 2.8e12, 2040: 3.3e12
+            2026: 5e6, 2027: 10e6, 2028: 18e6, 2029: 28e6, 2030: 40e6,
+            2031: 50e6, 2032: 400e6, 2033: 2.5e9, 2034: 12e9, 2035: 40e9,
+            2036: 100e9, 2037: 220e9, 2038: 400e9, 2039: 650e9, 2040: 1e12
         };
         const BASE_DESIGN = {
-            2026: 15e6, 2027: 60e6, 2028: 200e6, 2029: 600e6, 2030: 1.5e9,
-            2031: 3.5e9, 2032: 6e9, 2033: 9e9, 2034: 12e9, 2035: 15e9,
-            2036: 18e9, 2037: 21e9, 2038: 24e9, 2039: 27e9, 2040: 30e9
+            2026: 1e6, 2027: 3e6, 2028: 6e6, 2029: 10e6, 2030: 12e6,
+            2031: 15e6, 2032: 60e6, 2033: 200e6, 2034: 600e6, 2035: 1.5e9,
+            2036: 3.5e9, 2037: 6e9, 2038: 9e9, 2039: 12e9, 2040: 15e9
         };
 
         const ASP = 25000, AFF = 0.03, FIN_ATTACH = 0.40, FIN_FEE = 0.015;
         const HYP_RATE = 0.028;
         const INS_INST = 0.25, INS_PREMIUM = 0.018, INS_CUT = 0.15;
-        const BASE_GMV_2035 = 30e12;
+        const BASE_GMV_2035 = 30e12; // dial 100 → $30T in 2040
         const COST = {
             exchange:  [0.35, 0.12],
             seats:     [0.15, 0.05],
@@ -544,7 +544,7 @@
         };
 
         function costRatio(y, early, late) {
-            const t = Math.min(1, Math.max(0, (y - 2026) / (2035 - 2026)));
+            const t = Math.min(1, Math.max(0, (y - 2026) / (2040 - 2026)));
             return early + (late - early) * t;
         }
         function fmtMoney(x) {
