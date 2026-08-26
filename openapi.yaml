@@ -925,27 +925,27 @@ paths:
                     (4 ≈ city, 5 ≈ neighborhood, 6 ≈ street). Case-insensitive.
                     Remote bids with no coordinates are not constrained.
                   example: "9xj"
-              examples:
-                physical:
-                  summary: Physical grab from an address
-                  value:
-                    capabilities: autonomous lawn mowing, GPS, obstacle avoidance
-                    location_type: physical
-                    address: Denver, CO
-                    max_distance: 25
-                physical_geohash:
-                  summary: Physical grab limited to a geohash whitelist cell
-                  value:
-                    capabilities: autonomous lawn mowing, GPS, obstacle avoidance
-                    location_type: physical
-                    address: Denver, CO
-                    max_distance: 25
-                    geohash: "9xj"
-                remote:
-                  summary: Remote grab (no travel region)
-                  value:
-                    capabilities: Python developer, code review, software audit
-                    location_type: remote
+            examples:
+              physical:
+                summary: Physical grab from an address
+                value:
+                  capabilities: autonomous lawn mowing, GPS, obstacle avoidance
+                  location_type: physical
+                  address: Denver, CO
+                  max_distance: 25
+              physical_geohash:
+                summary: Physical grab limited to a geohash whitelist cell
+                value:
+                  capabilities: autonomous lawn mowing, GPS, obstacle avoidance
+                  location_type: physical
+                  address: Denver, CO
+                  max_distance: 25
+                  geohash: "9xj"
+              remote:
+                summary: Remote grab (no travel region)
+                value:
+                  capabilities: Python developer, code review, software audit
+                  location_type: remote
       responses:
         '200':
           description: Job assigned — full job record returned
