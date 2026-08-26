@@ -4027,9 +4027,11 @@ def handle_submit_financing(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 
 _HIRE_LOCATIONS = ("lakewood", "destin", "camas", "missoula", "other")
 _HIRE_FAMILY = ("single", "partnered", "family", "prefer_not")
+_HIRE_SEATS = ("mickey", "griffin", "saxon")
 _HIRE_REQUIRED = (
     "name", "email", "phone", "social", "address", "dob",
-    "family_status", "preferred_location", "role_interest", "experience",
+    "family_status", "preferred_location", "seat",
+    "sponsor_org", "sponsor_contact", "sponsor_email", "experience",
 )
 
 
@@ -4038,12 +4040,13 @@ def _notify_hiring_application(app: Dict[str, Any]) -> bool:
     to_addr = (getattr(config, "HIRING_NOTIFY_EMAIL", "") or "mickeyshaughnessy@gmail.com").strip()
     if not to_addr or "@" not in to_addr:
         return False
-    subject = f"[RSE hiring] {app.get('name', 'Applicant')} — {app.get('preferred_location', '')}"
+    subject = f"[RSE founding partner] {app.get('seat', '')} — {app.get('name', 'Applicant')}"
     lines = [
-        "New hiring application on therobotservicesexchange.com/hiring.html",
+        "New Founding Partner pair on therobotservicesexchange.com/hiring.html",
         "",
         f"id: {app.get('application_id')}",
         f"submitted: {app.get('created')}",
+        f"seat: {app.get('seat')}",
         f"name: {app.get('name')}",
         f"email: {app.get('email')}",
         f"phone: {app.get('phone')}",
@@ -4052,9 +4055,12 @@ def _notify_hiring_application(app: Dict[str, Any]) -> bool:
         f"dob: {app.get('dob')}",
         f"family_status: {app.get('family_status')}",
         f"preferred_location: {app.get('preferred_location')}",
-        f"role_interest: {app.get('role_interest')}",
+        f"sponsor_org: {app.get('sponsor_org')}",
+        f"sponsor_contact: {app.get('sponsor_contact')}",
+        f"sponsor_email: {app.get('sponsor_email')}",
+        f"sponsor_commitment: {app.get('sponsor_commitment')}",
         "",
-        "experience:",
+        "the pair:",
         app.get("experience") or "",
     ]
     body = "\n".join(lines)
@@ -4114,6 +4120,8 @@ def handle_submit_hiring_application(data: Dict[str, Any]) -> Tuple[Dict[str, An
 
     if "@" not in fields["email"] or "." not in fields["email"].split("@")[-1]:
         return {"error": "Invalid email address"}, 400
+    if "@" not in fields["sponsor_email"] or "." not in fields["sponsor_email"].split("@")[-1]:
+        return {"error": "Invalid sponsor email address"}, 400
 
     loc = fields["preferred_location"].lower().replace(" ", "_")
     if loc not in _HIRE_LOCATIONS:
@@ -4125,8 +4133,15 @@ def handle_submit_hiring_application(data: Dict[str, Any]) -> Tuple[Dict[str, An
         return {"error": f"family_status must be one of {sorted(_HIRE_FAMILY)}"}, 400
     fields["family_status"] = fam
 
+    seat = fields["seat"].lower().strip()
+    if seat not in _HIRE_SEATS:
+        return {"error": f"seat must be one of {sorted(_HIRE_SEATS)}"}, 400
+    fields["seat"] = seat
+
     if not re.match(r"^\d{4}-\d{2}-\d{2}$", fields["dob"]):
         return {"error": "dob must be YYYY-MM-DD"}, 400
+
+    sponsor_commitment = (data.get("sponsor_commitment") or "").strip()[:200]
 
     application = {
         "application_id": str(uuid.uuid4()),
@@ -4139,7 +4154,12 @@ def handle_submit_hiring_application(data: Dict[str, Any]) -> Tuple[Dict[str, An
         "dob": fields["dob"][:10],
         "family_status": fields["family_status"],
         "preferred_location": fields["preferred_location"],
-        "role_interest": fields["role_interest"][:200],
+        "seat": fields["seat"],
+        "role_interest": fields["seat"],
+        "sponsor_org": fields["sponsor_org"][:200],
+        "sponsor_contact": fields["sponsor_contact"][:120],
+        "sponsor_email": fields["sponsor_email"][:160],
+        "sponsor_commitment": sponsor_commitment,
         "experience": fields["experience"][:8000],
         "status": "submitted",
     }

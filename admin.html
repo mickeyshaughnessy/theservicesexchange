@@ -384,10 +384,13 @@
                     (a.starred ? ' · starred' : '') + '</div>' +
                     '<h3>' + esc(a.name) + '</h3>' +
                     '<div><span class="pill">' + esc(st) + '</span>' +
+                    '<span class="pill">' + esc(a.seat || a.role_interest) + '</span>' +
                     '<span class="pill">' + esc(a.preferred_location) + '</span>' +
-                    '<span class="pill">' + esc(a.role_interest) + '</span></div>' +
+                    (a.sponsor_org ? '<span class="pill">' + esc(a.sponsor_org) + '</span>' : '') +
+                    '</div>' +
                     '<p class="muted mb-1">' + esc(a.email) + ' · ' + esc(a.phone) + ' · ' + esc(a.social) + '</p>' +
                     '<p class="muted mb-1">' + esc(a.address) + ' · DOB ' + esc(a.dob) + ' · ' + esc(a.family_status) + '</p>' +
+                    (a.sponsor_org ? '<p class="muted mb-1">Sponsor: ' + esc(a.sponsor_contact || '') + ' · ' + esc(a.sponsor_email || '') + ' · ' + esc(a.sponsor_commitment || '') + '</p>' : '') +
                     '<div class="app-exp">' + esc(a.experience) + '</div>' +
                     '<div class="row g-2 align-items-end">' +
                     '<div class="col-md-3"><label class="form-label">Status</label><select class="form-control app-status">' + opts + '</select></div>' +
