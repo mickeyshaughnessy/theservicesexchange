@@ -7,7 +7,7 @@ Two reference apps for rideshare-style integration with The RSE.
 | `passenger_app.py` | Demand (passenger) | Human session token |
 | `driver_app.py` | Supply (fleet / vehicle) | **Operator login → agent token** for grab/channel/sign |
 
-There is no taxi-specific schema. Passengers post plain-English bids; vehicles send plain-English capabilities; the exchange matches with LLM + location + reputation.
+There is no taxi-specific schema. Passengers post plain-English bids; vehicles send plain-English capabilities; the exchange matches with LLM + location + reputation. Optional `geohash` on `/grab_job` (or `RSE_GEOHASH` in the driver app) restricts grabs to jobs whose pickup and drop-off sit in that cell.
 
 ---
 

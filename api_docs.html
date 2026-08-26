@@ -384,7 +384,9 @@
                 <p style="font-family:'Share Tech Mono',monospace;font-size:0.82rem;color:var(--text-dim);">
                     Runs end-to-end matching tests directly from this page against <code>rse-api.com:5003</code>.
                     Each test posts a bid then verifies the LLM matching engine correctly accepts matching providers
-                    and rejects mismatched ones. All test data is labelled <code>TEST:</code> and cleaned up on completion.
+                    and rejects mismatched ones. A geohash suite then checks optional <code>/grab_job</code> region
+                    whitelists (invalid hash → 400, in-cell → 200, out-of-cell → 204). All test data is labelled
+                    <code>TEST:</code> and cleaned up on completion.
                 </p>
                 <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
                     <button id="run-int-tests-btn" style="background:rgba(57,255,20,0.15);border:1px solid var(--accent);color:var(--accent);text-shadow:0 0 6px var(--accent);font-family:'Press Start 2P',monospace;font-size:0.6rem;padding:10px 18px;cursor:pointer;" onclick="runIntegrationTests()">▶ Run All Tests</button>
@@ -433,9 +435,10 @@
           matching_caps: "Specialty diet meal delivery, diabetic-friendly food service, nutritional compliance",
           non_matching_caps: "Concrete foundation pour, rebar installation, slab work, site grading" },
         { name: "Landscaping: weekly lawn mowing",
-          bid: { service: "TEST: Weekly lawn mowing and edging, 1-acre residential property", price: 80, currency: "USD", payment_method: "cash", location_type: "physical", address: "700 Vine St, Denver, CO 80206" },
+          bid: { service: "TEST: Weekly lawn mowing and edging, 1-acre residential property", price: 80, currency: "USD", payment_method: "cash", location_type: "physical", address: "123 Main St, Denver, CO 80202" },
           matching_caps: "Residential lawn mowing, edging, yard maintenance, grass cutting",
-          non_matching_caps: "Tax preparation, bookkeeping, CPA, financial statements" },
+          non_matching_caps: "Tax preparation, bookkeeping, CPA, financial statements",
+          geohash: "9xj" },
         { name: "Landscaping: emergency tree removal",
           bid: { service: "TEST: Emergency storm-damaged tree removal, large oak, debris hauling", price: 900, currency: "USD", payment_method: "cash", location_type: "physical", address: "800 York St, Denver, CO 80206" },
           matching_caps: "Tree removal, certified arborist, chainsaw operation, stump grinding, debris hauling",
@@ -603,9 +606,10 @@
         throw new Error(`Login failed for ${username}: ${lastErr}`);
     }
 
-    async function _itGrabJob(token, caps, locationType, address) {
+    async function _itGrabJob(token, caps, locationType, address, geohash) {
         const body = { capabilities: caps, location_type: locationType, max_distance: 50 };
         if (address) body.address = address;
+        if (geohash) body.geohash = geohash;
         return await _itPost('/grab_job', body, token);
     }
 
@@ -698,12 +702,13 @@
 
                 const locType = tc.bid.location_type;
                 const addr    = tc.bid.address || null;
+                const geo     = tc.geohash || null;
 
                 // ── Non-matching grab (expect 204) ──
                 // 204 does not start cooldown; 200 (false positive / external) does — spin a new provider for match if needed
                 let nonMatchOk = null, nonMatchNote = '';
                 let matchOk = null, matchNote = '';
-                const nmR = await _itGrabJob(caseProvToken, tc.non_matching_caps, locType, addr);
+                const nmR = await _itGrabJob(caseProvToken, tc.non_matching_caps, locType, addr, geo);
                 if (nmR.status === 204) {
                     nonMatchOk = true;
                 } else if (nmR.status === 200 && nmR.data) {
@@ -757,7 +762,7 @@
                 }
 
                 // ── Matching grab (expect 200) ──
-                const mR = await _itGrabJob(caseProvToken, tc.matching_caps, locType, addr);
+                const mR = await _itGrabJob(caseProvToken, tc.matching_caps, locType, addr, geo);
                 if (mR.status === 200 && mR.data) {
                     const job = mR.data;
                     if (job.buyer_username === buyerUsername) {
@@ -805,6 +810,118 @@
 
                 // Stay under Flask STRICT_LIMIT (~20/min) for register/login of fresh providers
                 await _itSleep(3500);
+            }
+
+            // ── Geohash whitelist ────────────────────────────────────────
+            if (!_intTestAborted) {
+                statusEl.textContent = 'Geohash whitelist tests…';
+                _itLog('', '');
+                _itLog('[ GEOHASH ] Optional /grab_job region whitelist…', '#ffff00');
+
+                const geoCaps = 'Residential lawn mowing, edging, yard maintenance, grass cutting';
+                const geoAddr = '123 Main St, Denver, CO 80202';
+                const geoService = `TEST: Weekly lawn mowing and edging, geohash whitelist [${suffix}]`;
+
+                async function _newGeoProv(tag) {
+                    const tok = await _itRegisterLogin(`it_g${suffix}_${tag}`, 'supply', password);
+                    await _itPost('/set_wallet', { wallet_address: INT_TEST_WALLET }, tok);
+                    return tok;
+                }
+
+                function _logGeo(label, ok, detail) {
+                    _itLogRaw(
+                        `  <span style="color:#888">[GH]</span> ` +
+                        `<span style="color:#c0c0d0">${label.padEnd(48, ' ')}</span>` +
+                        (ok
+                            ? '<span style="color:#39ff14">✓</span>'
+                            : `<span style="color:#ff3333">✗</span> <span style="color:#888">${detail || ''}</span>`)
+                    );
+                }
+
+                // Invalid geohash → 400 (does not consume cooldown)
+                try {
+                    const pBad = await _newGeoProv('bad');
+                    const rBad = await _itGrabJob(pBad, geoCaps, 'physical', geoAddr, 'not-a-hash!');
+                    const okBad = rBad.status === 400;
+                    results.push({
+                        name: 'Geohash: invalid value → 400',
+                        nonMatchOk: okBad, matchOk: okBad,
+                        matchNote: okBad ? '' : 'status ' + rBad.status + (rBad.data && rBad.data.error ? ': ' + rBad.data.error : ''),
+                    });
+                    _logGeo('invalid geohash → 400', okBad, 'status ' + rBad.status);
+                } catch (geoErr) {
+                    results.push({ name: 'Geohash: invalid value → 400', nonMatchOk: false, matchOk: false, matchNote: geoErr.message });
+                    _logGeo('invalid geohash → 400', false, geoErr.message);
+                }
+                await _itSleep(3500);
+
+                // Out-of-cell: Denver bid + SF geohash 9q8 → 204
+                const bidOutR = await _itPost('/submit_bid', {
+                    service: geoService + ' out-of-cell',
+                    price: 80, currency: 'USD', payment_method: 'cash',
+                    location_type: 'physical', address: geoAddr,
+                    end_time: Math.floor(Date.now() / 1000) + 7200,
+                }, buyerToken);
+                if (bidOutR.status === 200 && bidOutR.data && bidOutR.data.bid_id) {
+                    createdBidIds.push({ bidId: bidOutR.data.bid_id, token: buyerToken });
+                    try {
+                        const pOut = await _newGeoProv('out');
+                        const rOut = await _itGrabJob(pOut, geoCaps, 'physical', geoAddr, '9q8');
+                        const okOut = rOut.status === 204;
+                        results.push({
+                            name: 'Geohash: SF cell skips Denver bid (204)',
+                            nonMatchOk: okOut, matchOk: okOut,
+                            matchNote: okOut ? '' : 'status ' + rOut.status,
+                        });
+                        _logGeo('SF geohash 9q8 skips Denver bid → 204', okOut, 'status ' + rOut.status);
+                        if (rOut.status === 200 && rOut.data && rOut.data.job_id) {
+                            createdJobs.push({ job_id: rOut.data.job_id, buyerToken, provToken: pOut });
+                            const idx = createdBidIds.findIndex(b => b.bidId === bidOutR.data.bid_id);
+                            if (idx >= 0) createdBidIds.splice(idx, 1);
+                        }
+                    } catch (geoErr) {
+                        results.push({ name: 'Geohash: SF cell skips Denver bid (204)', nonMatchOk: false, matchOk: false, matchNote: geoErr.message });
+                        _logGeo('SF geohash 9q8 skips Denver bid → 204', false, geoErr.message);
+                    }
+                    await _itSleep(3500);
+                } else {
+                    results.push({ name: 'Geohash: SF cell skips Denver bid (204)', nonMatchOk: null, matchOk: null, note: 'submit_bid failed' });
+                    _logGeo('SF geohash 9q8 skips Denver bid → 204', false, 'submit_bid failed');
+                }
+
+                // In-cell: Denver bid + geohash 9xj → 200
+                const bidInR = await _itPost('/submit_bid', {
+                    service: geoService + ' in-cell',
+                    price: 80, currency: 'USD', payment_method: 'cash',
+                    location_type: 'physical', address: geoAddr,
+                    end_time: Math.floor(Date.now() / 1000) + 7200,
+                }, buyerToken);
+                if (bidInR.status === 200 && bidInR.data && bidInR.data.bid_id) {
+                    createdBidIds.push({ bidId: bidInR.data.bid_id, token: buyerToken });
+                    try {
+                        const pIn = await _newGeoProv('in');
+                        const rIn = await _itGrabJob(pIn, geoCaps, 'physical', '456 Oak Ave, Denver, CO 80203', '9xj');
+                        const okIn = rIn.status === 200 && rIn.data && rIn.data.buyer_username === buyerUsername;
+                        results.push({
+                            name: 'Geohash: Denver cell matches Denver bid (200)',
+                            nonMatchOk: okIn, matchOk: okIn,
+                            matchNote: okIn ? '' : 'status ' + rIn.status,
+                        });
+                        _logGeo('Denver geohash 9xj matches Denver bid → 200', okIn, 'status ' + rIn.status);
+                        if (rIn.status === 200 && rIn.data && rIn.data.job_id) {
+                            createdJobs.push({ job_id: rIn.data.job_id, buyerToken, provToken: pIn });
+                            const idx = createdBidIds.findIndex(b => b.bidId === bidInR.data.bid_id);
+                            if (idx >= 0) createdBidIds.splice(idx, 1);
+                        }
+                    } catch (geoErr) {
+                        results.push({ name: 'Geohash: Denver cell matches Denver bid (200)', nonMatchOk: false, matchOk: false, matchNote: geoErr.message });
+                        _logGeo('Denver geohash 9xj matches Denver bid → 200', false, geoErr.message);
+                    }
+                    await _itSleep(3500);
+                } else {
+                    results.push({ name: 'Geohash: Denver cell matches Denver bid (200)', nonMatchOk: null, matchOk: null, note: 'submit_bid failed' });
+                    _logGeo('Denver geohash 9xj matches Denver bid → 200', false, 'submit_bid failed');
+                }
             }
 
         } catch (err) {

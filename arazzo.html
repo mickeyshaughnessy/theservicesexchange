@@ -841,8 +841,9 @@ workflows:
       - stepId: provider-grab-job
         description: >
           Provider declares security patrol capabilities and their
-          current address. /grab_job applies three-stage matching:
-          (1) distance filter — only bids within max_distance miles;
+          current address. /grab_job applies location then capability matching:
+          (1) distance filter — only bids within max_distance miles —
+          plus optional geohash whitelist cell when supplied;
           (2) LLM capability match — OpenRouter determines whether
           the provider's capabilities cover the service description;
           (3) reputation alignment — bids sorted by

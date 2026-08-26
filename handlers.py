@@ -192,6 +192,121 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     except ValueError:
         return float('inf')
 
+
+# ── Geohash (supply whitelist region for /grab_job) ───────────────────────────
+# Standard geohash base32 (no a, i, l, o). Precision ≈ cell size:
+#   4 chars ~ 39 km, 5 ~ 4.9 km, 6 ~ 1.2 km, 7 ~ 153 m.
+_GEOHASH_BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
+_GEOHASH_RE = re.compile(r"^[0123456789bcdefghjkmnpqrstuvwxyz]+$")
+_GEOHASH_MAX_LEN = 12
+
+
+def encode_geohash(lat: float, lon: float, precision: int = 12) -> str:
+    """Encode a WGS-84 point to a geohash of the given character length."""
+    if precision < 1 or precision > _GEOHASH_MAX_LEN:
+        raise ValueError("geohash precision must be 1–12")
+    lat_f = float(lat)
+    lon_f = float(lon)
+    if not (-90.0 <= lat_f <= 90.0 and -180.0 <= lon_f <= 180.0):
+        raise ValueError("lat/lon out of range")
+
+    lat_range = [-90.0, 90.0]
+    lon_range = [-180.0, 180.0]
+    chars: List[str] = []
+    bit = 0
+    ch = 0
+    even = True
+    while len(chars) < precision:
+        if even:
+            mid = (lon_range[0] + lon_range[1]) / 2.0
+            if lon_f >= mid:
+                ch |= 1 << (4 - bit)
+                lon_range[0] = mid
+            else:
+                lon_range[1] = mid
+        else:
+            mid = (lat_range[0] + lat_range[1]) / 2.0
+            if lat_f >= mid:
+                ch |= 1 << (4 - bit)
+                lat_range[0] = mid
+            else:
+                lat_range[1] = mid
+        even = not even
+        if bit < 4:
+            bit += 1
+        else:
+            chars.append(_GEOHASH_BASE32[ch])
+            bit = 0
+            ch = 0
+    return "".join(chars)
+
+
+def parse_geohash_arg(value: Any) -> Tuple[Optional[str], Optional[str]]:
+    """Normalize an optional /grab_job geohash.
+
+    Returns (geohash, None) when present and valid, (None, None) when omitted,
+    or (None, error) when the value is present but invalid.
+    """
+    if value is None:
+        return None, None
+    if isinstance(value, bool) or not isinstance(value, str):
+        return None, "geohash must be a string"
+    gh = value.strip().lower()
+    if not gh:
+        return None, None
+    if len(gh) > _GEOHASH_MAX_LEN:
+        return None, "geohash must be 1–12 characters"
+    if not _GEOHASH_RE.match(gh):
+        return None, "Invalid geohash (base32: 0-9 and b-z except a, i, l, o)"
+    return gh, None
+
+
+def point_in_geohash(lat: Any, lon: Any, geohash: str) -> bool:
+    """True if (lat, lon) falls inside the geohash cell."""
+    try:
+        encoded = encode_geohash(lat, lon, precision=len(geohash))
+    except (TypeError, ValueError):
+        return False
+    return encoded == geohash
+
+
+def _bid_geo_points(bid: Dict[str, Any]) -> List[Tuple[float, float]]:
+    """Distinct geographic points a job requires travel to (service + ride ends)."""
+    points: List[Tuple[float, float]] = []
+    seen = set()
+    for lat_key, lon_key in (
+        ("lat", "lon"),
+        ("start_lat", "start_lon"),
+        ("end_lat", "end_lon"),
+    ):
+        lat, lon = bid.get(lat_key), bid.get(lon_key)
+        if lat is None or lon is None or lat == "" or lon == "":
+            continue
+        try:
+            pair = (float(lat), float(lon))
+        except (TypeError, ValueError):
+            continue
+        if pair in seen:
+            continue
+        seen.add(pair)
+        points.append(pair)
+    return points
+
+
+def bid_in_geohash_region(bid: Dict[str, Any], geohash: str) -> bool:
+    """Whether a bid is allowed under a supplier geohash whitelist.
+
+    Every known job coordinate must lie in the cell (so a rideshare drop-off
+    outside the region is rejected). Remote bids with no coordinates are not
+    region-constrained. Physical/hybrid bids with no coordinates cannot be
+    verified and are excluded.
+    """
+    points = _bid_geo_points(bid)
+    if not points:
+        return bid.get("location_type") == "remote"
+    return all(point_in_geohash(lat, lon, geohash) for lat, lon in points)
+
+
 # ── Geocoding ─────────────────────────────────────────────────────────────────
 # Uses Nominatim (OpenStreetMap) via plain HTTP requests with:
 #   • Fast-path lookup table for common test addresses (no I/O)
@@ -3029,7 +3144,7 @@ def update_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     """
     Match provider with best job using prioritized matching algorithm:
-    1. Location filtering
+    1. Location filtering (type, distance, optional geohash whitelist)
     2. Capability matching (AI)
     3. Reputation alignment
     4. Price (Highest first)
@@ -3056,6 +3171,9 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 
         capabilities = data.get('capabilities', '').strip()
         location_type = data.get('location_type', 'physical')
+        region_geohash, geohash_err = parse_geohash_arg(data.get('geohash'))
+        if geohash_err:
+            return {"error": geohash_err}, 400
 
         if not capabilities:
             return {"error": "Capabilities required"}, 400
@@ -3104,6 +3222,11 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                     )
                     if distance > max_distance:
                         continue
+
+            # Optional supplier whitelist: only jobs whose travel points
+            # (service location and rideshare start/end) sit in this cell.
+            if region_geohash and not bid_in_geohash_region(bid, region_geohash):
+                continue
             
             location_filtered.append(bid)
         

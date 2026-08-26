@@ -7,7 +7,7 @@ Live API: **https://rse-api.com:5003** · Docs: **https://rse-api.com:5003/api_d
 ## How it works
 
 1. **Buyers** register and post a bid (`POST /bid`) — service, price, location. One-shot or recurring (`recurring` + `cadence` + spending limits). Settlement hints optional (Stripe / XMoney / PayPal / Phantom). Autobidding only on `/bid`; legacy `/submit_bid` is one-shot.
-2. **Providers** register, link a wallet (`/set_wallet`), call `/grab_job`.
+2. **Providers** register, link a wallet (`/set_wallet`), call `/grab_job` (optional `geohash` whitelist region).
 3. Match by capability + reputation; both sides complete and rate via `/sign_job`.
 
 ## Seat NFTs

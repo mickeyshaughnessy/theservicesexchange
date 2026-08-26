@@ -19,6 +19,7 @@ Env
   RSE_WALLET_ADDRESS             optional seat NFT wallet
   RSE_AGENT_TOKEN                optional: reuse an existing agent token
   RSE_AGENT_LABEL                default "taxi-vehicle-1"
+  RSE_GEOHASH                    optional: /grab_job whitelist cell (pickup+drop-off)
   RSE_API                        default https://rse-api.com:5003
 """
 
@@ -157,6 +158,9 @@ def grab_next_ride(token: str) -> dict | None:
         "address": CURRENT_LOCATION["address"],
         "max_distance": CURRENT_LOCATION["max_distance"],
     }
+    geohash = os.environ.get("RSE_GEOHASH", "").strip()
+    if geohash:
+        payload["geohash"] = geohash
     r = requests.post(
         f"{RSE_API}/grab_job",
         headers=_auth(token),

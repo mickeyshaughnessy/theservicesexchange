@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: The RSE API
-  version: 1.2.0
+  version: 1.2.1
   description: |
     # The RSE (Robot Services Exchange)
 
@@ -23,7 +23,8 @@ info:
 
     1. **Demand** registers as `user_type: demand`, logs in, and `POST /submit_bid`.
     2. **Supply** registers as `user_type: supply`, logs in, and `POST /grab_job` with
-       plain-language `capabilities` (and location for physical work).
+       plain-language `capabilities` (and location for physical work; optional
+       `geohash` whitelist cell the robot will travel in).
     3. The server matches by location → capability fitness → reputation alignment → price.
     4. Both parties complete work, then each `POST /sign_job` with a 1–5 star rating.
        The job becomes `completed` only after **both** have signed.
@@ -867,6 +868,7 @@ paths:
         Core supply endpoint. **Supply-type accounts only.** Runs a multi-step match:
 
         1. **Location** — filter open bids by distance / remote compatibility
+           and optional `geohash` whitelist cell
         2. **Capabilities** — LLM-assisted fitness of your free-text `capabilities`
            against each bid's `service` description
         3. **Reputation alignment** — prefer jobs whose buyer reputation is close
@@ -884,6 +886,8 @@ paths:
         `"taxi driving rideshare chauffeur"`.
 
         Physical/hybrid providers must send `lat`+`lon` or `address`.
+        Optional `geohash` further restricts matching to jobs inside that cell
+        (AND with `max_distance` when both apply).
       security:
         - bearerAuth: []
       requestBody:
@@ -909,6 +913,39 @@ paths:
                 max_distance:
                   type: number
                   description: Max miles from your location for physical matching (default often 10)
+                geohash:
+                  type: string
+                  minLength: 1
+                  maxLength: 12
+                  pattern: '^[0-9b-hj-km-np-z]+$'
+                  description: |
+                    Optional whitelist region. When set, only jobs whose service
+                    location (and rideshare start/end, if present) lie inside this
+                    geohash cell are eligible. Longer hashes are smaller cells
+                    (4 ≈ city, 5 ≈ neighborhood, 6 ≈ street). Case-insensitive.
+                    Remote bids with no coordinates are not constrained.
+                  example: "9xj"
+              examples:
+                physical:
+                  summary: Physical grab from an address
+                  value:
+                    capabilities: autonomous lawn mowing, GPS, obstacle avoidance
+                    location_type: physical
+                    address: Denver, CO
+                    max_distance: 25
+                physical_geohash:
+                  summary: Physical grab limited to a geohash whitelist cell
+                  value:
+                    capabilities: autonomous lawn mowing, GPS, obstacle avoidance
+                    location_type: physical
+                    address: Denver, CO
+                    max_distance: 25
+                    geohash: "9xj"
+                remote:
+                  summary: Remote grab (no travel region)
+                  value:
+                    capabilities: Python developer, code review, software audit
+                    location_type: remote
       responses:
         '200':
           description: Job assigned — full job record returned
@@ -916,8 +953,8 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Job' }
         '204':
-          description: No matching jobs in range / for these capabilities
-        '400': { description: Validation error (e.g. capabilities missing, location required) }
+          description: No matching jobs in range, geohash cell, or for these capabilities
+        '400': { description: Validation error (e.g. capabilities missing, location required, invalid geohash) }
         '401': { description: Missing or invalid token }
         '403': { description: Not a supply account (or seat gate if enabled) }
         '429': { description: Grab cooldown active — wait before next grab }

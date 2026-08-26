@@ -5,6 +5,7 @@ Covers:
   • Core API mechanics (auth, bid CRUD, chat, bulletin)
   • Service matching accuracy across 30 diverse real-world categories
   • Advanced features (XMoney, exchange_data, nearby)
+  • Optional /grab_job geohash whitelist (invalid / out-of-cell / in-cell)
 
 Labeling & cleanup contract
   - Every test bid/service starts with "TEST:" so it is unambiguously synthetic.
@@ -114,10 +115,11 @@ MATCHING_TEST_CASES = [
         "bid": {
             "service": "TEST: Weekly lawn mowing and edging, 1-acre residential property",
             "price": 80, "currency": "USD", "payment_method": "cash",
-            "location_type": "physical", "address": "700 Vine St, Denver, CO 80206",
+            "location_type": "physical", "address": "123 Main St, Denver, CO 80202",
         },
         "matching_caps": "Residential lawn mowing, edging, yard maintenance, grass cutting",
         "non_matching_caps": "Tax preparation, bookkeeping, CPA, financial statements",
+        "geohash": "9xj",
     },
     {
         "name": "Landscaping: emergency storm tree removal",
@@ -405,11 +407,14 @@ class ServiceExchangeAPITester:
         assert r.status_code == 200, f"submit_bid failed: {r.status_code} {r.text}"
         return r.json()["bid_id"]
 
-    def _grab_job(self, token, caps, location_type, address=None, max_distance=50):
+    def _grab_job(self, token, caps, location_type, address=None, max_distance=50,
+                  geohash=None):
         payload = {"capabilities": caps, "location_type": location_type,
                    "max_distance": max_distance}
         if address:
             payload["address"] = address
+        if geohash:
+            payload["geohash"] = geohash
         return requests.post(f"{self.api_url}/grab_job",
                              headers=self._headers(token), json=payload, verify=False)
 
@@ -602,6 +607,7 @@ class ServiceExchangeAPITester:
             bid_data = case["bid"]
             loc = bid_data.get("location_type", "physical")
             addr = bid_data.get("address")
+            geohash = case.get("geohash")
             matching_caps     = case["matching_caps"]
             non_matching_caps = case["non_matching_caps"]
 
@@ -618,7 +624,7 @@ class ServiceExchangeAPITester:
             #   • Someone else's bid (demand-monitor etc.) → reject it back to
             #     the exchange immediately so the real buyer isn't stranded, and
             #     treat our non-match test as passing (our bid was untouched).
-            r = self._grab_job(prov_token, non_matching_caps, loc, addr)
+            r = self._grab_job(prov_token, non_matching_caps, loc, addr, geohash=geohash)
             non_match_note = ""
 
             if r.status_code == 204:
@@ -652,7 +658,7 @@ class ServiceExchangeAPITester:
             # ── 3. Matching provider should get 200 on OUR bid ───────────────
             # Same buyer_username check: if we land on an external bid we
             # reject it back and record a false-negative.
-            r = self._grab_job(prov_token, matching_caps, loc, addr)
+            r = self._grab_job(prov_token, matching_caps, loc, addr, geohash=geohash)
             match_ok = False
 
             if r.status_code == 200:
@@ -749,6 +755,62 @@ class ServiceExchangeAPITester:
 
         print("✓ Advanced features passed")
 
+    def test_geohash_whitelist(self):
+        """Optional /grab_job geohash: invalid 400, out-of-cell 204, in-cell 200."""
+        print("\n=== Geohash Whitelist Tests ===")
+
+        buyer_username = f"gbuy_{uuid.uuid4().hex[:7]}"
+        prov_username = f"gpro_{uuid.uuid4().hex[:7]}"
+        buyer_token = self._register_and_login(buyer_username, "demand")
+        prov_token = self._register_and_login(prov_username, "supply")
+        self._set_wallet(prov_token, config.TEST_WALLET_ADDRESS)
+
+        caps = "Residential lawn mowing, edging, yard maintenance, grass cutting"
+        denver = "123 Main St, Denver, CO 80202"
+
+        r = self._grab_job(prov_token, caps, "physical", denver, geohash="not-a-hash!")
+        assert r.status_code == 400, f"invalid geohash expected 400, got {r.status_code} {r.text}"
+        print("✓ Invalid geohash rejected (400)")
+
+        out_id = self._post_bid(buyer_token, {
+            "service": "TEST: Weekly lawn mowing and edging, geohash out-of-cell",
+            "price": 80, "currency": "USD", "payment_method": "cash",
+            "location_type": "physical", "address": denver,
+        })
+        r = self._grab_job(prov_token, caps, "physical", denver, geohash="9q8")
+        if r.status_code == 200:
+            job = r.json()
+            if job.get("buyer_username") == buyer_username:
+                self.created_jobs.append((job["job_id"], buyer_token, prov_token))
+                raise AssertionError("SF geohash 9q8 should not grab a Denver bid")
+            self._reject_job(prov_token, job["job_id"])
+            print("  (grabbed+rejected external bid; Denver bid untouched)")
+        else:
+            assert r.status_code == 204, f"out-of-cell expected 204, got {r.status_code} {r.text}"
+            print("✓ SF geohash 9q8 skips Denver bid (204)")
+            requests.post(f"{self.api_url}/cancel_bid",
+                          headers=self._headers(buyer_token),
+                          json={"bid_id": out_id}, verify=False)
+
+        in_id = self._post_bid(buyer_token, {
+            "service": "TEST: Weekly lawn mowing and edging, geohash in-cell",
+            "price": 80, "currency": "USD", "payment_method": "cash",
+            "location_type": "physical", "address": denver,
+        })
+        r = self._grab_job(prov_token, caps, "physical", "456 Oak Ave, Denver, CO 80203",
+                           geohash="9xj")
+        assert r.status_code == 200, f"in-cell expected 200, got {r.status_code} {r.text}"
+        job = r.json()
+        if job.get("buyer_username") == buyer_username:
+            self.created_jobs.append((job["job_id"], buyer_token, prov_token))
+            print("✓ Denver geohash 9xj matches Denver bid (200)")
+        else:
+            self._reject_job(prov_token, job["job_id"])
+            requests.post(f"{self.api_url}/cancel_bid",
+                          headers=self._headers(buyer_token),
+                          json={"bid_id": in_id}, verify=False)
+            print("  (grabbed external bid; in-cell check inconclusive)")
+
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
@@ -772,6 +834,7 @@ def main():
         if not args.quick:
             matching = tester.test_service_matching()
             tester.test_advanced_features()
+            tester.test_geohash_whitelist()
 
         duration = time.time() - start
         print(f"\n{'='*60}")

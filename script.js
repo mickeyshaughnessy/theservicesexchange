@@ -3704,7 +3704,8 @@ async function handleGrabJobSubmission(e) {
         address: document.getElementById('grabAddress'),
         lat: document.getElementById('grabLatitude'),
         lon: document.getElementById('grabLongitude'),
-        maxDistance: document.getElementById('grabDistance')
+        maxDistance: document.getElementById('grabDistance'),
+        geohash: document.getElementById('grabGeohash')
     };
 
     const capabilitiesText = elements.textarea ? elements.textarea.value.trim() : AppState.providerProfile;
@@ -3747,6 +3748,11 @@ async function handleGrabJobSubmission(e) {
         payload.max_distance = parseFloat(elements.maxDistance.value);
     }
 
+    const geohash = elements.geohash ? elements.geohash.value.trim() : '';
+    if (geohash) {
+        payload.geohash = geohash;
+    }
+
     if (elements.submitBtn) {
         elements.submitBtn.disabled = true;
         const btnText = document.getElementById('grabButtonText');
@@ -3768,7 +3774,7 @@ async function handleGrabJobSubmission(e) {
 
         if (response.status === 204) {
             setGrabJobResult(
-                'No jobs matched your capabilities. Try widening max distance, refining capabilities, or check back when more buyers post requests.',
+                'No jobs matched your capabilities. Try widening max distance, clearing a geohash region, refining capabilities, or check back when more buyers post requests.',
                 false
             );
             showNoMatchMarketHints();
