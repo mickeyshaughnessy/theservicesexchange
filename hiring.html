@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a2e">
-    <meta name="description" content="Founding Partners at The RSE — a named individual plus a sponsor. Ten-year horizon. Equity, salary, and benefits for the individual; seats and hiring rights for the sponsor.">
+    <meta name="description" content="Founding Partners at The RSE — a named individual plus a sponsor. Ten-year horizon. Equity, salary, and benefits for the individual; hiring rights for the sponsor.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="The RSE">
@@ -230,32 +230,31 @@
     <section class="py-5" style="background: var(--bg-deep);">
         <div class="container">
             <div class="hire-prose">
-                <p class="lede">A Founding Partner is a pair: a named individual who commits time, and a sponsor who commits money. We are assembling three pairs. The three individuals divide the company evenly.</p>
-                <p>The horizon matches permanent capital: 10–15+ years. Equity vests over 10 years (1-year cliff, then monthly). Hiring and advisory rights deepen only as GMV, density, seats, and jobs improve. Underperformance does not expand rights. Same rule as the <a href="business_plan.html">business plan</a>.</p>
-                <p>Names below are the seats we are filling — not a claim that every person or sponsor has signed.</p>
+                <p class="lede">A Founding Partner is a pair: a named individual who commits time, and a sponsor who commits money. We are assembling three spots. The three individuals divide the company evenly.</p>
+                <p>The horizon matches permanent capital: 10–15+ years. Equity vests over 10 years (1-year cliff, then monthly). Hiring and advisory rights deepen only as GMV, density, and jobs improve. Underperformance does not expand rights. Same rule as the <a href="business_plan.html">business plan</a>.</p>
             </div>
 
-            <h2 class="hire-section-title">THE THREE SEATS</h2>
+            <h2 class="hire-section-title">THE THREE SPOTS</h2>
             <div class="row g-4 mb-5" style="max-width:1100px;margin:0 auto 3rem;">
                 <div class="col-md-4">
                     <div class="hire-card">
                         <h3>Mickey Shaughnessy</h3>
-                        <p>Creator. Builds the exchange, API, seats, and model in public. Individual seat is filled.</p>
+                        <p>Creator. Builds the exchange, API, and model in public. Individual spot is filled.</p>
                         <p class="hire-pair-status">Sponsor: open</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="hire-card">
-                        <h3>Griffin Musk</h3>
-                        <p>Invited individual. The pair we want is Griffin plus a SpaceX / Tesla sponsor.</p>
-                        <p class="hire-pair-status">Sponsor: SpaceX / Tesla</p>
+                        <h3>Spot 2</h3>
+                        <p>Named individual plus a sponsor. Both sides of this pair are open.</p>
+                        <p class="hire-pair-status">Individual and sponsor: open</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="hire-card">
-                        <h3>Saxon Musk</h3>
-                        <p>Invited individual. The pair we want is Saxon plus an NVIDIA sponsor.</p>
-                        <p class="hire-pair-status">Sponsor: NVIDIA</p>
+                        <h3>Spot 3</h3>
+                        <p>Named individual plus a sponsor. Both sides of this pair are open.</p>
+                        <p class="hire-pair-status">Individual and sponsor: open</p>
                     </div>
                 </div>
             </div>
@@ -271,7 +270,7 @@
                 <div class="col-md-6">
                     <div class="hire-card">
                         <h3>The sponsor</h3>
-                        <p>Commits capital. Receives founding seats (1M tranche, $100k primary) plus hiring / advisory rights and first-refusal on key hires in that partner’s focus area. Seat dollars participate in Hyperion as on the business plan.</p>
+                        <p>Commits capital. Receives hiring / advisory rights and first-refusal on key hires in that partner’s focus area.</p>
                     </div>
                 </div>
             </div>
@@ -287,7 +286,7 @@
             </div>
             <div class="hire-why">
                 <h3>Sponsor is in the market, not a silent check</h3>
-                <p>Seats are how supply grabs work. Hiring rights turn the sponsor into a talent network for that seat’s focus area.</p>
+                <p>Hiring rights turn the sponsor into a talent network for that partner’s focus area.</p>
             </div>
 
             <div class="hire-close py-4" id="apply">
@@ -299,15 +298,15 @@
                     <label for="hireWebsite">Website</label>
                     <input type="text" id="hireWebsite" name="website" tabindex="-1" autocomplete="off">
                 </div>
-                <h3>The seat</h3>
+                <h3>The spot</h3>
                 <div class="row g-3">
                     <div class="col-12">
-                        <label for="hireSeat">Which Founding Partner pair</label>
-                        <select class="form-control" id="hireSeat" name="seat" required>
+                        <label for="hireSpot">Which Founding Partner spot</label>
+                        <select class="form-control" id="hireSpot" name="spot" required>
                             <option value="">Select…</option>
                             <option value="mickey">Mickey Shaughnessy — sponsor open</option>
-                            <option value="griffin">Griffin Musk + SpaceX / Tesla</option>
-                            <option value="saxon">Saxon Musk + NVIDIA</option>
+                            <option value="spot_2">Spot 2 — individual and sponsor open</option>
+                            <option value="spot_3">Spot 3 — individual and sponsor open</option>
                         </select>
                     </div>
                 </div>
@@ -374,19 +373,19 @@
                         <input class="form-control" id="hireSponsorEmail" name="sponsor_email" type="email" required maxlength="160">
                     </div>
                     <div class="col-md-6">
-                        <label for="hireSponsorSeats">Proposed seat commitment</label>
-                        <input class="form-control" id="hireSponsorSeats" name="sponsor_commitment" maxlength="200" placeholder="e.g. number of founding seats">
+                        <label for="hireSponsorCommit">Proposed capital commitment</label>
+                        <input class="form-control" id="hireSponsorCommit" name="sponsor_commitment" maxlength="200" placeholder="Size and vehicle, if you know it">
                     </div>
                     <div class="col-12">
                         <label for="hireExp">The pair</label>
-                        <textarea class="form-control" id="hireExp" name="experience" required maxlength="8000" rows="6" placeholder="Who the individual is, who the sponsor is, and why this pair should hold this seat for 10+ years."></textarea>
+                        <textarea class="form-control" id="hireExp" name="experience" required maxlength="8000" rows="6" placeholder="Who the individual is, who the sponsor is, and why this pair should hold this spot for 10+ years."></textarea>
                         <div class="hint">Plain language. A few paragraphs is plenty.</div>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary btn-lg mt-4" id="hireSubmit">Submit pair</button>
                 <div id="hireStatus" role="status"></div>
             </form>
-            <p class="hire-fine">Discussion and planning only. Not an offer of equity, seats, or employment. Terms are subject to definitive documents and applicable law. See the <a href="business_plan.html">business plan</a> and <a href="spreadsheet.html">spreadsheet</a>.</p>
+            <p class="hire-fine">Discussion and planning only. Not an offer of equity or employment. Terms are subject to definitive documents and applicable law. See the <a href="business_plan.html">business plan</a> and <a href="spreadsheet.html">spreadsheet</a>.</p>
         </div>
     </section>
 
@@ -475,22 +474,15 @@
         const btn = document.getElementById('hireSubmit');
         if (!form) return;
         const api = (typeof API_URL !== 'undefined' ? API_URL : 'https://rse-api.com:5003');
-        const seatHints = {
-            mickey: { name: 'Mickey Shaughnessy', sponsor: '' },
-            griffin: { name: 'Griffin Musk', sponsor: 'SpaceX / Tesla' },
-            saxon: { name: 'Saxon Musk', sponsor: 'NVIDIA' }
-        };
-        const seatEl = document.getElementById('hireSeat');
+        const spotEl = document.getElementById('hireSpot');
         const nameEl = document.getElementById('hireName');
-        const sponsorEl = document.getElementById('hireSponsorOrg');
-        seatEl.addEventListener('change', function () {
-            const hint = seatHints[seatEl.value];
-            if (!hint) return;
-            const knownNames = Object.keys(seatHints).map(function (k) { return seatHints[k].name; });
-            const knownSponsors = Object.keys(seatHints).map(function (k) { return seatHints[k].sponsor; }).filter(Boolean);
-            if (!nameEl.value.trim() || knownNames.indexOf(nameEl.value.trim()) !== -1) nameEl.value = hint.name;
-            if (hint.sponsor && (!sponsorEl.value.trim() || knownSponsors.indexOf(sponsorEl.value.trim()) !== -1)) {
-                sponsorEl.value = hint.sponsor;
+        spotEl.addEventListener('change', function () {
+            if (spotEl.value === 'mickey') {
+                if (!nameEl.value.trim() || nameEl.value.trim() === 'Mickey Shaughnessy') {
+                    nameEl.value = 'Mickey Shaughnessy';
+                }
+            } else if (nameEl.value.trim() === 'Mickey Shaughnessy') {
+                nameEl.value = '';
             }
         });
 
@@ -502,7 +494,7 @@
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
             setStatus('', true);
-            const seat = document.getElementById('hireSeat').value;
+            const spot = document.getElementById('hireSpot').value;
             const payload = {
                 name: document.getElementById('hireName').value.trim(),
                 email: document.getElementById('hireEmail').value.trim(),
@@ -512,12 +504,12 @@
                 dob: document.getElementById('hireDob').value.trim(),
                 family_status: document.getElementById('hireFamily').value,
                 preferred_location: document.getElementById('hireLocation').value,
-                seat: seat,
-                role_interest: seat,
+                spot: spot,
+                role_interest: spot,
                 sponsor_org: document.getElementById('hireSponsorOrg').value.trim(),
                 sponsor_contact: document.getElementById('hireSponsorContact').value.trim(),
                 sponsor_email: document.getElementById('hireSponsorEmail').value.trim(),
-                sponsor_commitment: document.getElementById('hireSponsorSeats').value.trim(),
+                sponsor_commitment: document.getElementById('hireSponsorCommit').value.trim(),
                 experience: document.getElementById('hireExp').value.trim(),
                 website: document.getElementById('hireWebsite').value.trim()
             };

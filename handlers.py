@@ -4027,10 +4027,10 @@ def handle_submit_financing(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 
 _HIRE_LOCATIONS = ("lakewood", "destin", "camas", "missoula", "other")
 _HIRE_FAMILY = ("single", "partnered", "family", "prefer_not")
-_HIRE_SEATS = ("mickey", "griffin", "saxon")
+_HIRE_SPOTS = ("mickey", "spot_2", "spot_3")
 _HIRE_REQUIRED = (
     "name", "email", "phone", "social", "address", "dob",
-    "family_status", "preferred_location", "seat",
+    "family_status", "preferred_location", "spot",
     "sponsor_org", "sponsor_contact", "sponsor_email", "experience",
 )
 
@@ -4040,13 +4040,13 @@ def _notify_hiring_application(app: Dict[str, Any]) -> bool:
     to_addr = (getattr(config, "HIRING_NOTIFY_EMAIL", "") or "mickeyshaughnessy@gmail.com").strip()
     if not to_addr or "@" not in to_addr:
         return False
-    subject = f"[RSE founding partner] {app.get('seat', '')} — {app.get('name', 'Applicant')}"
+    subject = f"[RSE founding partner] {app.get('spot', '')} — {app.get('name', 'Applicant')}"
     lines = [
         "New Founding Partner pair on therobotservicesexchange.com/hiring.html",
         "",
         f"id: {app.get('application_id')}",
         f"submitted: {app.get('created')}",
-        f"seat: {app.get('seat')}",
+        f"spot: {app.get('spot')}",
         f"name: {app.get('name')}",
         f"email: {app.get('email')}",
         f"phone: {app.get('phone')}",
@@ -4112,6 +4112,9 @@ def handle_submit_hiring_application(data: Dict[str, Any]) -> Tuple[Dict[str, An
         return {"status": "submitted"}, 201
 
     fields: Dict[str, str] = {}
+    data = dict(data or {})
+    if not (data.get("spot") or "").strip() and (data.get("seat") or "").strip():
+        data["spot"] = data.get("seat")
     for key in _HIRE_REQUIRED:
         val = (data.get(key) or "").strip()
         if not val:
@@ -4133,10 +4136,10 @@ def handle_submit_hiring_application(data: Dict[str, Any]) -> Tuple[Dict[str, An
         return {"error": f"family_status must be one of {sorted(_HIRE_FAMILY)}"}, 400
     fields["family_status"] = fam
 
-    seat = fields["seat"].lower().strip()
-    if seat not in _HIRE_SEATS:
-        return {"error": f"seat must be one of {sorted(_HIRE_SEATS)}"}, 400
-    fields["seat"] = seat
+    spot = fields["spot"].lower().strip()
+    if spot not in _HIRE_SPOTS:
+        return {"error": f"spot must be one of {sorted(_HIRE_SPOTS)}"}, 400
+    fields["spot"] = spot
 
     if not re.match(r"^\d{4}-\d{2}-\d{2}$", fields["dob"]):
         return {"error": "dob must be YYYY-MM-DD"}, 400
@@ -4154,8 +4157,8 @@ def handle_submit_hiring_application(data: Dict[str, Any]) -> Tuple[Dict[str, An
         "dob": fields["dob"][:10],
         "family_status": fields["family_status"],
         "preferred_location": fields["preferred_location"],
-        "seat": fields["seat"],
-        "role_interest": fields["seat"],
+        "spot": fields["spot"],
+        "role_interest": fields["spot"],
         "sponsor_org": fields["sponsor_org"][:200],
         "sponsor_contact": fields["sponsor_contact"][:120],
         "sponsor_email": fields["sponsor_email"][:160],

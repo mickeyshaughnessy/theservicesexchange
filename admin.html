@@ -384,7 +384,7 @@
                     (a.starred ? ' · starred' : '') + '</div>' +
                     '<h3>' + esc(a.name) + '</h3>' +
                     '<div><span class="pill">' + esc(st) + '</span>' +
-                    '<span class="pill">' + esc(a.seat || a.role_interest) + '</span>' +
+                    '<span class="pill">' + esc(a.spot || a.seat || a.role_interest) + '</span>' +
                     '<span class="pill">' + esc(a.preferred_location) + '</span>' +
                     (a.sponsor_org ? '<span class="pill">' + esc(a.sponsor_org) + '</span>' : '') +
                     '</div>' +
