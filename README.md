@@ -82,8 +82,8 @@ python int_tests.py
 | GET | /nearby | — | Services near a location |
 | GET | /exchange_data | — | Active bids + market stats |
 | GET | /stats | — | Platform statistics |
-| POST | /chat | ✓ | Send a message |
-| POST | /bulletin | ✓ | Post to community board |
+
+Chat, bulletin, job parties, campaigns, endorsements, and the follow graph are **deprecated** (HTTP **410**). The core loop is bid → grab_job → sign_job.
 
 ## Buy a Robot catalog
 

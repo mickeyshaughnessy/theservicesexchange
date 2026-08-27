@@ -73,18 +73,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     initializeGrabJobPage();
 
-    // Ensure Inbox / Community modals exist on every page (buttons are site-wide)
-    ensureCommModals();
-    
     // Load platform stats for homepage
     loadPlatformStats();
-
-    // Light inbox badge poll for returning users
-    if (AppState.authToken && !window._rseInboxPoll) {
-        window._rseInboxPoll = setInterval(() => {
-            if (AppState.authToken) refreshInboxBadge();
-        }, 60000);
-    }
 
     enhanceKeyboardServiceTiles();
     registerServiceWorker();
@@ -334,15 +324,11 @@ function setLoading(isLoading, buttonId) {
 function updateUIForLoggedInUser() {
     const elements = {
         login: document.getElementById('loginButton'),
-        account: document.getElementById('accountDropdown'),
-        chat: document.getElementById('chatButton'),
-        bulletin: document.getElementById('bulletinButton')
+        account: document.getElementById('accountDropdown')
     };
     
     if (elements.login) elements.login.style.display = 'none';
     if (elements.account) elements.account.style.display = 'inline-block';
-    if (elements.chat) elements.chat.style.display = 'inline-block';
-    if (elements.bulletin) elements.bulletin.style.display = 'inline-block';
 
     const heroSignup = document.getElementById('heroSignupBtn');
     if (heroSignup) heroSignup.style.display = 'none';
@@ -358,15 +344,11 @@ function updateUIForLoggedInUser() {
 function updateUIForLoggedOutUser() {
     const elements = {
         login: document.getElementById('loginButton'),
-        account: document.getElementById('accountDropdown'),
-        chat: document.getElementById('chatButton'),
-        bulletin: document.getElementById('bulletinButton')
+        account: document.getElementById('accountDropdown')
     };
     
     if (elements.login) elements.login.style.display = 'inline-block';
     if (elements.account) elements.account.style.display = 'none';
-    if (elements.chat) elements.chat.style.display = 'none';
-    if (elements.bulletin) elements.bulletin.style.display = 'none';
 
     const heroSignup = document.getElementById('heroSignupBtn');
     if (heroSignup) heroSignup.style.display = '';
@@ -587,7 +569,6 @@ async function loadAccountData() {
         
         await Promise.all([loadOutstandingBids(), loadCompletedJobs()]);
         updateReturningUserHome();
-        refreshInboxBadge();
         if (window.refreshProviderReadiness) window.refreshProviderReadiness();
         
     } catch (error) {
@@ -616,8 +597,6 @@ function updateReturningUserHome() {
     const active = AppState.activeJobs || [];
     const bids = AppState.outstandingBids || [];
     const completed = AppState.completedJobs || [];
-    const invites = (AppState.partyInvites || []).filter((pi) => pi.invite_status === 'invited');
-
     const titleEl = document.getElementById('userHomeTitle');
     const subEl = document.getElementById('userHomeSub');
     const eyebrow = document.getElementById('userHomeEyebrow');
@@ -646,14 +625,12 @@ function updateReturningUserHome() {
         if (isSupply) {
             actions.innerHTML = `
                 <a class="btn btn-hero-primary" href="grab_job.html">Grab Job (Robots Only)</a>
-                <button type="button" class="btn btn-hero-secondary" onclick="showChat()">Inbox</button>
                 <a class="btn btn-hero-secondary" href="profile.html">Profile</a>
             `;
         } else {
             actions.innerHTML = `
                 <button type="button" class="btn btn-hero-primary" onclick="showBuyerForm()">Bid</button>
-                <button type="button" class="btn btn-hero-secondary" onclick="showChat()">Inbox</button>
-                <a class="btn btn-hero-secondary" href="campaigns.html">Campaigns</a>
+                <a class="btn btn-hero-secondary" href="profile.html">Profile</a>
             `;
         }
     }
@@ -666,7 +643,7 @@ function updateReturningUserHome() {
         }
         if (isDemand || !isSupply) {
             tiles.push({ label: 'Open bids', value: String(bids.length), hint: bids[0] ? 'Edit or cancel below' : 'Post your first' });
-            tiles.push({ label: 'Active services', value: String(active.length), hint: invites.length ? `${invites.length} party invite(s)` : 'Matched work' });
+            tiles.push({ label: 'Active services', value: String(active.length), hint: 'Matched work' });
         }
         tiles.push({ label: 'Completed', value: String(completed.length), hint: 'Reputation history' });
         grid.innerHTML = tiles.map((t) => `
@@ -701,7 +678,7 @@ function updateReturningUserHome() {
                     <ol class="user-home-check-list">
                         <li><button type="button" class="btn btn-link p-0 align-baseline" onclick="showBuyerForm()">Post a service request</button></li>
                         <li>Wait for a provider match (watch Account → Active Services)</li>
-                        <li>Coordinate in job chat, then complete &amp; rate</li>
+                        <li>Complete &amp; rate when the job is done</li>
                     </ol>
                 `;
             }
@@ -713,24 +690,7 @@ function updateReturningUserHome() {
 }
 
 async function refreshInboxBadge() {
-    const btn = document.getElementById('chatButton');
-    if (!btn || !AppState.authToken) {
-        clearInboxBadge();
-        return;
-    }
-    try {
-        const response = await fetch(`${API_URL}/chat/conversations`, {
-            headers: { Authorization: `Bearer ${AppState.authToken}` }
-        });
-        if (!response.ok) return;
-        const data = await response.json();
-        const convos = data.conversations || [];
-        AppState.conversations = convos;
-        const unread = convos.filter((c) => c.unread).length;
-        setInboxBadge(unread);
-    } catch (e) {
-        /* silent */
-    }
+    clearInboxBadge();
 }
 
 function setInboxBadge(count) {
@@ -769,7 +729,7 @@ async function showNoMatchMarketHints() {
         const data = await response.json();
         const bids = data.active_bids || [];
         if (!bids.length) {
-            result.innerHTML += `<p class="small-text mt-2 mb-0">Market is quiet right now — check <a href="campaigns.html">Campaigns</a> or try again later.</p>`;
+            result.innerHTML += `<p class="small-text mt-2 mb-0">Market is quiet right now — try again later.</p>`;
             return;
         }
         const samples = bids.slice(0, 4).map((b) => {
@@ -853,7 +813,6 @@ function ensureAccountQuickLinks(typeLabel) {
                 ${isSupply
                     ? '<a class="btn btn-sm btn-outline-light" href="grab_job.html">Grab Job (Robots Only)</a>'
                     : '<button type="button" class="btn btn-sm btn-outline-light" onclick="showBuyerForm()">Post request</button>'}
-                <a class="btn btn-sm btn-outline-light" href="campaigns.html">Campaigns</a>
             </div>
         `;
     });
@@ -983,65 +942,36 @@ function updateActiveJobsDisplay() {
     const container = document.getElementById('activeJobs');
     if (!container) return;
 
-    const invites = (AppState.partyInvites || []).filter(pi => pi.invite_status === 'invited' && pi.job_status === 'accepted');
-    const coProviding = (AppState.partyInvites || []).filter(pi => pi.invite_status === 'accepted' && pi.job_status === 'accepted');
-
-    if (AppState.activeJobs.length === 0 && invites.length === 0 && coProviding.length === 0) {
+    if (AppState.activeJobs.length === 0) {
         container.innerHTML = '<p class="text-muted mb-0">No active services yet. <a href="grab_job.html">Grab Job (Robots Only)</a> or <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="showBuyerForm()">post a request</button>.</p>';
         return;
     }
 
-    const activeHtml = AppState.activeJobs.map(job => `
+    container.innerHTML = AppState.activeJobs.map(job => `
         <div class="job-item">
             <h6>${typeof job.service === 'object' ? escapeHtml(JSON.stringify(job.service)) : escapeHtml(job.service)}</h6>
             <p>Price: ${escapeHtml(job.currency || 'USD')} ${job.price} • Accepted: ${new Date(job.accepted_at * 1000).toLocaleDateString()}</p>
             <p class="text-muted">Role: ${escapeHtml(job.role)} • Partner: ${escapeHtml(job.counterparty)}</p>
             ${job.location_type !== 'remote' ? `<small class="text-muted">Location: ${escapeHtml(job.address || 'Physical service')}</small>` : '<small class="text-muted">Remote service</small>'}
-            ${partyBadgesHtml(job.party)}
             <div class="mt-1 d-flex gap-2 flex-wrap">
-                <button type="button" class="btn btn-sm btn-outline-light" onclick="openJobChannel('${job.job_id}')">💬 Job chat</button>
                 <button type="button" class="btn btn-sm btn-primary" onclick="signJobPrompt('${job.job_id}')">Complete &amp; rate</button>
                 ${job.role === 'provider' ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="rejectJobPrompt('${job.job_id}')">Reject</button>` : ''}
-                ${job.role === 'provider' ? `<button type="button" class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}', 'supply')">+ Co-provider</button>` : ''}
-                ${job.role === 'buyer' ? `<button type="button" class="btn btn-sm btn-outline-light" onclick="inviteToJobParty('${job.job_id}', 'demand')">+ Co-buyer</button>` : ''}
                 ${(job.role === 'provider' || job.role === 'buyer') ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="fileJobDispute('${job.job_id}')">Dispute</button>` : ''}
             </div>
         </div>
     `).join('');
-
-    const inviteHtml = invites.map(pi => `
-        <div class="job-item">
-            <h6>${typeof pi.service === 'object' ? escapeHtml(JSON.stringify(pi.service)) : escapeHtml(pi.service)}</h6>
-            <p class="text-muted">${escapeHtml(pi.side || 'supply')} invite • share: ${pi.share != null ? Math.round(pi.share * 100) + '%' : 'n/a'} (attribution)</p>
-            <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-outline-light" onclick="respondToPartyInvite('${pi.job_id}', 'accept')">Accept</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="respondToPartyInvite('${pi.job_id}', 'decline')">Decline</button>
-            </div>
-        </div>
-    `).join('');
-
-    const coProvidingHtml = coProviding.map(pi => `
-        <div class="job-item">
-            <h6>${typeof pi.service === 'object' ? escapeHtml(JSON.stringify(pi.service)) : escapeHtml(pi.service)}</h6>
-            <p class="text-muted">Co-providing with ${escapeHtml(pi.primary_provider)} • Your share: ${Math.round(pi.share * 100)}% (rep credit)</p>
-        </div>
-    `).join('');
-
-    container.innerHTML = activeHtml + inviteHtml + coProvidingHtml;
 }
 
 function updateJobsDisplay() {
     const container = document.getElementById('completedJobs');
     if (!container) return;
 
-    const completedAsParty = (AppState.partyInvites || []).filter(pi => pi.invite_status === 'accepted' && pi.job_status === 'completed');
-
-    if (AppState.completedJobs.length === 0 && completedAsParty.length === 0) {
+    if (AppState.completedJobs.length === 0) {
         container.innerHTML = '<p class="text-muted mb-0">No completed services</p>';
         return;
     }
 
-    const completedHtml = AppState.completedJobs.map(job => `
+    container.innerHTML = AppState.completedJobs.map(job => `
         <div class="job-item">
             <h6>${typeof job.service === 'object' ? escapeHtml(JSON.stringify(job.service)) : escapeHtml(job.service)}</h6>
             <p>Price: ${escapeHtml(job.currency || 'USD')} ${job.price} • Completed: ${new Date(job.completed_at * 1000).toLocaleDateString()}</p>
@@ -1049,23 +979,15 @@ function updateJobsDisplay() {
                 <small>Role: ${escapeHtml(job.role)}</small>
                 <small>Rating: ${job.their_rating ? '★'.repeat(job.their_rating) : 'Not rated'}</small>
             </div>
-            ${partyBadgesHtml(job.party)}
             ${(job.role === 'provider' || job.role === 'buyer') ? `<button class="btn btn-sm btn-link text-danger p-0 mt-1" onclick="fileJobDispute('${job.job_id}')">File dispute</button>` : ''}
         </div>
     `).join('');
-
-    const partyCompletedHtml = completedAsParty.map(pi => `
-        <div class="job-item">
-            <h6>${typeof pi.service === 'object' ? escapeHtml(JSON.stringify(pi.service)) : escapeHtml(pi.service)}</h6>
-            <p class="text-muted">Co-provided with ${escapeHtml(pi.primary_provider)} • Your share: ${Math.round(pi.share * 100)}% (rep credit)</p>
-        </div>
-    `).join('');
-
-    container.innerHTML = completedHtml + partyCompletedHtml;
 }
 
 
 async function respondToPartyInvite(jobId, action) {
+    showToast('Job parties are retired.', 'info');
+    return;
     try {
         const response = await fetch(`${API_URL}/jobs/${jobId}/party/respond`, {
             method: 'POST',
@@ -2052,6 +1974,7 @@ async function handleBidSubmission(e) {
 // ---------------------------------------------------------------------------
 
 function ensureCommModals() {
+    return;
     if (document.getElementById('chatModal') && document.getElementById('bulletinModal')) {
         bindCommFormListeners();
         return;
@@ -2339,6 +2262,7 @@ function peopleCardHtml(user) {
 }
 
 async function addFriend(username) {
+    throw new Error('Friends are retired');
     const response = await fetch(`${API_URL}/follow`, {
         method: 'POST',
         headers: {
@@ -2353,6 +2277,7 @@ async function addFriend(username) {
 }
 
 async function removeFriend(username) {
+    throw new Error('Friends are retired');
     const response = await fetch(`${API_URL}/unfollow`, {
         method: 'POST',
         headers: {
@@ -2470,6 +2395,7 @@ async function searchPeopleDirectory() {
 }
 
 async function loadFriendsLists() {
+    return;
     const followingEl = document.getElementById('friendsFollowingList');
     const followersEl = document.getElementById('friendsFollowersList');
     if (!AppState.authToken) return;
@@ -2505,6 +2431,7 @@ async function loadFriendsLists() {
 }
 
 async function loadConversations() {
+    return;
     const inboxContainer = document.getElementById('chatInbox');
     const loadingSpinner = document.getElementById('conversationsLoading');
     
@@ -2781,6 +2708,7 @@ function hideNewMessageForm() {
 
 // Bulletin Functions
 async function loadBulletinFeed() {
+    return;
     const feedContainer = document.getElementById('bulletinFeed');
     const loadingSpinner = document.getElementById('bulletinLoading');
     
@@ -3052,12 +2980,8 @@ async function resumePendingBuyerIntent() {
         }
         return;
     }
-    if (pendingIntent === 'chat') {
-        setTimeout(() => showChat(), 200);
+    if (pendingIntent === 'chat' || pendingIntent === 'bulletin') {
         return;
-    }
-    if (pendingIntent === 'bulletin') {
-        setTimeout(() => showBulletin(), 200);
     }
 }
 
@@ -3097,42 +3021,11 @@ async function loadPopularServices() {
 }
 
 async function showChat() {
-    if (!AppState.authToken) {
-        showAuth({ intent: 'chat', title: 'Sign in to open your inbox' });
-        return;
-    }
-
-    ensureCommModals();
-    const chatModal = document.getElementById('chatModal');
-    if (!chatModal) {
-        showToast('Inbox is unavailable on this page', 'error');
-        return;
-    }
-
-    openBootstrapModal(chatModal);
-    switchChatTab('inbox');
-    chatShowList();
-    await loadConversations();
-    // Prefetch directory names for the new-message datalist
-    searchPeopleDirectory().catch(() => {});
+    showToast('Inbox is retired. The exchange matches work; coordinate off-platform.', 'info');
 }
 
 async function showBulletin() {
-    if (!AppState.authToken) {
-        showAuth({ intent: 'bulletin', title: 'Sign in to join the community' });
-        return;
-    }
-
-    ensureCommModals();
-    const bulletinModal = document.getElementById('bulletinModal');
-    if (!bulletinModal) {
-        showToast('Community is unavailable on this page', 'error');
-        return;
-    }
-
-    openBootstrapModal(bulletinModal);
-    hideNewPostForm();
-    await loadBulletinFeed();
+    showToast('Community bulletin is retired.', 'info');
 }
 
 function selectService(serviceName) {
@@ -3162,19 +3055,7 @@ function escapeHtml(value) {
 }
 
 function contactProvider(bidId) {
-    if (!AppState.authToken) {
-        showAuth();
-        return;
-    }
-    
-    showChat();
-    setTimeout(() => {
-        showNewMessageForm();
-        const jobIdField = document.getElementById('chatJobId');
-        if (jobIdField) {
-            jobIdField.value = bidId;
-        }
-    }, 300);
+    showToast('In-app messaging is retired. Complete and rate via your active jobs.', 'info');
 }
 
 // Provider Grab Job Page Functions
@@ -3387,10 +3268,9 @@ function renderGrabJobSuccess(data, capabilitiesUsed) {
             <p><strong>Location:</strong> ${escapeHtml(location)}</p>
             ${jobId ? `<p class="small-text mb-2"><strong>Job ID:</strong> ${escapeHtml(jobId)}</p>` : ''}
             <div class="d-flex gap-2 flex-wrap mt-2">
-                ${jobId ? `<button type="button" class="btn btn-sm btn-primary" onclick="openJobChannel('${escapeHtml(jobId)}')">Open job chat</button>` : ''}
-                <button type="button" class="btn btn-sm btn-outline-light" onclick="showChat()">Inbox</button>
+                ${jobId ? `<button type="button" class="btn btn-sm btn-primary" onclick="signJobPrompt('${escapeHtml(jobId)}')">Complete &amp; rate</button>` : ''}
             </div>
-            <p class="small-text mt-2 mb-0">Coordinate with the buyer in job chat, then complete and rate when done.</p>
+            <p class="small-text mt-2 mb-0">Complete and rate when the work is done.</p>
         </div>
     `;
 }
@@ -3433,7 +3313,6 @@ function updateProviderDashboard() {
                     ${accepted ? ` · Accepted ${accepted}` : ''}</p>
                 <p class="text-muted small-text mb-2">Buyer: ${escapeHtml(job.counterparty || job.buyer_username || '—')}</p>
                 <div class="d-flex gap-2 flex-wrap">
-                    <button type="button" class="btn btn-sm btn-outline-light" onclick="openJobChannel('${job.job_id}')">Job chat</button>
                     <button type="button" class="btn btn-sm btn-primary" onclick="signJobPrompt('${job.job_id}')">Complete &amp; rate</button>
                     <button type="button" class="btn btn-sm btn-outline-danger" onclick="rejectJobPrompt('${job.job_id}')">Reject</button>
                 </div>
@@ -3964,6 +3843,7 @@ window.cancelBidBeingEdited = cancelBidBeingEdited;
 AppState.jobChannel = { jobId: null, pollTimer: null, lastTs: 0, lastId: null, readOnly: false };
 
 function ensureCoopModals() {
+    return;
     if (document.getElementById('jobChannelModal')) return;
     const html = `
 <div class="modal fade" id="jobChannelModal" tabindex="-1">
@@ -4112,6 +3992,8 @@ async function refreshJobChannelMessages(full) {
 }
 
 async function openJobChannel(jobId) {
+    showToast('Job chat is retired. Complete and rate when the work is done.', 'info');
+    return;
     if (!AppState.authToken) {
         showAuth();
         return;
@@ -4178,6 +4060,8 @@ async function postJobChannelMessage(jobId, body, messageType = 'user', payload 
 }
 
 async function inviteToJobParty(jobId, side) {
+    showToast('Job parties are retired. One buyer and one provider per job.', 'info');
+    return;
     if (!AppState.authToken) {
         showAuth();
         return;

@@ -101,7 +101,6 @@
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="index.html?open=bid">Get Something</a></li>
                     <li class="nav-item"><a class="nav-link" href="grab_job.html">Grab Job (Robots Only)</a></li>
-                    <li class="nav-item"><a class="nav-link" href="campaigns.html">Campaigns</a></li>
                     <li class="nav-item"><a class="nav-link" href="hiring.html">Hiring</a></li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navMore" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
@@ -118,9 +117,6 @@
                         </ul>
                     </li>
                 </ul><div class="nav-actions d-flex align-items-center flex-wrap gap-2 ms-lg-3 mt-2 mt-lg-0">
-                <button id="chatButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showChat()">💬 Inbox</button>
-                <button id="bulletinButton" class="btn btn-outline-light btn-sm ms-2" style="display: none;" onclick="showBulletin()">📢 Community</button>
-
                 <div id="accountDropdown" class="account-dropdown ms-3" style="display: none;">
                     <button class="account-btn">
                         <span id="accountUsername">Account</span> ▼
@@ -190,10 +186,6 @@
                         <span class="star-rating" id="profileStars"></span>
                         <span id="profileRatingText"></span>
                     </div>
-                    <div style="margin-top: 8px;">
-                        <span id="profileFollowerCount">0</span> followers &nbsp;·&nbsp;
-                        <span id="profileFollowingCount">0</span> following
-                    </div>
                     <p id="profileAbout" style="margin-top: 12px;"></p>
                 </div>
                 <div class="profile-header-actions" id="profileHeaderActions"></div>
@@ -212,23 +204,10 @@
                 </div>
             </div>
 
-            <!-- Cooperation & reputation breakdown (shown in both modes) -->
+            <!-- Reputation from signed jobs -->
             <div class="profile-card">
-                <h6>Cooperation</h6>
+                <h6>Jobs completed</h6>
                 <div id="reputationBreakdown" class="d-flex gap-4 flex-wrap"></div>
-            </div>
-
-            <!-- Endorsements (shown in both modes; endorse form only for viewers) -->
-            <div class="profile-card">
-                <h6>Endorsements</h6>
-                <div id="endorsementsList"></div>
-                <div id="endorseForm" style="display: none; margin-top: 12px;">
-                    <div class="row g-2">
-                        <div class="col-md-8"><input class="form-control form-control-sm" id="endorseSkillInput" placeholder="Endorse a skill (e.g. warehouse sorting)" maxlength="40"></div>
-                        <div class="col-md-4"><button class="btn btn-sm btn-outline-light w-100" onclick="submitEndorsement()">Endorse</button></div>
-                    </div>
-                    <div id="endorseStatus" class="mt-2" style="font-size: 0.85rem;"></div>
-                </div>
             </div>
 
             <!-- Owner-only sections -->
@@ -367,7 +346,7 @@
         </div>
     </div>
 
-    <!-- Auth Modal (shared markup/IDs with index.html so script.js?v=25 works unmodified) -->
+    <!-- Auth Modal (shared markup/IDs with index.html so script.js?v=28 works unmodified) -->
     <div class="modal fade" id="authModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
             <div class="modal-content">
@@ -416,7 +395,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js?v=25"></script>
+    <script src="script.js?v=28"></script>
     <script>
         const PROFILE_API = API_URL;
         let viewedProfile = null;
@@ -493,8 +472,6 @@
             document.getElementById('profileLocationLine').textContent = p.location || '';
             document.getElementById('profileStars').textContent = starsHtml(p.stars);
             document.getElementById('profileRatingText').textContent = `${(p.reputation_score || 0).toFixed(1)} (${p.total_ratings || 0} ratings)`;
-            document.getElementById('profileFollowerCount').textContent = p.follower_count || 0;
-            document.getElementById('profileFollowingCount').textContent = p.following_count || 0;
             document.getElementById('profileAbout').textContent = p.about || '';
 
             const avatarImg = document.getElementById('profileAvatarImg');
@@ -507,51 +484,16 @@
 
             renderRobotsOwned(p.robots_owned || [], isOwnProfile);
             renderCooperation(p);
-            renderEndorsements(p);
         }
 
         function renderCooperation(p) {
             const rb = p.reputation_breakdown || {};
             const el = document.getElementById('reputationBreakdown');
+            if (!el) return;
+            const completed = (rb.solo_jobs_completed || 0) + (rb.party_jobs_completed || 0) + (rb.campaign_jobs_completed || 0);
             el.innerHTML = `
-                <div><strong>${rb.solo_jobs_completed || 0}</strong><div class="text-muted" style="font-size:0.75rem;">Solo jobs</div></div>
-                <div><strong>${rb.party_jobs_completed || 0}</strong><div class="text-muted" style="font-size:0.75rem;">Job-party jobs</div></div>
-                <div><strong>${rb.campaign_jobs_completed || 0}</strong><div class="text-muted" style="font-size:0.75rem;">Campaign jobs</div></div>
+                <div><strong>${completed}</strong><div class="text-muted" style="font-size:0.75rem;">Completed jobs</div></div>
             `;
-        }
-
-        function renderEndorsements(p) {
-            const list = document.getElementById('endorsementsList');
-            const end = p.endorsements || { total_endorsements: 0, top_skills: [] };
-            list.innerHTML = end.top_skills.length
-                ? end.top_skills.map(s => `<span class="cap-chip">${escapeHtml(s.skill)} (${s.count})</span>`).join('')
-                : '<p class="text-muted mb-0">No endorsements yet.</p>';
-            document.getElementById('endorseForm').style.display = (!isOwnProfile && AppState.authToken) ? 'block' : 'none';
-        }
-
-        async function submitEndorsement() {
-            const skillInput = document.getElementById('endorseSkillInput');
-            const status = document.getElementById('endorseStatus');
-            const skill = skillInput.value.trim();
-            if (!skill) return;
-            try {
-                const res = await fetch(`${PROFILE_API}/endorsements`, {
-                    method: 'POST', headers: authHeaders(),
-                    body: JSON.stringify({ target_username: viewedProfile.username, skill })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    status.textContent = 'Endorsed!';
-                    skillInput.value = '';
-                    const pid = new URLSearchParams(location.search).get('pid');
-                    const res2 = await fetch(`${PROFILE_API}/profile/public/${encodeURIComponent(pid)}`);
-                    if (res2.ok) { viewedProfile = await res2.json(); renderEndorsements(viewedProfile); }
-                } else {
-                    status.textContent = data.error || 'Failed to endorse';
-                }
-            } catch (e) {
-                status.textContent = 'Network error';
-            }
         }
 
         function renderRobotsOwned(robots, editable) {
@@ -572,44 +514,7 @@
 
         function renderViewerActions() {
             const actions = document.getElementById('profileHeaderActions');
-            if (!AppState.authToken) {
-                actions.innerHTML = `<button class="btn btn-sm btn-light" onclick="showAuth()">Log in to add friend</button>`;
-                return;
-            }
-            actions.innerHTML = `
-                <button class="btn btn-sm btn-outline-light" id="followBtn">Add friend</button>
-                <button class="btn btn-sm btn-outline-light" onclick="messageUser('${viewedProfile.username}')">Message</button>
-            `;
-            checkFollowState();
-        }
-
-        async function checkFollowState() {
-            try {
-                const res = await fetch(`${PROFILE_API}/follows`, { headers: authHeaders() });
-                if (!res.ok) return;
-                const data = await res.json();
-                const following = (data.following || []).includes(viewedProfile.username);
-                const btn = document.getElementById('followBtn');
-                if (!btn) return;
-                btn.textContent = following ? 'Friends ✓' : 'Add friend';
-                btn.onclick = () => toggleFollow(!following);
-            } catch (e) { /* ignore */ }
-        }
-
-        async function toggleFollow(follow) {
-            const endpoint = follow ? 'follow' : 'unfollow';
-            try {
-                await fetch(`${PROFILE_API}/${endpoint}`, {
-                    method: 'POST',
-                    headers: authHeaders(),
-                    body: JSON.stringify({ target_username: viewedProfile.username })
-                });
-                checkFollowState();
-            } catch (e) { /* ignore */ }
-        }
-
-        function messageUser(username) {
-            location.href = `index.html?dm=${encodeURIComponent(username)}`;
+            if (actions) actions.innerHTML = '';
         }
 
         async function loadOwnerSections() {

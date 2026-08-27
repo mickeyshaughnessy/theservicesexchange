@@ -1542,6 +1542,7 @@
   }
 
   async function loadDiscoveryStatus() {
+    return;
     if (!state.token || !els.discoveryStatus) return;
     try {
       const data = await api('/account/discovery');
@@ -1771,6 +1772,7 @@
   }
 
   async function loadFriendsMobile() {
+    return;
     if (!state.token) return;
     if (els.friendsListStatus) els.friendsListStatus.textContent = 'Loading…';
     try {
@@ -1798,6 +1800,8 @@
   }
 
   async function followUser(username, currentlyFriend) {
+    toast('Friends are retired on the exchange.', 'ok');
+    return;
     try {
       if (currentlyFriend) {
         await api('/unfollow', {

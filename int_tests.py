@@ -2,7 +2,8 @@
 Integration Tests for the Services Exchange API
 
 Covers:
-  • Core API mechanics (auth, bid CRUD, chat, bulletin)
+  • Core API mechanics (auth, bid CRUD, grab, sign, cancel)
+  • Deprecated non-core routes return 410 (chat, bulletin, parties, campaigns)
   • Service matching accuracy across 30 diverse real-world categories
   • Advanced features (XMoney, exchange_data, nearby)
   • Optional /grab_job geohash whitelist (invalid / out-of-cell / in-cell)
@@ -544,23 +545,6 @@ class ServiceExchangeAPITester:
         assert r.json()["username"] == buyer_username
         print("✓ Account info")
 
-        r = requests.post(f"{self.api_url}/chat",
-                          headers=self._headers(buyer_token),
-                          json={"recipient": provider_username,
-                                "message": "TEST: Hello from integration test"},
-                          verify=False)
-        assert r.status_code == 200
-        print("✓ Chat")
-
-        r = requests.post(f"{self.api_url}/bulletin",
-                          headers=self._headers(buyer_token),
-                          json={"title": "TEST: Integration Test Post",
-                                "content": "Automated test bulletin.",
-                                "category": "general"},
-                          verify=False)
-        assert r.status_code == 200
-        print("✓ Bulletin")
-
         # Bid cancellation
         cancel_id = self._post_bid(buyer_token, {
             "service": "TEST: Bid for cancellation test",
@@ -582,7 +566,38 @@ class ServiceExchangeAPITester:
         assert r.status_code == 400
         print("✓ Negative price rejected")
 
+        self.test_deprecated_endpoints()
+
         return {"job_grabbed": job_grabbed}
+
+    def test_deprecated_endpoints(self):
+        """Non-core comms/cooperation/social routes must return 410 Gone."""
+        print("\n=== Deprecated (non-core) endpoints ===")
+        cases = [
+            ("POST", "/chat", {"recipient": "nobody", "message": "TEST"}),
+            ("POST", "/bulletin", {"title": "TEST", "content": "gone", "category": "general"}),
+            ("GET", "/chat/conversations", None),
+            ("GET", "/bulletin/feed", None),
+            ("GET", "/campaigns", None),
+            ("POST", "/campaigns", {"title": "TEST", "units": 1}),
+            ("GET", "/friends", None),
+            ("POST", "/follow", {"target_username": "nobody"}),
+            ("GET", "/jobs/00000000-0000-0000-0000-000000000000/party", None),
+            ("GET", "/jobs/00000000-0000-0000-0000-000000000000/channel", None),
+            ("GET", "/endorsements/nobody", None),
+            ("POST", "/contacts/match", {"phones": []}),
+        ]
+        # Auth is not required: retired routes should 410 even without a token.
+        for method, path, body in cases:
+            url = f"{self.api_url}{path}"
+            if method == "GET":
+                r = requests.get(url, verify=False)
+            else:
+                r = requests.post(url, json=body or {}, verify=False)
+            assert r.status_code == 410, f"{method} {path} expected 410, got {r.status_code} {r.text[:200]}"
+            data = r.json()
+            assert data.get("deprecated") is True, f"{path} missing deprecated=true"
+        print(f"✓ {len(cases)} retired routes return 410")
 
     # ── Service matching accuracy ─────────────────────────────────────────────
 

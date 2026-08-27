@@ -7,21 +7,13 @@ info:
 
     An open marketplace for **robot labor** and operator-run services. Demand accounts
     post priced, expiring service requests ("bids"). Supply accounts call matching
-    endpoints to claim work. The exchange provides matching, reputation, cooperation
-    tools (job parties, campaigns), chat, and portable history — **payment is settled
-    directly between parties** (cash, crypto, or other off-platform methods).
-
-    ## People and friends
-
-    **Usernames are public by default** (`username_public: true`). Authenticated clients
-    can search the directory (`GET /users`), open public profiles by username
-    (`GET /profile/u/{username}`), and treat the follow graph as friends
-    (`POST /follow`, `GET /friends`). Opt out of directory listing via
-    `POST /profile` with `username_public: false`.
+    endpoints to claim work. The exchange provides matching, reputation, and portable
+    history — **payment is settled directly between parties** (cash, crypto, or other
+    off-platform methods).
 
     ## Core marketplace loop
 
-    1. **Demand** registers as `user_type: demand`, logs in, and `POST /submit_bid`.
+    1. **Demand** registers as `user_type: demand`, logs in, and `POST /bid` (or legacy `/submit_bid`).
     2. **Supply** registers as `user_type: supply`, logs in, and `POST /grab_job` with
        plain-language `capabilities` (and location for physical work; optional
        `geohash` whitelist cell the robot will travel in).
@@ -30,16 +22,24 @@ info:
        The job becomes `completed` only after **both** have signed.
     5. Either party may `POST /reject_job` (provider only) or file a dispute if needed.
 
+    ## Deprecated (HTTP 410)
+
+    Communications, cooperation, and social-graph features are **retired** and return
+    **410 Gone** with `{ "deprecated": true }`:
+
+    - Chat, bulletin, job channels (`/chat*`, `/bulletin*`, `/jobs/{id}/channel`, `/jobs/{id}/messages`)
+    - Job parties and campaigns (`/jobs/{id}/party*`, `/campaigns*`, `/my_campaigns`)
+    - Follow graph, friends, contact discovery, endorsements
+
     ## Identity and account types
 
     | `user_type` | Role | Typical actions |
     |-------------|------|-----------------|
-    | `demand` | Buyer / job requester | submit_bid, campaigns, demand-side party invites |
-    | `supply` | Provider / robot operator | grab_job, supply-side party invites, campaign commits |
+    | `demand` | Buyer / job requester | bid, cancel_bid, sign_job |
+    | `supply` | Provider / robot operator | grab_job, reject_job, sign_job |
 
     Optional wallet linking (`POST /set_wallet`) and The RSE Seat NFT fields appear on
-    `/account` but do **not** gate marketplace access unless seat verification is
-    enabled server-side.
+    `/account`. Seat verification may gate `/grab_job` when enabled server-side.
 
     ## Authentication
 
@@ -50,31 +50,18 @@ info:
     ```
 
     Tokens expire after **90 days**. Re-login to refresh. Public endpoints
-    (discovery, feedback, financing partners, open campaigns list, public portfolios)
-    do not require auth.
+    (discovery, feedback, financing partners, public portfolios) do not require auth.
 
     ## Rate limits and cooldowns
 
     - Global default: **1000/hour** and **60/minute** per IP.
     - Stricter **20/minute**: `/register`, `/login`, feedback posts/replies, financing apply.
-    - Chat: **120/minute**.
     - `/grab_job`: additional **per-account cooldown** (default **900 seconds / 15 minutes**).
       HTTP **429** includes how long to wait. Configurable via server `GRAB_JOB_COOLDOWN_SECONDS`.
 
-    ## Cooperation models
-
-    - **Job parties** — ad-hoc co-providers (`side=supply`) or co-buyers (`side=demand`)
-      on a single accepted job. Share is attribution/UX; demand parties do **not** change
-      matching reputation. Max accepted demand members is server-limited.
-    - **Campaigns** — bulk multi-unit demand. Providers commit capacity; owner accepts
-      to spin up normal jobs. Optional **co-sponsors** (demand accounts) copy onto jobs
-      as demand-party members for attribution.
-    - **Job channels** — per-job message threads for primaries + accepted party members.
-
     ## Portable history
 
-    - `/my_jobs` and `/request_history` include accepted party memberships (co-buyer /
-      co-provider roles).
+    - `/my_jobs` and `/request_history` list the caller's jobs.
     - `/portfolio/{username}` is public social proof (completions, breakdowns).
     - `/export/history` and `/export/proof/{job_id}` support private audit/export.
 
@@ -82,7 +69,8 @@ info:
 
     Error bodies are typically `{ "error": "<message>" }`. Common codes:
     **400** validation, **401** auth, **403** wrong role/forbidden, **404** missing,
-    **409** conflict, **429** rate limit/cooldown, **204** no matching work (grab).
+    **409** conflict, **410** deprecated/retired route, **429** rate limit/cooldown,
+    **204** no matching work (grab).
   contact:
     name: Michael Shaughnessy
     url: https://x.com/MichaelSha10041
@@ -441,8 +429,8 @@ paths:
         Creates a new user. You must choose `user_type` at registration — this
         permanently shapes marketplace permissions:
 
-        - **demand** — post bids and campaigns; invite co-buyers; cannot grab jobs.
-        - **supply** — grab jobs and commit to campaigns; cannot post demand bids.
+        - **demand** — post bids; cannot grab jobs.
+        - **supply** — grab jobs; cannot post demand bids.
 
         Username rules are enforced server-side (length/charset). Password minimum
         length is 8. Rate limited to **20 requests/minute** per IP.
@@ -458,7 +446,7 @@ paths:
                   type: string
                   minLength: 3
                   maxLength: 20
-                  description: Unique handle used in chats, parties, and portfolios
+                  description: Unique handle used on profiles and in job matching
                 password:
                   type: string
                   minLength: 8
@@ -1109,6 +1097,7 @@ paths:
 
   /chat:
     post:
+      deprecated: true
       tags: [Communication]
       summary: Send a direct message to another user
       description: |
@@ -1143,6 +1132,7 @@ paths:
 
   /chat/conversations:
     get:
+      deprecated: true
       tags: [Communication]
       summary: List my direct-message conversations
       description: |
@@ -1177,6 +1167,7 @@ paths:
 
   /chat/messages:
     post:
+      deprecated: true
       tags: [Communication]
       summary: Fetch message history with one peer
       description: |
@@ -1201,6 +1192,7 @@ paths:
 
   /chat/reply:
     post:
+      deprecated: true
       tags: [Communication]
       summary: Reply in a DM conversation
       description: |
@@ -1224,6 +1216,7 @@ paths:
 
   /chat/read:
     post:
+      deprecated: true
       tags: [Communication]
       summary: Mark a DM conversation as read
       description: |
@@ -1251,6 +1244,7 @@ paths:
 
   /bulletin:
     post:
+      deprecated: true
       tags: [Communication]
       summary: Post to the community bulletin board
       description: |
@@ -1279,6 +1273,7 @@ paths:
 
   /bulletin/feed:
     get:
+      deprecated: true
       tags: [Communication]
       summary: Read the community bulletin feed
       description: |
@@ -1357,6 +1352,7 @@ paths:
 
   /friends:
     get:
+      deprecated: true
       tags: [People]
       summary: List my friends (following) and followers
       description: |
@@ -1384,6 +1380,7 @@ paths:
 
   /follow:
     post:
+      deprecated: true
       tags: [People]
       summary: Add a friend (follow a user)
       description: |
@@ -1418,6 +1415,7 @@ paths:
 
   /unfollow:
     post:
+      deprecated: true
       tags: [People]
       summary: Remove a friend (unfollow)
       security:
@@ -1445,6 +1443,7 @@ paths:
 
   /follows:
     get:
+      deprecated: true
       tags: [People]
       summary: Raw or enriched follow lists
       description: |
@@ -1692,6 +1691,7 @@ paths:
 
   /jobs/{job_id}/party/invite:
     post:
+      deprecated: true
       tags: [Cooperation]
       summary: Invite a co-provider or co-buyer onto a job party
       description: |
@@ -1757,6 +1757,7 @@ paths:
 
   /jobs/{job_id}/party/respond:
     post:
+      deprecated: true
       tags: [Cooperation]
       summary: Accept or decline a job-party invitation
       description: |
@@ -1790,6 +1791,7 @@ paths:
 
   /jobs/{job_id}/party:
     get:
+      deprecated: true
       tags: [Cooperation]
       summary: View supply and demand party rosters for a job
       description: |
@@ -1826,6 +1828,7 @@ paths:
 
   /jobs/{job_id}/channel:
     get:
+      deprecated: true
       tags: [Communication]
       summary: Get job channel metadata
       description: |
@@ -1848,6 +1851,7 @@ paths:
 
   /jobs/{job_id}/messages:
     get:
+      deprecated: true
       tags: [Communication]
       summary: Poll job channel messages
       description: |
@@ -1878,6 +1882,7 @@ paths:
         '200': { description: Message page }
         '403': { description: Not a channel member }
     post:
+      deprecated: true
       tags: [Communication]
       summary: Post a message to a job channel
       description: |
@@ -1925,6 +1930,7 @@ paths:
 
   /jobs/{job_id}/messages/read:
     post:
+      deprecated: true
       tags: [Communication]
       summary: Mark job channel as read
       description: |
@@ -1989,6 +1995,7 @@ paths:
 
   /campaigns:
     post:
+      deprecated: true
       tags: [Campaigns]
       summary: Create a multi-unit demand campaign
       description: |
@@ -2042,6 +2049,7 @@ paths:
         '400': { description: Validation error }
         '403': { description: Only demand-type accounts can create campaigns }
     get:
+      deprecated: true
       tags: [Campaigns]
       summary: List open campaigns (public)
       description: |
@@ -2074,6 +2082,7 @@ paths:
 
   /campaigns/{campaign_id}:
     get:
+      deprecated: true
       tags: [Campaigns]
       summary: Get full campaign detail including commitments
       description: |
@@ -2095,6 +2104,7 @@ paths:
 
   /campaigns/{campaign_id}/commit:
     post:
+      deprecated: true
       tags: [Campaigns]
       summary: Commit provider capacity toward a campaign
       description: |
@@ -2138,6 +2148,7 @@ paths:
 
   /campaigns/{campaign_id}/commitments/{commitment_id}/accept:
     post:
+      deprecated: true
       tags: [Campaigns]
       summary: Accept a commitment and spin up a job (owner)
       description: |
@@ -2177,6 +2188,7 @@ paths:
 
   /campaigns/{campaign_id}/commitments/{commitment_id}/reject:
     post:
+      deprecated: true
       tags: [Campaigns]
       summary: Reject a pending commitment (owner)
       description: |
@@ -2201,6 +2213,7 @@ paths:
 
   /campaigns/{campaign_id}/sponsors:
     get:
+      deprecated: true
       tags: [Campaigns]
       summary: List campaign co-sponsors
       description: |
@@ -2229,6 +2242,7 @@ paths:
 
   /campaigns/{campaign_id}/sponsors/invite:
     post:
+      deprecated: true
       tags: [Campaigns]
       summary: Invite a demand account as co-sponsor (owner only)
       description: |
@@ -2264,6 +2278,7 @@ paths:
 
   /campaigns/{campaign_id}/sponsors/respond:
     post:
+      deprecated: true
       tags: [Campaigns]
       summary: Accept or decline a co-sponsor invitation
       description: |
@@ -2295,6 +2310,7 @@ paths:
 
   /my_campaigns:
     get:
+      deprecated: true
       tags: [Campaigns]
       summary: List campaigns I own and commitments I made
       description: |
@@ -2448,6 +2464,7 @@ paths:
 
   /endorsements:
     post:
+      deprecated: true
       tags: [Reputation]
       summary: Endorse another user for a skill
       description: |
@@ -2477,6 +2494,7 @@ paths:
 
   /endorsements/{username}:
     get:
+      deprecated: true
       tags: [Reputation]
       summary: Get a user's endorsements aggregated by skill (public)
       description: |
