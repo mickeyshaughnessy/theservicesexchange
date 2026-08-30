@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a2e">
+    <meta name="description" content="Seat Purchase Agreement (SPA) template for The RSE — Golden Seats bought over time, cash to the Hyperion Fund, earnings shared with seat holders.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="The RSE">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <title>The RSE — SPA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css?v=28" rel="stylesheet">
+    <style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  .rse-doc {
+    --ink: #0c1222;
+    --ink-soft: #2a3548;
+    --muted: #5a6a82;
+    --rule: #d8dee8;
+    --accent: #0a6e6e;
+    --accent-soft: #e6f4f4;
+    --highlight: #0d9488;
+    --page-w: 8.5in;
+    --page-h: 11in;
+    --margin: 0.58in;
+  }
+  .rse-doc, .rse-doc * { box-sizing: border-box; }
+  .rse-doc {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    color: #121820;
+    background: #e8ecf2;
+    line-height: 1.46;
+    font-size: 9.5pt;
+    padding: 0.5rem 0 2rem;
+  }
+  .rse-doc p, .rse-doc li, .rse-doc td, .rse-doc th,
+  .rse-doc h1, .rse-doc h2, .rse-doc h3, .rse-doc .lede,
+  .rse-doc .page, .rse-doc .box, .rse-doc .callout {
+    color: #121820 !important;
+  }
+  .rse-doc .page {
+    width: var(--page-w);
+    min-height: var(--page-h);
+    margin: 0.35in auto;
+    padding: var(--margin);
+    background: #fff;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    position: relative;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+  }
+  .rse-doc .page:last-child { page-break-after: auto; }
+  @media print {
+    .site-chrome { display: none !important; }
+    .rse-doc { background: #fff; }
+    .rse-doc .page {
+      margin: 0;
+      box-shadow: none;
+      width: 100%;
+      min-height: 100vh;
+      padding: 0.5in 0.55in;
+    }
+  }
+  .rse-doc h1 {
+    font-size: 18pt;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+  }
+  .rse-doc h2 {
+    font-size: 10.8pt;
+    font-weight: 600;
+    color: #0c1222;
+    margin: 0.7em 0 0.28em;
+    letter-spacing: -0.01em;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0.12em;
+  }
+  .rse-doc h3 {
+    font-size: 9.6pt;
+    font-weight: 600;
+    color: #1a2332;
+    margin: 0.55em 0 0.15em;
+  }
+  .rse-doc p { margin-bottom: 0.35em; }
+  .rse-doc .lede { font-size: 10.2pt; color: #1a2332; line-height: 1.42; }
+  .rse-doc .muted { color: #3d4a5c; font-size: 8.5pt; }
+  .rse-doc .mono { font-family: 'IBM Plex Mono', monospace; font-size: 8.3pt; }
+  .rse-doc .blank { border-bottom: 1px solid #121820; padding: 0 0.15em; }
+  .rse-doc ol.arts { margin: 0.15em 0 0.4em 1.2em; padding: 0; }
+  .rse-doc ol.arts > li { margin-bottom: 0.28em; }
+  .rse-doc .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1.5px solid var(--ink);
+    padding-bottom: 0.3em;
+    margin-bottom: 0.65em;
+  }
+  .rse-doc .page-header .brand {
+    font-weight: 700;
+    font-size: 9.5pt;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .rse-doc .page-header .doc-label { font-size: 8.5pt; color: var(--muted); }
+  .rse-doc .page-footer {
+    margin-top: auto;
+    padding-top: 0.4em;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    color: var(--muted);
+  }
+  .rse-doc .cover-kicker {
+    font-size: 8.5pt;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--highlight);
+    margin-bottom: 0.35em;
+  }
+  .rse-doc .cover-rule {
+    width: 2.8in;
+    height: 2.5px;
+    background: var(--ink);
+    margin: 0.55em 0 0.75em;
+  }
+  .rse-doc .box {
+    border: 1px solid var(--rule);
+    padding: 0.45em 0.65em;
+    margin: 0.4em 0;
+    background: #fafbfc;
+  }
+  .rse-doc .box.accent { border-color: var(--accent); background: var(--accent-soft); }
+  .rse-doc .box h3 { margin-top: 0; }
+  .rse-doc .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5em 0.85em;
+  }
+  .rse-doc table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.6pt;
+    margin: 0.3em 0 0.5em;
+  }
+  .rse-doc th, .rse-doc td {
+    text-align: left;
+    padding: 0.24em 0.35em;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .rse-doc th {
+    font-weight: 600;
+    color: var(--ink-soft);
+    font-size: 7.6pt;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .rse-doc .callout {
+    border-left: 3px solid var(--highlight);
+    padding: 0.3em 0 0.3em 0.7em;
+    margin: 0.4em 0;
+    background: #f7faf9;
+  }
+  .rse-doc ul.clean { margin: 0.15em 0 0.4em 1em; }
+  .rse-doc ul.clean li { margin-bottom: 0.14em; }
+  .rse-doc .sig {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.1em 1.4em;
+    margin-top: 0.8em;
+  }
+  .rse-doc .sig .line { border-top: 1px solid #121820; margin-top: 1.6em; padding-top: 0.25em; font-size: 8.2pt; }
+  .inv-doc-tabs {
+    background: #0d0d3d;
+    border-bottom: 1px solid rgba(0,255,255,0.25);
+  }
+  .inv-doc-tabs .tab-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.65rem 0;
+  }
+  .inv-doc-tabs a {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #c8d6f5;
+    text-decoration: none;
+    border: 1px solid rgba(0,255,255,0.3);
+    padding: 0.35rem 0.7rem;
+  }
+  .inv-doc-tabs a:hover { color: #fff; border-color: #00ffff; }
+  .inv-doc-tabs a.active {
+    color: #0a0a2e;
+    background: #00ffff;
+    border-color: #00ffff;
+  }
+  @media (max-width: 900px) {
+    .rse-doc .page {
+      width: 100%;
+      min-height: auto;
+      margin: 0.75rem 0;
+      padding: 1.25rem;
+      box-shadow: none;
+    }
+    .rse-doc .grid-2, .rse-doc .sig { grid-template-columns: 1fr; }
+    .rse-doc .cover-rule { width: 40%; }
+  }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="site-chrome">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">The RSE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html?open=bid">Get Something</a></li>
+                    <li class="nav-item"><a class="nav-link" href="grab_job.html">Grab Job (Robots Only)</a></li>
+                    <li class="nav-item"><a class="nav-link" href="hiring.html">Hiring</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="navMore" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navMore">
+                            <li><a class="dropdown-item" href="portfolio.html">Portfolio</a></li>
+                            <li><a class="dropdown-item" href="robots.html">Buy a Robot</a></li>
+                            <li><a class="dropdown-item" href="examples.html">Examples</a></li>
+                            <li><a class="dropdown-item" href="api_docs.html">API Docs</a></li>
+                            <li><a class="dropdown-item" href="about.html">About</a></li>
+                            <li><a class="dropdown-item" href="garage.html">Garage</a></li>
+                            <li><a class="dropdown-item" href="investors.html">Investors</a></li>
+                            <li><a class="dropdown-item" href="business_plan.html">Business Plan</a></li>
+                            <li><a class="dropdown-item" href="spreadsheet.html">Spreadsheet</a></li>
+                            <li><a class="dropdown-item active" href="spa.html" aria-current="page">SPA</a></li>
+                            <li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="nav-actions d-flex align-items-center flex-wrap gap-2 ms-lg-3 mt-2 mt-lg-0">
+                    <button id="loginButton" class="btn btn-light" onclick="showAuth()">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="inv-doc-tabs">
+        <div class="container">
+            <nav class="tab-row" aria-label="Investor documents">
+                <a href="investors.html">Investors</a>
+                <a href="business_plan.html">Business Plan</a>
+                <a href="spreadsheet.html">Spreadsheet</a>
+                <a class="active" aria-current="page" href="spa.html">SPA</a>
+            </nav>
+        </div>
+    </div>
+    </div>
+
+    <main id="main-content" class="rse-doc" tabindex="-1">
+
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">Template · Confidential · Not an offer</span>
+  </div>
+
+  <p class="cover-kicker">Permanent Capital · Golden Seats · Hyperion Fund</p>
+  <h1>Seat Purchase Agreement</h1>
+  <p style="font-size:11pt;color:var(--ink-soft);margin-top:0.1em;">(this “Agreement” or “SPA”)</p>
+  <div class="cover-rule"></div>
+
+  <p class="lede">
+    Template for a Founding Partner sponsor (the Buyer) who agrees to buy Golden Seats over time as exchange GMV grows.
+    The Buyer receives the seats themselves. Purchase price is contributed to the Hyperion Fund. Seat holders share Fund earnings.
+    Company common stock, if any, is documented separately for the named individual.
+  </p>
+
+  <div class="grid-2">
+    <div class="box">
+      <h3>Effective Date</h3>
+      <p style="margin-bottom:0;"><span class="blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>, 20<span class="blank">&nbsp;&nbsp;&nbsp;</span></p>
+    </div>
+    <div class="box">
+      <h3>Founding Partner spot</h3>
+      <p style="margin-bottom:0;">☐ Spot 2 &nbsp;&nbsp; ☐ Spot 3 &nbsp;&nbsp; ☐ Other: <span class="blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></p>
+    </div>
+  </div>
+
+  <p>
+    This Seat Purchase Agreement is entered into as of the Effective Date by and among:
+  </p>
+  <ul class="clean">
+    <li><strong>The Exchange:</strong> <span class="blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> (the “Exchange”), operator of The Robot Services Exchange (“The RSE”).</li>
+    <li><strong>The Buyer / Sponsor:</strong> <span class="blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> (the “Buyer”).</li>
+    <li><strong>The Individual</strong> (if this SPA is paired with a Founding Partner hire): <span class="blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> (the “Individual”). Mickey Shaughnessy’s individual spot is filled and is not paired with a sponsor under this template.</li>
+  </ul>
+  <p>The Exchange, the Buyer, and (if signing) the Individual are the “Parties.”</p>
+
+  <h2>Recitals</h2>
+  <p>A. The RSE is an open marketplace for robot labor. Buyers of work post bids; providers grab matches. A Golden Seat is the supply-access token that lets a provider grab jobs.</p>
+  <p>B. The Business Plan at <span class="mono">therobotservicesexchange.com/business_plan.html</span> describes permanent capital, preferred rights that deepen only as network metrics improve, and the Hyperion Fund.</p>
+  <p>C. A Founding Partner sponsor commits capital by buying Golden Seats over time. The Buyer gets those seats. The same dollars are the Buyer’s Hyperion participation basis. Principal stays in the Fund; only earned profits may be distributed to seat holders.</p>
+  <p>D. This instrument is the SPA contemplated by the Business Plan and <span class="mono">hiring.html</span>. Bracketed items and Schedule A quantities are completed at signing. This public page is a template, not a signed contract and not an offer of seats, securities, or fund interests.</p>
+
+  <div class="page-footer">
+    <span>therobotservicesexchange.com/spa.html</span>
+    <span>Page 1 of 6</span>
+  </div>
+</section>
+
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">SPA · Definitions · The Seats</span>
+  </div>
+
+  <h2 style="margin-top:0;">1. Definitions</h2>
+  <p><strong>“Abuse”</strong> means material violation of Exchange terms in connection with a Seat: fraud, wash or fictitious jobs, rating manipulation, credential theft, spam grabbing, use in criminal activity, or other conduct the Exchange reasonably treats as grounds to suspend grab access.</p>
+  <p><strong>“GMV”</strong> means trailing twelve-month gross merchandise value of robot-labor jobs cleared on the Exchange, calculated as the Exchange publishes (or, if unpublished, as certified by the Exchange to the Buyer). Base-case planning path is in the investors model and spreadsheet.</p>
+  <p><strong>“Golden Seat”</strong> or <strong>“Seat”</strong> means a provider seat in the 2026 founding tranche (planning: 1,000,000 seats at a primary price of USD $100,000), recorded as an ERC-721 (or successor) on Base or in an Exchange registry, with the attributes in Section 3.</p>
+  <p><strong>“Hyperion Fund”</strong> or <strong>“Fund”</strong> means the permanent-capital vehicle described in the Business Plan (p. 3) and investors overview: remnant real estate, robot-advantaged SMBs, plus liquid markets.</p>
+  <p><strong>“Hyperion Basis”</strong> means, for the Buyer, the aggregate Purchase Price actually paid for Seats under this Agreement (and not refunded).</p>
+  <p><strong>“Primary Price”</strong> means USD $100,000 per Golden Seat unless Schedule A states a different price for a tranche.</p>
+  <p><strong>“Purchase Price”</strong> means Primary Price × number of Seats in the relevant tranche.</p>
+  <p><strong>“Triggered Tranche”</strong> means an additional Seat purchase that becomes due when GMV first exceeds the matching threshold in Schedule A.</p>
+
+  <h2>2. Agreement to buy Seats over time</h2>
+  <p>2.1 The Buyer agrees to purchase, and the Exchange agrees to sell and deliver, Golden Seats in the Initial Tranche at Closing and in each Triggered Tranche thereafter, in the amounts in Schedule A, at the Primary Price then applicable.</p>
+  <p>2.2 No Triggered Tranche is due unless and until the GMV threshold is first met. If GMV never reaches a threshold, that tranche never comes due. Underperformance does not expand the Buyer’s purchase obligation, advisory rights, or preferred commercial rights.</p>
+  <p>2.3 After a threshold is first met, the Exchange will give written notice. The Buyer shall pay the Purchase Price for that tranche within thirty (30) days (the “Funding Window”), subject to the cure in Section 12.</p>
+  <p>2.4 This Agreement does not sell company common stock. Any equity for the Individual is a separate 10-year vest (1-year cliff, then monthly) among the three Founding Partner individuals, as in the Business Plan.</p>
+
+  <h2>3. What the Buyer receives — the Seats themselves</h2>
+  <div class="callout">
+    <strong>Title to the Buyer.</strong> Each purchased Golden Seat is issued or transferred to the Buyer (or the Buyer’s designated wallet / registered holder). The Exchange does not retain the Seat. The Buyer may hold, use, or transfer it, subject only to Abuse and this Agreement.
+  </div>
+  <p>Each Golden Seat has all of the following attributes:</p>
+  <table>
+    <thead><tr><th>Attribute</th><th>Term</th></tr></thead>
+    <tbody>
+      <tr><td>Class</td><td>Golden Seat (founding tranche).</td></tr>
+      <tr><td>Grab access</td><td>Entitles the holder to take work through <span class="mono">/grab_job</span> (or successor) when seat verification is on.</td></tr>
+      <tr><td>Rate limit</td><td>Fifteen (15) minutes: one successful grab per Seat per 15-minute window, matching the live Exchange limit.</td></tr>
+      <tr><td>Duration</td><td>Good for eternity, modulo Abuse. No calendar expiry, inactivity decay, or “use it or lose it.”</td></tr>
+      <tr><td>Transfer</td><td>Fully transferable. Title, grab access (if not then revoked for Abuse), and the associated Hyperion Basis travel together.</td></tr>
+      <tr><td>On-chain form</td><td>If a particular contract build is technically non-transferable, the Exchange shall effect a commercial transfer by registry update, burn-and-mint, or equivalent so the Buyer’s transferee receives the same economic and access rights.</td></tr>
+    </tbody>
+  </table>
+  <p>Delivery: mint or registry credit to the wallet / holder named in Schedule C within ten (10) business days after cleared funds.</p>
+
+  <div class="page-footer">
+    <span>Buyer receives the Golden Seats · 15-minute rate limit · eternal modulo abuse · transferable</span>
+    <span>Page 2 of 6</span>
+  </div>
+</section>
+
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">SPA · Hyperion Fund</span>
+  </div>
+
+  <h2 style="margin-top:0;">4. Where the money goes — Hyperion Fund</h2>
+  <div class="box accent">
+    <h3>One check, two claims</h3>
+    <p style="margin-bottom:0;">The Purchase Price is not operating revenue of the Exchange and is not retained as an unrestricted corporate cash pile. <strong>One hundred percent (100%) of each Purchase Price is contributed to the Hyperion Fund</strong> as the Buyer’s Hyperion Basis for that tranche. In the same moment, the Buyer receives the Golden Seats themselves.</p>
+  </div>
+  <table>
+    <thead><tr><th>Step</th><th>What happens to the dollars</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1. Pay</td>
+        <td>Buyer wires the Purchase Price to the receiving account named in Schedule C (Exchange or Fund custodian).</td>
+      </tr>
+      <tr>
+        <td>2. Book</td>
+        <td>Same dollars are booked as (a) consideration for the Seats and (b) Hyperion NAV / Buyer’s Hyperion Basis. Cash is not spent twice.</td>
+      </tr>
+      <tr>
+        <td>3. Contribute</td>
+        <td><strong>All of it goes to the Hyperion Fund.</strong> The Fund deploys: remnant real estate (franchise + owned), robot-advantaged SMBs, plus stocks, crypto, bonds, and emerging assets until real-asset deals close.</td>
+      </tr>
+      <tr>
+        <td>4. Exchange fee</td>
+        <td>The Exchange earns Stream 06 only: a platform take of about 2.8% of Fund AUM per year (1% management + 15% of an assumed ~12% gross). That fee is how the Exchange is paid for administering the Fund. It is not a second grab of the Purchase Price.</td>
+      </tr>
+      <tr>
+        <td>5. Principal lock</td>
+        <td>The initial Purchase Price (Hyperion Basis) cannot be withdrawn. Permanent / long-dated capital. Only earned profits may leave the Fund.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted">First-wave planning (not a promise of named assets): ~12 residential STRs, ~4 health-aide dispatch books, cybercab ground, trash routes; residual AUM in liquid markets. See the Business Plan and investors page.</p>
+
+  <h2>5. Earnings shared with seat holders</h2>
+  <p>5.1 Seat holders are the economic participants in the Fund in respect of Seat dollars. The Buyer, as holder of the purchased Seats (and any transferee of those Seats), shares in Fund earnings pro rata to Hyperion Basis.</p>
+  <p>5.2 Waterfall, after reasonable Fund expenses:</p>
+  <ul class="clean">
+    <li><strong>First,</strong> Hyperion Basis stays in. No return of principal.</li>
+    <li><strong>Second,</strong> the Exchange’s platform take (~2.8% of AUM as modeled: 1% management plus performance participation).</li>
+    <li><strong>Third,</strong> remaining net earnings (profits above aggregate participant basis, after the platform take) are allocated to seat holders (and, if applicable, equity participants on the same “one check, two claims” rule) <strong>pro rata to Hyperion Basis</strong>.</li>
+    <li><strong>Fourth,</strong> amounts so allocated may be distributed in cash or reinvested. Only earned profits are distributable. Unrealized marks do not create a withdrawal right.</li>
+  </ul>
+  <p>5.3 Transfer of a Seat transfers the associated Hyperion Basis and the right to future allocations on that basis, effective as of the transfer date. The Exchange will update the Fund register.</p>
+  <p>5.4 This Section describes the commercial rule in the Business Plan. It is not a prospectus, a 1940 Act registration, or a promise of any return. Actual Fund documentation (limited partnership, trust, or equivalent) will govern when formed; this SPA obligates the Exchange to cause those documents to implement this waterfall for Seat dollars.</p>
+
+  <h2>6. Advisory and preferred rights (also GMV-ratcheted)</h2>
+  <p>While this Agreement is in force and the Buyer is not in uncured default, the Buyer has the advisory and preferred commercial rights in Schedule A for the highest GMV threshold that has been met. Rights deepen only as GMV (and, as the Exchange may also track, density, seats, and jobs) improve. They are preferential, not territorial monopolies, and do not freeze the open market.</p>
+
+  <div class="page-footer">
+    <span>100% of purchase price → Hyperion · principal locked · earnings pro rata to seat holders</span>
+    <span>Page 3 of 6</span>
+  </div>
+</section>
+
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">SPA · GMV deepening</span>
+  </div>
+
+  <h2 style="margin-top:0;">7. Commitment deepening with exchange GMV</h2>
+  <p>
+    Schedule A is the map. Let <strong>N</strong> be the Initial Tranche (number of Golden Seats at Closing). Additional seats become due when trailing twelve-month GMV first exceeds each threshold. Thresholds follow the Business Plan / investors-page <em>base</em> GMV path. Parties may overwrite the seat multiples in the right-hand columns at signing.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Stage</th>
+        <th>GMV threshold (T12M)</th>
+        <th>Base-path year (illustrative)</th>
+        <th>Additional seats due</th>
+        <th>Cumulative vs N</th>
+        <th>Rights step (hold while metrics hold)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Closing</td>
+        <td>—</td>
+        <td>Signing</td>
+        <td>N (Initial Tranche)</td>
+        <td>1.0×</td>
+        <td>Observer advisory; introductions</td>
+      </tr>
+      <tr>
+        <td>T1 Seed density</td>
+        <td>USD $80 million</td>
+        <td>2026</td>
+        <td>0.5 × N</td>
+        <td>1.5×</td>
+        <td>Written comments on density and matching</td>
+      </tr>
+      <tr>
+        <td>T2 Early network</td>
+        <td>USD $500 million</td>
+        <td>2028</td>
+        <td>0.5 × N</td>
+        <td>2.0×</td>
+        <td>Priority matching in one named geography or category</td>
+      </tr>
+      <tr>
+        <td>T3 Scale</td>
+        <td>USD $2 billion</td>
+        <td>2030</td>
+        <td>1.0 × N</td>
+        <td>3.0×</td>
+        <td>Preferential data access and referral economics</td>
+      </tr>
+      <tr>
+        <td>T4 Inflection</td>
+        <td>USD $24 billion</td>
+        <td>2032</td>
+        <td>1.0 × N</td>
+        <td>4.0×</td>
+        <td>First-look on hardware catalog and Garage / Lighthouse franchise opportunities</td>
+      </tr>
+      <tr>
+        <td>T5 Seat-peak ramp</td>
+        <td>USD $1.35 trillion</td>
+        <td>2035</td>
+        <td>2.0 × N</td>
+        <td>6.0×</td>
+        <td>Full preferred commercial package in the Business Plan</td>
+      </tr>
+      <tr>
+        <td>T6 Mature</td>
+        <td>USD $30 trillion</td>
+        <td>2040</td>
+        <td>As agreed in Schedule A (default: none automatic)</td>
+        <td>Hold</td>
+        <td>Rights hold if GMV and density hold; they do not expand on a calendar</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>Years in the table are the base scenario, not deadlines. A threshold is binary: first print above the number triggers the tranche, whether that print is early or late. If GMV later falls, already-purchased Seats and Hyperion Basis stay with the Buyer; untriggered future tranches remain untriggered; already-earned rights do not expand, and the Exchange may step them down to the highest threshold GMV still supports, on ninety (90) days’ notice, without touching title to Seats.</p>
+
+  <h2>8. The Individual (Founding Partner hire)</h2>
+  <p>When this SPA is paired with Spot 2 or Spot 3, the Individual commits time for 10+ years, receives an even third of the company as it vests, plus salary and benefits, as on <span class="mono">hiring.html</span>. The Individual is not the owner of the Sponsor’s Seats unless the Buyer transfers Seats to the Individual. Mickey Shaughnessy is not a party as a sponsored Individual.</p>
+  <p>Non-compete for the Individual: one to two years after termination, limited to competing robot-labor exchanges. Ordinary, not onerous. Not a non-solicit of the open market.</p>
+
+  <h2>9. Abuse; revocation of grab access</h2>
+  <p>The Exchange may suspend or revoke grab access on a Seat for Abuse. Eternity is modulo Abuse only — not modulo disagreement, inactivity, or lawful competition. Revocation for Abuse does not forfeit Hyperion Basis except in the case of fraud in the purchase itself or theft from the Fund. A revoked Seat remains transferable as an economic claim unless cancelled for purchase fraud, in which case the Exchange will unwind title and the corresponding Basis only as required to make the Fund whole.</p>
+
+  <div class="page-footer">
+    <span>Schedule A GMV map · base path $80M → $30T · rights and purchases ratchet, they do not run on a clock</span>
+    <span>Page 4 of 6</span>
+  </div>
+</section>
+
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">SPA · Termination</span>
+  </div>
+
+  <h2 style="margin-top:0;">10. Termination — the Individual</h2>
+  <p>Applies if the Individual is a party (Spot 2 or Spot 3). Mickey Shaughnessy’s role is outside this Section except as a co-equal Founding Partner individual for equity-split purposes.</p>
+  <h3>10.1 Events</h3>
+  <ul class="clean">
+    <li><strong>Resignation.</strong> The Individual may resign on ninety (90) days’ written notice.</li>
+    <li><strong>Without Cause by the Exchange.</strong> The Exchange (acting through the other Founding Partner individuals, or as the entity documents provide) may terminate the Individual without Cause on ninety (90) days’ notice.</li>
+    <li><strong>Cause.</strong> Immediately on written notice: fraud, willful misconduct, material breach of this Agreement or of employment / partner terms that remains uncured for fifteen (15) days after notice, criminal conviction involving dishonesty, or Abuse using Exchange systems.</li>
+    <li><strong>Death or disability.</strong> Termination effective on death or on disability lasting one hundred twenty (120) consecutive days (or as required by law).</li>
+  </ul>
+  <h3>10.2 Effect on the Individual</h3>
+  <table>
+    <thead><tr><th>Event</th><th>Equity</th><th>Pay / benefits</th><th>Non-compete</th><th>Seats the Individual owns</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Resignation or Without Cause</td>
+        <td>Unvested forfeited. Vested stays (Exchange may have a fair-value repurchase option for vested equity over 12 months).</td>
+        <td>End at last day, except accrued wages and legally required amounts.</td>
+        <td>1 year, competing robot-labor exchanges only.</td>
+        <td>Unaffected. Personal Seats (if any) remain fully transferable.</td>
+      </tr>
+      <tr>
+        <td>Cause</td>
+        <td>Unvested forfeited. Vested may be clawed back only to the extent of proven fraud or theft.</td>
+        <td>End at last day.</td>
+        <td>2 years, same limited scope.</td>
+        <td>Grab access may be revoked if the Cause was Abuse; Hyperion Basis stays except purchase fraud.</td>
+      </tr>
+      <tr>
+        <td>Death / disability</td>
+        <td>Unvested: [ &nbsp;] % acceleration or pro rata through the month of the event (complete at signing; default = pro rata through that month).</td>
+        <td>End at last day; death benefits if any plan exists.</td>
+        <td>None on the estate.</td>
+        <td>Pass by will, trust, or operation of law. Fully transferable.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>10.3 If the Individual leaves, the Buyer (Sponsor) may elect, within sixty (60) days: <strong>(a)</strong> continue this SPA (remaining Triggered Tranches and rights still follow GMV), or <strong>(b)</strong> freeze — no further untriggered tranches come due; already-purchased Seats, Hyperion Basis, and already-earned rights remain. Silence is election (a).</p>
+
+  <h2>11. Termination — the Sponsor / Buyer</h2>
+  <h3>11.1 Events</h3>
+  <ul class="clean">
+    <li><strong>Failure to fund.</strong> Buyer does not pay a Triggered Tranche (or the Initial Tranche) in the Funding Window and fails to cure within thirty (30) additional days after notice.</li>
+    <li><strong>Cause.</strong> Fraud in a purchase, material breach uncured for thirty (30) days, or Abuse directed by the Buyer.</li>
+    <li><strong>Convenience (Buyer).</strong> After thirty-six (36) months from Closing, and only if every then-triggered tranche has been funded, the Buyer may terminate remaining untriggered commitments on one hundred eighty (180) days’ notice.</li>
+    <li><strong>Convenience (Exchange).</strong> The Exchange may not terminate for convenience merely to resell the same commitment. It may terminate the advisory/preferred package (not title to Seats) if continuing it would violate law or a later open-market integrity rule of general application, on one hundred eighty (180) days’ notice and without expanding anyone else’s exclusive rights.</li>
+    <li><strong>Mutual.</strong> Written agreement.</li>
+    <li><strong>Exchange insolvency.</strong> Either party may terminate remaining untriggered obligations; Seats and Hyperion Basis already booked remain claims of the Buyer.</li>
+  </ul>
+  <h3>11.2 Effect on the Sponsor</h3>
+  <table>
+    <thead><tr><th></th><th>Seats already bought</th><th>Hyperion Basis / earnings</th><th>Future tranches</th><th>Advisory / preferred rights</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Failure to fund (uncured)</td>
+        <td>Stay with Buyer. Fully transferable.</td>
+        <td>Stay. Pro rata earnings continue.</td>
+        <td>Lapse.</td>
+        <td>Terminate. No clawback of Seats.</td>
+      </tr>
+      <tr>
+        <td>Cause (Buyer)</td>
+        <td>Stay, except purchase fraud (unwind that tranche).</td>
+        <td>Stay, except purchase fraud.</td>
+        <td>Lapse.</td>
+        <td>Terminate.</td>
+      </tr>
+      <tr>
+        <td>Convenience (Buyer), after 36 months</td>
+        <td>Stay.</td>
+        <td>Stay.</td>
+        <td>Untriggered lapse; triggered-but-unfunded must still close or Section 11.1 failure-to-fund applies.</td>
+        <td>Step down to the highest GMV threshold actually funded.</td>
+      </tr>
+      <tr>
+        <td>Mutual / Exchange insolvency</td>
+        <td>Stay.</td>
+        <td>Stay, subject to insolvency law.</td>
+        <td>As agreed or lapse.</td>
+        <td>As agreed; insolvency may terminate.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>11.3 Termination of the Buyer does not, by itself, terminate the Individual. The remaining Founding Partner individuals and the Exchange will treat the Individual under Section 10 and <span class="mono">hiring.html</span> in good faith (continue, re-pair, or Section 10 exit).</p>
+  <p>11.4 No termination returns Hyperion principal. No termination lets the Exchange keep Seats the Buyer already paid for, except the fraud unwind in this Section.</p>
+
+  <div class="page-footer">
+    <span>Seats already paid for stay with the Buyer · unvested individual equity is the main hire lever</span>
+    <span>Page 5 of 6</span>
+  </div>
+</section>
+
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">SPA · Boilerplate · Signatures</span>
+  </div>
+
+  <h2 style="margin-top:0;">12. Representations; miscellaneous</h2>
+  <p>12.1 Each party has authority to sign. The Buyer is acquiring Seats for its own account, can bear the loss of locked principal, and has read the Business Plan, investors overview, and this template’s disclaimer.</p>
+  <p>12.2 Notices: email plus one hard copy to the addresses in Schedule C.</p>
+  <p>12.3 Assignment: the Buyer may assign this Agreement with the Seats to a transferee that assumes remaining obligations in writing; the Exchange will not unreasonably withhold consent. The Exchange may assign to a successor operator of The RSE.</p>
+  <p>12.4 Governing law: <span class="blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>. Venue: <span class="blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>.</p>
+  <p>12.5 Entire agreement as to Seat purchases, Hyperion Basis for those Seats, GMV deepening, and the termination rules in Sections 10–11. Amendments in writing. Counterparts and electronic signatures permitted.</p>
+  <p>12.6 Securities and commodities laws, KYC/AML, and wallet sanctions screening apply. Closing of any tranche may be delayed until those checks clear. This template does not register or offer any security.</p>
+
+  <h2>Schedule A — complete at signing</h2>
+  <table>
+    <thead><tr><th>Item</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Initial Tranche N (Golden Seats at Closing)</td><td>&nbsp;</td></tr>
+      <tr><td>Primary Price (default USD $100,000 / Seat)</td><td>&nbsp;</td></tr>
+      <tr><td>Closing date</td><td>&nbsp;</td></tr>
+      <tr><td>Named geography / category for T2 rights</td><td>&nbsp;</td></tr>
+      <tr><td>Overwrite T1–T6 seat multiples? (else Section 7 defaults)</td><td>&nbsp;</td></tr>
+      <tr><td>T6 additional seats (default none automatic)</td><td>&nbsp;</td></tr>
+      <tr><td>Individual death/disability acceleration</td><td>&nbsp;</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Schedule C — delivery and notices</h2>
+  <table>
+    <thead><tr><th>Item</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Buyer wallet / registered holder</td><td>&nbsp;</td></tr>
+      <tr><td>Hyperion / receiving account</td><td>&nbsp;</td></tr>
+      <tr><td>Exchange notice address / email</td><td>&nbsp;</td></tr>
+      <tr><td>Buyer notice address / email</td><td>&nbsp;</td></tr>
+      <tr><td>Individual notice (if any)</td><td>&nbsp;</td></tr>
+    </tbody>
+  </table>
+
+  <p class="muted" style="margin-top:0.65em;font-size:8pt;line-height:1.4;">
+    <strong>Disclaimer.</strong> Public template for discussion and planning. Not an offer, solicitation, or sale of seats, equity, or Hyperion interests. Not legal, tax, or investment advice. Not signed by being published. Bracketed items, schedules, and entity names must be completed in a definitive document. Projections and GMV years are the investors-page base case, not guarantees. Preferred rights, vesting, non-competes, and Fund terms are subject to applicable law and later Fund formation documents. Hyperion is described for planning; this page does not offer fund interests.
+  </p>
+
+  <div class="sig">
+    <div>
+      <strong>THE EXCHANGE</strong>
+      <div class="line">Signature / name / title / date</div>
+    </div>
+    <div>
+      <strong>BUYER / SPONSOR</strong>
+      <div class="line">Signature / name / title / date</div>
+    </div>
+    <div>
+      <strong>INDIVIDUAL (if paired)</strong>
+      <div class="line">Signature / name / date</div>
+    </div>
+    <div>
+      <strong>ACKNOWLEDGED (optional)</strong>
+      <div class="line">Founding Partner individual — Mickey Shaughnessy / date</div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>© 2026 The RSE Protocol · Template only</span>
+    <span>Page 6 of 6</span>
+  </div>
+</section>
+
+    </main>
+    <footer class="footer site-chrome">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>The RSE</h5>
+                    <p>Open robot labor marketplace.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Links</h5>
+                    <a href="index.html">Home</a>
+                    <a href="hiring.html">Hiring</a>
+                    <a href="investors.html">Investors</a>
+                    <a href="business_plan.html">Business Plan</a>
+                    <a href="spreadsheet.html">Spreadsheet</a>
+                    <a href="spa.html">SPA</a>
+                    <a href="about.html">About</a>
+                </div>
+                <div class="col-md-4">
+                    <h5>Connect</h5>
+                    <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">X</a>
+                    <a href="https://github.com/mickeyshaughnessy/theservicesexchange">GitHub</a>
+                </div>
+            </div>
+            <div class="mt-5 pt-4 border-top border-secondary text-center">
+                <p class="mb-0">&copy; 2026 The RSE Protocol. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js?v=28"></script>
+</body>
+</html>
