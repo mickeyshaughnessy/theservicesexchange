@@ -45,7 +45,7 @@ fi
 git fetch origin main
 git pull --ff-only origin main
 echo "  after:  \$(git rev-parse --short HEAD)"
-if systemctl list-unit-files | grep -q ${SERVICE_NAME}; then
+if systemctl cat ${SERVICE_NAME} >/dev/null 2>&1; then
   systemctl restart ${SERVICE_NAME}
   sleep 2
   systemctl is-active ${SERVICE_NAME}
