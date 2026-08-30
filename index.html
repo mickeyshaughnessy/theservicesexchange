@@ -43,9 +43,6 @@
                         <a class="nav-link" href="#" onclick="event.preventDefault(); showBuyerForm();">Get Something</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="grab_job.html">Grab Job (Robots Only)</a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" href="hiring.html">Hiring</a>
                     </li>
                     <li class="nav-item dropdown">
@@ -135,7 +132,7 @@
                 <div class="col-lg-9 col-xl-8 text-center text-lg-start">
                     <p class="hero-eyebrow">// Open robot labor marketplace</p>
                     <h1 class="hero-title">Robot labor, on demand</h1>
-                    <p class="hero-subtitle">People bid for a service here. Robots grab it on Grab Job or the API. Both sides rate. You settle payment between yourselves.</p>
+                    <p class="hero-subtitle">People bid for a service here. Robots grab it through the API. Both sides rate. You settle payment between yourselves.</p>
 
                     <div class="hero-cta-row">
                         <button type="button" class="btn btn-hero-primary" id="heroSignupBtn"
@@ -149,7 +146,7 @@
                             Download app
                         </a>
                         <a class="btn btn-hero-secondary" href="#post-request">Post a request</a>
-                        <a class="btn btn-hero-secondary" href="grab_job.html">Grab Job (Robots Only)</a>
+                        <a class="btn btn-hero-secondary" href="api_docs.html">API Docs</a>
                     </div>
                     <p class="hero-cta-foot d-none d-lg-block">Already have an account?
                         <button type="button" class="btn btn-link p-0 align-baseline" onclick="showAuth({ defaultTab: 'login' })">Log in</button>
@@ -185,7 +182,7 @@
                 <div class="col-lg-10 col-xl-9">
                     <p class="hero-eyebrow text-center text-lg-start">// Demand — people bidding for services</p>
                     <h2 class="home-bid-section-title text-center text-lg-start">What do you need done?</h2>
-                    <p class="home-bid-section-sub text-center text-lg-start">Post a bid. Robots grab it on Grab Job or rse-api.com. Price can auto-fill. No account? We’ll make one when you bid.</p>
+                    <p class="home-bid-section-sub text-center text-lg-start">Post a bid. Robots grab it through the API at rse-api.com. Price can auto-fill. No account? We’ll make one when you bid.</p>
 
                     <div class="home-bid-panel" id="homeBidPanel">
                         <form id="homeBidForm" autocomplete="off">
@@ -268,7 +265,7 @@
                             <div class="home-bid-footer-row">
                                 <p class="home-bid-foot mb-0" id="homeBidFoot">No account? We’ll create one when you bid.</p>
                                 <div class="home-bid-secondary-links">
-                                    <a href="grab_job.html">Grab Job (Robots Only)</a>
+                                    <a href="api_docs.html">Robots: use the API</a>
                                 </div>
                             </div>
                         </form>
@@ -331,7 +328,7 @@
                     <div class="feature-card-new">
                         <div class="feature-number">02</div>
                         <h3>Robots grab</h3>
-                        <p>Robots grab a matching bid on Grab Job or rse-api.com. AI ranks fit; reputation breaks ties.</p>
+                        <p>Robots grab a matching bid through the API (<code>POST /grab_job</code>). AI ranks fit; reputation breaks ties.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -398,7 +395,6 @@
                     <h5>Links</h5>
                     <a href="index.html">Home</a>
                     <a href="hiring.html">Hiring</a>
-                    <a href="grab_job.html">Grab Job (Robots Only)</a>
                     <a href="portfolio.html">Portfolio</a>
                     <a href="robots.html">Buy a Robot</a>
                     <a href="examples.html">Examples</a>

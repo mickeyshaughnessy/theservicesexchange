@@ -624,7 +624,7 @@ function updateReturningUserHome() {
     if (actions) {
         if (isSupply) {
             actions.innerHTML = `
-                <a class="btn btn-hero-primary" href="grab_job.html">Grab Job (Robots Only)</a>
+                <a class="btn btn-hero-primary" href="api_docs.html">API Docs</a>
                 <a class="btn btn-hero-secondary" href="profile.html">Profile</a>
             `;
         } else {
@@ -666,10 +666,9 @@ function updateReturningUserHome() {
                 checklist.innerHTML = `
                     <h3 class="user-home-check-title">// Provider checklist</h3>
                     <ol class="user-home-check-list">
-                        <li>Describe capabilities on <a href="grab_job.html">Grab Job (Robots Only)</a></li>
+                        <li>Grab work from a robot via <code>POST /grab_job</code> — see <a href="api_docs.html">API Docs</a></li>
                         <li>Link wallet + seat on <a href="profile.html">Profile</a> (message <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">@MichaelSha10041</a> on X for a seat)</li>
-                        <li>Tap <strong>Grab Job</strong> to get matched</li>
-                        <li>Complete &amp; rate when the job is done</li>
+                        <li>Complete &amp; rate when a job is matched</li>
                     </ol>
                 `;
             } else {
@@ -811,7 +810,7 @@ function ensureAccountQuickLinks(typeLabel) {
                 <a class="btn btn-sm btn-outline-light" href="profile.html">Profile</a>
                 <a class="btn btn-sm btn-outline-light" href="portfolio.html">Portfolio</a>
                 ${isSupply
-                    ? '<a class="btn btn-sm btn-outline-light" href="grab_job.html">Grab Job (Robots Only)</a>'
+                    ? '<a class="btn btn-sm btn-outline-light" href="api_docs.html">API Docs</a>'
                     : '<button type="button" class="btn btn-sm btn-outline-light" onclick="showBuyerForm()">Post request</button>'}
             </div>
         `;
@@ -943,7 +942,7 @@ function updateActiveJobsDisplay() {
     if (!container) return;
 
     if (AppState.activeJobs.length === 0) {
-        container.innerHTML = '<p class="text-muted mb-0">No active services yet. <a href="grab_job.html">Grab Job (Robots Only)</a> or <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="showBuyerForm()">post a request</button>.</p>';
+        container.innerHTML = '<p class="text-muted mb-0">No active services yet. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="showBuyerForm()">Post a request</button>.</p>';
         return;
     }
 
@@ -955,7 +954,6 @@ function updateActiveJobsDisplay() {
             ${job.location_type !== 'remote' ? `<small class="text-muted">Location: ${escapeHtml(job.address || 'Physical service')}</small>` : '<small class="text-muted">Remote service</small>'}
             <div class="mt-1 d-flex gap-2 flex-wrap">
                 <button type="button" class="btn btn-sm btn-primary" onclick="signJobPrompt('${job.job_id}')">Complete &amp; rate</button>
-                ${job.role === 'provider' ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="rejectJobPrompt('${job.job_id}')">Reject</button>` : ''}
                 ${(job.role === 'provider' || job.role === 'buyer') ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="fileJobDispute('${job.job_id}')">Dispute</button>` : ''}
             </div>
         </div>
@@ -986,7 +984,7 @@ function updateJobsDisplay() {
 
 
 async function respondToPartyInvite(jobId, action) {
-    showToast('Job parties are retired.', 'info');
+    showToast('Job parties are on the API. Not on the website.', 'info');
     return;
     try {
         const response = await fetch(`${API_URL}/jobs/${jobId}/party/respond`, {
@@ -2970,14 +2968,7 @@ async function resumePendingBuyerIntent() {
         return;
     }
     if (pendingIntent === 'grab') {
-        const form = document.getElementById('grabJobForm');
-        if (form) {
-            form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            const ta = document.getElementById('capabilitiesText');
-            if (ta) ta.focus();
-        } else if (!location.pathname.includes('grab_job')) {
-            window.location.href = 'grab_job.html';
-        }
+        showToast('Robots grab work through the API (POST /grab_job). See API Docs.', 'info');
         return;
     }
     if (pendingIntent === 'chat' || pendingIntent === 'bulletin') {
@@ -3021,11 +3012,11 @@ async function loadPopularServices() {
 }
 
 async function showChat() {
-    showToast('Inbox is retired. The exchange matches work; coordinate off-platform.', 'info');
+    showToast('Chat is on the API (POST /chat). No inbox on the website.', 'info');
 }
 
 async function showBulletin() {
-    showToast('Community bulletin is retired.', 'info');
+    showToast('Bulletin is on the API (POST /bulletin). Not on the website.', 'info');
 }
 
 function selectService(serviceName) {
@@ -3055,7 +3046,7 @@ function escapeHtml(value) {
 }
 
 function contactProvider(bidId) {
-    showToast('In-app messaging is retired. Complete and rate via your active jobs.', 'info');
+    showToast('Messaging is on the API. Complete and rate via your active jobs here.', 'info');
 }
 
 // Provider Grab Job Page Functions
@@ -3544,6 +3535,8 @@ function signJobPrompt(jobId) {
 }
 
 function rejectJobPrompt(jobId) {
+    showToast('Reject job is API-only (POST /reject_job).', 'info');
+    return;
     if (!AppState.authToken) {
         showAuth({ defaultTab: 'login' });
         return;
@@ -3565,7 +3558,8 @@ function rejectJobPrompt(jobId) {
 
 async function handleGrabJobSubmission(e) {
     e.preventDefault();
-    
+    showToast('Grab job is API-only. Robots call POST /grab_job on rse-api.com.', 'info');
+    return;
     if (!AppState.authToken) {
         showAuth({
             intent: 'grab',
@@ -3992,7 +3986,7 @@ async function refreshJobChannelMessages(full) {
 }
 
 async function openJobChannel(jobId) {
-    showToast('Job chat is retired. Complete and rate when the work is done.', 'info');
+    showToast('Job channels are on the API. Complete and rate when the work is done.', 'info');
     return;
     if (!AppState.authToken) {
         showAuth();
@@ -4060,7 +4054,7 @@ async function postJobChannelMessage(jobId, body, messageType = 'user', payload 
 }
 
 async function inviteToJobParty(jobId, side) {
-    showToast('Job parties are retired. One buyer and one provider per job.', 'info');
+    showToast('Job parties are on the API. The website is one buyer, one provider.', 'info');
     return;
     if (!AppState.authToken) {
         showAuth();

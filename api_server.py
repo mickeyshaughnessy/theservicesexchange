@@ -36,7 +36,13 @@ from handlers import (
     sign_job,
     get_my_bids,
     get_my_jobs,
+    send_chat_message,
+    post_bulletin,
     get_exchange_data,
+    get_conversations,
+    get_chat_history,
+    send_reply,
+    get_bulletin_feed,
     get_platform_stats,
     handle_get_feedback,
     handle_post_feedback,
@@ -54,7 +60,11 @@ from handlers import (
     get_public_profile,
     get_public_profile_by_username,
     search_public_users,
+    get_friends_enriched,
     upload_avatar,
+    follow_user,
+    unfollow_user,
+    get_follow_lists,
     get_request_history,
     add_robot_owned,
     remove_robot_owned,
@@ -65,10 +75,24 @@ from handlers import (
     update_auto_bid,
     process_auto_bids_for_user,
     create_bid_request,
+    set_contact_discovery,
+    get_contact_discovery,
+    match_contacts,
     handle_get_cosmetics_catalog,
     handle_purchase_cosmetic,
     equip_cosmetic,
     admin_adjust_credits,
+    invite_job_party,
+    respond_job_party,
+    get_job_party,
+    create_campaign,
+    get_campaigns,
+    get_campaign_detail,
+    commit_to_campaign,
+    respond_campaign_commitment,
+    get_my_campaigns,
+    submit_endorsement,
+    get_user_endorsements,
     get_leaderboard,
     file_dispute,
     admin_list_disputes,
@@ -78,12 +102,20 @@ from handlers import (
     revoke_agent,
     rotate_agent,
     AGENT_ROUTE_SCOPES,
+    get_job_channel,
+    post_job_channel_message,
+    get_job_channel_messages,
+    mark_job_channel_read,
+    mark_chat_read,
     get_activity_me,
     get_activity_for_job,
     get_portfolio,
     get_portfolio_by_seat,
     export_history,
     export_job_proof,
+    invite_campaign_sponsor,
+    respond_campaign_sponsor,
+    get_campaign_sponsors,
     get_cap_table_investors,
     analyze_cap_table_synergy,
 )
@@ -252,21 +284,6 @@ def token_required(f):
 
         return f(username, *args, **kwargs)
     return decorated
-
-
-def deprecated_gone(feature, message=None):
-    """HTTP 410 for routes retired from the core exchange (comms, cooperation, social)."""
-    payload = {
-        'error': 'This endpoint is deprecated and is no longer part of the core exchange.',
-        'deprecated': True,
-        'feature': feature,
-    }
-    if message:
-        payload['message'] = message
-    resp = flask.make_response(flask.jsonify(payload), 410)
-    resp.headers['Deprecation'] = 'true'
-    return resp
-
 
 # Stopgap shared-secret admin gate (no admin-role system exists yet)
 _ADMIN_KEY = getattr(config, 'ADMIN_API_KEY', None) or 'tse-admin-9f1c7b2e'
@@ -555,20 +572,32 @@ def handle_sign_job(current_user):
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
-# Job Party Endpoints — deprecated (cooperation is not part of the core loop)
+# Job Party Endpoints (ad-hoc per-job coalitions)
 # -----------------------------------------------------------------------------
 
 @app.route('/jobs/<job_id>/party/invite', methods=['POST'])
-def handle_invite_job_party(job_id):
-    return deprecated_gone('cooperation', 'Job parties are retired. One buyer and one provider per job.')
+@token_required
+def handle_invite_job_party(current_user, job_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['job_id'] = job_id
+    response, status = invite_job_party(data)
+    return flask.jsonify(response), status
 
 @app.route('/jobs/<job_id>/party/respond', methods=['POST'])
-def handle_respond_job_party(job_id):
-    return deprecated_gone('cooperation', 'Job parties are retired. One buyer and one provider per job.')
+@token_required
+def handle_respond_job_party(current_user, job_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['job_id'] = job_id
+    response, status = respond_job_party(data)
+    return flask.jsonify(response), status
 
 @app.route('/jobs/<job_id>/party', methods=['GET'])
-def handle_get_job_party(job_id):
-    return deprecated_gone('cooperation', 'Job parties are retired. One buyer and one provider per job.')
+@token_required
+def handle_get_job_party(current_user, job_id):
+    response, status = get_job_party({'username': current_user, 'job_id': job_id})
+    return flask.jsonify(response), status
 
 @app.route('/jobs/<job_id>/dispute', methods=['POST'])
 @token_required
@@ -580,28 +609,54 @@ def handle_file_dispute(current_user, job_id):
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
-# Job channels — deprecated (communications are not part of the core loop)
+# Job channels (Stage B)
 # -----------------------------------------------------------------------------
 
 @app.route('/jobs/<job_id>/channel', methods=['GET'])
-def handle_get_job_channel(job_id):
-    return deprecated_gone('communications', 'Job chat is retired. Coordinate off-platform; complete via POST /sign_job.')
+@token_required
+def handle_get_job_channel(current_user, job_id):
+    response, status = get_job_channel({'username': current_user, 'job_id': job_id})
+    return flask.jsonify(response), status
 
 @app.route('/jobs/<job_id>/messages', methods=['GET'])
-def handle_get_job_channel_messages(job_id):
-    return deprecated_gone('communications', 'Job chat is retired. Coordinate off-platform; complete via POST /sign_job.')
+@token_required
+def handle_get_job_channel_messages(current_user, job_id):
+    data = {
+        'username': current_user,
+        'job_id': job_id,
+        'since_ts': flask.request.args.get('since_ts'),
+        'after_id': flask.request.args.get('after_id'),
+        'limit': flask.request.args.get('limit', 50),
+    }
+    response, status = get_job_channel_messages(data)
+    return flask.jsonify(response), status
 
 @app.route('/jobs/<job_id>/messages', methods=['POST'])
-def handle_post_job_channel_message(job_id):
-    return deprecated_gone('communications', 'Job chat is retired. Coordinate off-platform; complete via POST /sign_job.')
+@token_required
+@limiter.limit(_CHAT_LIMIT)
+def handle_post_job_channel_message(current_user, job_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['job_id'] = job_id
+    response, status = post_job_channel_message(data)
+    return flask.jsonify(response), status
 
 @app.route('/jobs/<job_id>/messages/read', methods=['POST'])
-def handle_mark_job_channel_read(job_id):
-    return deprecated_gone('communications', 'Job chat is retired. Coordinate off-platform; complete via POST /sign_job.')
+@token_required
+def handle_mark_job_channel_read(current_user, job_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['job_id'] = job_id
+    response, status = mark_job_channel_read(data)
+    return flask.jsonify(response), status
 
 @app.route('/chat/read', methods=['POST'])
-def handle_mark_chat_read():
-    return deprecated_gone('communications', 'Direct messages are retired.')
+@token_required
+def handle_mark_chat_read(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = mark_chat_read(data)
+    return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
 # Activity, portfolio, export (Stage C)
@@ -658,62 +713,107 @@ def handle_export_proof(current_user, job_id):
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
-# Campaign Endpoints — deprecated (cooperation is not part of the core loop)
+# Campaign Endpoints (multi-unit demand-side initiatives)
 # -----------------------------------------------------------------------------
 
-_CAMPAIGN_GONE = 'Campaigns are retired. Post one-shot or recurring bids with POST /bid.'
-
 @app.route('/campaigns', methods=['POST'])
-def handle_create_campaign():
-    return deprecated_gone('cooperation', _CAMPAIGN_GONE)
+@token_required
+def handle_create_campaign(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = create_campaign(data)
+    return flask.jsonify(response), status
 
 @app.route('/campaigns', methods=['GET'])
 def handle_get_campaigns():
-    return deprecated_gone('cooperation', _CAMPAIGN_GONE)
+    """Public endpoint listing open campaigns."""
+    try:
+        data = {
+            'category': flask.request.args.get('category'),
+            'location': flask.request.args.get('location'),
+            'limit': int(flask.request.args.get('limit', 50)),
+        }
+        response, status = get_campaigns(data)
+        return flask.jsonify(response), status
+    except ValueError:
+        return flask.jsonify({"error": "Invalid parameters"}), 400
 
 @app.route('/campaigns/<campaign_id>', methods=['GET'])
 def handle_get_campaign_detail(campaign_id):
-    return deprecated_gone('cooperation', _CAMPAIGN_GONE)
+    """Public endpoint for full campaign detail, including commitments."""
+    response, status = get_campaign_detail({'campaign_id': campaign_id})
+    return flask.jsonify(response), status
 
 @app.route('/campaigns/<campaign_id>/commit', methods=['POST'])
-def handle_commit_to_campaign(campaign_id):
-    return deprecated_gone('cooperation', _CAMPAIGN_GONE)
+@token_required
+def handle_commit_to_campaign(current_user, campaign_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['campaign_id'] = campaign_id
+    response, status = commit_to_campaign(data)
+    return flask.jsonify(response), status
 
 @app.route('/campaigns/<campaign_id>/sponsors', methods=['GET'])
 def handle_get_campaign_sponsors(campaign_id):
-    return deprecated_gone('cooperation', _CAMPAIGN_GONE)
+    response, status = get_campaign_sponsors({'campaign_id': campaign_id})
+    return flask.jsonify(response), status
 
 @app.route('/campaigns/<campaign_id>/sponsors/invite', methods=['POST'])
-def handle_invite_campaign_sponsor(campaign_id):
-    return deprecated_gone('cooperation', _CAMPAIGN_GONE)
+@token_required
+def handle_invite_campaign_sponsor(current_user, campaign_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['campaign_id'] = campaign_id
+    response, status = invite_campaign_sponsor(data)
+    return flask.jsonify(response), status
 
 @app.route('/campaigns/<campaign_id>/sponsors/respond', methods=['POST'])
-def handle_respond_campaign_sponsor(campaign_id):
-    return deprecated_gone('cooperation', _CAMPAIGN_GONE)
+@token_required
+def handle_respond_campaign_sponsor(current_user, campaign_id):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    data['campaign_id'] = campaign_id
+    response, status = respond_campaign_sponsor(data)
+    return flask.jsonify(response), status
 
 @app.route('/campaigns/<campaign_id>/commitments/<commitment_id>/accept', methods=['POST'])
-def handle_accept_campaign_commitment(campaign_id, commitment_id):
-    return deprecated_gone('cooperation', _CAMPAIGN_GONE)
+@token_required
+def handle_accept_campaign_commitment(current_user, campaign_id, commitment_id):
+    data = {'username': current_user, 'action': 'accept'}
+    response, status = respond_campaign_commitment(campaign_id, commitment_id, data)
+    return flask.jsonify(response), status
 
 @app.route('/campaigns/<campaign_id>/commitments/<commitment_id>/reject', methods=['POST'])
-def handle_reject_campaign_commitment(campaign_id, commitment_id):
-    return deprecated_gone('cooperation', _CAMPAIGN_GONE)
+@token_required
+def handle_reject_campaign_commitment(current_user, campaign_id, commitment_id):
+    data = {'username': current_user, 'action': 'reject'}
+    response, status = respond_campaign_commitment(campaign_id, commitment_id, data)
+    return flask.jsonify(response), status
 
 @app.route('/my_campaigns', methods=['GET'])
-def handle_get_my_campaigns():
-    return deprecated_gone('cooperation', _CAMPAIGN_GONE)
+@token_required
+def handle_get_my_campaigns(current_user):
+    response, status = get_my_campaigns({'username': current_user})
+    return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
 # Endorsement & Leaderboard Endpoints
 # -----------------------------------------------------------------------------
 
 @app.route('/endorsements', methods=['POST'])
-def handle_submit_endorsement():
-    return deprecated_gone('cooperation', 'Endorsements are retired. Matching uses star ratings from /sign_job.')
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_submit_endorsement(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = submit_endorsement(data)
+    return flask.jsonify(response), status
 
 @app.route('/endorsements/<username>', methods=['GET'])
 def handle_get_user_endorsements(username):
-    return deprecated_gone('cooperation', 'Endorsements are retired. Matching uses star ratings from /sign_job.')
+    """Public endpoint listing endorsements a user has received."""
+    response, status = get_user_endorsements(username)
+    return flask.jsonify(response), status
 
 @app.route('/leaderboard', methods=['GET'])
 def handle_leaderboard():
@@ -754,35 +854,61 @@ def stats():
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
-# Communication Endpoints — deprecated
+# Communication Endpoints
 # -----------------------------------------------------------------------------
 
-_CHAT_GONE = 'Direct messages are retired. The exchange matches work; coordinate off-platform.'
-_BULLETIN_GONE = 'The community bulletin is retired.'
-
 @app.route('/chat', methods=['POST'])
-def chat():
-    return deprecated_gone('communications', _CHAT_GONE)
+@token_required
+@limiter.limit(_CHAT_LIMIT)
+def chat(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = send_chat_message(data)
+    return flask.jsonify(response), status
 
 @app.route('/chat/conversations', methods=['GET'])
-def chat_conversations():
-    return deprecated_gone('communications', _CHAT_GONE)
+@token_required
+@limiter.limit(_CHAT_LIMIT)
+def chat_conversations(current_user):
+    data = {
+        'username': current_user,
+        'job_id': flask.request.args.get('job_id'),
+    }
+    response, status = get_conversations(data)
+    return flask.jsonify(response), status
 
 @app.route('/chat/messages', methods=['POST'])
-def chat_messages():
-    return deprecated_gone('communications', _CHAT_GONE)
+@token_required
+@limiter.limit(_CHAT_LIMIT)
+def chat_messages(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = get_chat_history(data)
+    return flask.jsonify(response), status
 
 @app.route('/chat/reply', methods=['POST'])
-def chat_reply():
-    return deprecated_gone('communications', _CHAT_GONE)
+@token_required
+@limiter.limit(_CHAT_LIMIT)
+def chat_reply(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = send_reply(data)
+    return flask.jsonify(response), status
 
 @app.route('/bulletin', methods=['POST'])
-def bulletin():
-    return deprecated_gone('communications', _BULLETIN_GONE)
+@token_required
+def bulletin(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = post_bulletin(data)
+    return flask.jsonify(response), status
 
 @app.route('/bulletin/feed', methods=['GET'])
-def bulletin_feed():
-    return deprecated_gone('communications', _BULLETIN_GONE)
+@token_required
+def bulletin_feed(current_user):
+    data = {'username': current_user}
+    response, status = get_bulletin_feed(data)
+    return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
 # Feedback Endpoints (no auth required)
@@ -989,21 +1115,38 @@ def users_directory(current_user):
 
 
 @app.route('/friends', methods=['GET'])
-def friends_list():
-    return deprecated_gone('social', 'Friends and the follow graph are retired.')
+@token_required
+def friends_list(current_user):
+    """Enriched following/followers cards (friends = people you follow)."""
+    response, status = get_friends_enriched({'username': current_user})
+    return flask.jsonify(response), status
 
 
 @app.route('/follow', methods=['POST'])
-def handle_follow():
-    return deprecated_gone('social', 'Friends and the follow graph are retired.')
+@token_required
+def handle_follow(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = follow_user(data)
+    return flask.jsonify(response), status
 
 @app.route('/unfollow', methods=['POST'])
-def handle_unfollow():
-    return deprecated_gone('social', 'Friends and the follow graph are retired.')
+@token_required
+def handle_unfollow(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = unfollow_user(data)
+    return flask.jsonify(response), status
 
 @app.route('/follows', methods=['GET'])
-def handle_get_follows():
-    return deprecated_gone('social', 'Friends and the follow graph are retired.')
+@token_required
+def handle_get_follows(current_user):
+    # Prefer enriched cards when client asks ?enriched=1
+    if (flask.request.args.get('enriched') or '').lower() in ('1', 'true', 'yes'):
+        response, status = get_friends_enriched({'username': current_user})
+    else:
+        response, status = get_follow_lists({'username': current_user})
+    return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
 # Request History / Robots Owned / Subscriptions
@@ -1083,26 +1226,44 @@ def handle_process_auto_bids(current_user):
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
-# Contact discovery — deprecated (social, not matching)
+# Contact discovery
 # -----------------------------------------------------------------------------
 
-_DISCOVERY_GONE = 'Contact-book discovery is retired.'
-
 @app.route('/account/discovery', methods=['GET'])
-def handle_get_discovery():
-    return deprecated_gone('social', _DISCOVERY_GONE)
+@token_required
+def handle_get_discovery(current_user):
+    response, status = get_contact_discovery(current_user)
+    return flask.jsonify(response), status
 
 @app.route('/account/discovery', methods=['POST'])
-def handle_set_discovery():
-    return deprecated_gone('social', _DISCOVERY_GONE)
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_set_discovery(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = set_contact_discovery(data)
+    return flask.jsonify(response), status
 
 @app.route('/account/discovery', methods=['DELETE'])
-def handle_clear_discovery():
-    return deprecated_gone('social', _DISCOVERY_GONE)
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_clear_discovery(current_user):
+    response, status = set_contact_discovery({
+        'username': current_user,
+        'discoverable': False,
+        'phones': [],
+        'emails': [],
+    })
+    return flask.jsonify(response), status
 
 @app.route('/contacts/match', methods=['POST'])
-def handle_match_contacts():
-    return deprecated_gone('social', _DISCOVERY_GONE)
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_match_contacts(current_user):
+    data = flask.request.get_json() or {}
+    data['username'] = current_user
+    response, status = match_contacts(data)
+    return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
 # App update manifest (CORS-friendly for Capacitor WebView)

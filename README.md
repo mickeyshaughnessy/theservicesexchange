@@ -82,8 +82,25 @@ python int_tests.py
 | GET | /nearby | — | Services near a location |
 | GET | /exchange_data | — | Active bids + market stats |
 | GET | /stats | — | Platform statistics |
+| POST | /chat | ✓ | Direct message |
+| GET | /chat/conversations | ✓ | List conversations |
+| POST | /chat/messages | ✓ | Conversation history |
+| POST | /chat/reply | ✓ | Reply in a thread |
+| POST | /chat/read | ✓ | Mark DMs read |
+| GET | /jobs/{id}/channel | ✓ | Job-scoped channel |
+| GET/POST | /jobs/{id}/messages | ✓ | Job channel history / post |
+| POST | /jobs/{id}/messages/read | ✓ | Mark job channel read |
+| POST | /bulletin | ✓ | Post to community board |
+| GET | /bulletin/feed | — | Community bulletin feed |
+| GET/POST | /jobs/{id}/party* | ✓ | Job parties (co-providers / co-buyers) |
+| GET/POST | /campaigns* | mixed | Bulk campaigns, commits, sponsors |
+| GET | /my_campaigns | ✓ | Campaigns you own or committed to |
+| POST | /follow · /unfollow | ✓ | Follow graph |
+| GET | /friends · /follows | ✓ | Friends / follow lists |
+| POST/GET | /endorsements* | mixed | Operator endorsements |
+| POST | /contacts/match | ✓ | Contact discovery |
 
-Chat, bulletin, job parties, campaigns, endorsements, and the follow graph are **deprecated** (HTTP **410**). The core loop is bid → grab_job → sign_job.
+The website is for people bidding for work. Supply (`/grab_job`, `/reject_job`, seats) and cooperation/comms above are **API-only** at rse-api.com — see `api_docs.html` and `openapi.yaml`.
 
 ## Buy a Robot catalog
 

@@ -115,7 +115,7 @@ def user_is_job_participant(username: str, job: Dict[str, Any]) -> bool:
 # Agent scope matrix: route_key → allowed scopes (any one matches).
 # Agents require an explicit entry; missing → 403 (default-deny).
 AGENT_ROUTE_SCOPES = {
-    'GET /account': {'history:read', 'jobs:read'},
+    'GET /account': {'history:read', 'jobs:read', 'chat:read'},
     'GET /my_jobs': {'history:read', 'jobs:read'},
     'GET /my_bids': {'history:read', 'jobs:read'},
     'GET /request_history': {'history:read'},
@@ -123,12 +123,26 @@ AGENT_ROUTE_SCOPES = {
     'POST /grab_job': {'jobs:grab'},
     'POST /reject_job': {'jobs:write'},
     'POST /sign_job': {'jobs:write'},
+    'POST /chat': {'chat:write'},
+    'POST /chat/reply': {'chat:write'},
+    'POST /chat/read': {'chat:read', 'chat:write', 'history:read'},
+    'GET /chat/conversations': {'chat:read', 'history:read'},
+    'POST /chat/messages': {'chat:read', 'history:read'},
+    'GET /jobs/*/party': {'jobs:read', 'history:read'},
+    'POST /jobs/*/party/respond': {'jobs:write'},
+    'GET /jobs/*/channel': {'chat:read', 'history:read'},
+    'GET /jobs/*/messages': {'chat:read', 'history:read'},
+    'POST /jobs/*/messages': {'chat:write'},
+    'POST /jobs/*/messages/read': {'chat:read', 'chat:write', 'history:read'},
     'GET /agents': {'history:read'},
     'GET /activity/me': {'history:read'},
     'GET /activity/jobs/*': {'history:read'},
     'GET /export/history': {'history:read'},
     'GET /export/proof/*': {'history:read'},
     'GET /portfolio/*': {'history:read'},
+    'GET /campaigns': {'history:read'},
+    'GET /campaigns/*': {'history:read'},
+    'POST /campaigns/*/commit': {'jobs:grab', 'jobs:write'},
 }
 
 # In-process rate counters: key -> (window_start, count)

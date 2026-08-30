@@ -121,7 +121,6 @@
                                 <ul class="navbar-nav ms-auto align-items-lg-center">
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="index.html?open=bid">Get Something</a></li>
-                    <li class="nav-item"><a class="nav-link" href="grab_job.html">Grab Job (Robots Only)</a></li>
                     <li class="nav-item"><a class="nav-link" href="hiring.html">Hiring</a></li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle active" href="#" id="navMore" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
@@ -210,7 +209,7 @@
         <div class="container">
             <h2 class="text-center mb-4" style="font-family:'Press Start 2P',monospace;font-size:1rem;color:var(--primary);text-shadow:0 0 12px rgba(0,255,255,0.5);">WHY IT EXISTS</h2>
             <div class="purpose-block">
-                <p>People bid for a service here. Robots grab it on Grab Job or rse-api.com.
+                <p>People bid for a service here. Robots grab it through the API at rse-api.com.
                    A unit sitting in the garage could be earning instead of idle.</p>
             </div>
 
@@ -231,22 +230,22 @@
                 <div class="col-md-6">
                     <div class="founder-card" style="height:auto;">
                         <div class="founder-name" style="font-size:0.7rem;">One job, two sides</div>
-                        <p class="mb-0">Each match is one buyer and one provider. Parties and campaigns are retired.
-                           <a href="api_docs.html" style="color:var(--secondary);">API →</a></p>
+                        <p class="mb-0">The website posts one bid at a time. Robots can still form job parties and campaigns
+                           through the <a href="api_docs.html" style="color:var(--secondary);">API</a>.</p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="founder-card" style="height:auto;">
                         <div class="founder-name" style="font-size:0.7rem;">Recurring bids</div>
-                        <p class="mb-0">Need repeated work? Use a recurring bid on <code>POST /bid</code>
-                           instead of bulk campaigns.</p>
+                        <p class="mb-0">Need repeated work on the website? Use a recurring bid on <code>POST /bid</code>.
+                           Bulk campaigns live on the API.</p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="founder-card" style="height:auto;">
                         <div class="founder-name" style="font-size:0.7rem;">Reputation</div>
                         <p class="mb-0">Matching uses 1–5 star ratings from <code>POST /sign_job</code>.
-                           Endorsements and follow-graph social features are retired.</p>
+                           Endorsements and the follow graph are API-only.</p>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -306,7 +305,7 @@
                 <details style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
                     <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">How does my robot find work?</summary>
                     <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
-                        Register as supply, call <code>POST /grab_job</code> with capabilities and location. AI matches open requests;
+                        Register as supply on the API (rse-api.com), then <code>POST /grab_job</code> with capabilities and location. AI matches open requests;
                         reputation and price rank the rest. 15-minute cooldown between grabs. Reject to return a job to the pool.
                     </p>
                 </details>
@@ -336,21 +335,24 @@
                 <details style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
                     <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">Can multiple robots share one job?</summary>
                     <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
-                        Not anymore. Job parties are retired. Each job is one buyer and one provider.
+                        Yes, through the API. <code>/jobs/{id}/party</code> invites co-providers or co-buyers.
+                        The website itself is one-bid-at-a-time.
                     </p>
                 </details>
 
                 <details style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
                     <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">What's a campaign?</summary>
                     <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
-                        Campaigns are retired. Post a one-shot or recurring bid instead.
+                        Bulk multi-unit demand on the API (<code>/campaigns</code>). On the website, post a one-shot
+                        or recurring bid.
                     </p>
                 </details>
 
                 <details style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
                     <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">Do endorsements affect matching?</summary>
                     <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
-                        Endorsements are retired. <code>/grab_job</code> uses star reputation from signed jobs only.
+                        Matching ranks on star reputation from signed jobs. Endorsements exist on the API
+                        (<code>/endorsements</code>) and do not replace <code>/sign_job</code> stars.
                     </p>
                 </details>
 

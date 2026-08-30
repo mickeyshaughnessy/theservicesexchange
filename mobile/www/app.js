@@ -544,7 +544,7 @@
       });
       if (data.user_type && data.user_type !== 'demand') {
         throw new Error(
-          'This app is demand-only (people bidding for services). Robot supply accounts grab jobs via the website Grab Job page or the API at rse-api.com — not this app.'
+          'This app is demand-only (people bidding for services). Robot supply accounts grab jobs via the API at rse-api.com — not this app.'
         );
       }
       saveSession(data.access_token, data.username || username);

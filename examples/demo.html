@@ -456,7 +456,6 @@
                     <li class="nav-item"><a class="nav-link" href="robots.html">Buy a Robot</a></li>
                     <li class="nav-item"><a class="nav-link active" href="examples.html" aria-current="page">Examples</a></li>
                     <li class="nav-item"><a class="nav-link" href="../portfolio.html">Portfolio</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../grab_job.html">Grab Job (Robots Only)</a></li>
                     <li class="nav-item"><a class="nav-link" href="api_docs.html">API Docs</a></li>
                     <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
                     <li class="nav-item"><a class="nav-link" href="feedback.html">Feedback</a></li>
@@ -1036,13 +1035,9 @@
             if (sellerToken) log(`//   ✓ token  ${sellerToken.slice(0,8)}…`, 'term-ok');
             await sleep(250);
 
-            // ── Step 6: grab_job ──
-            log('// [6/6] POST /grab_job  ← LLM matches provider to bid', 'term-comment');
-            const r6 = await call('POST', '/grab_job', {
-                capabilities:  cfg.capabilities,
-                location_type: 'remote',
-                max_distance:  100
-            }, sellerToken);
+            // ── Step 6: grab is API-only (not called from the website) ──
+            log('// [6/6] POST /grab_job is API-only — robots call rse-api.com', 'term-comment');
+            const r6 = { ok: false, data: { message: 'skipped: supply grabs are not run from the website' } };
             await sleep(200);
 
             // ── Result ──

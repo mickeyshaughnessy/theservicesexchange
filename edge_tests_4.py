@@ -260,9 +260,7 @@ def test_send_message_to_self():
     res.note(f"POST /chat recipient=self → HTTP {r.status_code}")
     res.note(f"Response: {r.text[:120]}")
 
-    if r.status_code == 410:
-        res.passed("Chat is deprecated (HTTP 410); self-message path is retired")
-    elif r.status_code == 200 and r.json().get("message_id"):
+    if r.status_code == 200 and r.json().get("message_id"):
         # Confirm the duplicate storage: message appears twice in chat history
         r_hist = requests.post(f"{RSE_API}/chat/messages", headers=h(user_tok), verify=VERIFY,
                                json={"conversation_id": username})
