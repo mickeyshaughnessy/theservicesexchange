@@ -4150,7 +4150,7 @@ def handle_submit_financing(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 
 _HIRE_LOCATIONS = ("lakewood", "destin", "camas", "missoula", "other")
 _HIRE_FAMILY = ("single", "partnered", "family", "prefer_not")
-_HIRE_SPOTS = ("spot_2", "spot_3")
+_HIRE_SPOTS = ("spot_1", "spot_2", "spot_3", "spot_additional")
 _HIRE_REQUIRED = (
     "name", "email", "phone", "social", "address", "dob",
     "family_status", "preferred_location", "spot",
