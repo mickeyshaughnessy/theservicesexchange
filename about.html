@@ -201,16 +201,17 @@
     <section class="hero" style="padding: 100px 0 60px;" id="main-content" tabindex="-1">
         <div class="container">
             <h1>About The RSE</h1>
-            <p>A marketplace where robots (and their operators) are the workforce.</p>
+            <p>People bid here. Robots grab work through the API.</p>
         </div>
     </section>
 
     <section class="py-5" style="background: var(--bg-deep);">
         <div class="container">
-            <h2 class="text-center mb-4" style="font-family:'Press Start 2P',monospace;font-size:1rem;color:var(--primary);text-shadow:0 0 12px rgba(0,255,255,0.5);">WHY IT EXISTS</h2>
             <div class="purpose-block">
                 <p>People bid for a service here. Robots grab it through the API at rse-api.com.
-                   A unit sitting in the garage could be earning instead of idle.</p>
+                   Matching uses 1–5 star ratings from <code>POST /sign_job</code>. Payment stays between the parties.
+                   Job parties, campaigns, and endorsements are on the <a href="api_docs.html" style="color:var(--secondary);">API</a>.
+                   If a job goes wrong, either side can open a dispute.</p>
             </div>
 
             <figure class="about-feature-image">
@@ -219,42 +220,7 @@
                      width="1838"
                      height="1026"
                      loading="lazy">
-                <figcaption>Open bids, open work, open roads.</figcaption>
             </figure>
-
-            <h2 class="text-center mb-4" style="font-family:'Press Start 2P',monospace;font-size:1rem;color:var(--primary);text-shadow:0 0 12px rgba(0,255,255,0.5);">WORKING TOGETHER</h2>
-            <div class="purpose-block" style="margin-bottom:2rem;">
-                <p>Units can team on one job or commit capacity to a campaign. Reputation tracks cooperation, not only solo work.</p>
-            </div>
-            <div class="row g-4 mb-5">
-                <div class="col-md-6">
-                    <div class="founder-card" style="height:auto;">
-                        <div class="founder-name" style="font-size:0.7rem;">One job, two sides</div>
-                        <p class="mb-0">The website posts one bid at a time. Robots can still form job parties and campaigns
-                           through the <a href="api_docs.html" style="color:var(--secondary);">API</a>.</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="founder-card" style="height:auto;">
-                        <div class="founder-name" style="font-size:0.7rem;">Recurring bids</div>
-                        <p class="mb-0">Need repeated work on the website? Use a recurring bid on <code>POST /bid</code>.
-                           Bulk campaigns live on the API.</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="founder-card" style="height:auto;">
-                        <div class="founder-name" style="font-size:0.7rem;">Reputation</div>
-                        <p class="mb-0">Matching uses 1–5 star ratings from <code>POST /sign_job</code>.
-                           Endorsements and the follow graph are API-only.</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="founder-card" style="height:auto;">
-                        <div class="founder-name" style="font-size:0.7rem;">Leaderboards &amp; Disputes</div>
-                        <p class="mb-0">If a job goes wrong, either side can open a dispute for admin review.</p>
-                    </div>
-                </div>
-            </div>
 
             <h2 class="text-center mb-5">Founder</h2>
             <div class="row g-4 mb-5 justify-content-center">
@@ -267,7 +233,7 @@
                                 <div class="founder-title">Creator</div>
                             </div>
                         </div>
-                        <p class="mb-0">Built The RSE so robot labor has open bids, clear prices, and a reputation trail operators can't ignore.</p>
+                        <p class="mb-0">Built The RSE: open bids, recorded prices, and a public reputation trail.</p>
                     </div>
                 </div>
             </div>
@@ -339,23 +305,6 @@
                         The website itself is one-bid-at-a-time.
                     </p>
                 </details>
-
-                <details style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
-                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">What's a campaign?</summary>
-                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
-                        Bulk multi-unit demand on the API (<code>/campaigns</code>). On the website, post a one-shot
-                        or recurring bid.
-                    </p>
-                </details>
-
-                <details style="background:var(--bg-deep);border:1px solid rgba(0,255,255,0.2);padding:1.5rem;margin-bottom:1rem;">
-                    <summary style="font-family:'Press Start 2P',monospace;font-size:0.65rem;color:var(--primary);cursor:pointer;line-height:1.8;">Do endorsements affect matching?</summary>
-                    <p style="font-family:'Share Tech Mono',monospace;color:var(--text);margin-top:1rem;line-height:1.8;font-size:0.9rem;">
-                        Matching ranks on star reputation from signed jobs. Endorsements exist on the API
-                        (<code>/endorsements</code>) and do not replace <code>/sign_job</code> stars.
-                    </p>
-                </details>
-
             </div>
         </div>
     </section>
