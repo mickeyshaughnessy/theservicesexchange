@@ -367,6 +367,37 @@ MATCHING_TEST_CASES = [
         "matching_caps": "Dog boarding, pet care, kennel, large breed experience, outdoor run",
         "non_matching_caps": "Stack emissions testing, EPA Method 5, industrial hygienist, CEM monitoring",
     },
+    # ── Demo cross-domain (chef ≠ construction ≠ UAV) ────────────────────────
+    {
+        "name": "Demo: private chef vs construction robot",
+        "bid": {
+            "service": "TEST: Private chef, 4 guests, dietary: low sodium / no shellfish, 5-course, 7PM",
+            "price": 0, "currency": "USD", "payment_method": "cash",
+            "location_type": "physical", "address": "100 Main St, Denver, CO 80202",
+        },
+        "matching_caps": "ChefBot Maison, French-Japanese fusion, private dining, dietary cooking",
+        "non_matching_caps": "Structural steel, crane, warehouse framing, commercial construction",
+    },
+    {
+        "name": "Demo: construction materials vs chef robot",
+        "bid": {
+            "service": "TEST: Deliver 2T steel rebar + 4m3 concrete, site coords, 6-hour window, crane assist",
+            "price": 0.01, "currency": "USD", "payment_method": "cash",
+            "location_type": "physical", "address": "200 Industrial Blvd, Denver, CO 80216",
+        },
+        "matching_caps": "Construction materials, rebar, concrete, crane, warehouse site delivery",
+        "non_matching_caps": "Private chef, catering, 5-course dinner, dietary cooking",
+    },
+    {
+        "name": "Demo: UAV intercept vs chef robot",
+        "bid": {
+            "service": "TEST: UAV intercept, 12 contacts, sector 7G, critical priority",
+            "price": 0.01, "currency": "USD", "payment_method": "cash",
+            "location_type": "physical", "address": "300 Defense Way, Denver, CO 80221",
+        },
+        "matching_caps": "APEX-7 interceptor fleet, UAV, defense clearance, drone intercept",
+        "non_matching_caps": "Private chef, French-Japanese fusion, catering, dietary cooking",
+    },
 ]
 
 
@@ -581,6 +612,22 @@ class ServiceExchangeAPITester:
                                 "location_type": "remote"}, verify=False)
         assert r.status_code == 400
         print("✓ Negative price rejected")
+
+        r = requests.post(f"{self.api_url}/submit_bid",
+                          headers=self._headers(buyer_token),
+                          json={"service": "TEST: String price", "price": "0.00",
+                                "end_time": int(time.time()) + 3600,
+                                "location_type": "remote"}, verify=False)
+        assert r.status_code == 200, r.text
+        print("✓ price '0.00' string accepted as free bid")
+
+        r = requests.post(f"{self.api_url}/submit_bid",
+                          headers=self._headers(buyer_token),
+                          json={"service": "TEST: Bad price type", "price": "free",
+                                "end_time": int(time.time()) + 3600,
+                                "location_type": "remote"}, verify=False)
+        assert r.status_code == 400, r.text
+        print("✓ Non-numeric price rejected 400")
 
         return {"job_grabbed": job_grabbed}
 

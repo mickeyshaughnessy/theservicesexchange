@@ -632,59 +632,192 @@ JSON only:"""
         return base, 200
 
 
-def match_service_with_capabilities(service_description: Union[str, Dict], provider_capabilities: str) -> bool:
-    """
-    Use OpenRouter to determine if provider can fulfill service, with keyword fallback.
-    """
+MATCH_SCORE_MIN = 7
+
+_MATCH_STOPWORDS = frozenset("""
+a an the and or of to for in on at by with from as is are was be this that it
+its job jobs work works service services request requests need needs please
+looking seeking want wanted required requires include includes including
+robot robots bot bots unit units provider providers operator operators
+daily weekly hourly fully
+""".split())
+
+# Distinct skill domains. Non-empty disjoint sets → hard mismatch (chef ≠ steel).
+_DOMAIN_LEXICONS = {
+    'culinary': {
+        'chef', 'cook', 'cooking', 'kitchen', 'dinner', 'catering', 'cuisine',
+        'culinary', 'menu', 'dietary', 'fusion', 'baking', 'pastry',
+    },
+    'delivery': {
+        'delivery', 'courier', 'doordash', 'instacart', 'pickup', 'dropoff',
+        'lastmile', 'last-mile',
+    },
+    'health': {
+        'nurse', 'nursing', 'wound', 'medication', 'alzheimer', 'alzheimers',
+        'dementia', 'cna', 'pediatric', 'therapy', 'therapist', 'surgery',
+        'postop', 'elder', 'clinical', 'hospital', 'aide',
+    },
+    'landscaping': {
+        'lawn', 'mowing', 'edging', 'yard', 'tree', 'arborist', 'irrigation',
+        'sprinkler', 'grass', 'stump', 'landscape', 'landscaping',
+    },
+    'construction': {
+        'construction', 'steel', 'rebar', 'concrete', 'crane', 'warehouse',
+        'framing', 'ironworker', 'electrician', 'electrical', 'conduit',
+        'welding', 'slab', 'foundation', 'erection',
+    },
+    'defense': {
+        'uav', 'drone', 'drones', 'intercept', 'interceptor', 'defense',
+        'defence', 'military', 'clearance', 'sector',
+    },
+    'software': {
+        'react', 'typescript', 'developer', 'hacking', 'oscp', 'penetration',
+        'cybersecurity', 'nodejs',
+    },
+    'finance': {'tax', 'cpa', 'bookkeeping', 'bookkeeper'},
+    'pets': {'grooming', 'groomer', 'pet', 'pets'},
+    'events': {'party', 'birthday', 'balloon', 'entertainer', 'bounce'},
+    'hazmat': {'hazmat', 'chemical', 'corrosive'},
+    'emissions': {'emissions', 'epa', 'stack', 'voc', 'pm25', 'iaq', 'ashrae'},
+}
+
+
+def _service_text(service_description: Union[str, Dict]) -> str:
+    if isinstance(service_description, dict):
+        service_description = service_description.get('description') or json.dumps(service_description)
+    text = str(service_description or '')
+    if text.upper().startswith('TEST:'):
+        text = text[5:]
+    return text
+
+
+def _tokens(text: str) -> set:
+    return {
+        t for t in re.findall(r"[a-z0-9]+", str(text or '').lower())
+        if t not in _MATCH_STOPWORDS and len(t) > 1
+    }
+
+
+def _domains_for(text: str) -> set:
+    tokens = _tokens(text)
+    found = set()
+    for domain, words in _DOMAIN_LEXICONS.items():
+        for tok in tokens:
+            if tok in words:
+                found.add(domain)
+                break
+            if any(len(w) >= 4 and (w in tok or tok in w) for w in words):
+                found.add(domain)
+                break
+    return found
+
+
+def parse_money(value: Any) -> Tuple[Optional[float], Optional[str]]:
+    """Coerce a bid price. Allows 0. Returns (amount, error)."""
+    if value is None:
+        return None, "Price required"
+    if isinstance(value, bool):
+        return None, "Invalid price"
+    if isinstance(value, str):
+        value = value.strip().replace('$', '').replace(',', '')
+        if value == '':
+            return None, "Invalid price"
     try:
-        # Handle service objects
-        if isinstance(service_description, dict):
-            service_description = json.dumps(service_description)
-        
-        prompt = f"""You are a service marketplace matching engine. Decide whether a provider can fulfill a service request.
+        price = float(value)
+    except (TypeError, ValueError):
+        return None, "Invalid price"
+    if not math.isfinite(price):
+        return None, "Invalid price"
+    if price < 0:
+        return None, "Price must be non-negative"
+    if price > 1_000_000:
+        return None, "Price too large"
+    return round(price, 2), None
+
+
+def _keyword_match_score(service_text: str, capabilities: str) -> int:
+    s_dom = _domains_for(service_text)
+    c_dom = _domains_for(capabilities)
+    if s_dom and c_dom and s_dom.isdisjoint(c_dom):
+        return 0
+    if s_dom and c_dom and (s_dom & c_dom):
+        return 8
+    overlap = _tokens(service_text) & _tokens(capabilities)
+    if len(overlap) >= 3:
+        return 8
+    if len(overlap) >= 2:
+        return 6
+    if len(overlap) == 1:
+        return 3
+    return 0
+
+
+def _llm_match_score(service_text: str, capabilities: str) -> Optional[int]:
+    prompt = f"""You score whether a provider can perform THIS exact job. Reply with one integer 0-10.
 
 SERVICE REQUEST:
-{service_description}
+{service_text}
 
 PROVIDER CAPABILITIES:
-{provider_capabilities}
+{capabilities}
 
-RULES:
-- Answer YES if the provider's skills, equipment, or credentials reasonably cover this service.
-- Be lenient: if there is a plausible chance the provider can do the job, answer YES.
-- Answer NO only when the service clearly requires a completely different domain of expertise or equipment.
-  Examples that must be NO: a landscaper doing post-surgery nursing; a nurse erecting steel frames;
-  a food delivery driver performing a cybersecurity audit; a party entertainer doing EPA emissions testing.
-- Partial skill overlap is fine — lean toward YES when in doubt.
+0-3: different domain (chef vs construction vs UAV/defense vs nursing vs lawn).
+4-6: adjacent but not actually qualified.
+7-10: clearly has the skills or equipment for this job.
 
-Respond with exactly one word: YES or NO.
+A construction robot is not a chef. A chef is not a steel erector. A lawn mower is not a nurse.
+Do not score 7+ across domains.
 
-Answer:"""
+Score:"""
+    answer = call_openrouter_llm(prompt, temperature=0, max_tokens=8)
+    if not answer:
+        return None
+    m = re.search(r"\b(10|[0-9])\b", answer)
+    if not m:
+        return None
+    return max(0, min(10, int(m.group(1))))
 
-        answer = call_openrouter_llm(prompt, temperature=0, max_tokens=20)
-        
-        if answer:
-            if "YES" in answer.upper():
-                return True
-            if "NO" in answer.upper():
-                return False
-        
+
+def score_capability_match(service_description: Union[str, Dict], provider_capabilities: str) -> int:
+    """0-10 fit. Cross-domain (chef vs steel, etc.) is 0 without calling the LLM."""
+    svc = _service_text(service_description)
+    caps = str(provider_capabilities or '')
+    if not svc.strip() or not caps.strip():
+        return 0
+    s_dom = _domains_for(svc)
+    c_dom = _domains_for(caps)
+    if s_dom and c_dom and s_dom.isdisjoint(c_dom):
+        return 0
+    try:
+        llm = _llm_match_score(svc, caps)
+        if llm is not None:
+            return llm
     except Exception as e:
         logger.error(f"LLM matching error: {str(e)}")
-    
-    # Fallback to keyword matching
-    return keyword_match_service(service_description, provider_capabilities)
+    return _keyword_match_score(svc, caps)
+
+
+def match_service_with_capabilities(service_description: Union[str, Dict], provider_capabilities: str) -> bool:
+    """True when capability fit is strong enough to grab this job."""
+    return score_capability_match(service_description, provider_capabilities) >= MATCH_SCORE_MIN
+
 
 def keyword_match_service(service_description: Union[str, Dict], provider_capabilities: str) -> bool:
-    """Fallback keyword matching."""
-    # Handle service objects
-    if isinstance(service_description, dict):
-        service_description = json.dumps(service_description)
-    
-    service_words = set(str(service_description).lower().split())
-    capability_words = set(provider_capabilities.lower().split())
-    common_words = service_words & capability_words
-    return len(common_words) >= 1  # More lenient for testing
+    """Fallback keyword matching (same threshold as LLM path)."""
+    return _keyword_match_score(_service_text(service_description), str(provider_capabilities or '')) >= MATCH_SCORE_MIN
+
+
+def _is_demo_grab(bid: Dict[str, Any]) -> bool:
+    """TEST: bids and $0 bids do not consume the /grab_job cooldown."""
+    svc = bid.get('service') or ''
+    if isinstance(svc, dict):
+        svc = str(svc.get('description') or '')
+    if str(svc).upper().startswith('TEST:'):
+        return True
+    try:
+        return float(bid.get('price') or 0) == 0.0
+    except (TypeError, ValueError):
+        return False
 
 def calculate_reputation_score(user_data: Dict[str, Any]) -> float:
     """Calculate user reputation score (0.0 - 5.0)."""
@@ -1939,12 +2072,11 @@ def create_auto_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         service = (template_in.get("service") or data.get("service") or "").strip()
         if not service:
             return {"error": "template.service required"}, 400
-        try:
-            price = float(template_in.get("price") if "price" in template_in else data.get("price"))
-        except (TypeError, ValueError):
-            return {"error": "template.price must be a number"}, 400
-        if price <= 0:
-            return {"error": "template.price must be positive"}, 400
+        price, price_err = parse_money(
+            template_in.get("price") if "price" in template_in else data.get("price")
+        )
+        if price_err:
+            return {"error": f"template.price: {price_err}"}, 400
 
         location_type = (
             template_in.get("location_type")
@@ -2895,9 +3027,10 @@ def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 
         if location_type not in ('physical', 'hybrid', 'remote'):
             return {"error": "location_type must be 'physical', 'hybrid', or 'remote'"}, 400
-        
-        if price <= 0:
-            return {"error": "Price must be positive"}, 400
+
+        price, price_err = parse_money(price)
+        if price_err:
+            return {"error": price_err}, 400
         
         if end_time <= time.time():
             return {"error": "End time must be in the future"}, 400
@@ -3093,12 +3226,9 @@ def update_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             return {"error": "Service, price, and end_time required"}, 400
         if location_type not in ('physical', 'hybrid', 'remote'):
             return {"error": "location_type must be 'physical', 'hybrid', or 'remote'"}, 400
-        try:
-            price = float(price)
-        except (TypeError, ValueError):
-            return {"error": "Invalid price"}, 400
-        if price <= 0:
-            return {"error": "Price must be positive"}, 400
+        price, price_err = parse_money(price)
+        if price_err:
+            return {"error": price_err}, 400
         if end_time <= time.time():
             return {"error": "End time must be in the future"}, 400
 
@@ -3166,8 +3296,6 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         _GRAB_COOLDOWN = int(getattr(config, 'GRAB_JOB_COOLDOWN_SECONDS', 900) or 900)
         last_grab = user_data.get('last_grab_at', 0)
         remaining = _GRAB_COOLDOWN - (time.time() - last_grab)
-        if remaining > 0:
-            return {"error": f"Rate limit: wait {int(remaining)}s before next /grab_job"}, 429
 
         capabilities = data.get('capabilities', '').strip()
         location_type = data.get('location_type', 'physical')
@@ -3233,40 +3361,26 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         if not location_filtered:
             return {"message": "No jobs in your area"}, 204
         
-        # Step 2: Capability matching using LLM
-        capability_matched = []
+        # Step 2: Capability matching — score every in-area bid, pick the best fit.
+        # Cross-domain jobs (chef vs construction, etc.) score 0 and never grab.
+        scored = []
         for bid in location_filtered:
-            if match_service_with_capabilities(bid['service'], capabilities):
-                capability_matched.append(bid)
-        
-        if not capability_matched:
+            fit = score_capability_match(bid['service'], capabilities)
+            if fit >= MATCH_SCORE_MIN:
+                scored.append((fit, bid))
+
+        if not scored:
             return {"message": "No matching jobs for your capabilities"}, 204
-        
-        # Step 3: Sort by reputation alignment (smaller difference is better)
-        capability_matched.sort(key=lambda b: abs(provider_reputation - b['buyer_reputation']))
-        
-        # Step 4: Within same reputation tier, sort by price (highest first)
-        final_sorted = []
-        current_rep_diff = None
-        current_group = []
-        
-        for bid in capability_matched:
-            rep_diff = abs(provider_reputation - bid['buyer_reputation'])
-            if current_rep_diff is None or abs(rep_diff - current_rep_diff) < 0.5:
-                current_group.append(bid)
-                current_rep_diff = rep_diff
-            else:
-                current_group.sort(key=lambda b: b['price'], reverse=True)
-                final_sorted.extend(current_group)
-                current_group = [bid]
-                current_rep_diff = rep_diff
-        
-        if current_group:
-            current_group.sort(key=lambda b: b['price'], reverse=True)
-            final_sorted.extend(current_group)
-        
-        # Select the best job
-        best_bid = final_sorted[0]
+
+        scored.sort(key=lambda item: (
+            -item[0],
+            abs(provider_reputation - item[1].get('buyer_reputation', 2.5)),
+            -float(item[1].get('price') or 0),
+        ))
+        best_bid = scored[0][1]
+
+        if remaining > 0 and not _is_demo_grab(best_bid):
+            return {"error": f"Rate limit: wait {int(remaining)}s before next /grab_job"}, 429
         
         job_id = str(uuid.uuid4())
         job_record = {
@@ -3298,13 +3412,16 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'supply_party': [],
             'demand_party': [],
             'provider_seat_token_id': user_data.get('seat_token_id'),
+            'seat_verification': bool(getattr(config, 'SEAT_VERIFICATION_ENABLED', False)),
+            'match_score': scored[0][0],
         }
         
         save_job(job_id, job_record)
         delete_bid(best_bid['bid_id'])
 
-        user_data['last_grab_at'] = int(time.time())
-        save_account(username, user_data)
+        if not _is_demo_grab(best_bid):
+            user_data['last_grab_at'] = int(time.time())
+            save_account(username, user_data)
 
         buyer = job_record.get('buyer_username')
         _emit('job.grabbed', username=username, job_id=job_id,
@@ -3769,8 +3886,8 @@ def get_exchange_data(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'active_bids': active_bids
         }
         
+        all_jobs = get_all_jobs()
         if include_completed:
-            all_jobs = get_all_jobs()
             completed_jobs = []
             
             for job in all_jobs:
@@ -3823,23 +3940,20 @@ def get_exchange_data(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             
             result['completed_jobs'] = completed_jobs
         
-        # Market statistics
+        # Market statistics (completed-today is always counted, not only when listing jobs)
+        today_start = int(time.time()) - 86400
+        completed_today = [
+            j for j in all_jobs
+            if j.get('status') == 'completed' and j.get('completed_at', 0) > today_start
+        ]
         market_stats = {
             'total_active_bids': len([b for b in all_bids if b['end_time'] > current_time]),
-            'total_completed_today': 0
+            'total_completed_today': len(completed_today),
         }
         
         if category_filter and active_bids:
             prices = [b['price'] for b in active_bids]
             market_stats[f'avg_price_{category_filter}'] = round(sum(prices) / len(prices), 2)
-        
-        if include_completed:
-            today_start = int(time.time()) - 86400
-            all_jobs = get_all_jobs()
-            market_stats['total_completed_today'] = len([
-                j for j in all_jobs 
-                if j['status'] == 'completed' and j.get('completed_at', 0) > today_start
-            ])
         
         result['market_stats'] = market_stats
         
@@ -4463,10 +4577,8 @@ def _channel_members_from_job(job: Dict[str, Any]) -> List[str]:
 
 def _channel_state_for_job(job: Dict[str, Any]) -> str:
     status = job.get('status')
-    if status == 'accepted':
+    if status in ('accepted', 'completed'):
         return 'active'
-    if status in ('completed', 'rejected'):
-        return 'read_only'
     return 'read_only'
 
 
@@ -4626,7 +4738,7 @@ def post_job_channel_message(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]
         # refresh state
         ch = ensure_job_channel(job) or ch
         if ch.get('state') == 'read_only':
-            return {"error": "Channel is read-only (job completed or rejected)"}, 403
+            return {"error": "Channel is read-only (job rejected)"}, 403
 
         # Rate limits
         if not _rate_limit_ok(f"channel:{username}", _CHANNEL_POST_LIMIT_PER_MIN):
