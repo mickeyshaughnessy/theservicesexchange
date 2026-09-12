@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a2e">
+    <meta name="description" content="The Hyperion Fund — permanent capital that buys robot-advantaged businesses and assets so The RSE can deploy robot labor. AUM grows from Seat Purchase Agreements.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="The RSE">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <title>The RSE — Hyperion Fund</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css?v=28" rel="stylesheet">
+    <style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  .rse-doc {
+    --ink: #0c1222;
+    --ink-soft: #2a3548;
+    --muted: #5a6a82;
+    --rule: #d8dee8;
+    --accent: #0a6e6e;
+    --accent-soft: #e6f4f4;
+    --highlight: #0d9488;
+    --page-w: 8.5in;
+    --page-h: 11in;
+    --margin: 0.62in;
+  }
+  .rse-doc, .rse-doc * { box-sizing: border-box; }
+  .rse-doc {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    color: #121820;
+    background: #e8ecf2;
+    line-height: 1.48;
+    font-size: 9.8pt;
+    padding: 0.5rem 0 2rem;
+  }
+  .rse-doc p, .rse-doc li, .rse-doc td, .rse-doc th,
+  .rse-doc h1, .rse-doc h2, .rse-doc h3, .rse-doc .lede,
+  .rse-doc .page, .rse-doc .box, .rse-doc .callout {
+    color: #121820 !important;
+  }
+  .rse-doc .page {
+    width: var(--page-w);
+    min-height: var(--page-h);
+    margin: 0.35in auto;
+    padding: var(--margin);
+    background: #fff;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    position: relative;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+  }
+  .rse-doc .page:last-child { page-break-after: auto; }
+  @media print {
+    .site-chrome { display: none !important; }
+    .rse-doc { background: #fff; }
+    .rse-doc .page {
+      margin: 0;
+      box-shadow: none;
+      width: 100%;
+      min-height: 100vh;
+      padding: 0.55in 0.6in;
+    }
+  }
+  .rse-doc h1 {
+    font-size: 20pt;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+  }
+  .rse-doc h2 {
+    font-size: 11.5pt;
+    font-weight: 600;
+    color: #0c1222;
+    margin: 0.85em 0 0.35em;
+    letter-spacing: -0.01em;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0.15em;
+  }
+  .rse-doc h3 {
+    font-size: 10pt;
+    font-weight: 600;
+    color: #1a2332;
+    margin: 0.65em 0 0.2em;
+  }
+  .rse-doc p { margin-bottom: 0.4em; }
+  .rse-doc .lede { font-size: 10.5pt; color: #1a2332; line-height: 1.45; }
+  .rse-doc .muted { color: #3d4a5c; font-size: 8.8pt; }
+  .rse-doc .mono { font-family: 'IBM Plex Mono', monospace; font-size: 8.5pt; }
+  .rse-doc .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1.5px solid var(--ink);
+    padding-bottom: 0.3em;
+    margin-bottom: 0.75em;
+  }
+  .rse-doc .page-header .brand {
+    font-weight: 700;
+    font-size: 9.5pt;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .rse-doc .page-header .doc-label { font-size: 8.5pt; color: var(--muted); }
+  .rse-doc .page-footer {
+    margin-top: auto;
+    padding-top: 0.45em;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    color: var(--muted);
+  }
+  .rse-doc .cover-kicker {
+    font-size: 8.5pt;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--highlight);
+    margin-bottom: 0.4em;
+  }
+  .rse-doc .cover-rule {
+    width: 2.8in;
+    height: 2.5px;
+    background: var(--ink);
+    margin: 0.7em 0 0.9em;
+  }
+  .rse-doc .box {
+    border: 1px solid var(--rule);
+    padding: 0.5em 0.7em;
+    margin: 0.45em 0;
+    background: #fafbfc;
+  }
+  .rse-doc .box.accent { border-color: var(--accent); background: var(--accent-soft); }
+  .rse-doc .box h3 { margin-top: 0; }
+  .rse-doc .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55em 0.9em;
+  }
+  .rse-doc table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin: 0.35em 0 0.6em;
+  }
+  .rse-doc th, .rse-doc td {
+    text-align: left;
+    padding: 0.28em 0.4em;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .rse-doc th {
+    font-weight: 600;
+    color: var(--ink-soft);
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .rse-doc .callout {
+    border-left: 3px solid var(--highlight);
+    padding: 0.35em 0 0.35em 0.75em;
+    margin: 0.5em 0;
+    background: #f7faf9;
+  }
+  .rse-doc ul.clean { margin: 0.2em 0 0.5em 1em; }
+  .rse-doc ul.clean li { margin-bottom: 0.18em; }
+  .inv-doc-tabs {
+    background: #0d0d3d;
+    border-bottom: 1px solid rgba(0,255,255,0.25);
+  }
+  .inv-doc-tabs .tab-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.65rem 0;
+  }
+  .inv-doc-tabs a {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #c8d6f5;
+    text-decoration: none;
+    border: 1px solid rgba(0,255,255,0.3);
+    padding: 0.35rem 0.7rem;
+  }
+  .inv-doc-tabs a:hover { color: #fff; border-color: #00ffff; }
+  .inv-doc-tabs a.active {
+    color: #0a0a2e;
+    background: #00ffff;
+    border-color: #00ffff;
+  }
+  @media (max-width: 900px) {
+    .rse-doc .page {
+      width: 100%;
+      min-height: auto;
+      margin: 0.75rem 0;
+      padding: 1.25rem;
+      box-shadow: none;
+    }
+    .rse-doc .grid-2 { grid-template-columns: 1fr; }
+    .rse-doc .cover-rule { width: 40%; }
+  }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="site-chrome">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">The RSE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html?open=bid">Get Something</a></li>
+                    <li class="nav-item"><a class="nav-link" href="hiring.html">Hiring</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="navMore" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navMore">
+                            <li><a class="dropdown-item" href="portfolio.html">Portfolio</a></li>
+                            <li><a class="dropdown-item" href="robots.html">Buy a Robot</a></li>
+                            <li><a class="dropdown-item" href="examples.html">Examples</a></li>
+                            <li><a class="dropdown-item" href="api_docs.html">API Docs</a></li>
+                            <li><a class="dropdown-item" href="about.html">About</a></li>
+                            <li><a class="dropdown-item" href="garage.html">Garage</a></li>
+                            <li><a class="dropdown-item" href="investors.html">Investors</a></li>
+                            <li><a class="dropdown-item" href="business_plan.html">Business Plan</a></li>
+                            <li><a class="dropdown-item" href="spreadsheet.html">Spreadsheet</a></li>
+                            <li><a class="dropdown-item" href="spa.html">SPA</a></li>
+                            <li><a class="dropdown-item active" href="hyperion.html" aria-current="page">Hyperion</a></li>
+                            <li><a class="dropdown-item" href="feedback.html">Feedback</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="nav-actions d-flex align-items-center flex-wrap gap-2 ms-lg-3 mt-2 mt-lg-0">
+                    <button id="loginButton" class="btn btn-light" onclick="showAuth()">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="inv-doc-tabs">
+        <div class="container">
+            <nav class="tab-row" aria-label="Investor documents">
+                <a href="investors.html">Investors</a>
+                <a href="business_plan.html">Business Plan</a>
+                <a href="spreadsheet.html">Spreadsheet</a>
+                <a href="spa.html">SPA</a>
+                <a class="active" aria-current="page" href="hyperion.html">Hyperion</a>
+            </nav>
+        </div>
+    </div>
+    </div>
+
+    <main id="main-content" class="rse-doc" tabindex="-1">
+
+<!-- ===================== PAGE 1: WHAT IT IS ===================== -->
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">Hyperion Fund · Confidential</span>
+  </div>
+
+  <p class="cover-kicker">Permanent Capital · Robot-Advantaged Assets · Exchange Growth</p>
+  <h1>The Hyperion Fund</h1>
+  <p style="font-size:11pt;color:var(--ink-soft);margin-top:0.15em;">How the Fund works — and why it exists</p>
+  <div class="cover-rule"></div>
+
+  <h2 style="margin-top:0;border:none;padding:0;">1. What Hyperion is</h2>
+  <p class="lede">
+    Hyperion is the permanent-capital vehicle attached to The Robot Services Exchange.
+    It buys valuable existing businesses and assets that will both <strong>benefit from automation</strong>
+    and <strong>support the growth of The RSE</strong>. Seat Purchase Agreement (SPA) dollars are the
+    primary way assets under management grow.
+  </p>
+  <p>
+    The Fund is US-based and open to assets globally. It is not a ten-year PE clock, and it is not
+    a closed robot fleet. It owns demand, routes, books, and enabling capacity; the exchange
+    supplies seated robot labor. Principal stays in. Only earned profits may transfer out.
+  </p>
+
+  <div class="callout">
+    <strong>Not purely a return vehicle.</strong> Hyperion exists to get robot services into the
+    physical world and to thicken the exchange. Returns matter because locked principal has to
+    compound. They are not the point. The point is deployment: more matchable jobs, more seats
+    grabbing them, more density for The RSE.
+  </div>
+
+  <div class="grid-2">
+    <div class="box accent">
+      <h3>Why it exists</h3>
+      <p style="margin-bottom:0;font-size:9.2pt;">Buy the work that robots are about to do well. Put that work on the open market. Keep the principal working so the next wave of robots has somewhere to grab.</p>
+    </div>
+    <div class="box">
+      <h3>How AUM grows</h3>
+      <p style="margin-bottom:0;font-size:9.2pt;">Sponsors buy Golden Seats under the <a href="spa.html">SPA</a>. One hundred percent of each purchase price is contributed to Hyperion. Seat holders share earned profits. Later seat and equity dollars participate on the same rule.</p>
+    </div>
+  </div>
+
+  <h2>2. The selling motivation</h2>
+  <p>
+    Robot labor is arriving into markets that still run on human dispatch books, owner-operators,
+    and apps that have demand but no robot supply. Those businesses are valuable <em>now</em> because
+    they already have customers, routes, and reputation. They become more valuable if someone
+    actually attaches robots — and they become a load-bearing part of The RSE if that work is
+    posted and grabbed on the exchange instead of locked inside a private fleet.
+  </p>
+  <p>
+    Hyperion is the buyer for that transition. An owner who cannot or will not robotize still has
+    a book worth owning. A hardware team that can make the missing part (an actuator, a gripper,
+    a chassis) still needs a patient check. A demand-side app still needs someone who will fulfill
+    with seated robots instead of only human contractors. The Fund is how SPA capital does that
+    work, instead of sitting as unused cash or being spent as operating expense.
+  </p>
+  <div class="grid-2">
+    <div class="box">
+      <h3>For the exchange</h3>
+      <p style="margin-bottom:0;font-size:9.2pt;">Owned demand is density you do not have to wait for. Jobs get specified, seated, rated, and repeated. Take-rate, seats, hardware, Garage / Lighthouse, insurance, and ads fire on the same volume.</p>
+    </div>
+    <div class="box">
+      <h3>For the owner who sells</h3>
+      <p style="margin-bottom:0;font-size:9.2pt;">Labor is the constraint. Succession is the other. Hyperion buys the book so the work continues — with robots on the repeatable load, humans on exceptions — instead of being stripped or shut.</p>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>therobotservicesexchange.com/hyperion.html</span>
+    <span>Page 1 of 4</span>
+  </div>
+</section>
+
+<!-- ===================== PAGE 2: MECHANICS ===================== -->
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">Mechanics · SPA → AUM</span>
+  </div>
+
+  <h2 style="margin-top:0;">3. How the money works</h2>
+  <p class="lede">
+    One check, two claims. The sponsor (or other seat / equity buyer) receives the security.
+    The same dollars become Hyperion NAV — the buyer’s Hyperion Basis. Cash is not spent twice.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Step</th><th>What happens</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>SPA (or seat / equity purchase)</td>
+        <td>Buyer pays the purchase price and receives Golden Seats (15-minute rate limit, eternal modulo abuse, fully transferable) or the equity interest. See the <a href="spa.html">SPA</a>.</td>
+      </tr>
+      <tr>
+        <td>Contribute</td>
+        <td><strong>100% of the purchase price goes into the Hyperion Fund</strong> as Hyperion Basis. It is not exchange operating revenue and is not an unrestricted cash pile.</td>
+      </tr>
+      <tr>
+        <td>Deploy</td>
+        <td>The Fund buys robot-advantaged businesses and assets, plus public and liquid holdings until real-asset deals close. US-based; assets may sit anywhere.</td>
+      </tr>
+      <tr>
+        <td>AUM grows</td>
+        <td>New SPA tranches (and later seat / equity dollars) add Basis. Asset income stays in the Fund. Principal cannot be withdrawn.</td>
+      </tr>
+      <tr>
+        <td>Exchange fee</td>
+        <td>Stream 06 on the <a href="investors.html">investors</a> model: ~2.8% of AUM per year (1% management + 15% of an assumed ~12% gross). That is how the exchange is paid for administering the Fund.</td>
+      </tr>
+      <tr>
+        <td>Earnings</td>
+        <td>After expenses and the platform take, remaining <em>earned</em> profits are allocated to seat holders pro rata to Hyperion Basis. Unrealized marks do not create a withdrawal right. Transfer of a Seat transfers its Basis.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Principal stays in.</strong> Permanent / long-dated capital. Only profits above basis may leave.
+    The Fund is how SPA capital keeps working for robot deployment after the Seat is issued.
+  </div>
+
+  <h2>4. Mandate</h2>
+  <p>
+    Own physical (and physical-adjacent) demand at remnant or value prices. Attach RSE matching,
+    design, franchises, and robot labor. Hold enabling supply where it unblocks jobs on the
+    exchange. Keep unused cash in liquid markets so it is still working.
+  </p>
+  <p>
+    Two tests for every asset:
+  </p>
+  <ul class="clean">
+    <li><strong>Automation test.</strong> Will robots, or robot-plus-human teams, make this book cheaper, denser, or more reliable?</li>
+    <li><strong>Exchange test.</strong> Will owning it create matchable jobs, seats, hardware pull-through, or franchise nodes on The RSE — not a private silo?</li>
+  </ul>
+  <p>If an asset fails the second test, Hyperion should not own it, even if it would make money.</p>
+
+  <h2>5. What the exchange does <em>not</em> own</h2>
+  <p>
+    Asset income stays in the Fund. The exchange earns fees, not the buildings or the books.
+    Hyperion is not a closed fleet competing with seated providers on the open market: owned
+    demand posts work; any capable seated robot can grab. Preferred rights for SPA sponsors
+    deepen with GMV; they are not territorial monopolies.
+  </p>
+
+  <div class="page-footer">
+    <span>100% of SPA purchase price → Hyperion · principal locked · earnings pro rata</span>
+    <span>Page 2 of 4</span>
+  </div>
+</section>
+
+<!-- ===================== PAGE 3: WHAT IT BUYS ===================== -->
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">What the Fund buys</span>
+  </div>
+
+  <h2 style="margin-top:0;">6. Sleeves — examples, not a portfolio</h2>
+  <p class="lede">
+    These are the kinds of assets Hyperion is built to buy. Counts and names below are a
+    first-wave plan, not addresses and not a commitment.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Sleeve</th><th>Example</th><th>Why it belongs in Hyperion</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Labor SMBs</td>
+        <td>Small housekeeping businesses that already serve short-term rentals in a few metros</td>
+        <td>The book is the demand. Deploy robot housekeepers on turnover (clean, linen, restock, inspect); humans take exceptions. Jobs post on The RSE.</td>
+      </tr>
+      <tr>
+        <td>Routes &amp; municipal-adjacent</td>
+        <td>Residential and commercial trash collection businesses</td>
+        <td>Weekly windows, GPS / photo proof of empty carts. O&amp;O first; franchise the spec when it repeats.</td>
+      </tr>
+      <tr>
+        <td>Demand-side apps</td>
+        <td>Existing request apps — rides, errands, visits — analogous to a Lyft-style demand surface</td>
+        <td>Keep the buyers. Fulfill with seated robot suppliers on the exchange instead of only human contractors.</td>
+      </tr>
+      <tr>
+        <td>Enabling hardware</td>
+        <td>A startup producing actuators, grippers, or other missing robot parts</td>
+        <td>Unblock supply. More capable robots → more grabs → more seats. Patient capital, not a flip.</td>
+      </tr>
+      <tr>
+        <td>Remnant real estate</td>
+        <td>STRs, small hospitality, depots, parking, overnight lots</td>
+        <td>Own the ground that jobs run across. Some sites become Garage / Lighthouse nodes; some stay owned.</td>
+      </tr>
+      <tr>
+        <td>Dispatch books</td>
+        <td>Health-aide / companion care books; livery / cybercab ground</td>
+        <td>Clinical work stays human. Robots take non-clinical load. Own the ground and the book, not the OEM.</td>
+      </tr>
+      <tr>
+        <td>Public / liquid</td>
+        <td>Stock in large companies poised to deliver robot labor (e.g. Tesla, Waymo), plus crypto, bonds, cash</td>
+        <td>Participate in the robot-labor stack that will fill seats. Residual AUM stays invested until real-asset deals close.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>First-wave planning (same as the business plan)</h3>
+  <p>
+    ~12 residential STRs · ~4 health-aide dispatch books (Lakewood, Camas, Destin, Missoula, Austin, Boulder and peers)
+    · cybercab ground · trash routes · residual in liquid markets. Later waves repeat: buy remnant or valuable demand,
+    attach robot services, keep or franchise the playbook.
+  </p>
+
+  <div class="box accent">
+    <h3>Flywheel</h3>
+    <p style="margin-bottom:0;font-size:9.2pt;">SPA capital → Hyperion AUM → buy the book or the ground → design matchable jobs → seats and the API fill them → take-rate, hardware, Garage / Lighthouse, insurance, and ads fire on the same volume. Asset income stays in the Fund. The exchange earns fees. Density compounds.</p>
+  </div>
+
+  <h2>7. Geography</h2>
+  <p>
+    The Fund is US-based: formation, administration, and the first operating wave.
+    It is open to assets globally — a housekeeping book in another country, a demand app
+    with international orders, a public company listed outside the US — whenever the two
+    tests (automation + exchange) still hold and the work can be posted and grabbed.
+  </p>
+
+  <div class="page-footer">
+    <span>Examples only · not a current portfolio · not investment advice</span>
+    <span>Page 3 of 4</span>
+  </div>
+</section>
+
+<!-- ===================== PAGE 4: OWNERS, RULES, NEXT ===================== -->
+<section class="page">
+  <div class="page-header">
+    <span class="brand">The RSE</span>
+    <span class="doc-label">Owners · Rules · Next</span>
+  </div>
+
+  <h2 style="margin-top:0;">8. Why an owner sells to Hyperion</h2>
+  <p>
+    Most of the businesses above are not failing. They are constrained. Hyperion is a buyer
+    for owners who want the work to continue under robot labor, not a liquidation.
+  </p>
+  <div class="grid-2">
+    <div class="box">
+      <h3>Labor is the ceiling</h3>
+      <p style="margin-bottom:0;font-size:9.2pt;">Housekeeping, aides, haulers, and dispatch already have customers. They cannot hire enough people. Selling to a buyer who will deploy robots is how the book survives the labor shortage.</p>
+    </div>
+    <div class="box">
+      <h3>Succession without shutting the door</h3>
+      <p style="margin-bottom:0;font-size:9.2pt;">Owner-operators retire. Strategic buyers often shut the local spec. Hyperion wants the spec: the routes, the turnover checklist, the app’s demand. Stay as an operator, or exit. The jobs stay posted.</p>
+    </div>
+    <div class="box">
+      <h3>Capital for the robots themselves</h3>
+      <p style="margin-bottom:0;font-size:9.2pt;">A small operator rarely finances a robot fleet, seats, and Garage time. The Fund can. Hardware referrals and seats are other RSE streams on the same volume.</p>
+    </div>
+    <div class="box">
+      <h3>Open market, not a private cage</h3>
+      <p style="margin-bottom:0;font-size:9.2pt;">Work goes on The RSE. Other seated providers can compete. That is the point: density for the exchange, not a captured fleet that starves the open book.</p>
+    </div>
+  </div>
+
+  <h2>9. Why a sponsor funds it</h2>
+  <p>
+    The <a href="spa.html">SPA</a> is how a sponsor enters: Golden Seats they hold and can transfer,
+    Hyperion Basis, a share of earned Fund profits, and advisory rights that deepen only as
+    exchange GMV grows. See <a href="hiring.html">hiring</a> for the Founding Partner pair
+    (named individual + sponsor).
+  </p>
+  <p>
+    The honest pitch is not a multiple. It is this: the same dollars that buy you seats also
+    buy the physical demand those seats will grab. You are not waiting for the market to appear.
+    You are funding the businesses and assets that make the market real — housekeeping turns,
+    trash routes, demand apps, actuators, public robot-labor names — and you keep the seats.
+  </p>
+
+  <h2>10. Rules that do not change</h2>
+  <ul class="clean">
+    <li>Principal (Hyperion Basis) cannot be withdrawn. Only earned profits may leave.</li>
+    <li>Transfer of a Seat transfers its Basis and future allocations.</li>
+    <li>The exchange’s take is the modeled ~2.8% of AUM — not a second grab of the purchase price.</li>
+    <li>Preferred rights deepen with network metrics. Underperformance does not expand them.</li>
+    <li>Hyperion does not freeze the open market. Owned demand still posts; seated supply still grabs.</li>
+    <li>US-based Fund; global assets allowed when they serve deployment and exchange growth.</li>
+  </ul>
+
+  <h2>11. Related documents</h2>
+  <ol style="margin:0.2em 0 0.6em 1.15em;">
+    <li>Live 15-year model (AUM and Stream 06 fees): <span class="mono">therobotservicesexchange.com/investors.html</span></li>
+    <li>Business plan (Hyperion chapter): <span class="mono">therobotservicesexchange.com/business_plan.html</span></li>
+    <li>SPA template (cash → Fund, waterfall): <span class="mono">therobotservicesexchange.com/spa.html</span></li>
+    <li>Spreadsheet: <span class="mono">therobotservicesexchange.com/spreadsheet.html</span></li>
+    <li>Hiring / Founding Partner pair: <span class="mono">therobotservicesexchange.com/hiring.html</span></li>
+  </ol>
+
+  <div class="box">
+    <h3>Contact</h3>
+    <p style="margin-bottom:0.15em;"><strong>Mickey Shaughnessy</strong> · Creator</p>
+    <p class="mono" style="margin-bottom:0.15em;">@MichaelSha10041</p>
+    <p class="mono" style="margin-bottom:0;">Website: therobotservicesexchange.com · API: rse-api.com</p>
+  </div>
+
+  <p class="muted" style="margin-top:0.9em;font-size:8pt;line-height:1.4;">
+    <strong>Disclaimer.</strong> Discussion and scenario planning only. Not an offer, solicitation, or sale of seats, equity, or Hyperion interests. No commitment is implied. Named companies, sleeves, and first-wave counts are illustrations, not a portfolio and not investment advice. Projections and fee rates follow the investors-page model and are not guarantees. Not financial, legal, or tax advice. Fund terms are subject to definitive documentation, Fund formation, and applicable law. This page does not offer fund interests.
+  </p>
+
+  <div class="page-footer">
+    <span>© 2026 The RSE Protocol</span>
+    <span>Page 4 of 4</span>
+  </div>
+</section>
+
+    </main>
+    <footer class="footer site-chrome">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>The RSE</h5>
+                    <p>Open robot labor marketplace.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Links</h5>
+                    <a href="index.html">Home</a>
+                    <a href="hiring.html">Hiring</a>
+                    <a href="investors.html">Investors</a>
+                    <a href="business_plan.html">Business Plan</a>
+                    <a href="spreadsheet.html">Spreadsheet</a>
+                    <a href="spa.html">SPA</a>
+                    <a href="hyperion.html">Hyperion</a>
+                    <a href="about.html">About</a>
+                </div>
+                <div class="col-md-4">
+                    <h5>Connect</h5>
+                    <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">X</a>
+                    <a href="https://github.com/mickeyshaughnessy/theservicesexchange">GitHub</a>
+                </div>
+            </div>
+            <div class="mt-5 pt-4 border-top border-secondary text-center">
+                <p class="mb-0">&copy; 2026 The RSE Protocol. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js?v=28"></script>
+</body>
+</html>
