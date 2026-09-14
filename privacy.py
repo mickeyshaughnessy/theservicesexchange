@@ -158,7 +158,7 @@ _NEARBY_FORBIDDEN_KEYS = (
     "email",
     "phone",
     "wallet_address",
-    "phantom_wallet_address",
+    "phantom_wallet_address",  # leftover private field; never publish
     "exact_address",
     "raw_address",
 )
@@ -213,7 +213,7 @@ def project_public_location_field(location: Optional[str], level: str) -> Option
 
 def project_public_profile(user_data: Dict[str, Any], *, username: str) -> Dict[str, Any]:
     """
-    Build the public profile subset. Contact info, wallets, auto-bids, and
+    Build the public profile subset. Contact info, auto-bids, and
     discovery hashes are never included.
     """
     plvl = normalize_privacy_level(
@@ -229,6 +229,5 @@ def project_public_profile(user_data: Dict[str, Any], *, username: str) -> Dict[
         "about": about,
         "privacy_level": plvl,
         # Explicitly omitted (document for auditors):
-        # contact_info, wallet_address, phantom_wallet_address, contact_hashes,
-        # auto_bids, email, phone, payment methods
+        # contact_info, contact_hashes, auto_bids, email, phone, payment methods
     }

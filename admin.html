@@ -144,6 +144,7 @@
             <div class="row g-3" id="kpiRow"></div>
             <div class="admin-tabs" role="tablist">
                 <button type="button" class="active" data-pane="apps">Applications</button>
+                <button type="button" data-pane="seats">Seats</button>
                 <button type="button" data-pane="api">API</button>
                 <button type="button" data-pane="traffic">Traffic</button>
                 <button type="button" data-pane="recent">Recent requests</button>
@@ -154,6 +155,41 @@
                     <h2>Hiring applications</h2>
                     <p class="muted" id="appsSummary"></p>
                     <div id="appsList"></div>
+                </div>
+            </div>
+            <div class="admin-pane" id="pane-seats">
+                <div class="admin-card mb-3">
+                    <h2>Assign / transfer</h2>
+                    <p class="muted">Mickey is the registrar. Transfer updates the book; grab access travels with the seat unless revoked for abuse.</p>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label" for="seatIdInput">Seat #</label>
+                            <input class="form-control" id="seatIdInput" placeholder="blank = next">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="seatUserInput">Username</label>
+                            <input class="form-control" id="seatUserInput" placeholder="registered username" required>
+                        </div>
+                        <div class="col-md-7 d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-primary btn-sm" id="seatAssign">Assign</button>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="seatTransfer">Transfer to username</button>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="seatRevoke">Revoke grab</button>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="seatUnrevoke">Restore grab</button>
+                        </div>
+                    </div>
+                    <p class="muted mt-2 mb-0" id="seatActionStatus"></p>
+                </div>
+                <div class="admin-card">
+                    <h2>Registry</h2>
+                    <p class="muted" id="seatsSummary"></p>
+                    <div class="table-responsive">
+                        <table class="admin-table" id="seatsTable">
+                            <thead>
+                                <tr><th class="num">Seat</th><th>Owner</th><th>Status</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div class="admin-pane" id="pane-api">
@@ -350,6 +386,7 @@
                 [c.feedback, 'Feedback'],
                 [c.financing, 'Financing'],
                 [c.disputes, 'Disputes'],
+                [c.seats, 'Seats'],
                 [c.campaigns, 'Campaigns'],
                 [api.total_requests, 'API requests'],
                 [api.total_errors, 'API errors'],
@@ -458,6 +495,48 @@
             }).join(''));
         }
 
+        function renderSeats(data) {
+            const rows = data.seats || [];
+            document.getElementById('seatsSummary').textContent =
+                (data.count || 0) + ' seats · ' + (data.active || 0) + ' active · ' + (data.revoked || 0) + ' revoked';
+            fillTable('seatsTable', rows.map(function (s) {
+                return '<tr><td class="num">' + esc(s.seat_id) + '</td><td>' + esc(s.owner_username) +
+                    '</td><td>' + esc(s.status) + '</td></tr>';
+            }).join(''));
+        }
+
+        async function seatAction(path, extra) {
+            const status = document.getElementById('seatActionStatus');
+            const username = (document.getElementById('seatUserInput').value || '').trim();
+            const rawId = (document.getElementById('seatIdInput').value || '').trim();
+            const body = Object.assign({}, extra || {});
+            if (username) body.username = username;
+            if (username) body.to_username = username;
+            if (rawId) body.seat_id = Number(rawId);
+            status.textContent = 'Saving…';
+            try {
+                const data = await api(path, { method: 'POST', body: JSON.stringify(body) });
+                status.textContent = data.message || 'Saved';
+                const listed = await api('/admin/seats');
+                renderSeats(listed);
+            } catch (e) {
+                status.textContent = e.message || 'Failed';
+            }
+        }
+
+        document.getElementById('seatAssign').addEventListener('click', function () {
+            seatAction('/admin/seats/assign');
+        });
+        document.getElementById('seatTransfer').addEventListener('click', function () {
+            seatAction('/admin/seats/transfer');
+        });
+        document.getElementById('seatRevoke').addEventListener('click', function () {
+            seatAction('/admin/seats/revoke');
+        });
+        document.getElementById('seatUnrevoke').addEventListener('click', function () {
+            seatAction('/admin/seats/unrevoke');
+        });
+
         async function loadAll() {
             const ov = await api('/admin/overview');
             renderKpis(ov);
@@ -467,6 +546,10 @@
             const apps = hire.applications || [];
             document.getElementById('appsSummary').textContent = apps.length + ' stored on Spaces';
             renderApps(apps);
+            try {
+                const listed = await api('/admin/seats');
+                renderSeats(listed);
+            } catch (e) { /* seats tab optional if older API */ }
         }
 
         if (token) {

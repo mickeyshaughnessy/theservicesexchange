@@ -29,9 +29,10 @@ from handlers import (
     grab_job,
     reject_job,
     get_account_info,
-    set_wallet,
-    set_phantom_wallet,
-    clear_phantom_wallet,
+    admin_list_seats,
+    admin_assign_seat,
+    admin_transfer_seat,
+    admin_set_seat_revoked,
     nearby_services,
     sign_job,
     get_my_bids,
@@ -417,27 +418,38 @@ def account(current_user):
     response, status = get_account_info({'username': current_user})
     return flask.jsonify(response), status
 
-@app.route('/set_wallet', methods=['POST'])
-@token_required
-def handle_set_wallet(current_user):
-    data = flask.request.get_json() or {}
-    data['username'] = current_user
-    response, status = set_wallet(data)
+@app.route('/admin/seats', methods=['GET'])
+@admin_user_required
+def handle_admin_list_seats(_admin_user):
+    response, status = admin_list_seats()
     return flask.jsonify(response), status
 
-@app.route('/set_phantom_wallet', methods=['POST'])
-@token_required
-def handle_set_phantom_wallet(current_user):
-    """Link Solana (Phantom) wallet for demand payments / auto-bidding."""
+@app.route('/admin/seats/assign', methods=['POST'])
+@admin_user_required
+def handle_admin_assign_seat(admin_user):
     data = flask.request.get_json() or {}
-    data['username'] = current_user
-    response, status = set_phantom_wallet(data)
+    response, status = admin_assign_seat(data, admin=admin_user)
     return flask.jsonify(response), status
 
-@app.route('/set_phantom_wallet', methods=['DELETE'])
-@token_required
-def handle_clear_phantom_wallet(current_user):
-    response, status = clear_phantom_wallet(current_user)
+@app.route('/admin/seats/transfer', methods=['POST'])
+@admin_user_required
+def handle_admin_transfer_seat(admin_user):
+    data = flask.request.get_json() or {}
+    response, status = admin_transfer_seat(data, admin=admin_user)
+    return flask.jsonify(response), status
+
+@app.route('/admin/seats/revoke', methods=['POST'])
+@admin_user_required
+def handle_admin_revoke_seat(admin_user):
+    data = flask.request.get_json() or {}
+    response, status = admin_set_seat_revoked(data, True, admin=admin_user)
+    return flask.jsonify(response), status
+
+@app.route('/admin/seats/unrevoke', methods=['POST'])
+@admin_user_required
+def handle_admin_unrevoke_seat(admin_user):
+    data = flask.request.get_json() or {}
+    response, status = admin_set_seat_revoked(data, False, admin=admin_user)
     return flask.jsonify(response), status
 
 # -----------------------------------------------------------------------------
@@ -508,7 +520,7 @@ def handle_bid(current_user):
     Canonical bid endpoint. Supports one-shot open requests and recurring
     subscription / autobids (recurring=true + cadence). Time-bound spending
     limits apply to recurring subscription bids. Optional payment integrations
-    (Stripe, XMoney, PayPal, Phantom) may be attached; live charge only when
+    (Stripe, XMoney, PayPal) may be attached; live charge only when
     provider config keys are present.
     """
     data = flask.request.get_json() or {}
@@ -1294,7 +1306,7 @@ def app_version_manifest():
     return flask.jsonify({"error": "version manifest not found"}), 404
 
 # -----------------------------------------------------------------------------
-# Cosmetics Shop Endpoints (payments stubbed; Phantom Wallet / XMoney pending)
+# Cosmetics Shop Endpoints (payments stubbed; XMoney pending)
 # -----------------------------------------------------------------------------
 
 @app.route('/shop/catalog', methods=['GET'])

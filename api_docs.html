@@ -399,7 +399,6 @@
     // Integration Test Suite
     // ══════════════════════════════════════════════════════════════
 
-    const INT_TEST_WALLET = '0x6B2D765cfB33Aa5736e96231eD078f9D01917A03';
     let _intTestAborted = false;
 
     const MATCHING_TEST_CASES = [
@@ -679,7 +678,6 @@
                 let caseProvToken;
                 try {
                     caseProvToken = await _itRegisterLogin(caseProvUser, 'supply', password);
-                    await _itPost('/set_wallet', { wallet_address: INT_TEST_WALLET }, caseProvToken);
                 } catch (setupErr) {
                     _itLog(`  [${i+1}] ${tc.name} — SKIP (provider setup: ${setupErr.message})`, '#ff3333');
                     results.push({ name: tc.name, nonMatchOk: null, matchOk: null, note: 'provider setup failed' });
@@ -736,7 +734,6 @@
                         try {
                             const fpProv = `it_p${suffix}_${i}m`;
                             caseProvToken = await _itRegisterLogin(fpProv, 'supply', password);
-                            await _itPost('/set_wallet', { wallet_address: INT_TEST_WALLET }, caseProvToken);
                             provToken = caseProvToken;
                         } catch (e) {
                             matchNote = 'provider re-setup failed after FP';
@@ -749,7 +746,6 @@
                         try {
                             const extProv = `it_p${suffix}_${i}x`;
                             caseProvToken = await _itRegisterLogin(extProv, 'supply', password);
-                            await _itPost('/set_wallet', { wallet_address: INT_TEST_WALLET }, caseProvToken);
                             provToken = caseProvToken;
                         } catch (e) {
                             nonMatchNote = (nonMatchNote ? nonMatchNote + ' | ' : '') + 'match provider re-setup failed';
@@ -829,7 +825,6 @@
 
                 async function _newGeoProv(tag) {
                     const tok = await _itRegisterLogin(`it_g${suffix}_${tag}`, 'supply', password);
-                    await _itPost('/set_wallet', { wallet_address: INT_TEST_WALLET }, tok);
                     return tok;
                 }
 

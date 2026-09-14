@@ -9,8 +9,7 @@ Covers:
 
 Labeling & cleanup contract
   - Every test bid/service starts with "TEST:" so it is unambiguously synthetic.
-  - Provider accounts call set_wallet with the real seat wallet (seats #1-100)
-    so tests remain valid if SEAT_VERIFICATION_ENABLED is turned on.
+  - Grab-job seat gate is off by default (SEAT_VERIFICATION_ENABLED=False).
   - cleanup() cancels outstanding bids AND completes (signs) any open test jobs,
     leaving the live exchange in the same state it was before the run.
 
@@ -449,12 +448,6 @@ class ServiceExchangeAPITester:
         return requests.post(f"{self.api_url}/grab_job",
                              headers=self._headers(token), json=payload, verify=False)
 
-    def _set_wallet(self, token, wallet_address):
-        r = requests.post(f"{self.api_url}/set_wallet",
-                          headers=self._headers(token),
-                          json={"wallet_address": wallet_address}, verify=False)
-        return r.status_code == 200
-
     def _reject_job(self, token, job_id, reason="Test: returning to exchange"):
         """Reject a job so it goes back on the exchange for the real buyer."""
         requests.post(f"{self.api_url}/reject_job",
@@ -523,10 +516,6 @@ class ServiceExchangeAPITester:
         buyer_token = self._register_and_login(buyer_username, "demand")
         provider_token = self._register_and_login(provider_username, "supply")
         print(f"✓ Users created ({buyer_username}, {provider_username})")
-
-        # Link the real seat wallet for the provider
-        if self._set_wallet(provider_token, config.TEST_WALLET_ADDRESS):
-            print(f"✓ Provider wallet linked (seats #1-100)")
 
         bids = [
             {
@@ -641,10 +630,6 @@ class ServiceExchangeAPITester:
 
         buyer_token   = self._register_and_login(buyer_username,  "demand")
         prov_token    = self._register_and_login(prov_username,   "supply")
-
-        # Link the real seat wallet (seats #1-100) to the test provider
-        if self._set_wallet(prov_token, config.TEST_WALLET_ADDRESS):
-            print(f"✓ Provider wallet linked ({config.TEST_WALLET_ADDRESS[:10]}… seats #1-100)")
 
         results = []  # list of (name, non_match_ok, match_ok, notes)
         external_grabs = 0   # jobs grabbed from other users and rejected back
@@ -810,7 +795,6 @@ class ServiceExchangeAPITester:
         prov_username = f"gpro_{uuid.uuid4().hex[:7]}"
         buyer_token = self._register_and_login(buyer_username, "demand")
         prov_token = self._register_and_login(prov_username, "supply")
-        self._set_wallet(prov_token, config.TEST_WALLET_ADDRESS)
 
         caps = "Residential lawn mowing, edging, yard maintenance, grass cutting"
         denver = "123 Main St, Denver, CO 80202"

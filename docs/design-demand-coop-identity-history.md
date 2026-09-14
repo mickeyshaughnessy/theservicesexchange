@@ -1,13 +1,15 @@
 # Demand-Side Cooperation, Dual Identity, and Durable Transaction History
 
+> **Superseded (2026-09):** Seats are a centrally managed Exchange registry (Mickey Shaughnessy assigns, transfers, revokes). Wallet / NFT / chain language below is historical and not live.
+
 | Field | Value |
 |-------|-------|
 | **Document title** | Demand-Side Cooperation, Dual Identity (Username/Seat), and Durable Transaction History for The RSE |
 | **Author** | _TBD_ |
 | **Date** | 2026-07-10 |
-| **Status** | Draft (rev 3 — default-deny agents, sponsor caps) |
+| **Status** | Draft (rev 3 — default-deny agents, sponsor caps) — **seat model superseded** |
 | **Audience** | Senior engineers familiar with `handlers.py`, `api_server.py`, `utils.py`, `openapi.yaml` |
-| **Related systems** | Flask multi-page The RSE API, DO Spaces JSON store, Base ERC-721 `RSESeat` |
+| **Related systems** | Flask multi-page The RSE API, DO Spaces JSON store, central seat registry |
 
 ---
 

@@ -6,7 +6,7 @@ Fleet operator account + scoped agent token for the vehicle process.
 
 Flow
 ----
-  operator login → set_wallet (optional) → create/reuse agent token
+  operator login → create/reuse agent token
   → poll /grab_job as agent → job channel status posts → sign_job
 
 Agent scopes used
@@ -16,7 +16,6 @@ Agent scopes used
 Env
 ---
   RSE_USERNAME / RSE_PASSWORD     fleet operator credentials
-  RSE_WALLET_ADDRESS             optional seat NFT wallet
   RSE_AGENT_TOKEN                optional: reuse an existing agent token
   RSE_AGENT_LABEL                default "taxi-vehicle-1"
   RSE_GEOHASH                    optional: /grab_job whitelist cell (pickup+drop-off)
@@ -101,24 +100,6 @@ def login(username: str, password: str) -> str:
     token = r.json()["access_token"]
     print(f"[RSE] Operator logged in as {username} (type={r.json().get('user_type')})")
     return token
-
-
-def set_wallet(operator_token: str, wallet_address: str) -> None:
-    r = requests.post(
-        f"{RSE_API}/set_wallet",
-        headers=_auth(operator_token),
-        json={"wallet_address": wallet_address},
-        verify=VERIFY_SSL,
-    )
-    if r.status_code == 200:
-        body = r.json()
-        print(
-            f"[RSE] Wallet linked: {wallet_address[:10]}… "
-            f"seat_status={body.get('seat_status')} "
-            f"public_id={(body.get('identity') or {}).get('public_id')}"
-        )
-    else:
-        print(f"[RSE] set_wallet returned {r.status_code}: {r.text} (non-fatal)")
 
 
 def ensure_agent_token(operator_token: str) -> str:
@@ -381,15 +362,6 @@ def main() -> None:
 
     register(username, password)
     operator_token = login(username, password)
-
-    seat_wallet = os.environ.get("RSE_WALLET_ADDRESS", "")
-    if seat_wallet:
-        set_wallet(operator_token, seat_wallet)
-    else:
-        print(
-            "[RSE] No RSE_WALLET_ADDRESS — seat not linked "
-            "(OK while SEAT_VERIFICATION_ENABLED=False)."
-        )
 
     # Vehicle process uses agent token for grab + channel + sign
     agent_token = ensure_agent_token(operator_token)

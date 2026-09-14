@@ -122,6 +122,8 @@ CHANNELS_PREFIX = f"{S3_PREFIX}/channels"
 CHANNEL_MESSAGES_PREFIX = f"{S3_PREFIX}/channel_messages"
 CHAT_CURSORS_PREFIX = f"{S3_PREFIX}/chat_cursors"
 CONTACT_HASHES_PREFIX = f"{S3_PREFIX}/contact_hashes"
+SEATS_PREFIX = f"{S3_PREFIX}/seats"
+SEATS_INDEX_KEY = f"{S3_PREFIX}/seats/_index.json"
 
 # -----------------------------------------------------------------------------
 # S3 Helper Functions
@@ -214,6 +216,59 @@ def _s3_list(prefix: str) -> List[str]:
 # -----------------------------------------------------------------------------
 # Account Management
 # -----------------------------------------------------------------------------
+
+def _empty_seats_index() -> Dict[str, Any]:
+    return {"next_id": 1, "seats": {}, "by_owner": {}}
+
+
+def get_seats_index(*, force_refresh: bool = False) -> Dict[str, Any]:
+    """Seat registry index: next_id, seats{id -> {owner, status}}, by_owner{user -> [ids]}."""
+    if force_refresh:
+        _cache_delete(SEATS_INDEX_KEY)
+    data = _s3_get(SEATS_INDEX_KEY)
+    if not data or not isinstance(data, dict):
+        return _empty_seats_index()
+    data.setdefault("next_id", 1)
+    data.setdefault("seats", {})
+    data.setdefault("by_owner", {})
+    return data
+
+
+def save_seats_index(index: Dict[str, Any]) -> None:
+    if not _s3_put(SEATS_INDEX_KEY, index):
+        logger.error("Failed to save seats index")
+
+
+def save_seat_record(seat_id: int, data: Dict[str, Any]) -> None:
+    key = f"{SEATS_PREFIX}/{int(seat_id)}.json"
+    if not _s3_put(key, data):
+        logger.error(f"Failed to save seat {seat_id}")
+
+
+def get_seat_record(seat_id: int, *, force_refresh: bool = False) -> Optional[Dict[str, Any]]:
+    key = f"{SEATS_PREFIX}/{int(seat_id)}.json"
+    if force_refresh:
+        _cache_delete(key)
+    return _s3_get(key)
+
+
+def list_seat_summaries() -> List[Dict[str, Any]]:
+    """Lightweight list from the index (no per-seat history)."""
+    index = get_seats_index()
+    rows = []
+    for sid, meta in (index.get("seats") or {}).items():
+        try:
+            seat_id = int(sid)
+        except (TypeError, ValueError):
+            continue
+        rows.append({
+            "seat_id": seat_id,
+            "owner_username": (meta or {}).get("owner"),
+            "status": (meta or {}).get("status") or "active",
+        })
+    rows.sort(key=lambda r: r["seat_id"])
+    return rows
+
 
 def save_account(username: str, data: Dict[str, Any]) -> None:
     """Save account data to S3 and refresh local cache."""

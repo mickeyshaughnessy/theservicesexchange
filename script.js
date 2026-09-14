@@ -609,9 +609,10 @@ function updateReturningUserHome() {
     }
     if (titleEl) titleEl.textContent = `Welcome back, ${name}`;
 
+    const seatId = u.seat_id != null ? u.seat_id : u.seat_token_id;
     const seatLabel = u.seat_status === 'valid'
-        ? 'Seat active'
-        : (u.wallet_address ? `Seat: ${u.seat_status || 'pending'}` : 'No wallet linked');
+        ? (seatId != null ? `Seat #${seatId}` : 'Seat active')
+        : (u.seat_status && u.seat_status !== 'no_seat' ? `Seat: ${u.seat_status}` : 'No seat yet');
 
     if (subEl) {
         if (isSupply) {
@@ -667,7 +668,7 @@ function updateReturningUserHome() {
                     <h3 class="user-home-check-title">// Provider checklist</h3>
                     <ol class="user-home-check-list">
                         <li>Grab work from a robot via <code>POST /grab_job</code> — see <a href="api_docs.html">API Docs</a></li>
-                        <li>Link wallet + seat on <a href="profile.html">Profile</a> (message <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">@MichaelSha10041</a> on X for a seat)</li>
+                        <li>Message <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">@MichaelSha10041</a> on X for a seat</li>
                         <li>Complete &amp; rate when a job is matched</li>
                     </ol>
                 `;
@@ -3312,66 +3313,6 @@ function updateProviderDashboard() {
     }).join('');
 }
 
-/**
- * Link Ethereum wallet via POST /set_wallet (profile + readiness flows).
- * @param {string} [address]
- * @param {{statusEl?: HTMLElement, inputEl?: HTMLElement}} [opts]
- */
-async function linkWallet(address, opts = {}) {
-    if (!AppState.authToken) {
-        showAuth({ defaultTab: 'login', title: 'Log in to link wallet' });
-        return null;
-    }
-    const raw = (address || '').trim();
-    if (!raw) {
-        showToast('Enter a wallet address', 'error');
-        return null;
-    }
-    try {
-        const response = await fetch(`${API_URL}/set_wallet`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${AppState.authToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ wallet_address: raw })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-            showToast(data.error || 'Could not link wallet', 'error');
-            if (opts.statusEl) {
-                opts.statusEl.style.display = 'block';
-                opts.statusEl.style.color = 'var(--danger)';
-                opts.statusEl.textContent = data.error || 'Link failed';
-            }
-            return null;
-        }
-        showToast(`Wallet linked · seat: ${data.seat_status || 'checked'}`, 'success');
-        if (opts.statusEl) {
-            opts.statusEl.style.display = 'block';
-            opts.statusEl.style.color = 'var(--accent)';
-            opts.statusEl.textContent = `Linked ${data.wallet_address || raw} · seat ${data.seat_status || 'unknown'}`;
-        }
-        const text = document.getElementById('walletAddressText');
-        if (text) text.textContent = data.wallet_address || raw;
-        const seatEl = document.getElementById('seatStatusText');
-        if (seatEl) seatEl.textContent = data.seat_status || 'unknown';
-        if (opts.inputEl) opts.inputEl.value = data.wallet_address || raw;
-        await loadAccountData();
-        if (window.refreshProviderReadiness) window.refreshProviderReadiness();
-        return data;
-    } catch (e) {
-        showToast('Network error linking wallet', 'error');
-        return null;
-    }
-}
-
-function linkWalletFromProfile() {
-    const input = document.getElementById('walletAddressInput');
-    const status = document.getElementById('walletLinkStatus');
-    return linkWallet(input ? input.value : '', { inputEl: input, statusEl: status });
-}
-
 /** Mobile-friendly complete/rate and reject modals (no window.prompt). */
 function ensureJobActionModals() {
     if (document.getElementById('jobRateModal')) return;
@@ -3662,8 +3603,8 @@ async function handleGrabJobSubmission(e) {
             showToast('Job matched — open job chat to coordinate', 'success');
         } else {
             let errMsg = data.error || data.message || 'Unable to grab a job right now.';
-            if (/wallet|seat|NFT/i.test(errMsg)) {
-                errMsg += ' Link your wallet on Profile after you have a seat (message @MichaelSha10041 on X).';
+            if (/seat/i.test(errMsg)) {
+                errMsg += ' Message @MichaelSha10041 on X — Mickey assigns seats.';
             }
             if (/supply-type|Only supply/i.test(errMsg)) {
                 errMsg = 'This account is demand (people bidding for services). Grab Job is for supply — robot / operator accounts only. Register a supply account or log in as one.';

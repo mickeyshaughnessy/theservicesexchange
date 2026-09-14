@@ -2,7 +2,7 @@
 The RSE Business Logic
 ----------------------
 This module contains the core business logic for The RSE (Robot Services Exchange) Protocol.
-It handles user management, bid/job matching, messaging, and seat verification.
+It handles user management, bid/job matching, messaging, and centrally managed seats.
 """
 
 import uuid
@@ -20,7 +20,7 @@ from typing import Dict, List, Optional, Tuple, Union, Any
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import config
-import seat_verification
+import seats as seats_mod
 import privacy as privacy_mod
 from utils import (
     get_account, save_account, account_exists, get_signup_stats,
@@ -61,12 +61,12 @@ def public_actor(username: str, *, agent: Optional[Dict[str, Any]] = None) -> Di
     """Build a public identity card for activity, proofs, and account responses."""
     user = get_account(username) or {}
     user_type = user.get('user_type') or 'demand'
-    seat_token_id = user.get('seat_token_id')
+    seat_id = seats_mod.account_seat_id(user)
     seat_active = user.get('seat_active')
     seat_status_cached = user.get('seat_status_cached')
 
-    if user_type == 'supply' and seat_active and seat_token_id is not None:
-        public_id = f"seat:{seat_token_id}"
+    if user_type == 'supply' and seat_active and seat_id is not None:
+        public_id = f"seat:{seat_id}"
     else:
         public_id = username
 
@@ -76,7 +76,8 @@ def public_actor(username: str, *, agent: Optional[Dict[str, Any]] = None) -> Di
         'public_id': public_id,
         'handle': username,
         'profile_slug': user.get('profile_slug'),
-        'seat_token_id': seat_token_id if user_type == 'supply' else None,
+        'seat_id': seat_id if user_type == 'supply' else None,
+        'seat_token_id': seat_id if user_type == 'supply' else None,
         'seat_status': seat_status_cached,
         'agent_id': None,
         'robot_id': None,
@@ -925,35 +926,9 @@ def get_account_info(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         if user_data.get('total_ratings', 0) > 0:
             avg_rating = user_data['stars'] / user_data['total_ratings']
 
-        wallet_address = user_data.get('wallet_address') or None
-        seat_status = user_data.get('seat_status_cached') or "no_wallet"
-        seat_token_id = user_data.get('seat_token_id')
-
-        if wallet_address:
-            result = seat_verification.verify_seat(wallet_address)
-            if result["error"]:
-                seat_status = "unknown"
-            elif result["valid"]:
-                seat_status = "valid"
-                seat_token_id = result["token_id"]
-                user_data['seat_active'] = True
-                user_data['seat_token_id'] = seat_token_id
-                user_data['seat_status_cached'] = seat_status
-                save_account(username, user_data)
-            elif result["revoked"]:
-                seat_status = "revoked"
-                seat_token_id = result["token_id"]
-                user_data['seat_active'] = False
-                user_data['seat_token_id'] = seat_token_id
-                user_data['seat_status_cached'] = seat_status
-                save_account(username, user_data)
-            else:
-                seat_status = "no_seat"
-                user_data['seat_active'] = False
-                user_data['seat_status_cached'] = seat_status
-                save_account(username, user_data)
-        else:
-            seat_status = "no_wallet"
+        seat_snap = seats_mod.refresh_account_seat(username, user_data)
+        seat_status = seat_snap.get("seat_status") or "no_seat"
+        seat_id = seat_snap.get("seat_id")
 
         agents_meta = user_data.get('agents_meta') or []
         identity = public_actor(username)
@@ -966,10 +941,9 @@ def get_account_info(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'total_ratings': user_data.get('total_ratings', 0),
             'completed_jobs': user_data.get('completed_jobs', 0),
             'reputation_score': round(calculate_reputation_score(user_data), 2),
-            'wallet_address': wallet_address,
-            'phantom_wallet_address': user_data.get('phantom_wallet_address'),
             'seat_status': seat_status,
-            'seat_token_id': seat_token_id,
+            'seat_id': seat_id,
+            'seat_token_id': seat_id,
             'identity': identity,
             'agents_count': len([a for a in agents_meta if not a.get('revoked_at')]),
         }, 200
@@ -979,128 +953,64 @@ def get_account_info(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         return {"error": "Internal server error"}, 500
 
 
-_SOLANA_ADDR_RE = re.compile(r'^[1-9A-HJ-NP-Za-km-z]{32,44}$')
-
-
-def normalize_solana_address(raw: str) -> Optional[str]:
-    """Basic base58 Solana address check (length + charset)."""
-    if not raw:
-        return None
-    addr = str(raw).strip()
-    if not _SOLANA_ADDR_RE.match(addr):
-        return None
-    return addr
-
-
-def set_phantom_wallet(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
-    """
-    Link a Solana (Phantom) wallet for demand payments / auto-bidding.
-    Separate from ETH wallet_address used for Base seat NFTs.
-    """
+def admin_list_seats() -> Tuple[Dict[str, Any], int]:
     try:
-        username = data.get('username')
-        raw = (data.get('phantom_wallet_address') or data.get('wallet_address') or '').strip()
-        if not raw:
-            return {"error": "phantom_wallet_address required"}, 400
-        address = normalize_solana_address(raw)
-        if not address:
-            return {"error": "Invalid Solana address"}, 400
-
-        user_data = get_account(username)
-        if not user_data:
-            return {"error": "User not found"}, 404
-
-        user_data['phantom_wallet_address'] = address
-        user_data['phantom_wallet_linked_at'] = int(time.time())
-        # Optional client-reported proof metadata (not cryptographically verified yet)
-        if data.get('signature'):
-            user_data['phantom_wallet_signature'] = str(data.get('signature'))[:256]
-        if data.get('signed_message'):
-            user_data['phantom_wallet_signed_message'] = str(data.get('signed_message'))[:500]
-        save_account(username, user_data)
-
-        _emit(
-            'phantom.linked',
-            username=username,
-            actor=public_actor(username),
-            payload={'phantom_wallet_address': address},
-            idempotency_key=f"phantom.linked:{username}:{address}",
-        )
-        logger.info(f"Phantom wallet linked for {username}: {address}")
-        return {
-            "message": "Phantom wallet linked",
-            "phantom_wallet_address": address,
-        }, 200
+        return seats_mod.list_seats(), 200
     except Exception as e:
-        logger.error(f"set_phantom_wallet error: {str(e)}")
+        logger.error(f"admin_list_seats error: {e}")
         return {"error": "Internal server error"}, 500
 
 
-def clear_phantom_wallet(username: str) -> Tuple[Dict[str, Any], int]:
+def admin_assign_seat(data: Dict[str, Any], admin: str = "mickey") -> Tuple[Dict[str, Any], int]:
     try:
-        user_data = get_account(username)
-        if not user_data:
-            return {"error": "User not found"}, 404
-        user_data.pop('phantom_wallet_address', None)
-        user_data.pop('phantom_wallet_linked_at', None)
-        user_data.pop('phantom_wallet_signature', None)
-        user_data.pop('phantom_wallet_signed_message', None)
-        save_account(username, user_data)
-        return {"message": "Phantom wallet unlinked"}, 200
+        username = (data.get("username") or data.get("owner") or "").strip()
+        raw_id = data.get("seat_id")
+        seat_id = seats_mod.parse_seat_id(raw_id) if raw_id not in (None, "") else None
+        if raw_id not in (None, "") and seat_id is None:
+            return {"error": "seat_id must be a positive integer"}, 400
+        result, status = seats_mod.assign_seat(username, seat_id=seat_id, admin=admin)
+        if status == 200:
+            dest = username
+            _emit(
+                "seat.assigned",
+                username=dest,
+                actor=public_actor(admin),
+                payload={"seat_id": (result.get("seat") or {}).get("seat_id"), "owner": dest},
+                idempotency_key=f"seat.assigned:{dest}:{(result.get('seat') or {}).get('seat_id')}",
+            )
+        return result, status
     except Exception as e:
-        logger.error(f"clear_phantom_wallet error: {str(e)}")
+        logger.error(f"admin_assign_seat error: {e}")
         return {"error": "Internal server error"}, 500
 
 
-def set_wallet(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
-    """Link an Ethereum wallet address to the authenticated user's account."""
+def admin_transfer_seat(data: Dict[str, Any], admin: str = "mickey") -> Tuple[Dict[str, Any], int]:
     try:
-        username = data.get('username')
-        raw_address = (data.get('wallet_address') or '').strip()
-
-        if not raw_address:
-            return {"error": "wallet_address required"}, 400
-
-        address = seat_verification.normalize_address(raw_address)
-        if address is None:
-            return {"error": "Invalid Ethereum address"}, 400
-
-        user_data = get_account(username)
-        if not user_data:
-            return {"error": "User not found"}, 404
-
-        user_data['wallet_address'] = address
-        seat_result = seat_verification.verify_seat(address)
-        seat_status = "unknown"
-        if not seat_result["error"]:
-            user_data['seat_active'] = seat_result["valid"]
-            if seat_result["valid"]:
-                seat_status = "valid"
-                user_data['seat_token_id'] = seat_result["token_id"]
-            elif seat_result.get("revoked"):
-                seat_status = "revoked"
-                user_data['seat_token_id'] = seat_result.get("token_id")
-            else:
-                seat_status = "no_seat"
-                user_data['seat_active'] = False
-            user_data['seat_status_cached'] = seat_status
-        save_account(username, user_data)
-
-        _emit('wallet.linked', username=username, actor=public_actor(username),
-              payload={'wallet_address': address, 'seat_status': seat_status},
-              idempotency_key=f"wallet.linked:{username}:{address}")
-
-        logger.info(f"Wallet linked for {username}: {address}")
-        return {
-            "message": "Wallet address linked",
-            "wallet_address": address,
-            "seat_status": seat_status,
-            "seat_token_id": user_data.get('seat_token_id'),
-            "identity": public_actor(username),
-        }, 200
-
+        to_username = (data.get("to_username") or data.get("username") or "").strip()
+        result, status = seats_mod.transfer_seat(data.get("seat_id"), to_username, admin=admin)
+        if status == 200:
+            _emit(
+                "seat.transferred",
+                username=to_username,
+                actor=public_actor(admin),
+                payload={
+                    "seat_id": result.get("seat", {}).get("seat_id") if isinstance(result.get("seat"), dict) else data.get("seat_id"),
+                    "from_username": result.get("from_username"),
+                    "to_username": to_username,
+                },
+                idempotency_key=f"seat.transferred:{data.get('seat_id')}:{to_username}:{int(time.time())}",
+            )
+        return result, status
     except Exception as e:
-        logger.error(f"Set wallet error: {str(e)}")
+        logger.error(f"admin_transfer_seat error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def admin_set_seat_revoked(data: Dict[str, Any], revoked: bool, admin: str = "mickey") -> Tuple[Dict[str, Any], int]:
+    try:
+        return seats_mod.set_seat_revoked(data.get("seat_id"), revoked, admin=admin)
+    except Exception as e:
+        logger.error(f"admin_set_seat_revoked error: {e}")
         return {"error": "Internal server error"}, 500
 
 # -----------------------------------------------------------------------------
@@ -1204,6 +1114,7 @@ def get_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 
         _profile_defaults(user_data)
         follows = get_follows(username)
+        seat_snap = seats_mod.refresh_account_seat(username, user_data)
 
         return {
             'username': username,
@@ -1215,8 +1126,8 @@ def get_profile(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'reputation_score': round(calculate_reputation_score(user_data), 2),
             'stars': user_data.get('stars', 0),
             'total_ratings': user_data.get('total_ratings', 0),
-            'wallet_address': user_data.get('wallet_address'),
-            'phantom_wallet_address': user_data.get('phantom_wallet_address'),
+            'seat_id': seat_snap.get('seat_id'),
+            'seat_status': seat_snap.get('seat_status') or 'no_seat',
             'credits': user_data['credits'],
             'robots_owned': user_data['robots_owned'],
             'subscriptions': user_data['subscriptions'],
@@ -1781,8 +1692,11 @@ _SPEND_PERIOD_SECONDS = {
 # unless a provider marks integration_status=live and config enables charging.
 _BID_PAYMENT_METHODS = frozenset({
     "cash", "credit_card", "debit_card", "paypal", "venmo", "zelle",
-    "bank_transfer", "wire", "xmoney", "stripe", "phantom", "phantom_wallet",
-    "solana", "usdc_sol", "usdc", "crypto", "invoice", "other",
+    "bank_transfer", "wire", "xmoney", "stripe", "invoice", "other",
+})
+_BLOCKED_PAYMENT_METHODS = frozenset({
+    "phantom", "phantom_wallet", "solana", "usdc_sol", "usdc", "crypto",
+    "bitcoin", "btc", "eth", "ethereum", "nft",
 })
 _PAYMENT_INTEGRATIONS = {
     "stripe": {
@@ -1806,13 +1720,6 @@ _PAYMENT_INTEGRATIONS = {
         "integration_status": "optional",
         "config_keys": ["PAYPAL_CLIENT_ID", "PAYPAL_CLIENT_SECRET"],
     },
-    "phantom": {
-        "id": "phantom",
-        "name": "Phantom Wallet",
-        "description": "Solana/USDC wallet address for off-platform settlement.",
-        "integration_status": "optional",
-        "config_keys": [],
-    },
 }
 
 
@@ -1829,12 +1736,15 @@ def _next_run_at(from_ts: int, cadence: str, preferred_local_hour: int = 8) -> i
 
 def _normalize_payment_method(raw: Any) -> str:
     pm = str(raw or "cash").strip().lower()[:80] or "cash"
-    if pm in ("phantom_wallet", "solana", "usdc_sol", "usdc"):
-        return "phantom"
     if pm not in _BID_PAYMENT_METHODS and pm not in _PAYMENT_INTEGRATIONS:
-        # Allow free-form labels up to 80 chars for counterparty notes
         return pm
     return pm
+
+
+def _reject_blocked_payment(pm: str) -> Optional[str]:
+    if pm in _BLOCKED_PAYMENT_METHODS:
+        return "That payment method is not available. Use cash, card, PayPal, Stripe, Venmo, Zelle, or bank."
+    return None
 
 
 def _parse_spending_limits(raw: Any) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
@@ -1924,26 +1834,15 @@ def _normalize_payment_integration(
 ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     """Optional provider-specific metadata attached to bids / auto-bid templates."""
     if raw is None or raw == {}:
-        # Auto-attach Phantom wallet when method is phantom
-        if payment_method == "phantom":
-            addr = user_data.get("phantom_wallet_address")
-            if not addr:
-                return None, "Link a Phantom wallet before paying with Phantom"
-            return {
-                "provider": "phantom",
-                "wallet_address": addr,
-                "integration_status": "optional",
-            }, None
         return None, None
     if not isinstance(raw, dict):
         return None, "payment_integration must be an object"
     provider = str(
         raw.get("provider") or raw.get("id") or payment_method or ""
     ).strip().lower()
-    if provider in ("phantom_wallet", "solana", "usdc_sol"):
-        provider = "phantom"
-    if payment_method == "phantom" and not provider:
-        provider = "phantom"
+    blocked = _reject_blocked_payment(provider) or _reject_blocked_payment(payment_method)
+    if blocked:
+        return None, blocked
     known = _PAYMENT_INTEGRATIONS.get(provider)
     out: Dict[str, Any] = {
         "provider": provider or payment_method,
@@ -1951,23 +1850,11 @@ def _normalize_payment_integration(
     }
     # Pass through safe public settlement hints only (no secrets)
     for key in (
-        "account_id", "merchant_id", "email", "wallet_address",
+        "account_id", "merchant_id", "email",
         "customer_id", "checkout_url", "note", "xmoney_account",
     ):
         if raw.get(key) is not None:
             out[key] = str(raw[key])[:200]
-    if provider == "phantom" or payment_method == "phantom":
-        addr = (
-            out.get("wallet_address")
-            or user_data.get("phantom_wallet_address")
-        )
-        if not addr:
-            return None, "Link a Phantom wallet before paying with Phantom"
-        norm = normalize_solana_address(str(addr))
-        if not norm:
-            return None, "Invalid Phantom / Solana wallet address"
-        out["wallet_address"] = norm
-        out["provider"] = "phantom"
     if provider == "xmoney" and not out.get("xmoney_account") and not out.get("account_id"):
         # Allow empty — informational only
         pass
@@ -1989,7 +1876,7 @@ def _payment_provider_live(provider: str) -> bool:
         return False
     keys = meta.get("config_keys") or []
     if not keys:
-        return provider == "phantom"  # wallet address is enough for settlement hint
+        return False
     return all(bool(getattr(config, k, None)) for k in keys)
 
 
@@ -2112,6 +1999,9 @@ def create_auto_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             or data.get("payment_method")
             or "cash"
         )
+        blocked = _reject_blocked_payment(payment_method)
+        if blocked:
+            return {"error": blocked}, 400
         pay_int_raw = (
             template_in.get("payment_integration")
             if "payment_integration" in template_in
@@ -2122,17 +2012,6 @@ def create_auto_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         )
         if pay_err:
             return {"error": pay_err}, 400
-
-        phantom_addr = None
-        if payment_method == "phantom":
-            phantom_addr = (
-                (payment_integration or {}).get("wallet_address")
-                or user_data.get("phantom_wallet_address")
-            )
-            if not phantom_addr:
-                return {
-                    "error": "Link a Phantom wallet before creating auto-bids that pay with Phantom",
-                }, 400
 
         # Time-bound spending limits (required for safe recurring spend)
         limits_raw = (
@@ -2151,17 +2030,11 @@ def create_auto_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             spending_limits = {
                 "max_amount": round(price * 4, 2),
                 "period": period,
-                "currency": (
-                    "USDC" if payment_method == "phantom"
-                    else (template_in.get("currency") or data.get("currency") or "USD")
-                )[:8],
+                "currency": (template_in.get("currency") or data.get("currency") or "USD")[:8],
                 "defaulted": True,
             }
 
-        currency = (
-            "USDC" if payment_method == "phantom"
-            else (template_in.get("currency") or data.get("currency") or "USD")
-        )[:8]
+        currency = (template_in.get("currency") or data.get("currency") or "USD")[:8]
 
         item = {
             "id": str(uuid.uuid4()),
@@ -2175,7 +2048,6 @@ def create_auto_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                 "currency": currency,
                 "payment_method": payment_method,
                 "payment_integration": payment_integration,
-                "phantom_wallet_address": phantom_addr if payment_method == "phantom" else None,
                 "xmoney_account": (
                     (payment_integration or {}).get("xmoney_account")
                     or (payment_integration or {}).get("account_id")
@@ -2320,31 +2192,23 @@ def process_auto_bids_for_user(username: str) -> Tuple[Dict[str, Any], int]:
 
             hours = int(tpl.get("expires_in_hours") or 24)
             end_time = now + max(1, min(168, hours)) * 3600
-            # Refresh Phantom address from account at post time
-            acc_now = get_account(username) or {}
             pay_method = _normalize_payment_method(tpl.get("payment_method") or "cash")
-            if pay_method == "phantom":
-                if not acc_now.get("phantom_wallet_address") and not (
-                    (tpl.get("payment_integration") or {}).get("wallet_address")
-                ):
-                    skipped.append({
-                        "id": item["id"],
-                        "reason": "phantom_wallet_missing",
-                    })
-                    sched["next_run_at"] = _next_run_at(
-                        now, item.get("cadence") or "weekly",
-                        sched.get("preferred_local_hour", 8),
-                    )
-                    continue
+            if _reject_blocked_payment(pay_method):
+                skipped.append({
+                    "id": item["id"],
+                    "reason": "unsupported_payment_method",
+                })
+                sched["next_run_at"] = _next_run_at(
+                    now, item.get("cadence") or "weekly",
+                    sched.get("preferred_local_hour", 8),
+                )
+                continue
 
             bid_payload = {
                 "username": username,
                 "service": tpl.get("service"),
                 "price": tpl.get("price"),
-                "currency": (
-                    "USDC" if pay_method == "phantom"
-                    else (tpl.get("currency") or "USD")
-                ),
+                "currency": tpl.get("currency") or "USD",
                 "payment_method": pay_method,
                 "payment_integration": tpl.get("payment_integration"),
                 "xmoney_account": tpl.get("xmoney_account"),
@@ -2353,11 +2217,6 @@ def process_auto_bids_for_user(username: str) -> Tuple[Dict[str, Any], int]:
                 "privacy_level": tpl.get("privacy_level"),
                 "from_auto_bid_id": item.get("id"),
             }
-            if pay_method == "phantom":
-                bid_payload["phantom_wallet_address"] = (
-                    (tpl.get("payment_integration") or {}).get("wallet_address")
-                    or acc_now.get("phantom_wallet_address")
-                )
             if tpl.get("address"):
                 bid_payload["address"] = tpl["address"]
 
@@ -2476,9 +2335,12 @@ def create_bid_request(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         # Normalize optional payment integration onto the one-shot bid
         user_data = get_account(data.get("username")) or {}
         pm = _normalize_payment_method(data.get("payment_method") or "cash")
+        blocked = _reject_blocked_payment(pm)
+        if blocked:
+            return {"error": blocked}, 400
         data = dict(data)
         data["payment_method"] = pm
-        if "payment_integration" in data or pm == "phantom":
+        if "payment_integration" in data:
             pay_int, pay_err = _normalize_payment_integration(
                 pm, data.get("payment_integration"), user_data
             )
@@ -2486,8 +2348,6 @@ def create_bid_request(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
                 return {"error": pay_err}, 400
             if pay_int:
                 data["payment_integration"] = pay_int
-                if pay_int.get("wallet_address"):
-                    data["phantom_wallet_address"] = pay_int["wallet_address"]
                 if pay_int.get("xmoney_account") or pay_int.get("account_id"):
                     data["xmoney_account"] = (
                         pay_int.get("xmoney_account") or pay_int.get("account_id")
@@ -2710,12 +2570,6 @@ _COSMETICS_CATEGORY_TO_OWNED_KEY = {
 
 PAYMENT_PROVIDERS = [
     {
-        "id": "phantom_wallet",
-        "name": "Phantom Wallet",
-        "description": "Pay with SOL/USDC via Phantom Wallet. Integration pending.",
-        "integration_status": "pending",
-    },
-    {
         "id": "xmoney",
         "name": "XMoney",
         "description": "Pay with card or bank transfer via XMoney. Integration pending.",
@@ -2731,9 +2585,9 @@ def handle_get_cosmetics_catalog() -> Tuple[Dict[str, Any], int]:
 def handle_purchase_cosmetic(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
     """
     Purchase a cosmetic item. payment_method 'credits' deducts from the user's internal
-    balance and fulfills immediately. External providers (Phantom Wallet, XMoney) are
-    stubbed pending real integration, following the financing-partner pattern: the
-    order is recorded as pending, no charge is attempted, nothing is added to inventory.
+    balance and fulfills immediately. External providers (XMoney) are stubbed pending
+    real integration: the order is recorded as pending, no charge is attempted, nothing
+    is added to inventory.
     """
     try:
         username = data.get('username')
@@ -3102,23 +2956,20 @@ def submit_bid(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'end_lat': end_lat,
             'end_lon': end_lon,
         }
-        # Phantom / Solana settlement hint for providers (off-platform)
-        pm = str(payment_method or '').lower()
-        if pm in ('phantom', 'phantom_wallet', 'solana', 'usdc_sol'):
-            bid['payment_method'] = 'phantom'
-            bid['currency'] = currency if currency and currency != 'USD' else 'USDC'
-            p_addr = data.get('phantom_wallet_address') or user_data.get('phantom_wallet_address')
-            if p_addr and normalize_solana_address(str(p_addr)):
-                bid['phantom_wallet_address'] = normalize_solana_address(str(p_addr))
+        pm = _normalize_payment_method(payment_method)
+        blocked = _reject_blocked_payment(pm)
+        if blocked:
+            return {"error": blocked}, 400
+        bid['payment_method'] = pm
 
-        # Optional payment integration metadata (Stripe / XMoney / PayPal / Phantom)
+        # Optional payment integration metadata (Stripe / XMoney / PayPal)
         pay_int = data.get('payment_integration')
         if isinstance(pay_int, dict) and pay_int:
             bid['payment_integration'] = {
                 k: pay_int[k] for k in pay_int
                 if k in (
                     'provider', 'integration_status', 'account_id', 'merchant_id',
-                    'email', 'wallet_address', 'customer_id', 'checkout_url',
+                    'email', 'customer_id', 'checkout_url',
                     'note', 'xmoney_account', 'charge_now',
                 )
             }
@@ -3287,11 +3138,11 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             return {"error": "User not found"}, 404
 
         if config.SEAT_VERIFICATION_ENABLED:
+            seats_mod.refresh_account_seat(username, user_data)
             if not user_data.get('seat_active'):
-                wallet = user_data.get('wallet_address')
-                if not wallet:
-                    return {"error": "No wallet address linked. Use /set_wallet to link your Ethereum wallet."}, 403
-                return {"error": f"No valid The RSE Seat NFT found for wallet {wallet}. Use /set_wallet to re-sync after acquiring a seat."}, 403
+                return {
+                    "error": "No valid seat assigned. Message Mickey Shaughnessy (@MichaelSha10041 on X) to get a seat.",
+                }, 403
 
         _GRAB_COOLDOWN = int(getattr(config, 'GRAB_JOB_COOLDOWN_SECONDS', 900) or 900)
         last_grab = user_data.get('last_grab_at', 0)
@@ -3411,7 +3262,8 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'party': [],
             'supply_party': [],
             'demand_party': [],
-            'provider_seat_token_id': user_data.get('seat_token_id'),
+            'provider_seat_id': seats_mod.account_seat_id(user_data),
+            'provider_seat_token_id': seats_mod.account_seat_id(user_data),
             'seat_verification': bool(getattr(config, 'SEAT_VERIFICATION_ENABLED', False)),
             'match_score': scored[0][0],
         }
@@ -4515,6 +4367,10 @@ def handle_admin_overview() -> Tuple[Dict[str, Any], int]:
             extra["campaigns"] = len(get_all_campaigns() or [])
         except Exception:
             extra["campaigns"] = None
+        try:
+            extra["seats"] = seats_mod.list_seats().get("count")
+        except Exception:
+            extra["seats"] = None
         return {
             "generated": int(time.time()),
             "platform": plat if isinstance(plat, dict) else {},
@@ -5580,7 +5436,8 @@ def respond_campaign_commitment(campaign_id: str, commitment_id: str, data: Dict
             'party': [],
             'supply_party': [],
             'demand_party': [],
-            'provider_seat_token_id': (provider_data or {}).get('seat_token_id'),
+            'provider_seat_id': seats_mod.account_seat_id(provider_data),
+            'provider_seat_token_id': seats_mod.account_seat_id(provider_data),
         }
         _copy_sponsors_to_demand_party(job_record, campaign)
         save_job(job_id, job_record)
@@ -5904,8 +5761,8 @@ def get_portfolio(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'location': acc.get('location'),
             'profile_slug': acc.get('profile_slug'),
         }
-        if identity.get('seat_token_id') is not None and identity.get('public_id', '').startswith('seat:'):
-            resp['canonical_portfolio'] = f"/portfolio/seat/{identity['seat_token_id']}"
+        if identity.get('seat_id') is not None and identity.get('public_id', '').startswith('seat:'):
+            resp['canonical_portfolio'] = f"/portfolio/seat/{identity['seat_id']}"
         return resp, 200
     except Exception as e:
         logger.error(f"get_portfolio error: {e}")
@@ -5913,24 +5770,24 @@ def get_portfolio(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 
 
 def get_portfolio_by_seat(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
-    """Public portfolio by seat token id."""
+    """Public portfolio by seat id."""
     try:
-        token_id = data.get('token_id')
-        try:
-            token_id = int(token_id)
-        except (TypeError, ValueError):
-            return {"error": "token_id must be integer"}, 400
-        # Scan accounts for matching seat_token_id (acceptable for Stage C scale)
-        owner = None
-        for uname, acc in get_all_accounts():
-            if acc.get('seat_token_id') == token_id:
-                owner = uname
-                break
+        token_id = data.get('token_id') if data.get('token_id') is not None else data.get('seat_id')
+        seat_id = seats_mod.parse_seat_id(token_id)
+        if seat_id is None:
+            return {"error": "seat_id must be integer"}, 400
+        owner = seats_mod.owner_for_seat(seat_id)
+        if not owner:
+            for uname, acc in get_all_accounts():
+                if seats_mod.account_seat_id(acc) == seat_id:
+                    owner = uname
+                    break
         if not owner:
             return {"error": "Seat portfolio not found"}, 404
         resp, status = get_portfolio({'target_username': owner})
         if status == 200:
-            resp['seat_token_id'] = token_id
+            resp['seat_id'] = seat_id
+            resp['seat_token_id'] = seat_id
             resp['canonical'] = True
         return resp, status
     except Exception as e:

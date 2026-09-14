@@ -259,7 +259,7 @@ def main() -> None:
     print("\nDriver details:")
     print(f"  Username    : {job['provider_username']}")
     print(f"  Reputation  : {job.get('provider_reputation', 0):.1f}/5.0")
-    print(f"  Seat stamp  : {job.get('provider_seat_token_id')}")
+    print(f"  Seat stamp  : {job.get('provider_seat_id') or job.get('provider_seat_token_id')}")
     print(f"  Pickup      : {job.get('start_address', job.get('address'))}")
     print(f"  Drop-off    : {job.get('end_address')}")
     print(f"  Fare        : {job.get('currency')} {job.get('price')}")

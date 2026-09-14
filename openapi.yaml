@@ -9,7 +9,7 @@ info:
     post priced, expiring service requests ("bids"). Supply accounts call matching
     endpoints to claim work. The exchange provides matching, reputation, cooperation
     tools (job parties, campaigns), chat, and portable history — **payment is settled
-    directly between parties** (cash, crypto, or other off-platform methods).
+    directly between parties** (cash, cards, PayPal, or other off-platform methods).
 
     ## People and friends
 
@@ -37,8 +37,8 @@ info:
     | `demand` | Buyer / job requester | bid, campaigns, demand-side party invites |
     | `supply` | Provider / robot operator | grab_job, supply-side party invites, campaign commits |
 
-    Optional wallet linking (`POST /set_wallet`) and The RSE Seat NFT fields appear on
-    `/account`. Seat verification may gate `/grab_job` when enabled server-side.
+    Seat fields appear on `/account`. Mickey Shaughnessy assigns seats in the Exchange
+    registry (`/admin/seats*`). Seat verification may gate `/grab_job` when enabled.
     The public website is demand-side (people posting bids). Supply, chat, parties,
     and campaigns are called on the API at rse-api.com.
 
@@ -99,8 +99,8 @@ tags:
       Use these for monitoring and dashboards — they do not require authentication.
   - name: Auth
     description: |
-      Account lifecycle: register (demand or supply), login for a 24h Bearer token,
-      read account/reputation snapshot, and optionally link a wallet.
+      Account lifecycle: register (demand or supply), login for a Bearer token,
+      read account/reputation snapshot and seat status.
   - name: Marketplace
     description: |
       The primary economic loop — post requests (bids), cancel, grab matches, reject,
@@ -184,7 +184,7 @@ components:
           description: Whether the authenticated viewer follows this user
     PublicProfile:
       type: object
-      description: Privacy-filtered public profile (no contact, wallets, or hashes)
+      description: Privacy-filtered public profile (no contact or hashes)
       properties:
         username: { type: string }
         display_name: { type: string, nullable: true }
@@ -527,7 +527,7 @@ paths:
       description: |
         Returns the caller's account profile fields relevant to marketplace trust:
         stars/ratings, completed_jobs, computed `reputation_score` (used in matching),
-        optional wallet/seat fields, and a small identity block.
+        optional seat fields, and a small identity block.
 
         This is the private self-view. For public social proof of another user,
         use `GET /portfolio/{username}` instead.
@@ -546,41 +546,24 @@ paths:
                 total_ratings: 22
                 completed_jobs: 20
                 reputation_score: 4.51
-                wallet_address: null
-                seat_status: no_wallet
-                seat_token_id: null
+                seat_status: no_seat
+                seat_id: null
         '401': { description: Missing or invalid token }
         '404': { description: User not found }
 
-  /set_wallet:
-    post:
+  /admin/seats:
+    get:
       tags: [Auth]
-      summary: Link an Ethereum wallet address to the account
+      summary: List seats in the Exchange registry
       description: |
-        Optional identity step. Stores a checksummed Ethereum address on the
-        account and may sync The RSE Seat NFT ownership when seat verification is
-        configured. **Does not currently gate** grab/bid access unless the server
-        has `SEAT_VERIFICATION_ENABLED=True`.
-
-        Useful for seat-linked public portfolios (`/portfolio/seat/{token_id}`).
+        Mickey Shaughnessy is the registrar. Admin auth required.
+        Seats are fully transferable via `POST /admin/seats/transfer`.
       security:
         - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [wallet_address]
-              properties:
-                wallet_address:
-                  type: string
-                  example: '0x0000000000000000000000000000000000000001'
-                  description: 0x-prefixed 40-hex Ethereum address
       responses:
-        '200': { description: Wallet linked (and seat fields refreshed if applicable) }
-        '400': { description: Invalid Ethereum address }
+        '200': { description: Seat list }
         '401': { description: Missing or invalid token }
+        '403': { description: Not an admin }
 
   /my_bids:
     get:
@@ -658,7 +641,7 @@ paths:
         Processing skips posts that would exceed the period budget.
 
         **Optional payment integrations** (`payment_method` + optional
-        `payment_integration`): cash, stripe, xmoney, paypal, phantom, etc.
+        `payment_integration`): cash, stripe, xmoney, paypal, venmo, etc.
         Live charge only when provider config keys are set and `charge_now` is true;
         otherwise fields are settlement hints for the counterparty.
       security:
@@ -681,7 +664,7 @@ paths:
                 payment_method:
                   type: string
                   default: cash
-                  description: cash | stripe | xmoney | paypal | phantom | venmo | wire | …
+                  description: cash | stripe | xmoney | paypal | venmo | wire | …
                 payment_integration:
                   type: object
                   description: Optional provider metadata (no secrets)
@@ -690,7 +673,6 @@ paths:
                     account_id: { type: string }
                     merchant_id: { type: string }
                     email: { type: string }
-                    wallet_address: { type: string }
                     xmoney_account: { type: string }
                     charge_now: { type: boolean, default: false }
                 end_time:
@@ -2393,10 +2375,10 @@ paths:
   /portfolio/seat/{token_id}:
     get:
       tags: [Discovery]
-      summary: Public portfolio by The RSE Seat token id
+      summary: Public portfolio by seat id
       description: |
         Canonical portfolio lookup when identity is seat-linked. Resolves the
-        account that owns the given ERC-721 seat `token_id` and returns the same
+        account that holds the given registry seat id and returns the same
         shape as `/portfolio/{username}`, with seat metadata flags. Prefer this
         URL when you have a seat id rather than a mutable username.
       parameters:

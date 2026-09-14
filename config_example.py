@@ -32,17 +32,9 @@ LLM_MAX_TOKENS = 800
 TOKEN_EXPIRY_SECONDS = 7776000  # 90 days — stay signed in across app closes
 DEFAULT_MAX_DISTANCE_MILES = 10
 
-# RSE Seat NFT — ERC-721 on Base mainnet
-# Contract: https://basescan.org/address/0x151fEB62F0D3085617a086130cc67f7f18Ce33CE
-ETH_PRIVATE_KEY = '0x...'                          # deployer/owner wallet private key
-RSE_SEAT_CONTRACT_ADDRESS = '0x151fEB62F0D3085617a086130cc67f7f18Ce33CE'
-RSE_SEAT_OWNER_PRIVATE_KEY = ETH_PRIVATE_KEY        # alias
-BASE_RPC_URL = 'https://mainnet.base.org'
-BASE_SEPOLIA_RPC_URL = 'https://sepolia.base.org'
-SEAT_NETWORK = 'base'                               # 'base' for mainnet, 'base_sepolia' for testnet
-NETWORK = SEAT_NETWORK                              # alias used by seat_admin scripts
-SEAT_VERIFICATION_ENABLED = False                   # set True to enforce NFT gate on /grab_job
-SEAT_METADATA_BASE_URI = 'https://mithril-media.sfo3.digitaloceanspaces.com/theservicesexchange/rse-seats/'
+# Seats — Mickey Shaughnessy assigns, transfers, and revokes via /admin/seats*.
+# Grab-job gate stays off until you flip this.
+SEAT_VERIFICATION_ENABLED = False
 
 # -----------------------------------------------------------------------------
 # Feature flags (demand coop / identity / history / agents)

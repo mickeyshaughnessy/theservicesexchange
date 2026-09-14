@@ -64,20 +64,10 @@ Thumbs.db
 # Logs
 *.log
 
-# Local config — contains live API keys and private key. NEVER COMMIT.
+# Local config — contains live API keys. NEVER COMMIT.
 config_local.py
 /config.py
 .env
-
-# Hardhat .env (ETH private key for deployment) — see contracts/.env.example
-contracts/.env
-
-# Seat data (keep in repo but could be sensitive)
-# seats.dat
-# silver_seats.dat
-
-# Generated NFT metadata (re-create with generate_metadata.py)
-seat_admin/metadata/
 
 # Operational logs written by seat_admin scripts
 seat_admin/revocation_log.json

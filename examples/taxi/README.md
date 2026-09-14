@@ -60,14 +60,14 @@ export RSE_VERIFY_SSL=0
 ## Driver agent details
 
 1. Operator account (`user_type=supply`) registers/logs in.
-2. Optional `POST /set_wallet` for seat identity (`public_id` → `seat:{id}`).
+2. Optional seat assignment by Mickey (registry) for identity (`public_id` → `seat:{id}`).
 3. `POST /agents` with scopes:
    - `history:read`, `jobs:grab`, `jobs:write`, `chat:write`, `chat:read`
 4. Vehicle process uses **agent** bearer token for:
    - `POST /grab_job`
    - `GET/POST /jobs/{id}/messages` (status: `en_route`, `arrived`, `in_trip`, `completed`)
    - `POST /sign_job` / `POST /reject_job`
-5. Agent cannot create agents, change wallet, or hit undeclared routes (default-deny).
+5. Agent cannot create agents or hit undeclared routes (default-deny).
 
 `/grab_job` is limited per **operator account** (server `GRAB_JOB_COOLDOWN_SECONDS`, default **900s**).  
 Client wait: `RSE_GRAB_COOLDOWN` (default 900).
@@ -117,7 +117,7 @@ Portfolio / export: site `portfolio.html`, APIs `GET /portfolio/{user}`, `GET /e
 **Supply**
 - [ ] `supply` operator account
 - [ ] Agent token with grab + chat scopes
-- [ ] Optional seat wallet
+- [ ] Optional seat (Mickey assigns)
 - [ ] Honor grab cooldown
 - [ ] Always sign or reject — never drop a grabbed job
 - [ ] Stream status on the job channel

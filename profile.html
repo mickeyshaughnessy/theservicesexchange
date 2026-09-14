@@ -239,47 +239,19 @@
                 </div>
 
                 <div class="profile-card">
-                    <h6>Wallet &amp; Credits</h6>
-                    <p>ETH wallet (seats): <span id="walletAddressText">Not linked</span></p>
-                    <p class="text-muted" style="font-size:0.85rem;">Seat status: <span id="seatStatusText">—</span></p>
-                    <div class="row g-2 align-items-end mb-2">
-                        <div class="col-md-8">
-                            <label class="form-label" for="walletAddressInput">Link or update wallet (Base / ETH)</label>
-                            <input type="text" class="form-control" id="walletAddressInput" placeholder="0x…" autocomplete="off" spellcheck="false">
-                        </div>
-                        <div class="col-md-4">
-                            <button type="button" class="btn btn-primary w-100" id="linkWalletBtn" onclick="linkWalletFromProfile()">Link wallet</button>
-                        </div>
-                    </div>
-                    <p id="walletLinkStatus" class="small-text mb-2" style="display:none;"></p>
-                    <p class="text-muted" style="font-size:0.85rem;">Need a seat? Message <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">@MichaelSha10041</a> on X with this address, then re-link to refresh seat status.</p>
-
-                    <hr style="border-color: rgba(0,255,255,0.2); margin: 1rem 0;">
-                    <h6 class="mt-2">Phantom (Solana) — auto-bidding payments</h6>
+                    <h6>Seat &amp; Credits</h6>
+                    <p>Seat: <span id="seatStatusText">—</span></p>
                     <p class="text-muted" style="font-size:0.85rem;">
-                        Connect Phantom to mark auto-requests as paid in USDC/SOL off-platform.
-                        Settlement is still between you and the provider; the exchange does not custody funds.
+                        Mickey Shaughnessy assigns seats. Message
+                        <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">@MichaelSha10041</a>
+                        on X. Seats transfer when he updates the registry.
                     </p>
-                    <p>Phantom: <span id="phantomWalletText">Not linked</span></p>
-                    <div class="row g-2 align-items-end mb-2">
-                        <div class="col-md-8">
-                            <label class="form-label" for="phantomWalletInput">Solana address (or Connect Phantom)</label>
-                            <input type="text" class="form-control" id="phantomWalletInput" placeholder="Base58 address…" autocomplete="off" spellcheck="false">
-                        </div>
-                        <div class="col-md-4 d-flex flex-column gap-1">
-                            <button type="button" class="btn btn-primary w-100" id="connectPhantomBtn" onclick="connectPhantomFromProfile()">Connect Phantom</button>
-                            <button type="button" class="btn btn-outline-light w-100 btn-sm" onclick="linkPhantomFromProfile()">Save address</button>
-                        </div>
-                    </div>
-                    <p id="phantomLinkStatus" class="small-text mb-2" style="display:none;"></p>
-                    <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="unlinkPhantomFromProfile()">Unlink Phantom</button>
-
                     <p class="mt-3">Credits balance: <strong id="creditsBalanceText">0</strong></p>
                 </div>
 
                 <div class="profile-card">
                     <h6>Cosmetics Shop</h6>
-                    <p class="text-muted" style="font-size: 0.85rem;">Spend credits on frames, backgrounds, fonts, and text colors. Phantom checkout for cosmetics is still pending — use credits for now.</p>
+                    <p class="text-muted" style="font-size: 0.85rem;">Spend credits on frames, backgrounds, fonts, and text colors.</p>
                     <div id="shopCatalog" class="row g-2"></div>
                 </div>
 
@@ -287,7 +259,6 @@
                     <h6>Auto-requests (recurring demand)</h6>
                     <p class="text-muted" style="font-size: 0.85rem;">
                         Up to 5 active templates. When due, the API re-posts an open request.
-                        Use <strong>Phantom</strong> as payment so providers see your Solana address on the bid.
                     </p>
                     <div id="autoBidsList"></div>
                     <div class="row g-2 mt-2">
@@ -309,8 +280,12 @@
                         </div>
                         <div class="col-md-3">
                             <select class="form-control form-control-sm" id="autoBidPayInput">
-                                <option value="phantom">Phantom (USDC)</option>
                                 <option value="cash">Cash / off-platform</option>
+                                <option value="paypal">PayPal</option>
+                                <option value="stripe">Stripe</option>
+                                <option value="venmo">Venmo</option>
+                                <option value="zelle">Zelle</option>
+                                <option value="bank_transfer">Bank transfer</option>
                             </select>
                         </div>
                         <div class="col-md-3"><input class="form-control form-control-sm" id="autoBidAddressInput" placeholder="Address / area"></div>
@@ -533,109 +508,18 @@
                 document.getElementById('editContactInfo').value = p.contact_info || '';
                 const up = document.getElementById('editUsernamePublic');
                 if (up) up.checked = p.username_public !== false;
-                document.getElementById('walletAddressText').textContent = p.wallet_address || 'Not linked';
                 const seatEl = document.getElementById('seatStatusText');
-                if (seatEl) seatEl.textContent = p.seat_status || (p.wallet_address ? 'unknown' : 'no_wallet');
-                const walletInput = document.getElementById('walletAddressInput');
-                if (walletInput && p.wallet_address) walletInput.value = p.wallet_address;
+                if (seatEl) {
+                    const sid = p.seat_id != null ? p.seat_id : p.seat_token_id;
+                    const st = p.seat_status || 'no_seat';
+                    seatEl.textContent = sid != null ? ('#' + sid + ' · ' + st) : st;
+                }
                 document.getElementById('creditsBalanceText').textContent = p.credits;
-
-                const phantomText = document.getElementById('phantomWalletText');
-                const phantomInput = document.getElementById('phantomWalletInput');
-                if (phantomText) {
-                    phantomText.textContent = p.phantom_wallet_address || 'Not linked';
-                }
-                if (phantomInput && p.phantom_wallet_address) {
-                    phantomInput.value = p.phantom_wallet_address;
-                }
 
                 renderRobotsOwned(p.robots_owned || [], true);
                 await loadAutoBidsWeb();
 
                 await Promise.all([loadShareLink(), loadShopCatalog(p.cosmetics_owned), loadRequestHistory()]);
-            } catch (e) { /* ignore */ }
-        }
-
-        function getPhantomProvider() {
-            if (window.phantom && window.phantom.solana && window.phantom.solana.isPhantom) {
-                return window.phantom.solana;
-            }
-            if (window.solana && window.solana.isPhantom) {
-                return window.solana;
-            }
-            return null;
-        }
-
-        async function connectPhantomFromProfile() {
-            const status = document.getElementById('phantomLinkStatus');
-            status.style.display = 'block';
-            const provider = getPhantomProvider();
-            if (!provider) {
-                status.textContent = 'Phantom not found — install the Phantom browser extension, then retry.';
-                window.open('https://phantom.app/', '_blank', 'noopener');
-                return;
-            }
-            try {
-                status.textContent = 'Connecting…';
-                const resp = await provider.connect();
-                const address = (resp && resp.publicKey)
-                    ? resp.publicKey.toString()
-                    : (provider.publicKey && provider.publicKey.toString());
-                if (!address) throw new Error('No public key');
-                document.getElementById('phantomWalletInput').value = address;
-                await linkPhantomWallet(address, status);
-            } catch (e) {
-                status.textContent = (e && e.message) || 'Phantom connect cancelled';
-            }
-        }
-
-        async function linkPhantomFromProfile() {
-            const status = document.getElementById('phantomLinkStatus');
-            status.style.display = 'block';
-            const address = (document.getElementById('phantomWalletInput').value || '').trim();
-            await linkPhantomWallet(address, status);
-        }
-
-        async function linkPhantomWallet(address, statusEl) {
-            if (!AppState.authToken) {
-                showAuth({ defaultTab: 'login', title: 'Log in to link Phantom' });
-                return;
-            }
-            if (!address) {
-                if (statusEl) statusEl.textContent = 'Enter a Solana address or Connect Phantom';
-                return;
-            }
-            try {
-                if (statusEl) statusEl.textContent = 'Saving…';
-                const res = await fetch(`${PROFILE_API}/set_phantom_wallet`, {
-                    method: 'POST',
-                    headers: authHeaders(),
-                    body: JSON.stringify({ phantom_wallet_address: address }),
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) {
-                    if (statusEl) statusEl.textContent = data.error || 'Could not link Phantom';
-                    return;
-                }
-                document.getElementById('phantomWalletText').textContent = data.phantom_wallet_address || address;
-                if (statusEl) statusEl.textContent = 'Phantom linked for auto-bidding payments';
-                if (typeof showToast === 'function') showToast('Phantom wallet linked', 'success');
-            } catch (e) {
-                if (statusEl) statusEl.textContent = 'Network error linking Phantom';
-            }
-        }
-
-        async function unlinkPhantomFromProfile() {
-            try {
-                await fetch(`${PROFILE_API}/set_phantom_wallet`, {
-                    method: 'DELETE',
-                    headers: authHeaders(),
-                });
-                document.getElementById('phantomWalletText').textContent = 'Not linked';
-                document.getElementById('phantomWalletInput').value = '';
-                const status = document.getElementById('phantomLinkStatus');
-                status.style.display = 'block';
-                status.textContent = 'Phantom unlinked';
             } catch (e) { /* ignore */ }
         }
 
@@ -675,7 +559,6 @@
                             <strong>${escapeHtml(a.name || 'Auto')}</strong>
                             <span class="badge bg-secondary ms-1">${escapeHtml(a.status || '')}</span>
                             <div class="small text-muted">${escapeHtml(a.cadence || '')} · ${pay} · $${escapeHtml(String(tpl.price ?? ''))}
-                            ${tpl.phantom_wallet_address ? ' · ' + escapeHtml(String(tpl.phantom_wallet_address).slice(0, 8)) + '…' : ''}
                             </div>
                             <div class="small text-muted">Next: ${escapeHtml(next)}${limTxt ? ' · ' + limTxt : ''}</div>
                         </div>
@@ -705,13 +588,6 @@
             if (!service || !(price > 0)) {
                 status.textContent = 'Service and price required.';
                 return;
-            }
-            if (payment_method === 'phantom') {
-                const linked = (document.getElementById('phantomWalletText').textContent || '').trim();
-                if (!linked || linked === 'Not linked') {
-                    status.textContent = 'Connect Phantom first for USDC auto-bids.';
-                    return;
-                }
             }
             status.textContent = 'Creating…';
             try {

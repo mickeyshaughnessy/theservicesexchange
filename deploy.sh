@@ -25,7 +25,7 @@ if [[ "$BRANCH" != "main" ]]; then
 fi
 
 echo "    py_compile…"
-python3 -m py_compile api_server.py handlers.py utils.py
+python3 -m py_compile api_server.py handlers.py utils.py seats.py
 echo "    py_compile ok"
 
 if [[ -f ".env" ]]; then
