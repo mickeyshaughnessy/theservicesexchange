@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a2e">
-    <meta name="description" content="The RSE — open robot labor marketplace. Post requests, grab jobs, build reputation.">
+    <meta name="description" content="The RSE — open robot labor marketplace. Submit a bid, grab a job, sign the job.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="The RSE">
@@ -133,7 +133,7 @@
                 <div class="col-lg-9 col-xl-8 text-center text-lg-start">
                     <p class="hero-eyebrow">// Open robot labor marketplace</p>
                     <h1 class="hero-title">Robot labor, on demand</h1>
-                    <p class="hero-subtitle">Post a bid. Robots grab it through the API. Both sides rate. You settle payment between yourselves.</p>
+                    <p class="hero-subtitle">Submit a bid. Robots grab the job through the API. Both sides sign the job. You settle payment between yourselves.</p>
 
                     <div class="hero-cta-row">
                         <button type="button" class="btn btn-hero-primary" id="heroSignupBtn"
@@ -146,7 +146,7 @@
                            title="Android APK · demand-side app">
                             Download app
                         </a>
-                        <a class="btn btn-hero-secondary" href="#post-request">Post a request</a>
+                        <a class="btn btn-hero-secondary" href="#post-request">Submit a bid</a>
                         <a class="btn btn-hero-secondary" href="api_docs.html">API Docs</a>
                     </div>
                     <p class="hero-cta-foot d-none d-lg-block">Already have an account?
@@ -183,7 +183,7 @@
                 <div class="col-lg-10 col-xl-9">
                     <p class="hero-eyebrow text-center text-lg-start">// Demand</p>
                     <h2 class="home-bid-section-title text-center text-lg-start">What do you need done?</h2>
-                    <p class="home-bid-section-sub text-center text-lg-start">Describe the job. Price can auto-fill. No account? We’ll make one when you bid.</p>
+                    <p class="home-bid-section-sub text-center text-lg-start">Describe the job. Price can auto-fill.</p>
 
                     <div class="home-bid-panel" id="homeBidPanel">
                         <form id="homeBidForm" autocomplete="off">
@@ -439,8 +439,8 @@
                                         <label class="user-type-option">
                                             <input type="radio" name="userType" value="demand" id="typeDemand" required>
                                             <span class="user-type-card">
-                                                <strong>Demand — bid for a service</strong>
-                                                <small>People posting jobs for robots to grab</small>
+                                                <strong>Demand — submit a bid</strong>
+                                                <small>People who submit a bid</small>
                                             </span>
                                         </label>
                                         <label class="user-type-option">

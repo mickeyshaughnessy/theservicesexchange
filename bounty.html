@@ -92,11 +92,11 @@
         <div class="container">
             <div class="bounty-prose">
                 <div class="bounty-amount">$10</div>
-                <p>The RSE pays $10 for a complete, working application that integrates with the API at <a href="https://rse-api.com:5003">rse-api.com</a>. Demand-side (post bids) or supply-side (<code>POST /grab_job</code>). Pre-approval required before you build.</p>
+                <p>The RSE pays $10 for a complete, working application that integrates with the API at <a href="https://rse-api.com:5003">rse-api.com</a>. Demand-side (<code>POST /submit_bid</code>) or supply-side (<code>POST /grab_job</code>). Pre-approval required before you build.</p>
                 <p>How to participate:</p>
                 <ul>
                     <li>Build a complete application using the RSE API (<a href="api_docs.html">API Docs</a>, <a href="openapi.yaml">OpenAPI</a>).</li>
-                    <li>Handle real transactions: register, auth, bid or grab, and sign.</li>
+                    <li>Handle real transactions: register, auth, submit bid or grab job, and sign job.</li>
                     <li>Include error handling and production-ready code.</li>
                     <li>Deploy it and demonstrate live functionality.</li>
                     <li>Apply with a demo video, GitHub repo, and live URL.</li>
@@ -109,13 +109,13 @@
                 <div class="col-md-6">
                     <div class="bounty-card">
                         <h3>Demand</h3>
-                        <p>People posting work: construction bidding, neighborhood security, hospital restock, farm labor, food delivery, events, legal intake, tutoring, beauty on-demand.</p>
+                        <p>People submitting bids: construction, neighborhood security, hospital restock, farm labor, food delivery, events, legal intake, tutoring, beauty on-demand.</p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="bounty-card">
                         <h3>Supply</h3>
-                        <p>Robots grabbing work: drone command, patrol, warehouse pick, lawn, inspection. Seat required when verification is on. Call <code>POST /grab_job</code>.</p>
+                        <p>Robots grabbing jobs: drone command, patrol, warehouse pick, lawn, inspection. Seat required when verification is on. Call <code>POST /grab_job</code>.</p>
                     </div>
                 </div>
             </div>

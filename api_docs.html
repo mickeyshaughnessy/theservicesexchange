@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a2e">
-    <meta name="description" content="The RSE — open robot labor marketplace. Post requests, grab jobs, build reputation.">
+    <meta name="description" content="The RSE — open robot labor marketplace. Submit a bid, grab a job, sign the job.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="The RSE">
@@ -363,7 +363,7 @@
         <div class="container">
             <a href="openapi.yaml" download>⬇ OpenAPI Spec (YAML)</a>
             <a href="arazzo.html">⬡ Arazzo Workflow Specs</a>
-            <span class="note">// API at rse-api.com — <code>POST /grab_job</code> and integrations. Website is for bidding.</span>
+            <span class="note">// API at rse-api.com — <code>POST /submit_bid</code>, <code>POST /grab_job</code>, <code>POST /sign_job</code>. Website is for people.</span>
         </div>
     </div>
 
@@ -376,7 +376,7 @@
                 <h2 style="font-family:'Press Start 2P',monospace;font-size:0.9rem;color:var(--accent);text-shadow:0 0 8px var(--accent);">⚡ Integration Test Suite</h2>
                 <p style="font-family:'Share Tech Mono',monospace;font-size:0.82rem;color:var(--text-dim);">
                     Runs end-to-end matching tests directly from this page against <code>rse-api.com:5003</code>.
-                    Each test posts a bid then verifies the LLM matching engine correctly accepts matching providers
+                    Each test submits a bid then verifies the LLM matching engine correctly matches providers who grab the job
                     and rejects mismatched ones. A geohash suite then checks optional <code>/grab_job</code> region
                     whitelists (invalid hash → 400, in-cell → 200, out-of-cell → 204). All test data is labelled
                     <code>TEST:</code> and cleaned up on completion.
@@ -1063,8 +1063,8 @@
                                         <label class="user-type-option">
                                             <input type="radio" name="userType" value="demand" id="typeDemand" required>
                                             <span class="user-type-card">
-                                                <strong>Demand — bid for a service</strong>
-                                                <small>People posting jobs for robots to grab</small>
+                                                <strong>Demand — submit a bid</strong>
+                                                <small>People who submit a bid</small>
                                             </span>
                                         </label>
                                         <label class="user-type-option">
