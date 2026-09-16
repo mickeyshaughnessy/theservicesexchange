@@ -23,7 +23,7 @@ from utils import (
 
 logger = logging.getLogger(__name__)
 
-_SEAT_CONTACT = "Message Mickey Shaughnessy (@MichaelSha10041 on X) to get or transfer a seat."
+_SEAT_CONTACT = "Message Mickey Shaughnessy (@MichaelSha10041 on X or therobotservicesexchange@proton.me) to get or transfer a seat."
 
 
 def parse_seat_id(raw: Any) -> Optional[int]:

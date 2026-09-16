@@ -3141,7 +3141,7 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             seats_mod.refresh_account_seat(username, user_data)
             if not user_data.get('seat_active'):
                 return {
-                    "error": "No valid seat assigned. Message Mickey Shaughnessy (@MichaelSha10041 on X) to get a seat.",
+                    "error": "No valid seat assigned. Message Mickey Shaughnessy (@MichaelSha10041 on X or therobotservicesexchange@proton.me) to get a seat.",
                 }, 403
 
         _GRAB_COOLDOWN = int(getattr(config, 'GRAB_JOB_COOLDOWN_SECONDS', 900) or 900)

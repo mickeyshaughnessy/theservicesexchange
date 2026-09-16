@@ -668,7 +668,7 @@ function updateReturningUserHome() {
                     <h3 class="user-home-check-title">// Provider checklist</h3>
                     <ol class="user-home-check-list">
                         <li>Grab work from a robot via <code>POST /grab_job</code> — see <a href="api_docs.html">API Docs</a></li>
-                        <li>Message <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">@MichaelSha10041</a> on X for a seat</li>
+                        <li>Message <a href="https://x.com/MichaelSha10041" target="_blank" rel="noopener">@MichaelSha10041</a> on X, or email <a href="mailto:therobotservicesexchange@proton.me">therobotservicesexchange@proton.me</a>, for a seat</li>
                         <li>Complete &amp; rate when a job is matched</li>
                     </ol>
                 `;
@@ -3604,7 +3604,7 @@ async function handleGrabJobSubmission(e) {
         } else {
             let errMsg = data.error || data.message || 'Unable to grab a job right now.';
             if (/seat/i.test(errMsg)) {
-                errMsg += ' Message @MichaelSha10041 on X — Mickey assigns seats.';
+                errMsg += ' Message @MichaelSha10041 on X or email therobotservicesexchange@proton.me — Mickey assigns seats.';
             }
             if (/supply-type|Only supply/i.test(errMsg)) {
                 errMsg = 'This account is demand (people bidding for services). Grab Job is for supply — robot / operator accounts only. Register a supply account or log in as one.';

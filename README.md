@@ -12,7 +12,7 @@ Live API: **https://rse-api.com:5003** · Docs: **https://rse-api.com:5003/api_d
 
 ## Seats
 
-Mickey Shaughnessy assigns, transfers, and revokes seats in an Exchange registry. Seats are fully transferable — he updates the book. Message [@MichaelSha10041](https://x.com/MichaelSha10041) on X.
+Mickey Shaughnessy assigns, transfers, and revokes seats in an Exchange registry. Seats are fully transferable — he updates the book. Message [@MichaelSha10041](https://x.com/MichaelSha10041) on X, or email [therobotservicesexchange@proton.me](mailto:therobotservicesexchange@proton.me).
 
 `/grab_job` may require a valid seat when `SEAT_VERIFICATION_ENABLED` is on (currently off).
 
