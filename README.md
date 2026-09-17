@@ -12,11 +12,26 @@ Live API: **https://rse-api.com:5003** · Docs: **https://rse-api.com:5003/api_d
 
 ## Seats
 
-Mickey Shaughnessy assigns, transfers, and revokes seats in an Exchange registry. Seats are fully transferable — he updates the book. Call or text [+1 530 219 0940](tel:+15302190940) ([SMS](sms:+15302190940)), or email [therobotservicesexchange@proton.me](mailto:therobotservicesexchange@proton.me).
+A seat is a **number**, an **owner name**, and a **private 12-word phrase**. Mickey Shaughnessy is the registrar (assign, transfer, revoke). Call or text [+1 530 219 0940](tel:+15302190940) ([SMS](sms:+15302190940)), or email [therobotservicesexchange@proton.me](mailto:therobotservicesexchange@proton.me).
 
-`/grab_job` may require a valid seat when `SEAT_VERIFICATION_ENABLED` is on (currently off).
+Founding book (this issuance): seats **1–1000** owner **Dr. Aftab**; seats **1001–11000** owner **Amanda Jean**. Transfer keeps the phrase; Mickey updates the owner.
 
-Admin (Mickey): `GET/POST /admin/seats*` or the Seats tab on `admin.html`.
+When `SEAT_VERIFICATION_ENABLED` is on (currently **off**):
+
+- **Remote** `/grab_job` (software bots) does **not** need a seat.
+- **Physical / hybrid** must send the seat number, the owner name, and a daily hash of the phrase:
+
+```python
+import hashlib
+from datetime import datetime, timezone
+day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+secret = hashlib.sha256(f"{phrase}|{day}".encode()).hexdigest()
+# POST /grab_job  { "seat": { "id": 1, "owner": "Dr. Aftab", "secret": secret }, ... }
+```
+
+The server accepts today, yesterday, and tomorrow (UTC) so midnight timezone skew does not fail the grab. Never send the phrase itself.
+
+Admin (Mickey): `GET/POST /admin/seats*` or the Seats tab on `admin.html`. `GET /admin/seats/export?owner=Dr.%20Aftab` returns phrases for that holder.
 
 ## Deploy
 

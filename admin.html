@@ -160,28 +160,40 @@
             <div class="admin-pane" id="pane-seats">
                 <div class="admin-card mb-3">
                     <h2>Assign / transfer</h2>
-                    <p class="muted">Mickey is the registrar. Transfer updates the book; grab access travels with the seat unless revoked for abuse.</p>
+                    <p class="muted">A seat is a number, an owner name, and a private phrase. Physical/hybrid <code>/grab_job</code> will send the seat number, owner, and SHA-256 of phrase|UTC date (gate is currently off). Remote software grabs skip the seat. Transfer keeps the phrase; Mickey updates the owner.</p>
                     <div class="row g-2 align-items-end">
                         <div class="col-md-2">
                             <label class="form-label" for="seatIdInput">Seat #</label>
                             <input class="form-control" id="seatIdInput" placeholder="blank = next">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label" for="seatUserInput">Username</label>
-                            <input class="form-control" id="seatUserInput" placeholder="registered username" required>
+                            <label class="form-label" for="seatUserInput">Owner</label>
+                            <input class="form-control" id="seatUserInput" placeholder="Dr. Aftab" required>
                         </div>
                         <div class="col-md-7 d-flex flex-wrap gap-2">
                             <button type="button" class="btn btn-primary btn-sm" id="seatAssign">Assign</button>
-                            <button type="button" class="btn btn-outline-light btn-sm" id="seatTransfer">Transfer to username</button>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="seatTransfer">Transfer to owner</button>
                             <button type="button" class="btn btn-outline-light btn-sm" id="seatRevoke">Revoke grab</button>
                             <button type="button" class="btn btn-outline-light btn-sm" id="seatUnrevoke">Restore grab</button>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="seatExport">Export phrases</button>
                         </div>
                     </div>
                     <p class="muted mt-2 mb-0" id="seatActionStatus"></p>
                 </div>
-                <div class="admin-card">
-                    <h2>Registry</h2>
+                <div class="admin-card mb-3">
+                    <h2>Holders</h2>
                     <p class="muted" id="seatsSummary"></p>
+                    <div class="table-responsive">
+                        <table class="admin-table" id="seatOwnersTable">
+                            <thead>
+                                <tr><th>Owner</th><th class="num">Seats</th><th class="num">Active</th><th class="num">Revoked</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="admin-card">
+                    <h2>Registry sample</h2>
                     <div class="table-responsive">
                         <table class="admin-table" id="seatsTable">
                             <thead>
@@ -497,26 +509,37 @@
 
         function renderSeats(data) {
             const rows = data.seats || [];
+            const holders = data.by_owner || [];
             document.getElementById('seatsSummary').textContent =
                 (data.count || 0) + ' seats · ' + (data.active || 0) + ' active · ' + (data.revoked || 0) + ' revoked';
+            fillTable('seatOwnersTable', holders.map(function (h) {
+                return '<tr><td>' + esc(h.owner) + '</td><td class="num">' + esc(h.count) +
+                    '</td><td class="num">' + esc(h.active) + '</td><td class="num">' + esc(h.revoked) + '</td></tr>';
+            }).join(''));
             fillTable('seatsTable', rows.map(function (s) {
-                return '<tr><td class="num">' + esc(s.seat_id) + '</td><td>' + esc(s.owner_username) +
+                return '<tr><td class="num">' + esc(s.seat_id) + '</td><td>' + esc(s.owner || s.owner_username) +
                     '</td><td>' + esc(s.status) + '</td></tr>';
             }).join(''));
         }
 
         async function seatAction(path, extra) {
             const status = document.getElementById('seatActionStatus');
-            const username = (document.getElementById('seatUserInput').value || '').trim();
+            const owner = (document.getElementById('seatUserInput').value || '').trim();
             const rawId = (document.getElementById('seatIdInput').value || '').trim();
             const body = Object.assign({}, extra || {});
-            if (username) body.username = username;
-            if (username) body.to_username = username;
+            if (owner) {
+                body.owner = owner;
+                body.to_owner = owner;
+            }
             if (rawId) body.seat_id = Number(rawId);
             status.textContent = 'Saving…';
             try {
                 const data = await api(path, { method: 'POST', body: JSON.stringify(body) });
-                status.textContent = data.message || 'Saved';
+                let msg = data.message || 'Saved';
+                if (data.phrase) {
+                    msg += ' · phrase (copy now): ' + data.phrase;
+                }
+                status.textContent = msg;
                 const listed = await api('/admin/seats');
                 renderSeats(listed);
             } catch (e) {
@@ -535,6 +558,23 @@
         });
         document.getElementById('seatUnrevoke').addEventListener('click', function () {
             seatAction('/admin/seats/unrevoke');
+        });
+        document.getElementById('seatExport').addEventListener('click', async function () {
+            const status = document.getElementById('seatActionStatus');
+            const owner = (document.getElementById('seatUserInput').value || '').trim();
+            if (!owner) { status.textContent = 'Owner required to export'; return; }
+            status.textContent = 'Exporting…';
+            try {
+                const data = await api('/admin/seats/export?owner=' + encodeURIComponent(owner));
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'seats-' + owner.replace(/\s+/g, '_') + '.json';
+                a.click();
+                status.textContent = 'Downloaded ' + (data.count || 0) + ' seats for ' + owner;
+            } catch (e) {
+                status.textContent = e.message || 'Export failed';
+            }
         });
 
         async function loadAll() {

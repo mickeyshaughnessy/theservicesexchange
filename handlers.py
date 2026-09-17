@@ -953,24 +953,40 @@ def get_account_info(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         return {"error": "Internal server error"}, 500
 
 
-def admin_list_seats() -> Tuple[Dict[str, Any], int]:
+def admin_list_seats(owner: Optional[str] = None, limit: int = 200) -> Tuple[Dict[str, Any], int]:
     try:
-        return seats_mod.list_seats(), 200
+        return seats_mod.list_seats(owner=owner, limit=limit), 200
     except Exception as e:
         logger.error(f"admin_list_seats error: {e}")
         return {"error": "Internal server error"}, 500
 
 
+def admin_get_seat(seat_id: Any) -> Tuple[Dict[str, Any], int]:
+    try:
+        return seats_mod.get_seat_admin_view(seat_id)
+    except Exception as e:
+        logger.error(f"admin_get_seat error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
+def admin_export_seats(owner: str) -> Tuple[Dict[str, Any], int]:
+    try:
+        return seats_mod.export_seats_for_owner(owner)
+    except Exception as e:
+        logger.error(f"admin_export_seats error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
 def admin_assign_seat(data: Dict[str, Any], admin: str = "mickey") -> Tuple[Dict[str, Any], int]:
     try:
-        username = (data.get("username") or data.get("owner") or "").strip()
+        owner = (data.get("owner") or data.get("username") or "").strip()
         raw_id = data.get("seat_id")
         seat_id = seats_mod.parse_seat_id(raw_id) if raw_id not in (None, "") else None
         if raw_id not in (None, "") and seat_id is None:
             return {"error": "seat_id must be a positive integer"}, 400
-        result, status = seats_mod.assign_seat(username, seat_id=seat_id, admin=admin)
+        result, status = seats_mod.assign_seat(owner, seat_id=seat_id, admin=admin)
         if status == 200:
-            dest = username
+            dest = owner
             _emit(
                 "seat.assigned",
                 username=dest,
@@ -986,19 +1002,21 @@ def admin_assign_seat(data: Dict[str, Any], admin: str = "mickey") -> Tuple[Dict
 
 def admin_transfer_seat(data: Dict[str, Any], admin: str = "mickey") -> Tuple[Dict[str, Any], int]:
     try:
-        to_username = (data.get("to_username") or data.get("username") or "").strip()
-        result, status = seats_mod.transfer_seat(data.get("seat_id"), to_username, admin=admin)
+        to_owner = (data.get("to_owner") or data.get("to_username") or data.get("owner") or data.get("username") or "").strip()
+        result, status = seats_mod.transfer_seat(data.get("seat_id"), to_owner, admin=admin)
         if status == 200:
             _emit(
                 "seat.transferred",
-                username=to_username,
+                username=to_owner,
                 actor=public_actor(admin),
                 payload={
                     "seat_id": result.get("seat", {}).get("seat_id") if isinstance(result.get("seat"), dict) else data.get("seat_id"),
-                    "from_username": result.get("from_username"),
-                    "to_username": to_username,
+                    "from_owner": result.get("from_owner"),
+                    "to_owner": to_owner,
+                    "from_username": result.get("from_owner"),
+                    "to_username": to_owner,
                 },
-                idempotency_key=f"seat.transferred:{data.get('seat_id')}:{to_username}:{int(time.time())}",
+                idempotency_key=f"seat.transferred:{data.get('seat_id')}:{to_owner}:{int(time.time())}",
             )
         return result, status
     except Exception as e:
@@ -3137,13 +3155,6 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         if not user_data:
             return {"error": "User not found"}, 404
 
-        if config.SEAT_VERIFICATION_ENABLED:
-            seats_mod.refresh_account_seat(username, user_data)
-            if not user_data.get('seat_active'):
-                return {
-                    "error": "No valid seat assigned. Message Mickey Shaughnessy (call or SMS +1 530 219 0940, or email therobotservicesexchange@proton.me) to get a seat.",
-                }, 403
-
         _GRAB_COOLDOWN = int(getattr(config, 'GRAB_JOB_COOLDOWN_SECONDS', 900) or 900)
         last_grab = user_data.get('last_grab_at', 0)
         remaining = _GRAB_COOLDOWN - (time.time() - last_grab)
@@ -3159,6 +3170,18 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 
         if user_data.get('user_type') != 'supply':
             return {"error": "Only supply-type accounts can grab jobs"}, 403
+
+        verified_seat_id = None
+        if config.SEAT_VERIFICATION_ENABLED and seats_mod.seat_required_for_grab(location_type):
+            ok, message, rec = seats_mod.verify_grab_proof(data)
+            if not ok:
+                return {
+                    "error": (
+                        f"{message}. Message Mickey Shaughnessy (call or SMS +1 530 219 0940, "
+                        "or email therobotservicesexchange@proton.me) to get a seat."
+                    ),
+                }, 403
+            verified_seat_id = (rec or {}).get("seat_id")
 
         provider_reputation = calculate_reputation_score(user_data)
         
@@ -3262,8 +3285,8 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             'party': [],
             'supply_party': [],
             'demand_party': [],
-            'provider_seat_id': seats_mod.account_seat_id(user_data),
-            'provider_seat_token_id': seats_mod.account_seat_id(user_data),
+            'provider_seat_id': verified_seat_id if verified_seat_id is not None else seats_mod.account_seat_id(user_data),
+            'provider_seat_token_id': verified_seat_id if verified_seat_id is not None else seats_mod.account_seat_id(user_data),
             'seat_verification': bool(getattr(config, 'SEAT_VERIFICATION_ENABLED', False)),
             'match_score': scored[0][0],
         }

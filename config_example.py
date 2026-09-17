@@ -33,6 +33,8 @@ TOKEN_EXPIRY_SECONDS = 7776000  # 90 days — stay signed in across app closes
 DEFAULT_MAX_DISTANCE_MILES = 10
 
 # Seats — Mickey Shaughnessy assigns, transfers, and revokes via /admin/seats*.
+# A seat is (number, owner, phrase). Physical/hybrid /grab_job presents
+# seat.id + owner + SHA-256(phrase|UTC-date). Remote software grabs skip the seat.
 # Grab-job gate stays off until you flip this.
 SEAT_VERIFICATION_ENABLED = False
 

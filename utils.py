@@ -239,10 +239,12 @@ def save_seats_index(index: Dict[str, Any]) -> None:
         logger.error("Failed to save seats index")
 
 
-def save_seat_record(seat_id: int, data: Dict[str, Any]) -> None:
+def save_seat_record(seat_id: int, data: Dict[str, Any]) -> bool:
     key = f"{SEATS_PREFIX}/{int(seat_id)}.json"
-    if not _s3_put(key, data):
+    ok = _s3_put(key, data)
+    if not ok:
         logger.error(f"Failed to save seat {seat_id}")
+    return ok
 
 
 def get_seat_record(seat_id: int, *, force_refresh: bool = False) -> Optional[Dict[str, Any]]:
@@ -261,9 +263,11 @@ def list_seat_summaries() -> List[Dict[str, Any]]:
             seat_id = int(sid)
         except (TypeError, ValueError):
             continue
+        owner = (meta or {}).get("owner")
         rows.append({
             "seat_id": seat_id,
-            "owner_username": (meta or {}).get("owner"),
+            "owner": owner,
+            "owner_username": owner,
             "status": (meta or {}).get("status") or "active",
         })
     rows.sort(key=lambda r: r["seat_id"])

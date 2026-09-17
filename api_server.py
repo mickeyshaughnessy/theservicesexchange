@@ -30,6 +30,8 @@ from handlers import (
     reject_job,
     get_account_info,
     admin_list_seats,
+    admin_get_seat,
+    admin_export_seats,
     admin_assign_seat,
     admin_transfer_seat,
     admin_set_seat_revoked,
@@ -421,7 +423,27 @@ def account(current_user):
 @app.route('/admin/seats', methods=['GET'])
 @admin_user_required
 def handle_admin_list_seats(_admin_user):
-    response, status = admin_list_seats()
+    owner = flask.request.args.get('owner')
+    try:
+        limit = int(flask.request.args.get('limit', 200))
+    except (TypeError, ValueError):
+        limit = 200
+    response, status = admin_list_seats(owner=owner, limit=limit)
+    return flask.jsonify(response), status
+
+
+@app.route('/admin/seats/export', methods=['GET'])
+@admin_user_required
+def handle_admin_export_seats(_admin_user):
+    owner = flask.request.args.get('owner') or ''
+    response, status = admin_export_seats(owner)
+    return flask.jsonify(response), status
+
+
+@app.route('/admin/seats/<int:seat_id>', methods=['GET'])
+@admin_user_required
+def handle_admin_get_seat(_admin_user, seat_id):
+    response, status = admin_get_seat(seat_id)
     return flask.jsonify(response), status
 
 @app.route('/admin/seats/assign', methods=['POST'])

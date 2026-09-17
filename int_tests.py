@@ -6,10 +6,12 @@ Covers:
   • Service matching accuracy across 30 diverse real-world categories
   • Advanced features (XMoney, exchange_data, nearby)
   • Optional /grab_job geohash whitelist (invalid / out-of-cell / in-cell)
+  • Seat registry (founding owners) and /grab_job seat-proof fields
 
 Labeling & cleanup contract
   - Every test bid/service starts with "TEST:" so it is unambiguously synthetic.
   - Grab-job seat gate is off by default (SEAT_VERIFICATION_ENABLED=False).
+    When on, remote grabs skip the seat; physical/hybrid send seat id+owner+daily hash.
   - cleanup() cancels outstanding bids AND completes (signs) any open test jobs,
     leaving the live exchange in the same state it was before the run.
 
@@ -26,6 +28,7 @@ import uuid
 import hashlib
 import argparse
 import config
+import seats as seats_mod
 
 # ── Silence SSL warnings for self-signed certs on localhost ──────────────────
 import urllib3
@@ -438,15 +441,21 @@ class ServiceExchangeAPITester:
         return r.json()["bid_id"]
 
     def _grab_job(self, token, caps, location_type, address=None, max_distance=50,
-                  geohash=None):
+                  geohash=None, seat=None):
         payload = {"capabilities": caps, "location_type": location_type,
                    "max_distance": max_distance}
         if address:
             payload["address"] = address
         if geohash:
             payload["geohash"] = geohash
+        if seat:
+            payload["seat"] = seat
         return requests.post(f"{self.api_url}/grab_job",
                              headers=self._headers(token), json=payload, verify=False)
+
+    def _admin_headers(self):
+        key = getattr(config, "ADMIN_API_KEY", None) or ""
+        return {"X-Admin-Key": key}
 
     def _reject_job(self, token, job_id, reason="Test: returning to exchange"):
         """Reject a job so it goes back on the exchange for the real buyer."""
@@ -842,6 +851,103 @@ class ServiceExchangeAPITester:
                           json={"bid_id": in_id}, verify=False)
             print("  (grabbed external bid; in-cell check inconclusive)")
 
+    def test_seats(self):
+        """Founding registry + grab_job seat proof fields (gate currently off)."""
+        print("\n=== Seat Registry + Grab Proof ===")
+
+        phrase = "abandon ability able about above absent absorb abstract absurd abuse access accident"
+        secret = seats_mod.daily_proof(phrase, seats_mod.utc_today())
+        assert len(secret) == 64
+        assert seats_mod.proof_matches(phrase, secret)
+        print("✓ Daily SHA-256(phrase|UTC-date) helper")
+
+        r = requests.get(f"{self.api_url}/admin/seats",
+                         headers=self._admin_headers(), verify=False)
+        assert r.status_code == 200, f"admin/seats {r.status_code} {r.text}"
+        listed = r.json()
+        by = {row.get("owner"): row for row in (listed.get("by_owner") or [])}
+        assert "Dr. Aftab" in by, f"missing Dr. Aftab in by_owner: {list(by)}"
+        assert "Amanda Jean" in by, f"missing Amanda Jean in by_owner: {list(by)}"
+        assert by["Dr. Aftab"].get("count") == 1000, by["Dr. Aftab"]
+        assert by["Amanda Jean"].get("count") == 10000, by["Amanda Jean"]
+        print("✓ Founding holders: Dr. Aftab 1k, Amanda Jean 10k")
+
+        r = requests.get(f"{self.api_url}/admin/seats/1",
+                         headers=self._admin_headers(), verify=False)
+        assert r.status_code == 200, f"admin/seats/1 {r.status_code} {r.text}"
+        rec = (r.json() or {}).get("seat") or {}
+        assert rec.get("owner") == "Dr. Aftab"
+        assert rec.get("status") == "active"
+        words = (rec.get("phrase") or "").split()
+        assert len(words) == 12, f"expected 12-word phrase, got {len(words)}"
+        live_secret = seats_mod.daily_proof(rec["phrase"], seats_mod.utc_today())
+        print("✓ Seat 1 record (phrase not logged)")
+
+        r = requests.get(
+            f"{self.api_url}/admin/seats/export",
+            headers=self._admin_headers(),
+            params={"owner": "Dr. Aftab"},
+            verify=False,
+        )
+        assert r.status_code == 200, f"export {r.status_code} {r.text}"
+        exported = r.json()
+        assert exported.get("count") == 1000, exported.get("count")
+        assert len(exported.get("seats") or []) == 1000
+        print("✓ Export Dr. Aftab 1000 phrases")
+
+        tag = uuid.uuid4().hex[:8]
+        buyer = self._register_and_login(f"sbuy_{tag}", "demand")
+        phys = self._register_and_login(f"sphy_{tag}", "supply")
+        rem = self._register_and_login(f"srem_{tag}", "supply")
+
+        self._post_bid(buyer, {
+            "service": f"TEST: Seat-proof lawn mowing {tag}",
+            "price": 75, "currency": "USD", "payment_method": "cash",
+            "location_type": "physical", "address": "123 Main St, Denver, CO 80202",
+        })
+        r = self._grab_job(
+            phys,
+            "Residential lawn mowing, edging, yard maintenance, grass cutting",
+            "physical",
+            "456 Oak Ave, Denver, CO 80203",
+            seat={"id": 1, "owner": "Dr. Aftab", "secret": live_secret},
+        )
+        assert r.status_code != 403, f"physical grab with seat proof 403: {r.text}"
+        if r.status_code == 200:
+            job = r.json()
+            if job.get("buyer_username", "").startswith("sbuy_"):
+                self.created_jobs.append((job["job_id"], buyer, phys))
+                print("✓ Physical grab with seat proof (200)")
+            else:
+                self._reject_job(phys, job["job_id"])
+                print("✓ Physical grab with seat proof did not 403 (external match)")
+        else:
+            assert r.status_code == 204, f"physical grab {r.status_code} {r.text}"
+            print("✓ Physical grab with seat proof did not 403 (204 no match)")
+
+        self._post_bid(buyer, {
+            "service": f"TEST: Seat-waiver remote code review {tag}",
+            "price": 120, "currency": "USD", "payment_method": "cash",
+            "location_type": "remote",
+        })
+        r = self._grab_job(
+            rem,
+            "Python developer, code review, software audit, TypeScript",
+            "remote",
+        )
+        assert r.status_code != 403, f"remote grab without seat 403: {r.text}"
+        if r.status_code == 200:
+            job = r.json()
+            if job.get("buyer_username", "").startswith("sbuy_"):
+                self.created_jobs.append((job["job_id"], buyer, rem))
+                print("✓ Remote software grab without seat (200)")
+            else:
+                self._reject_job(rem, job["job_id"])
+                print("✓ Remote grab without seat did not 403 (external match)")
+        else:
+            assert r.status_code == 204, f"remote grab {r.status_code} {r.text}"
+            print("✓ Remote software grab without seat did not 403 (204 no match)")
+
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
@@ -861,6 +967,7 @@ def main():
         start = time.time()
 
         core = tester.test_core_functionality()
+        tester.test_seats()
 
         if not args.quick:
             matching = tester.test_service_matching()

@@ -363,13 +363,34 @@
         <div class="container">
             <a href="openapi.yaml" download>⬇ OpenAPI Spec (YAML)</a>
             <a href="arazzo.html">⬡ Arazzo Workflow Specs</a>
-            <span class="note">// API at rse-api.com — <code>POST /submit_bid</code>, <code>POST /grab_job</code>, <code>POST /sign_job</code>. Website is for people.</span>
+            <span class="note">// API at rse-api.com — <code>POST /submit_bid</code>, <code>POST /grab_job</code> (seat proof for physical/hybrid when the gate is on; remote software skips the seat), <code>POST /sign_job</code>. Website is for people.</span>
         </div>
     </div>
 
 
     <main id="main-content" class="swagger-shell" tabindex="-1">
         <div class="container py-4">
+
+            <div style="background:var(--bg-panel);border:1px solid rgba(0,255,255,0.35);padding:1.5rem;margin-bottom:1.5rem;">
+                <h2 style="font-family:'Press Start 2P',monospace;font-size:0.9rem;color:var(--primary);">Seats</h2>
+                <p style="font-family:'Share Tech Mono',monospace;font-size:0.82rem;color:var(--text);line-height:1.65;margin-bottom:0.75rem;">
+                    A seat is a <strong>number</strong>, an <strong>owner name</strong>, and a private <strong>12-word phrase</strong>.
+                    Mickey Shaughnessy is the registrar (<code>/admin/seats*</code>). Founding book: seats <code>1–1000</code> owner
+                    <strong>Dr. Aftab</strong>; <code>1001–11000</code> owner <strong>Amanda Jean</strong>. Transfer keeps the phrase.
+                </p>
+                <p style="font-family:'Share Tech Mono',monospace;font-size:0.82rem;color:var(--text);line-height:1.65;margin-bottom:0.75rem;">
+                    When <code>SEAT_VERIFICATION_ENABLED</code> is on (currently <strong>off</strong>), physical and hybrid
+                    <code>POST /grab_job</code> must send the seat number, the owner, and a daily hash of the phrase.
+                    <strong>Remote software grabs skip the seat.</strong> Never send the phrase itself.
+                </p>
+                <pre style="font-family:'Share Tech Mono',monospace;font-size:0.75rem;color:var(--text-bright);background:var(--bg-card);padding:0.85rem 1rem;overflow:auto;margin:0;">import hashlib
+from datetime import datetime, timezone
+day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+secret = hashlib.sha256(f"{phrase}|{day}".encode()).hexdigest()
+# POST /grab_job
+# { "seat": { "id": 1, "owner": "Dr. Aftab", "secret": secret },
+#   "location_type": "physical", "capabilities": "…", "address": "…" }</pre>
+            </div>
 
             <!-- One-click Integration Test Suite -->
             <div id="int-test-suite" style="background:var(--bg-panel);border:1px solid rgba(57,255,20,0.4);padding:1.5rem;margin-bottom:1.5rem;">
@@ -378,7 +399,9 @@
                     Runs end-to-end matching tests directly from this page against <code>rse-api.com:5003</code>.
                     Each test submits a bid then verifies the LLM matching engine correctly matches providers who grab the job
                     and rejects mismatched ones. A geohash suite then checks optional <code>/grab_job</code> region
-                    whitelists (invalid hash → 400, in-cell → 200, out-of-cell → 204). All test data is labelled
+                    whitelists (invalid hash → 400, in-cell → 200, out-of-cell → 204). The seat gate is off, so these
+                    grabs do not send a daily phrase hash; remote software grabs will keep skipping the seat when the
+                    gate is turned on. All test data is labelled
                     <code>TEST:</code> and cleaned up on completion.
                 </p>
                 <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">

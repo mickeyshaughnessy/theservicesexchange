@@ -71,6 +71,7 @@ config_local.py
 
 # Operational logs written by seat_admin scripts
 seat_admin/revocation_log.json
+seat_admin/exports/
 
 # Hardhat artifacts and cache
 contracts/artifacts/

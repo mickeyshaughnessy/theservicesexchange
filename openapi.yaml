@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: The RSE API
-  version: 1.2.1
+  version: 1.3.0
   description: |
     # The RSE (Robot Services Exchange)
 
@@ -37,10 +37,13 @@ info:
     | `demand` | Buyer / job requester | bid, campaigns, demand-side party invites |
     | `supply` | Provider / robot operator | grab_job, supply-side party invites, campaign commits |
 
-    Seat fields appear on `/account`. Mickey Shaughnessy assigns seats in the Exchange
-    registry (`/admin/seats*`). Seat verification may gate `/grab_job` when enabled.
-    The public website is demand-side (people posting bids). Supply, chat, parties,
-    and campaigns are called on the API at rse-api.com.
+    A seat is a number, an owner name, and a private phrase. Mickey Shaughnessy
+    assigns seats in the Exchange registry (`/admin/seats*`). When seat verification
+    is enabled, physical/hybrid `/grab_job` must present `seat.id`, `seat.owner`, and
+    `seat.secret` = SHA-256 hex of `phrase|YYYY-MM-DD` (UTC, ±1 day accepted).
+    Remote (software) grabs skip the seat. The gate is off until
+    `SEAT_VERIFICATION_ENABLED` is turned on. The public website is demand-side.
+    Supply, chat, parties, and campaigns are called on the API at rse-api.com.
 
     ## Authentication
 
@@ -102,6 +105,15 @@ tags:
     description: |
       Account lifecycle: register (demand or supply), login for a Bearer token,
       read account/reputation snapshot and seat status.
+  - name: Seats
+    description: |
+      Supply access is a **seat**: a number, an owner name, and a private 12-word
+      phrase. Mickey Shaughnessy is the registrar. Physical/hybrid `/grab_job`
+      presents `seat.id`, `seat.owner`, and `seat.secret` = SHA-256 hex of
+      `phrase|YYYY-MM-DD` (UTC; yesterday and tomorrow also accepted). **Remote
+      (software) grabs skip the seat.** The gate is off until
+      `SEAT_VERIFICATION_ENABLED` is true. Founding book: seats 1–1000 owner
+      **Dr. Aftab**; 1001–11000 owner **Amanda Jean**. Transfer keeps the phrase.
   - name: Marketplace
     description: |
       The primary economic loop — post requests (bids), cancel, grab matches, reject,
@@ -143,7 +155,8 @@ tags:
   - name: Admin
     description: |
       Stopgap admin tools gated by the `X-Admin-Key` shared-secret header
-      (no per-admin user roles yet). Dispute queue and resolution.
+      or a Bearer token for `ADMIN_DASHBOARD_USERS` (Mickey). Seat registry,
+      hiring queue, and dispute resolution.
 
 components:
   securitySchemes:
@@ -554,17 +567,168 @@ paths:
 
   /admin/seats:
     get:
-      tags: [Auth]
+      tags: [Seats, Admin]
       summary: List seats in the Exchange registry
       description: |
-        Mickey Shaughnessy is the registrar. Admin auth required.
-        Seats are fully transferable via `POST /admin/seats/transfer`.
+        Mickey Shaughnessy is the registrar. Returns holder totals (`by_owner`)
+        and a sample of seat rows (no phrases). Filter with `owner` and `limit`.
       security:
+        - adminKey: []
         - bearerAuth: []
+      parameters:
+        - name: owner
+          in: query
+          schema: { type: string }
+          description: Filter rows to this owner name (e.g. Dr. Aftab)
+        - name: limit
+          in: query
+          schema: { type: integer, default: 200 }
       responses:
-        '200': { description: Seat list }
-        '401': { description: Missing or invalid token }
+        '200':
+          description: Registry summary
+          content:
+            application/json:
+              example:
+                count: 11000
+                active: 11000
+                revoked: 0
+                listed: 200
+                by_owner:
+                  - owner: Amanda Jean
+                    count: 10000
+                    active: 10000
+                    revoked: 0
+                  - owner: Dr. Aftab
+                    count: 1000
+                    active: 1000
+                    revoked: 0
+                seats:
+                  - seat_id: 1
+                    owner: Dr. Aftab
+                    status: active
+        '401': { description: Missing or invalid admin auth }
         '403': { description: Not an admin }
+
+  /admin/seats/export:
+    get:
+      tags: [Seats, Admin]
+      summary: Export phrases for one owner
+      description: |
+        Returns every seat for `owner` including the private phrase. Do not
+        log or commit the response. Query `owner` is required.
+      security:
+        - adminKey: []
+        - bearerAuth: []
+      parameters:
+        - name: owner
+          in: query
+          required: true
+          schema: { type: string }
+          example: Dr. Aftab
+      responses:
+        '200':
+          description: Seats with phrases
+        '400': { description: owner required }
+        '401': { description: Missing or invalid admin auth }
+
+  /admin/seats/{seat_id}:
+    get:
+      tags: [Seats, Admin]
+      summary: Get one seat including phrase
+      security:
+        - adminKey: []
+        - bearerAuth: []
+      parameters:
+        - name: seat_id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200': { description: Seat record (includes phrase) }
+        '404': { description: Seat does not exist }
+
+  /admin/seats/assign:
+    post:
+      tags: [Seats, Admin]
+      summary: Assign a seat (creates a phrase if new)
+      description: |
+        `owner` is a free-text name (need not be a registered username).
+        Blank `seat_id` takes the next number. New seats return `phrase` once.
+      security:
+        - adminKey: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [owner]
+              properties:
+                owner: { type: string, example: Dr. Aftab }
+                seat_id: { type: integer, nullable: true }
+      responses:
+        '200': { description: Assigned; `phrase` present only for a newly created seat }
+        '409': { description: Seat held by someone else — use transfer }
+
+  /admin/seats/transfer:
+    post:
+      tags: [Seats, Admin]
+      summary: Transfer a seat to a new owner (phrase unchanged)
+      security:
+        - adminKey: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [seat_id, to_owner]
+              properties:
+                seat_id: { type: integer, example: 1 }
+                to_owner: { type: string, example: Amanda Jean }
+      responses:
+        '200': { description: Transferred }
+        '404': { description: Seat does not exist }
+
+  /admin/seats/revoke:
+    post:
+      tags: [Seats, Admin]
+      summary: Revoke grab access for a seat
+      security:
+        - adminKey: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [seat_id]
+              properties:
+                seat_id: { type: integer }
+      responses:
+        '200': { description: Revoked }
+
+  /admin/seats/unrevoke:
+    post:
+      tags: [Seats, Admin]
+      summary: Restore grab access for a revoked seat
+      security:
+        - adminKey: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [seat_id]
+              properties:
+                seat_id: { type: integer }
+      responses:
+        '200': { description: Restored }
 
   /my_bids:
     get:
@@ -872,6 +1036,28 @@ paths:
         Physical/hybrid providers must send `lat`+`lon` or `address`.
         Optional `geohash` further restricts matching to jobs inside that cell
         (AND with `max_distance` when both apply).
+
+        ## Seats
+
+        A seat is **(number, owner, phrase)**. The phrase is never sent.
+
+        When `SEAT_VERIFICATION_ENABLED` is on:
+
+        - `location_type=remote` (software bots) — **no seat required**.
+        - `physical` / `hybrid` — send `seat.id`, `seat.owner` (must match the
+          registry, case-insensitive), and `seat.secret`:
+
+        ```
+        secret = SHA-256( phrase + "|" + UTC_YYYY-MM-DD ).hexdigest()
+        ```
+
+        The server accepts today, yesterday, and tomorrow (UTC) so midnight
+        timezone skew does not fail the grab. Wrong owner, revoked seat, or bad
+        hash → **403**.
+
+        The gate is **currently off**; extra `seat` fields are ignored and do
+        not 403. Founding owners: Dr. Aftab (1–1000), Amanda Jean (1001–11000).
+        Message Mickey Shaughnessy to get or transfer a seat.
       security:
         - bearerAuth: []
       requestBody:
@@ -909,14 +1095,41 @@ paths:
                     (4 ≈ city, 5 ≈ neighborhood, 6 ≈ street). Case-insensitive.
                     Remote bids with no coordinates are not constrained.
                   example: "9xj"
+                seat:
+                  type: object
+                  description: |
+                    Required for physical/hybrid grabs when `SEAT_VERIFICATION_ENABLED`
+                    is on. Remote software grabs omit this. `secret` is
+                    SHA-256(phrase + "|" + UTC YYYY-MM-DD) hex; yesterday and
+                    tomorrow are also accepted.
+                  required: [id, owner, secret]
+                  properties:
+                    id: { type: integer, minimum: 1, example: 1 }
+                    owner: { type: string, example: Dr. Aftab }
+                    secret:
+                      type: string
+                      description: 64-char SHA-256 hex of phrase|YYYY-MM-DD (UTC)
+                seat_id:
+                  type: integer
+                  description: Flat alias for seat.id
+                owner:
+                  type: string
+                  description: Flat alias for seat.owner
+                secret:
+                  type: string
+                  description: Flat alias for seat.secret
             examples:
               physical:
-                summary: Physical grab from an address
+                summary: Physical grab with seat proof
                 value:
                   capabilities: autonomous lawn mowing, GPS, obstacle avoidance
                   location_type: physical
                   address: Denver, CO
                   max_distance: 25
+                  seat:
+                    id: 1
+                    owner: Dr. Aftab
+                    secret: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
               physical_geohash:
                 summary: Physical grab limited to a geohash whitelist cell
                 value:
@@ -925,8 +1138,12 @@ paths:
                   address: Denver, CO
                   max_distance: 25
                   geohash: "9xj"
+                  seat:
+                    id: 1
+                    owner: Dr. Aftab
+                    secret: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
               remote:
-                summary: Remote grab (no travel region)
+                summary: Remote software grab (no seat)
                 value:
                   capabilities: Python developer, code review, software audit
                   location_type: remote
@@ -940,7 +1157,10 @@ paths:
           description: No matching jobs in range, geohash cell, or for these capabilities
         '400': { description: Validation error (e.g. capabilities missing, location required, invalid geohash) }
         '401': { description: Missing or invalid token }
-        '403': { description: Not a supply account (or seat gate if enabled) }
+        '403':
+          description: |
+            Not a supply account, or (when the seat gate is on) a physical/hybrid
+            grab missing a valid seat proof. Remote grabs are not seat-gated.
         '429': { description: Grab cooldown active — wait before next grab }
 
   /reject_job:
