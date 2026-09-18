@@ -202,11 +202,15 @@
       <p style="font-size:11pt;color:var(--ink-soft);margin-top:0.15em;">A technical history of the protocol, 2025-08-10 → 2026-09-17</p>
       <div class="cover-rule"></div>
       <p class="lede">
-        The RSE is an open marketplace for robot labor. Demand posts a priced, expiring request.
-        Supply calls <span class="mono">POST /grab_job</span>. An LLM scores whether the provider can do
-        <em>this</em> job; both parties dual-sign completion. Settlement stays off-platform.
-        This note reconstructs how that loop was built, from the git history of
-        <span class="mono">theservicesexchange</span> (262 commits on <span class="mono">main</span>, ~176k insertions).
+        This note is a reading of the git history of <span class="mono">theservicesexchange</span>
+        (262 commits on <span class="mono">main</span>, about 176k insertions) from the first commit on
+        10 August 2025 through 17 September 2026. It is written for people who will want the numbers and
+        the failed experiments, not a slogan. The marketplace that exists today is small and specific:
+        a buyer posts a priced, expiring request; a provider calls
+        <span class="mono">POST /grab_job</span>; an LLM is asked whether those capabilities cover
+        <em>this</em> job rather than a neighboring one; both sides sign when the work is done; money
+        never sits on the platform. How we got a system that looks that simple is the subject of the
+        next three pages.
       </p>
     </div>
     <div>
@@ -217,40 +221,41 @@
   <div class="grid-3">
     <div class="box kpi"><div class="n">262</div><div class="l">commits on main</div></div>
     <div class="box kpi"><div class="n">13 mo</div><div class="l">Aug 2025 → Sep 2026</div></div>
-    <div class="box kpi"><div class="n">1 loop</div><div class="l">bid → match → grab → sign</div></div>
+    <div class="box kpi"><div class="n">11k</div><div class="l">founding seats issued</div></div>
   </div>
 
-  <h2 style="margin-top:0.7em;border:none;padding:0;">1. What did not change</h2>
+  <h2 style="margin-top:0.7em;border:none;padding:0;">1. The first commit already had the loop</h2>
   <p>
-    The conserved quantity is the matching loop. From the first commit (<span class="mono">87a45fa</span>, 10 Aug 2025)
-    the system is a Flask API plus a JSON object store: accounts, bids, jobs, tokens. There is no SQL database.
-    Persistence moved onto DigitalOcean Spaces (S3-compatible JSON). The public website is for people posting
-    bids; robots call <span class="mono">rse-api.com</span>. Dual-sign completion and a 15-minute grab cooldown
-    are old. Reputation is a shrunk-toward-2.5 mean of stars, so a new provider is not indistinguishable from a
-    5-star veteran with <em>n</em> = 1.
+    <span class="mono">87a45fa</span> on 10 August 2025 is a Flask API and a pile of JSON documents
+    (accounts, bids, jobs, tokens) with no SQL database. Persistence later moved onto DigitalOcean
+    Spaces, which is S3-compatible JSON, but the shape did not change: you read and write objects by
+    id, and any index is another object. People post bids on the public website; robots call
+    <span class="mono">rse-api.com</span>. Both parties have always had to sign before a job is
+    <span class="mono">completed</span>, and a successful grab has always started a cooldown that is
+    fifteen minutes today. Reputation is a mean of stars shrunk toward 2.5, so a single five-star
+    rating does not look like a long record. Those pieces were in place before most of the product
+    around them existed.
   </p>
   <p>
-    What did change is the <em>scarce resource</em> that gates supply (the seat), the <em>decision procedure</em>
-    that is the matching mind, and the <em>surfaces</em> around the loop (mobile app, cooperation APIs, Hyperion,
-    a registrar instead of a chain).
-  </p>
-
-  <h2>2. Naming and identity of the protocol</h2>
-  <p>
-    The repository opened as the “Service Exchange (SEX) Protocol,” a general marketplace. Copy and code then
-    specialized to robot labor: The RSE / The Robot Services Exchange. Registration grew a hard
-    <span class="mono">user_type ∈ {demand, supply}</span> (Dec 2025). Demand is a username; supply’s public
-    identity is intended to be a seat when one is assigned. The marketing host moved to
-    <span class="mono">therobotservicesexchange.com</span> (11 Aug 2026); the API host
-    <span class="mono">rse-api.com</span> did not.
+    The work that followed was almost entirely about three other things. A seat is the scarce object
+    that, when the gate is on, authorizes a grab and stamps supply identity on the job; seats are not
+    money, and the platform still does not hold funds. The matching function is the only place an LLM
+    is allowed to decide who works. Around that core we added, and sometimes removed, a mobile app,
+    cooperation APIs, a catalog, investor documents, and two quite different implementations of title.
   </p>
 
-  <div class="callout">
-    <strong>Working hypothesis of the design.</strong> Robot labor needs an open book more than it needs
-    on-chain settlement. Matching is a classifier with a precision/recall tradeoff. Seats are rate-limit
-    tokens plus title, not a payment rail. Trust in the registrar (Mickey Shaughnessy) was cheaper than
-    trust in Base L2 once transferability and ops cost were taken seriously.
-  </div>
+  <h2>2. From a general exchange to robot labor</h2>
+  <p>
+    The repository opened as the “Service Exchange (SEX) Protocol,” which was meant to be a general
+    marketplace. Copy and code specialized to robot labor, and the public name became The RSE (The
+    Robot Services Exchange). On 3 December 2025 registration began requiring
+    <span class="mono">user_type ∈ {demand, supply}</span>, which is still set once and is still a
+    single role. Demand’s public identity is a username; supply’s is meant to be a seat when one is
+    assigned. On 11 August 2026 the marketing host moved to
+    <span class="mono">therobotservicesexchange.com</span>. The API host,
+    <span class="mono">rse-api.com</span>, was left alone, which is the practical reason robots and
+    the website can evolve on different schedules.
+  </p>
 
   <div class="page-footer">
     <span>therobotservicesexchange.com/git_report.html</span>
@@ -262,11 +267,19 @@
 <section class="page">
   <div class="page-header">
     <span class="brand">The RSE</span>
-    <span class="doc-label">Timeline · commit intensity</span>
+    <span class="doc-label">Commits · dates</span>
   </div>
 
-  <h2 style="margin-top:0;border:none;padding:0;">3. Timeline of the machine</h2>
-  <p class="muted" style="margin-bottom:0.55em;">Dates from <span class="mono">git log --format='%ad %h %s'</span> on <span class="mono">main</span>. Intensity plot: commits per calendar month.</p>
+  <h2 style="margin-top:0;border:none;padding:0;">3. Thirteen months of commits</h2>
+  <p>
+    The bar chart is commits per calendar month on <span class="mono">main</span>, from
+    <span class="mono">git log</span>. August 2025 through January 2026 is a steady build (11–27
+    commits a month). February 2026 is empty. March (37) is the Base NFT launch. April and May drop
+    to 5 and 1 after seats were made soulbound. July is the mode, 60 commits, which is cooperation,
+    identity, the demand Android app, Nearby privacy, and the first investor-model pages landing
+    together. August is still busy (35). September, through the 17th, is 13 commits and includes both
+    the registrar cutover and the phrase-proof issuance.
+  </p>
 
   <svg viewBox="0 0 720 168" width="100%" height="168" role="img" aria-label="Commits per month, August 2025 through September 2026">
     <text x="0" y="12" class="bar-label">commits / month</text>
@@ -306,41 +319,39 @@
     </g>
     <text x="564" y="24" class="bar-label" text-anchor="middle">60 · Jul 2026</text>
   </svg>
-  <p class="muted">July 2026 is the mode: cooperation APIs, identity, mobile, privacy, and the investor model landed in one month. March is the NFT seat launch. April–May is a trough after soulbound seats. September 2026 is the registrar cutover and phrase-proof seats.</p>
-
   <div class="tl">
     <div class="tl-row tl-date">2025-08-10</div><div class="tl-row"><div class="tl-dot"></div></div>
-    <div class="tl-row"><strong>Genesis.</strong> Flask API, Anthropic Haiku matcher, local JSON. Loop already bid / grab / sign.</div>
+    <div class="tl-row">Flask API, Anthropic Haiku matcher, local JSON. Bid, grab, and dual-sign are already the loop.</div>
 
     <div class="tl-date">2025-08-26</div><div><div class="tl-dot"></div></div>
-    <div><strong>File seats.</strong> <span class="mono">seats.dat</span>: id, owner, 12-word phrase. Grab sent <span class="mono">md5(phrase)</span>. Golden vs Silver (software).</div>
+    <div><span class="mono">seats.dat</span> rows are an id, an owner, and a 12-word phrase. Grab presented <span class="mono">md5(phrase)</span>. Golden seats were for physical work; Silver seats, with a one-minute limit, were for software agents.</div>
 
     <div class="tl-date">2025-10-03</div><div><div class="tl-dot"></div></div>
-    <div><strong>OpenRouter.</strong> Matching oracle becomes a swappable HTTP model, not a single vendor SDK.</div>
+    <div>Matching moves to OpenRouter, so the model is an HTTP endpoint with free and paid fallbacks rather than a single vendor SDK.</div>
 
     <div class="tl-date">2025-12-03</div><div><div class="tl-dot"></div></div>
-    <div><strong>Demand vs supply.</strong> <span class="mono">user_type</span> required at register. Homepage becomes a bid form.</div>
+    <div>Registration requires <span class="mono">user_type</span>. The homepage is a bid form.</div>
 
     <div class="tl-date">2026-03-18</div><div><div class="tl-dot"></div></div>
-    <div><strong>Seats on Base.</strong> ERC-721 <span class="mono">RSESeat</span>, <span class="mono">/set_wallet</span>, grab gated on <span class="mono">seat_active</span>.</div>
+    <div>ERC-721 <span class="mono">RSESeat</span> on Base (chain 8453). Providers link a wallet with <span class="mono">/set_wallet</span>; grab checks a denormalized <span class="mono">seat_active</span> flag.</div>
 
     <div class="tl-date">2026-04-23</div><div><div class="tl-dot"></div></div>
-    <div><strong>Soulbound.</strong> Transfers reverted on-chain. Ops friction high; the experiment is later reversed.</div>
+    <div>Transfers are reverted on-chain (soulbound). Private sale of a seat is no longer possible without the contract owner.</div>
 
     <div class="tl-date">2026-07-10</div><div><div class="tl-dot"></div></div>
-    <div><strong>Cooperation.</strong> Job parties, campaigns, agent tokens, activity ledger, job channels. Taxi reference agent.</div>
+    <div>Job parties, campaigns, agent tokens under a parent account, an append-only activity log, job channels, and a taxi reference client that polls grab with a geohash whitelist.</div>
 
     <div class="tl-date">2026-07–08</div><div><div class="tl-dot"></div></div>
-    <div><strong>Surfaces.</strong> Demand Android app, Nearby + differential privacy, catalog, Garage, investors / Hyperion / SPA.</div>
+    <div>Demand Android app (now 1.5.5), Nearby with differential privacy on published pins, robot catalog and Garage, then hiring, investors, SPA, and Hyperion pages.</div>
 
     <div class="tl-date">2026-09-10</div><div><div class="tl-dot"></div></div>
-    <div><strong>Mind v4.</strong> Matching becomes a 0–10 score plus domain lexicons. Cross-domain grabs hard-zero.</div>
+    <div>Matching becomes an integer 0–10 with threshold 7. Disjoint domain lexicons return 0 without calling the model.</div>
 
     <div class="tl-date">2026-09-14</div><div><div class="tl-dot"></div></div>
-    <div><strong>Chain off.</strong> Wallets and NFTs deleted. Mickey is the registrar. Seats transferable again in a book.</div>
+    <div>Wallet linking, the Solidity project, and seat NFTs are deleted (~82k lines, mostly lockfile and artifacts). Mickey Shaughnessy is the registrar; seats are transferable in an Exchange book.</div>
 
     <div class="tl-date">2026-09-17</div><div><div class="tl-dot"></div></div>
-    <div><strong>Phrase proof.</strong> Seats = (n, owner, phrase). Daily SHA-256; remote software waived. 11k founding seats issued.</div>
+    <div>A seat is again a number, an owner, and a phrase. Grab will present a daily SHA-256 of the phrase; remote software grabs skip the seat. Seats 1–1000 are issued to Dr. Aftab and 1001–11000 to Amanda Jean. The gate is still off.</div>
   </div>
 
   <div class="page-footer">
@@ -353,15 +364,18 @@
 <section class="page">
   <div class="page-header">
     <span class="brand">The RSE</span>
-    <span class="doc-label">Seats · matching mind</span>
+    <span class="doc-label">Seats · matching</span>
   </div>
 
-  <h2 style="margin-top:0;border:none;padding:0;">4. Seats: three security models</h2>
+  <h2 style="margin-top:0;border:none;padding:0;">4. Seats, blockchain, and a registrar</h2>
   <p>
-    A seat is the scarce object that authorizes <span class="mono">/grab_job</span> (when the gate is on) and
-    stamps supply identity on a job. It is not money. The 15-minute cooldown is per account today; the economic
-    story is still “one successful grab per seat per window.” Three implementations were tried. They differ in
-    <em>who is the source of truth</em> and <em>what the client must prove</em>.
+    When the gate is on, a seat is what lets a provider call <span class="mono">/grab_job</span> and what
+    gets stamped on the job as supply identity. It is not money: price and currency are recorded on the
+    request, and the parties settle however they like. The cooldown that actually runs in production is
+    still per account (900 seconds); the economic story on the SPA and investors pages is still one
+    successful grab per seat per window, which is a gap rather than a contradiction, and it is called
+    out again at the end. Three implementations differ in who holds the book and what a client has to
+    show at grab time.
   </p>
 
   <table>
@@ -402,58 +416,66 @@
   </table>
 
   <p>
-    The NFT era is the interesting negative result. The contract did what a chain is good at: a globally
-    visible, non-custodial token id, with revoke/unrevoke as owner functions and a 15-minute in-process cache
-    so grab did not pay an RPC on every call. Soulbound was a response to “seats as licenses, not speculative
-    NFTs.” It made private transfer of title <em>impossible without the contract owner</em>, which is the same
-    trust assumption as a registrar, plus RPC, wallets, and a non-transferable asset nobody could sell.
-    On 14 Sep 2026 the chain code was deleted (~82k lines, mostly lockfile and artifacts). The 17 Sep issuance
-    restored the 2025 object (number, owner, phrase) with a better proof:
+    The Base contract did the things a chain is actually good at. Token ids were globally visible and
+    not held in our database; the owner could revoke and unrevoke; grab used a 15-minute in-process
+    cache so a successful match did not pay an <span class="mono">eth_call</span> on every request.
+    Soulbound was an attempt to treat seats as licenses rather than tradable pictures, and it did that
+    by reverting any transfer. After that change, moving title still required the contract owner, which
+    is the same trust assumption as Mickey keeping a book, except that operators also needed wallets,
+    a public RPC, and an asset they could not sell. That is why the chain was removed on 14 September
+    rather than patched further. The 17 September issuance went back to the 2025 object (a number, an
+    owner, a 12-word phrase) and changed only the proof:
   </p>
   <p class="mono" style="margin:0.3em 0 0.5em;">
     secret = SHA-256( phrase ‖ "|" ‖ YYYY-MM-DD<sub>UTC</sub> ) &nbsp;∈ {today−1, today, today+1}
   </p>
   <p>
-    That is TOTP with period 86400 s and a ±1-step window. The phrase never crosses the wire. Owner string must
-    match the book (case-insensitive). Founding allocation matches the old <span class="mono">seats.dat</span>
-    split under real names: seats 1–1000 <strong>Dr. Aftab</strong>, 1001–11000 <strong>Amanda Jean</strong>.
-    The grab gate remains off until <span class="mono">SEAT_VERIFICATION_ENABLED</span> is flipped.
+    The construction is the same shape as TOTP with a period of 86,400 seconds and a ±1-step window,
+    so a client whose clock is on the other side of midnight UTC still verifies. The phrase itself is
+    never sent. The owner string on the request has to match the book, ignoring case. The split of the
+    first 11,000 seats is the old <span class="mono">seats.dat</span> allocation under ordinary names:
+    1–1000 to Dr. Aftab, 1001–11000 to Amanda Jean. Enforcement is still a config flag,
+    <span class="mono">SEAT_VERIFICATION_ENABLED</span>, which is false; remote
+    (<span class="mono">location_type=remote</span>) grabs are written to skip the seat when the flag
+    is turned on, which is the current stand-in for the old Silver band.
   </p>
 
-  <h2>5. The mind of The RSE</h2>
+  <h2>5. How the matching prompt changed</h2>
   <p>
-    <span class="mono">match_service_with_capabilities</span> is the only place an LLM is allowed to decide who
-    works. Treat it as a binary classifier <em>C(job, caps) → {grab, skip}</em> sitting in front of reputation
-    and price sort. Four prompt regimes:
+    Grab still filters by location (and optional geohash), then asks whether the provider can do the
+    job, then ranks by reputation alignment and price. The LLM sits only in that middle step,
+    <span class="mono">match_service_with_capabilities</span>, as a classifier in front of the sort.
+    Four prompts were used; the failure modes moved with the wording, which is why they are listed
+    rather than paraphrased into a single “the matcher got better” sentence.
   </p>
   <table>
     <thead>
-      <tr><th>Regime</th><th>Oracle</th><th>Output</th><th>Inductive bias</th></tr>
+      <tr><th></th><th>Model</th><th>Output</th><th>Rule</th></tr>
     </thead>
     <tbody>
       <tr>
-        <td>v0 · Aug 2025</td>
-        <td>Claude 3 Haiku, direct SDK</td>
+        <td>Aug 2025</td>
+        <td>Claude 3 Haiku, SDK</td>
         <td>YES / NO</td>
-        <td>“Definitely” and “partial = NO.” High precision, starved recall.</td>
+        <td>YES only if the provider can definitely fulfill the request; partial overlap is NO.</td>
       </tr>
       <tr>
-        <td>v1 · Oct 2025</td>
-        <td>OpenRouter, free then paid fallback</td>
+        <td>Oct 2025</td>
+        <td>OpenRouter (free, then paid fallback)</td>
         <td>YES / NO</td>
-        <td>Same rule, swappable weights. Keyword ∩ ≥ 2 if the model is silent.</td>
+        <td>Same binary; if the model is silent, keyword overlap of at least two tokens.</td>
       </tr>
       <tr>
-        <td>v2 · tests era</td>
+        <td>Later, pre-Sep 2026</td>
         <td>OpenRouter</td>
-        <td>YES / NO, “be lenient”</td>
-        <td>Plausible chance → YES. Integration tests then showed cross-domain false positives.</td>
+        <td>YES / NO</td>
+        <td>“Be lenient”: a plausible chance is YES. Cross-domain false positives show up in tests.</td>
       </tr>
       <tr>
-        <td>v3 · 10 Sep 2026</td>
-        <td>OpenRouter, 8 tokens</td>
-        <td>integer 0–10, threshold 7</td>
-        <td>Domain lexicons: disjoint non-empty domains → 0 without calling the model. “A chef is not a steel erector.”</td>
+        <td>10 Sep 2026</td>
+        <td>OpenRouter, max 8 tokens</td>
+        <td>0–10, grab if ≥ 7</td>
+        <td>Twelve domain lexicons; disjoint non-empty domains score 0 without an LLM call.</td>
       </tr>
     </tbody>
   </table>
@@ -463,13 +485,17 @@
 Do not score 7+ across domains.
 Score:</div>
   <p style="margin-top:0.45em;">
-    The domain short-circuit is the physically important part: it is a hard constraint, not a prompt suggestion.
-    Live integration tests (34 cases) sit at 33/34; the remaining false positive is adjacent-domain (aerial survey).
-    That is the current residual of the mind.
+    The twelve domains in the current lexicon are culinary, delivery, health, landscaping,
+    construction, defense, software, finance, pets, events, hazmat, and emissions. If both the job
+    and the capabilities match a non-empty domain set and those sets are disjoint, the score is 0
+    and the model is not called; that is what makes “a chef is not a steel erector” a constraint
+    rather than a suggestion in the prompt. The live suite is 34 cases and currently 33/34. The
+    remaining false positive is adjacent-domain (aerial survey), which those lexicons do not
+    separate.
   </p>
 
   <div class="page-footer">
-    <span>Matching threshold MATCH_SCORE_MIN = 7 · gate SEAT_VERIFICATION_ENABLED = False</span>
+    <span>MATCH_SCORE_MIN = 7 · SEAT_VERIFICATION_ENABLED = False</span>
     <span>Page 3 of 4</span>
   </div>
 </section>
@@ -478,73 +504,63 @@ Score:</div>
 <section class="page">
   <div class="page-header">
     <span class="brand">The RSE</span>
-    <span class="doc-label">Architecture · surfaces · open questions</span>
+    <span class="doc-label">Runtime · surfaces · open work</span>
   </div>
 
-  <h2 style="margin-top:0;border:none;padding:0;">6. Architecture that actually shipped</h2>
+  <h2 style="margin-top:0;border:none;padding:0;">6. What is actually running</h2>
   <p>
-    Control plane: Flask + gunicorn on a single DigitalOcean droplet, nginx terminating TLS, floating IP.
-    Data plane: JSON objects in Spaces, short in-process TTLs because workers do not share memory
-    (account TTL 2 s; jobs 2 s). There is still no relational store. That is a deliberate constraint:
-    every record is a document you can <span class="mono">GET</span> by id; indexes are extra JSON files
-    (<span class="mono">seats/_index.json</span>).
+    Production is Flask and gunicorn on one DigitalOcean droplet, with nginx terminating TLS on a
+    floating IP. Objects live in Spaces. Because gunicorn workers do not share memory, in-process
+    caches are short on purpose: two seconds for accounts and jobs, so a sign or a party update is
+    not served stale from another worker. There is still no relational store. The seat book is
+    <span class="mono">seats/_index.json</span> plus one JSON file per seat; the index for 11,000
+    seats is about 500 kB, which is fine at this N and is not an argument that the same layout would
+    hold a billion seats (the 2035 planning figure on the investors page).
   </p>
-  <div class="grid-2">
-    <div class="box">
-      <h3>Always-on loop</h3>
-      <p class="mono" style="margin-bottom:0.2em;">POST /bid · POST /grab_job · POST /sign_job</p>
-      <p style="margin-bottom:0;font-size:9.2pt;">Location filter (optional geohash cell) → capability score → reputation alignment → price. Job channel opens on grab. Both signatures required for <span class="mono">completed</span>.</p>
-    </div>
-    <div class="box">
-      <h3>Added, then sometimes removed</h3>
-      <p style="margin-bottom:0;font-size:9.2pt;">Rideshare UI came and went. Comms/cooperation APIs were deprecated and restored. Phantom and ETH linking lasted until the registrar cutover. Hyperion, SPA, and hiring are documents around the loop, not the loop.</p>
-    </div>
-  </div>
   <p>
-    July 2026 added structure without changing the Hamiltonian: demand parties, supply parties, campaigns
-    (bulk demand → N jobs), agent bearer tokens under a parent account, an append-only activity log, and
-    public portfolios. A taxi example shows the intended robot client: poll grab with a geohash whitelist,
-    talk on the job channel, sign. Nearby applies geo-indistinguishability (Gaussian noise on published pins,
-    σ by privacy dial, stable per entity × UTC day).
+    Some of the code around the loop came and went. A rideshare UI was added and later removed.
+    Comms and cooperation APIs were deprecated and then restored, with grab kept off the website.
+    Phantom and ETH linking lasted until the registrar cutover. What stayed from July 2026 is the
+    extra structure that does not change matching: demand and supply parties on a job, campaigns that
+    turn bulk demand into ordinary jobs, agent bearer tokens under a parent account, an append-only
+    activity log, and public portfolios. The taxi example is the intended robot client: poll grab
+    with a geohash whitelist, talk on the job channel, sign. Nearby publishes pins with Gaussian
+    noise (σ set by a privacy dial), stable per entity and UTC day so the point does not jitter on
+    refresh.
   </p>
 
-  <h2>7. Product surfaces</h2>
+  <h2>7. Where people and robots actually go</h2>
   <table>
-    <thead><tr><th>Surface</th><th>When</th><th>Role</th></tr></thead>
+    <thead><tr><th>Surface</th><th>When</th><th>What it does</th></tr></thead>
     <tbody>
-      <tr><td>Website (demand)</td><td>from day one</td><td>Humans submit bids. Grab is API-only.</td></tr>
-      <tr><td>rse-api.com</td><td>from day one</td><td>Robots. OpenAPI 1.3.0, in-page integration suite.</td></tr>
-      <tr><td>Android app</td><td>Jul 2026 · now 1.5.5</td><td>Demand-side, talks only to the API. Auto-update, Nearby, privacy dials.</td></tr>
-      <tr><td>Buy a Robot / Garage</td><td>2026</td><td>Catalog on Spaces; franchise economics for maintenance density.</td></tr>
-      <tr><td>Investors / SPA / Hyperion</td><td>Aug–Sep 2026</td><td>Seat sales as the bulk modeled stream; purchase price to Hyperion.</td></tr>
+      <tr><td>Website</td><td>from the first commit</td><td>Demand: humans submit bids. Grab is not offered here.</td></tr>
+      <tr><td>rse-api.com</td><td>from the first commit</td><td>Supply and everything else. OpenAPI 1.3.0; the docs page runs the integration suite against production.</td></tr>
+      <tr><td>Android app</td><td>July 2026, now 1.5.5</td><td>Demand-side only; talks to the API, not the website. Auto-update, Nearby, privacy dials.</td></tr>
+      <tr><td>Buy a Robot / Garage</td><td>2026</td><td>Catalog JSON on Spaces; franchise copy for maintenance density.</td></tr>
+      <tr><td>Investors / SPA / Hyperion</td><td>August–September 2026</td><td>Seat issuance is the bulk of the modeled revenue; SPA purchase price is contributed to Hyperion.</td></tr>
     </tbody>
   </table>
 
-  <h2>8. Open questions (for this audience)</h2>
-  <ul class="clean">
-    <li><strong>When to flip the seat gate.</strong> Proof is implemented; enforcement is a boolean. Remote software remains a free band. Physical density is the scarce thing the 11k seats are for.</li>
-    <li><strong>Cooldown per seat vs per account.</strong> Many seats × many logins can still parallelize grabs. A per-seat last-grab timestamp is the natural next conserved quantity.</li>
-    <li><strong>Matching as a calibrated score.</strong> 0–10 is better than YES/NO, but it is not a probability. The residual FP is adjacent-domain. A confusion matrix over the 12 lexicons would be the next instrument.</li>
-    <li><strong>JSON-on-object-storage.</strong> Fine at current N. Seat index of 11k is ~500 kB. A billion seats (the 2035 planning story) is a different store.</li>
-    <li><strong>Chain as optional title layer later.</strong> The NFT experiment failed as the <em>primary</em> book. It could return as a mirror of the registrar, not the reverse.</li>
-  </ul>
-
-  <div class="box accent">
-    <h3>Read this as an experiment log</h3>
-    <p style="margin-bottom:0;font-size:9.2pt;">
-      The RSE did not start as a robot-labor thesis and then add an API. It started as a matching API and
-      then discovered that seats, identity, and the prompt <em>are</em> the product. The git history is the
-      lab notebook: file secrets → L2 NFTs → a named registrar with a daily hash; Haiku YES/NO → a scored
-      mind with hard domain zeros. The loop on page 1 is still the Hamiltonian.
-    </p>
-  </div>
+  <h2>8. What is still open</h2>
+  <p>
+    The daily hash is implemented and tested; turning it on is
+    <span class="mono">SEAT_VERIFICATION_ENABLED</span>. Remote software stays ungated when that
+    happens. The 11,000 founding seats are for physical and hybrid density, which is the scarce side.
+    Cooldown is still per account, so many logins holding many of Aftab’s or Amanda Jean’s seats can
+    still grab in parallel; a <span class="mono">last_grab_at</span> on the seat record would be the
+    straightforward way to make the SPA’s “one grab per seat per window” true in the API. The 0–10
+    score is ordered but not calibrated, and the remaining false positive is adjacent-domain, so the
+    next measurement that would actually change the prompt is a confusion matrix over the twelve
+    lexicons rather than another adjective in the instructions. A chain could come back later as a
+    mirror of the registrar. Using it as the book was the experiment that already ran.
+  </p>
 
   <p class="muted" style="margin-top:0.7em;font-size:8pt;">
-    Method. History reconstructed from <span class="mono">git log</span> on
-    <span class="mono">main</span> at <span class="mono">ffce9a4</span> (17 Sep 2026). Counts: 262 commits,
-    Aug 2025–Sep 2026. Matching prompts quoted from <span class="mono">handlers.py</span> at the cited SHAs.
-    Seat objects from <span class="mono">seats.dat</span>, <span class="mono">RSESeat.sol</span>, and
-    <span class="mono">seats.py</span>. This is an engineering narrative, not an offering document.
+    Reconstructed from <span class="mono">git log</span> on <span class="mono">main</span> through
+    17 September 2026 (262 commits, August 2025–September 2026). Matching prompts are from
+    <span class="mono">handlers.py</span> at the cited dates. Seat objects are from
+    <span class="mono">seats.dat</span>, <span class="mono">RSESeat.sol</span>, and
+    <span class="mono">seats.py</span>. This is an engineering history, not an offering document.
   </p>
 
   <div class="page-footer">
