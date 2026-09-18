@@ -112,8 +112,8 @@
     border-left: 3px solid var(--highlight); padding: 0.35em 0 0.35em 0.75em;
     margin: 0.5em 0; background: #f7faf9;
   }
-  .rse-doc ul.clean { margin: 0.2em 0 0.5em 1em; }
-  .rse-doc ul.clean li { margin-bottom: 0.18em; }
+  .rse-doc ul.clean, .rse-doc ol.clean { margin: 0.2em 0 0.5em 1em; }
+  .rse-doc ul.clean li, .rse-doc ol.clean li { margin-bottom: 0.22em; }
   .rse-doc .hero-row {
     display: grid; grid-template-columns: 1fr 1.7in; gap: 0.85em; align-items: start;
   }
@@ -202,12 +202,12 @@
       <p style="font-size:11pt;color:var(--ink-soft);margin-top:0.15em;">A technical history of the protocol, 2025-08-10 → 2026-09-17</p>
       <div class="cover-rule"></div>
       <p class="lede">
-        Git history of <span class="mono">theservicesexchange</span> from 10 August 2025 through
-        17 September 2026: 262 commits on <span class="mono">main</span>, about 176k insertions.
-        A buyer posts a priced, expiring request; a provider calls
-        <span class="mono">POST /grab_job</span>; an LLM scores whether those capabilities cover
-        the job; both sides sign when the work is done. Price and currency are recorded on the
-        request. Parties settle off-platform.
+        This document is an engineering history of The Robot Services Exchange, reconstructed from
+        <span class="mono">git log</span> on <span class="mono">main</span> in
+        <span class="mono">theservicesexchange</span> (262 commits, about 176k insertions, 10 August
+        2025 through 17 September 2026). It is for physicists and engineers who already have the
+        business plan: what shipped, what was tried and deleted, and how the matching loop, seats,
+        demand surfaces, and Hyperion sit relative to one another.
       </p>
     </div>
     <div>
@@ -221,34 +221,47 @@
     <div class="box kpi"><div class="n">11k</div><div class="l">founding seats issued</div></div>
   </div>
 
-  <h2 style="margin-top:0.7em;border:none;padding:0;">1. Core protocol</h2>
+  <h2 style="margin-top:0.7em;border:none;padding:0;">1. How the exchange works</h2>
   <p>
-    <span class="mono">87a45fa</span> (10 August 2025) is already a Flask API and JSON documents
-    (accounts, bids, jobs, tokens). Persistence later moved to DigitalOcean Spaces (S3-compatible
-    JSON): objects by id, indexes as more objects. No SQL database.
+    The first commit (<span class="mono">87a45fa</span>, 10 August 2025) is already a Flask API and
+    JSON documents for accounts, bids, jobs, and tokens. Persistence later moved to DigitalOcean
+    Spaces (S3-compatible JSON): each record is an object by id, and any index is another object.
+    There is no SQL database. The loop that commit implemented is still the one that runs:
   </p>
-  <ul class="clean">
-    <li>Website: people post bids. API (<span class="mono">rse-api.com</span>): robots grab jobs.</li>
-    <li>Both parties sign before status is <span class="mono">completed</span>.</li>
-    <li>Successful grab starts a cooldown (900 seconds today, per account).</li>
-    <li>Reputation: mean of stars, shrunk toward 2.5, so one five-star rating is a short record.</li>
-    <li>When the gate is on, a seat authorizes <span class="mono">/grab_job</span> and stamps supply identity on the job. Price and currency stay on the request. Settlement is between the parties.</li>
-    <li>The LLM is called only in matching (<span class="mono">match_service_with_capabilities</span>).</li>
-  </ul>
+  <ol class="clean" style="margin-left:1.1em;">
+    <li><strong>Bid.</strong> Demand posts a priced, expiring service request (<span class="mono">POST /bid</span> or the website form): what is wanted, how much, where, how long it stays open.</li>
+    <li><strong>Grab.</strong> Supply calls <span class="mono">POST /grab_job</span> with free-text capabilities and, for physical work, a location (optional geohash cell).</li>
+    <li><strong>Match.</strong> The server filters by location, asks an LLM whether those capabilities cover this job, then ranks remaining jobs by reputation alignment and price. A successful grab starts a 900-second cooldown on that account.</li>
+    <li><strong>Sign.</strong> Both sides complete the work and <span class="mono">POST /sign_job</span> with a 1–5 star rating. The job is <span class="mono">completed</span> only after both signatures. Reputation is a mean of stars shrunk toward 2.5, so a single five-star rating is still a short record.</li>
+  </ol>
+  <p>
+    Price and currency are recorded on the request. The parties settle off-platform. When seat
+    verification is on, a seat authorizes the grab and is stamped on the job as the supply public
+    identity. The LLM is called only in matching
+    (<span class="mono">match_service_with_capabilities</span>).
+  </p>
 
-  <h2>2. Identity</h2>
-  <table>
-    <thead><tr><th>Field</th><th>Value</th></tr></thead>
-    <tbody>
-      <tr><td>First name</td><td>“Service Exchange (SEX) Protocol”</td></tr>
-      <tr><td>Public name</td><td>The RSE (The Robot Services Exchange)</td></tr>
-      <tr><td>3 Dec 2025</td><td><span class="mono">user_type ∈ {demand, supply}</span>, set once, one role</td></tr>
-      <tr><td>Demand public id</td><td>username</td></tr>
-      <tr><td>Supply public id</td><td>seat, when assigned</td></tr>
-      <tr><td>11 Aug 2026</td><td>Marketing host: <span class="mono">therobotservicesexchange.com</span></td></tr>
-      <tr><td>API host</td><td><span class="mono">rse-api.com</span></td></tr>
-    </tbody>
-  </table>
+  <h2>2. Demand, website, and API</h2>
+  <p>
+    The repository opened as the “Service Exchange (SEX) Protocol,” a general marketplace, and the
+    public name became The RSE (The Robot Services Exchange) as the copy specialized to robot labor.
+    Registration requires <span class="mono">user_type ∈ {demand, supply}</span>, set once, one role.
+    Demand’s public identity is a username. Supply’s is a seat when one is assigned.
+  </p>
+  <div class="grid-2">
+    <div class="box">
+      <h3>Website · demand</h3>
+      <p style="margin-bottom:0.35em;font-size:9.2pt;">
+        <span class="mono">therobotservicesexchange.com</span> (cut over 11 August 2026). People register as demand and submit bids from the homepage form. The Android app (1.5.5) is the same demand role over the API, with Nearby, privacy dials, and auto-update.
+      </p>
+    </div>
+    <div class="box">
+      <h3>API · supply</h3>
+      <p style="margin-bottom:0.35em;font-size:9.2pt;">
+        <span class="mono">rse-api.com:5003</span>. Robots and operators register as supply, call <span class="mono">/grab_job</span>, job channels, parties, and campaigns. OpenAPI 1.3.0. The docs page runs the integration suite against production.
+      </p>
+    </div>
+  </div>
 
   <div class="page-footer">
     <span>therobotservicesexchange.com/git_report.html</span>
@@ -355,12 +368,14 @@
     <span class="doc-label">Seats · matching</span>
   </div>
 
-  <h2 style="margin-top:0;border:none;padding:0;">4. Seat management</h2>
+  <h2 style="margin-top:0;border:none;padding:0;">4. Seats</h2>
   <p>
-    With the gate on, a seat authorizes <span class="mono">/grab_job</span> and is stamped on the job
-    as supply identity. Price and currency stay on the request; parties settle off-platform. Production
-    cooldown is 900 seconds per account. The SPA still describes one grab per seat per window (see
-    Future work). Three books were used:
+    A seat is a number, an owner, and a private 12-word phrase. Mickey Shaughnessy is the registrar:
+    he assigns, transfers, and revokes. Transfer keeps the phrase and updates the owner. With
+    <span class="mono">SEAT_VERIFICATION_ENABLED</span> on, physical and hybrid grabs present the
+    seat number, the owner name, and a daily hash of the phrase; remote software grabs skip the seat.
+    Production cooldown is 900 seconds per account. The SPA describes one grab per seat per window
+    (see Future work). Three books were used:
   </p>
 
   <table>
@@ -418,8 +433,10 @@
 
   <h2>5. Matching</h2>
   <p>
-    Grab order: location (optional geohash) → capability score → reputation alignment → price.
-    The LLM runs only in the middle step, <span class="mono">match_service_with_capabilities</span>.
+    After location filtering (type, distance, optional geohash cell), remaining bids are scored for
+    capability fit, then ordered by how close the buyer’s reputation is to the provider’s, then by
+    price. Only the capability step calls an LLM. Four prompts were used; the failure modes moved
+    with the wording.
   </p>
   <table>
     <thead>
@@ -506,17 +523,18 @@ Score:</div>
     <li>Nearby pins: Gaussian noise, σ from a privacy dial, stable per entity × UTC day</li>
   </ul>
 
-  <h2>7. Surfaces</h2>
-  <table>
-    <thead><tr><th>Surface</th><th>When</th><th>Role</th></tr></thead>
-    <tbody>
-      <tr><td>Website</td><td>from first commit</td><td>Demand: humans submit bids</td></tr>
-      <tr><td>rse-api.com</td><td>from first commit</td><td>Supply and the rest of the API. OpenAPI 1.3.0; docs page runs the integration suite</td></tr>
-      <tr><td>Android app</td><td>Jul 2026 · now 1.5.5</td><td>Demand-side; API only. Auto-update, Nearby, privacy dials</td></tr>
-      <tr><td>Buy a Robot / Garage</td><td>2026</td><td>Catalog JSON on Spaces; franchise copy for maintenance density</td></tr>
-      <tr><td>Investors / SPA / Hyperion</td><td>Aug–Sep 2026</td><td>Seat issuance is the bulk of modeled revenue; SPA purchase price goes to Hyperion</td></tr>
-    </tbody>
-  </table>
+  <h2>7. Hyperion</h2>
+  <p>
+    The Hyperion Fund is the capital vehicle around the exchange. Under the SPA, a sponsor pays a
+    purchase price and receives Golden Seats (15-minute rate limit, eternal modulo abuse,
+    transferable). One hundred percent of that purchase price is contributed to Hyperion as the
+    buyer’s Hyperion Basis. Seat holders share earned profits.
+    Principal stays in the Fund. The Fund buys robot-advantaged demand, routes, books, and enabling
+    capacity; seated providers on The RSE grab the resulting work. Later seat and equity dollars
+    participate on the same contribution rule. Stream 06 on the investors model is an administration
+    fee on AUM (~2.8%/year in the published dials). Pages:
+    <a href="hyperion.html">hyperion.html</a>, <a href="spa.html">spa.html</a>.
+  </p>
 
   <h2>8. Future work</h2>
   <ul class="clean">
