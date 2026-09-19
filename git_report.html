@@ -235,9 +235,9 @@
     <li><strong>Sign.</strong> Both sides complete the work and <span class="mono">POST /sign_job</span> with a 1–5 star rating. The job is <span class="mono">completed</span> only after both signatures. Reputation is a mean of stars shrunk toward 2.5, so a single five-star rating is still a short record.</li>
   </ol>
   <p>
-    Price and currency are recorded on the request. The parties settle off-platform. When seat
-    verification is on, a seat authorizes the grab and is stamped on the job as the supply public
-    identity. The LLM is called only in matching
+    Price and currency are recorded on the request. The parties settle off-platform. Seats are not
+    money. When seat verification is on, a seat authorizes the grab and is stamped on the job as the
+    supply public identity. The LLM is called only in matching
     (<span class="mono">match_service_with_capabilities</span>).
   </p>
 
@@ -370,7 +370,7 @@
 
   <h2 style="margin-top:0;border:none;padding:0;">4. Seats</h2>
   <p>
-    A seat is a number, an owner, and a private 12-word phrase. Mickey Shaughnessy is the registrar:
+    A seat is a number, an owner, and a private 12-word phrase. Seats are not money. Mickey Shaughnessy is the registrar:
     he assigns, transfers, and revokes. Transfer keeps the phrase and updates the owner. With
     <span class="mono">SEAT_VERIFICATION_ENABLED</span> on, physical and hybrid grabs present the
     seat number, the owner name, and a daily hash of the phrase; remote software grabs skip the seat.
