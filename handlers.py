@@ -6470,7 +6470,7 @@ _PROJECTION_PRESETS = {
     "conservative": {
         "label": "Conservative",
         "gmv": 25,          # → $7.5T 2040 GMV
-        "take": 30,         # → 3.0% take-rate
+        "take": 0,          # retired; model forces a 0 job take
         "seatPrice": 50,    # → $50k / seat
         "network": 40,      # → 0.40×
         "capital": 50,      # → $0.5T raise
@@ -6480,7 +6480,7 @@ _PROJECTION_PRESETS = {
     "base": {
         "label": "Base",
         "gmv": 100,         # → $30T 2040 GMV
-        "take": 50,         # → 5.0%
+        "take": 0,          # retired; model forces a 0 job take
         "seatPrice": 100,   # → $100k
         "network": 100,     # → 1.0×
         "capital": 150,     # → $1.5T raise
@@ -6490,7 +6490,7 @@ _PROJECTION_PRESETS = {
     "aggressive": {
         "label": "Aggressive",
         "gmv": 250,         # → $75T 2040 GMV
-        "take": 70,         # → 7.0%
+        "take": 0,          # retired; model forces a 0 job take
         "seatPrice": 120,   # → $120k
         "network": 180,     # → 1.8×
         "capital": 200,     # → $2.0T raise
@@ -6569,7 +6569,7 @@ _STREAM_KEYS = (
     "exchange", "seats", "hardware", "ads", "franchise", "hyperion", "insurance", "design"
 )
 _STREAM_LABELS = {
-    "exchange": "Exchange take-rate",
+    "exchange": "Job take (zero)",
     "seats": "Eternal seats",
     "hardware": "Hardware referrals",
     "ads": "Nearby / ads",
@@ -6667,7 +6667,7 @@ def _dial_params_from_preset(preset: Dict[str, Any]) -> Dict[str, float]:
     """Convert UI dial integers to model parameters (matches investors.html readParams)."""
     return {
         "gmv2035": (float(preset["gmv"]) / 10.0) * 3e12,
-        "takeRate": float(preset["take"]) / 1000.0,
+        "takeRate": 0.0,  # no escrow, no cut of the job
         "seatPrice": float(preset["seatPrice"]) * 1000.0,
         "network": float(preset["network"]) / 100.0,
         "capital": (float(preset["capital"]) / 100.0) * 1e12,
@@ -6682,11 +6682,6 @@ def _merge_projection_overrides(preset_key: str, overrides: Optional[Dict[str, A
     if overrides.get("gmv2035") is not None:
         try:
             base["gmv2035"] = float(overrides["gmv2035"])
-        except (TypeError, ValueError):
-            pass
-    if overrides.get("takeRate") is not None:
-        try:
-            base["takeRate"] = float(overrides["takeRate"])
         except (TypeError, ValueError):
             pass
     if overrides.get("seatPrice") is not None:
@@ -6706,7 +6701,7 @@ def _merge_projection_overrides(preset_key: str, overrides: Optional[Dict[str, A
             pass
     # Sanity clamps
     base["gmv2035"] = max(1e9, min(100e12, base["gmv2035"]))
-    base["takeRate"] = max(0.005, min(0.20, base["takeRate"]))
+    base["takeRate"] = 0.0
     base["seatPrice"] = max(1000.0, min(1e6, base["seatPrice"]))
     base["network"] = max(0.05, min(5.0, base["network"]))
     base["capital"] = max(1e6, min(20e12, base["capital"]))
@@ -7022,7 +7017,7 @@ def _cap_table_heuristic(
         peak_seats = series["peak_seat_revenue"]
         narrative = (
             f"{preset['label']} uses the investors.html projection path "
-            f"(2040 GMV {_fmt_usd_short(params['gmv2035'])}, take-rate {params['takeRate']*100:.1f}%, "
+            f"(2040 GMV {_fmt_usd_short(params['gmv2035'])}, job take 0%, no escrow, "
             f"seat {_fmt_usd_short(params['seatPrice'])}, network {params['network']:.2f}×). "
             f"Peak seat revenue {_fmt_usd_short(peak_seats)}; 2035 total revenue {_fmt_usd_short(series['rev_2035'])}; "
             f"15-yr cum. profit {_fmt_usd_short(series['cum_profit'])}. "
@@ -7098,7 +7093,7 @@ def _cap_table_heuristic(
         synergies.append({
             "theme": "Dual-use commercial + secure buyers",
             "strength": "medium",
-            "rationale": "Diversifies take-rate GMV beyond consumer robotics jobs.",
+            "rationale": "Diversifies cleared job volume beyond consumer robotics jobs.",
         })
     if has_any("pif_saudi", "nbim_norway", "kic_korea", "temasek") and has_any("softbank", "blackrock"):
         synergies.append({
@@ -7156,7 +7151,7 @@ def _cap_table_heuristic(
         f"{_fmt_usd_short(focus['pre_money_usd'])} pre / {_fmt_usd_short(focus['post_money_usd'])} post "
         f"(~{focus['equity_sold_pct']}% to investors, ~{focus['esop_pct']}% ESOP, "
         f"~{focus['founder_equity_pct']}% founders/prior). "
-        f"Cap-table makeup sets residual risk premia on each of the eight streams. "
+        f"Job take is fixed at zero. Cap-table makeup sets residual risk premia on the earning streams. "
     )
     if notes:
         summary += f"Planner notes considered: {notes[:240]}"

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a2e">
-    <meta name="description" content="Invest in The RSE — the open exchange for robot labor. How the marketplace works, eight revenue streams, and interactive 15-year projections.">
+    <meta name="description" content="Invest in The RSE — the open exchange for robot labor. Jobs clear with no escrow and no take. Seats and six other streams, with interactive 15-year projections.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="The RSE">
@@ -894,8 +894,10 @@
             <p class="inv-kicker">Investor overview</p>
             <h1>How The RSE works — and how it earns</h1>
             <p class="lede">
-                Revenue follows density: take-rate, seats, hardware, attention, franchises, Hyperion fees, insurance, design.
+                The exchange records the price of a job. It does not hold the money, and it does not take a cut.
+                Revenue follows density: seats, hardware, attention, franchises, Hyperion fees, insurance, design.
                 Seat and equity dollars participate in the <a href="hyperion.html">Hyperion Fund</a>. Permanent capital; preferred rights that deepen with the network.
+                <a href="payments.html">Why there is no escrow and no take</a>.
             </p>
             <div class="inv-cta-row">
                 <a class="btn btn-primary btn-lg" href="tel:+15302190940">Call +1 530 219 0940</a>
@@ -910,7 +912,7 @@
                 <a href="#snapshot">Live snapshot</a>
                 <a href="#how-it-works">How it works</a>
                 <a href="#streams">Revenue streams</a>
-                <a href="#exchange-gmv">1. Exchange GMV</a>
+                <a href="#exchange-gmv">1. Cleared GMV</a>
                 <a href="#seats">2. Seats</a>
                 <a href="#hardware">3. Hardware</a>
                 <a href="#nearby-ads">4. Nearby / ads</a>
@@ -953,21 +955,22 @@
     <!-- ========== REVENUE STREAMS ========== -->
     <section class="inv-section" id="streams">
         <div class="container">
-            <h2>Eight revenue streams</h2>
+            <h2>Revenue streams</h2>
             <p class="inv-stream-lede">
-                Eight streams. Seat issuance is the bulk of modeled revenue (base peak near $50T in 2035 at $100k × 500M new seats).
+                Seven earning streams. The job itself is not one of them: no escrow, and the take-rate is zero.
+                Seat issuance is the bulk of modeled revenue (base peak near $50T in 2035 at $100k × 500M new seats).
                 Figures follow the <a href="#projections">Projections</a> dials.
             </p>
             <div class="row g-3">
                 <div class="col-md-6 col-lg-4">
                     <div class="inv-card">
-                        <span class="inv-pill">01 · Exchange</span>
-                        <h3>Take-rate on GMV</h3>
-                        <p class="formula-mini">Revenue = GMV × take-rate</p>
+                        <span class="inv-pill">01 · Jobs</span>
+                        <h3>No take, no escrow</h3>
+                        <p class="formula-mini">Job revenue = $0</p>
                         <div class="live-num" id="cardExch2035">—</div>
-                        <div class="live-label">Platform revenue · 2035</div>
-                        <p class="cost-line"><strong>Cost load:</strong> 35% → 12% of stream rev</p>
-                        <a class="stream-jump" href="#exchange-gmv">Details &amp; chart →</a>
+                        <div class="live-label">Platform cut of the job · every year</div>
+                        <p class="cost-line">Parties settle. <a href="payments.html">Why</a></p>
+                        <a class="stream-jump" href="#exchange-gmv">Cleared GMV →</a>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
@@ -1055,30 +1058,27 @@
     <!-- 1. Exchange -->
     <section class="inv-section" id="exchange-gmv">
         <div class="container">
-            <h2>1. Exchange take-rate</h2>
-            <p class="inv-formula">Revenue = <code>GMV</code> × <code>take-rate</code>
-                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">GMV = dollar value of robot labor jobs cleared on the exchange</span>
+            <h2>1. Cleared GMV, no take</h2>
+            <p class="inv-formula">Job revenue = <code>$0</code>
+                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">GMV = dollar value of robot labor jobs cleared on the exchange. Recorded. Not collected.</span>
             </p>
             <p class="inv-stream-lede">
-                Platform fee on transaction volume once payments and escrow are on-platform.
-                Dials set 2040 GMV and take-rate; each chart bar is GMV × take-rate for that year.
+                No escrow. No platform fee. The two sides settle the price on the bid.
+                The GMV dial scales how much work clears. It does not scale a cut.
+                Insurance uses GMV as a base. A seat is the right to that full price.
+                <a href="payments.html">Why the exchange doesn’t handle payments</a>.
             </p>
             <div class="inv-stream-meta">
                 <div class="inv-metric"><div class="n" id="metricGmv2035">—</div><div class="l">GMV · 2040 (dial)</div></div>
-                <div class="inv-metric"><div class="n" id="metricTakeRate">—</div><div class="l">Take-rate (dial)</div></div>
-                <div class="inv-metric"><div class="n" id="metricExch2035">—</div><div class="l">= GMV × take · 2035</div></div>
-                <div class="inv-metric"><div class="n" id="metricExch2040">—</div><div class="l">Revenue · 2040</div></div>
+                <div class="inv-metric"><div class="n" id="metricTakeRate">0%</div><div class="l">Take-rate</div></div>
+                <div class="inv-metric"><div class="n" id="metricExch2035">$0</div><div class="l">Job revenue · 2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricExch2040">$0</div><div class="l">Job revenue · 2040</div></div>
             </div>
             <div class="inv-chart-box">
-                <h3 id="titleChartExchange">Platform revenue from take-rate ($ / year)</h3>
-                <canvas id="chartExchange" aria-label="Bar chart of exchange take-rate revenue by year"></canvas>
+                <h3 id="titleChartGmv">GMV cleared (jobs, $ / year)</h3>
+                <canvas id="chartGmv" aria-label="Bar chart of GMV cleared by year. The exchange does not keep a cut of these amounts."></canvas>
             </div>
-            <p class="inv-chart-caption" id="captionExchange">Each bar = that year’s GMV × take-rate. Not GMV itself.</p>
-            <div class="inv-chart-box">
-                <h3 id="titleChartGmv">Underlying GMV (jobs cleared, $ / year)</h3>
-                <canvas id="chartGmv" aria-label="Bar chart of GMV by year"></canvas>
-            </div>
-            <p class="inv-chart-caption">Context only — GMV is the base the take-rate applies to. Platform keeps the take-rate bar above, not full GMV.</p>
+            <p class="inv-chart-caption" id="captionExchange">Each bar is the value of jobs cleared. Platform revenue from those jobs is zero.</p>
         </div>
     </section>
 
@@ -1416,10 +1416,10 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Exchange take-rate</td>
-                            <td>Cloud matching, support, disputes, insurance partners, compliance</td>
-                            <td class="num">35% of rev</td>
-                            <td class="num">12% of rev</td>
+                            <td>Job take</td>
+                            <td>None. No escrow, no card network, no refund desk. The cut is not in the model.</td>
+                            <td class="num">$0</td>
+                            <td class="num">$0</td>
                         </tr>
                         <tr>
                             <td>Seat sales</td>
@@ -1475,10 +1475,11 @@
         <div class="container">
             <h2>15-year revenue &amp; profit projections</h2>
             <p class="inv-prose mb-4">
-                Years <strong>2026–2040</strong>. Expand the scenario dials to re-tune GMV, take-rate, seats, network scale,
+                Years <strong>2026–2040</strong>. Expand the scenario dials to re-tune GMV, seats, network scale,
                 and equity assumptions—charts, the P&amp;L table, stream summaries above, and raise KPIs update live.
+                GMV is jobs cleared. The take on it stays zero, so it is not a revenue line.
                 Seat primary issuance is the bulk of modeled project revenue (base peak near $50T in 2035),
-                then plateaus. Exchange take-rate is the largest recurring line after that issuance window.
+                then plateaus. After that, the recurring lines are hardware, attention, franchises, Hyperion, insurance, and design.
             </p>
 
             <div class="inv-dials" id="scenarioDials" aria-label="Scenario tuning dials">
@@ -1486,7 +1487,7 @@
                     <button type="button" class="inv-dials-toggle" id="dialsToggle"
                         aria-expanded="false" aria-controls="scenarioDialsBody">
                         <h3>Scenario dials</h3>
-                        <span class="inv-dials-summary" id="dialsSummary">Base · GMV $30.0T · take 5.0% · seats $100k · net 1.00×</span>
+                        <span class="inv-dials-summary" id="dialsSummary">Base · GMV $30.0T · no take · seats $100k · net 1.00×</span>
                         <span class="inv-dials-chevron" id="dialsChevron">Expand</span>
                     </button>
                     <div class="inv-presets" role="group" aria-label="Scenario presets">
@@ -1510,11 +1511,6 @@
                             <label for="dialGmv">2040 GMV <span class="val" id="dialGmvVal">$30.0T</span></label>
                             <input type="range" id="dialGmv" min="5" max="500" step="5" value="100" aria-valuetext="$30.0T">
                             <div class="hint">Scales the full GMV path. Base = $30T in 2040 (~half of ~$60T 2025 human labor GMV).</div>
-                        </div>
-                        <div class="inv-dial">
-                            <label for="dialTake">Take-rate <span class="val" id="dialTakeVal">5.0%</span></label>
-                            <input type="range" id="dialTake" min="10" max="150" step="5" value="50">
-                            <div class="hint">Platform share of GMV. Base 5%. Range 1.0%–15.0%.</div>
                         </div>
                         <div class="inv-dial">
                             <label for="dialSeatPrice">Seat price <span class="val" id="dialSeatPriceVal">$100k</span></label>
@@ -1582,7 +1578,7 @@
                         <tr>
                             <th>Year</th>
                             <th class="num">GMV</th>
-                            <th class="num">Exchange</th>
+                            <th class="num">Job take</th>
                             <th class="num">Seats</th>
                             <th class="num">Hardware</th>
                             <th class="num">Ads</th>
@@ -1626,8 +1622,8 @@
                     </tr>
                     <tr>
                         <td>Payments</td>
-                        <td>Off-platform settlement; exchange records price</td>
-                        <td>Escrow + take-rate (model corridor ~5% of GMV)</td>
+                        <td>Parties settle. Exchange records the price. No escrow.</td>
+                        <td>Stays that way. Take-rate is zero. <a href="payments.html">Why</a></td>
                     </tr>
                     <tr>
                         <td>Disputes</td>
@@ -1657,9 +1653,9 @@
             </p>
             <p class="inv-prose mb-2">
                 Valuations are a <strong>DCF of the same 15-year projection curves</strong> used above
-                (all eight streams)—not a seed-stage rule of thumb.
+                (job take fixed at zero)—not a seed-stage rule of thumb.
                 Cap-table makeup sets a <strong>risk premium per revenue stream</strong> (e.g. NVIDIA/Unitree de-risk
-                hardware; a16z/Sequoia de-risk marketplace take-rate; sovereigns/BlackRock de-risk Hyperion).
+                hardware; a16z/Sequoia de-risk marketplace density; sovereigns/BlackRock de-risk Hyperion).
                 Live scenario dials under <a href="#projections">Projections</a> are sent for the focus scenario when you run the tool.
             </p>
             <p class="inv-note mb-4">
@@ -1911,10 +1907,10 @@
         const SEAT_UNIT_COST = [100, 25];
 
         const PRESETS = {
-            conservative: { gmv: 25, take: 30, seatPrice: 50, network: 40, capital: 50, partners: 5 },
-            base:         { gmv: 100, take: 50, seatPrice: 100, network: 100, capital: 150, partners: 7 },
-            aggressive:   { gmv: 250, take: 70, seatPrice: 120, network: 180, capital: 200, partners: 6 },
-            capital:      { gmv: 100, take: 50, seatPrice: 100, network: 100, capital: 150, partners: 7 }
+            conservative: { gmv: 25, seatPrice: 50, network: 40, capital: 50, partners: 5 },
+            base:         { gmv: 100, seatPrice: 100, network: 100, capital: 150, partners: 7 },
+            aggressive:   { gmv: 250, seatPrice: 120, network: 180, capital: 200, partners: 6 },
+            capital:      { gmv: 100, seatPrice: 100, network: 100, capital: 150, partners: 7 }
         };
 
         function costRatio(y, early, late) {
@@ -1958,7 +1954,7 @@
         function readParams() {
             return {
                 gmv2035: (Number(document.getElementById('dialGmv').value) / 10) * 3e12, // 100 → $30T in 2040
-                takeRate: Number(document.getElementById('dialTake').value) / 1000,       // 50 → 5%
+                takeRate: 0, // no escrow, no cut of the job
                 seatPrice: Number(document.getElementById('dialSeatPrice').value) * 1000, // 100 → $100k
                 network: Number(document.getElementById('dialNetwork').value) / 100,      // 100 → 1.0×
                 capital: (Number(document.getElementById('dialCapital').value) / 100) * 1e12, // 150 → $1.5T
@@ -1987,7 +1983,7 @@
 
             YEARS.forEach(y => {
                 const gmv = BASE_GMV[y] * gmvScale;
-                const exchange = gmv * p.takeRate;
+                const exchange = 0; // job take stays zero; gmv is cleared volume, not revenue
                 const seatUnits = BASE_SEAT_NEW[y] * n;
                 const seats = seatUnits * p.seatPrice;
                 const robots = BASE_ROBOTS[y] * n;
@@ -2164,7 +2160,6 @@
         }
 
         // Stream charts (filled by applyScenario from dials)
-        makeBar('chartExchange', [{ label: 'Take-rate revenue ($)', data: [], backgroundColor: COLORS.exchange }], false);
         makeBar('chartGmv', [{ label: 'GMV — jobs cleared ($)', data: [], backgroundColor: COLORS.gmv }], false);
         makeBar('chartSeatsRev', [{ label: 'Seat sales revenue ($)', data: [], backgroundColor: COLORS.seats }], false);
         makeBar('chartSeatsUnits', [{ label: 'New seats sold (units)', data: [], backgroundColor: COLORS.seats }], false, true);
@@ -2175,7 +2170,6 @@
         makeBar('chartInsurance', [{ label: 'Insurance / SLA ($)', data: [], backgroundColor: COLORS.insurance }], false);
         makeBar('chartDesign', [{ label: 'Design services ($)', data: [], backgroundColor: COLORS.design }], false);
         makeBar('chartRevenueStacked', [
-            { label: 'Exchange', data: [], backgroundColor: COLORS.exchange, borderRadius: 0 },
             { label: 'Seats', data: [], backgroundColor: COLORS.seats, borderRadius: 0 },
             { label: 'Hardware', data: [], backgroundColor: COLORS.hardware, borderRadius: 0 },
             { label: 'Ads', data: [], backgroundColor: COLORS.ads, borderRadius: 0 },
@@ -2185,7 +2179,6 @@
             { label: 'Design', data: [], backgroundColor: COLORS.design, borderRadius: 0 }
         ], true);
         makeBar('chartRevenueExSeats', [
-            { label: 'Exchange', data: [], backgroundColor: COLORS.exchange, borderRadius: 0 },
             { label: 'Hardware', data: [], backgroundColor: COLORS.hardware, borderRadius: 0 },
             { label: 'Ads', data: [], backgroundColor: COLORS.ads, borderRadius: 0 },
             { label: 'Franchise', data: [], backgroundColor: COLORS.franchise, borderRadius: 0 },
@@ -2199,7 +2192,6 @@
             { label: 'Profit', data: [], backgroundColor: COLORS.profit, borderRadius: 2 }
         ], false);
         makeBar('chartProfitStacked', [
-            { label: 'Exchange', data: [], backgroundColor: COLORS.exchange, borderRadius: 0 },
             { label: 'Seats', data: [], backgroundColor: COLORS.seats, borderRadius: 0 },
             { label: 'Hardware', data: [], backgroundColor: COLORS.hardware, borderRadius: 0 },
             { label: 'Ads', data: [], backgroundColor: COLORS.ads, borderRadius: 0 },
@@ -2216,7 +2208,6 @@
 
         function updateDialLabels(p) {
             setMoney('dialGmvVal', p.gmv2035);
-            setText('dialTakeVal', (p.takeRate * 100).toFixed(1) + '%');
             setMoney('dialSeatPriceVal', p.seatPrice);
             setText('dialNetworkVal', p.network.toFixed(2) + '×');
             setMoney('dialCapitalVal', p.capital);
@@ -2231,7 +2222,7 @@
                 : 'Custom';
             setHtml('dialsSummary', withMag(
                 presetName + ' · GMV ' + fmtMoney(p.gmv2035) +
-                ' · take ' + (p.takeRate * 100).toFixed(1) + '%' +
+                ' · no take' +
                 ' · seats ' + fmtMoney(p.seatPrice) +
                 ' · net ' + p.network.toFixed(2) + '×'
             ));
@@ -2250,14 +2241,12 @@
 
             // Exchange
             setMoney('metricGmv2035', p.gmv2035);
-            setText('metricTakeRate', (p.takeRate * 100).toFixed(1) + '%');
-            setMoney('metricExch2035', series.exchange[i2035]);
-            setMoney('metricExch2040', series.exchange[i2040]);
-            setMoney('cardExch2035', series.exchange[i2035]);
-            setText('titleChartExchange', 'Platform revenue = GMV × ' + (p.takeRate * 100).toFixed(1) + '%  ($ / year)');
+            setText('metricTakeRate', '0%');
+            setText('metricExch2035', '$0');
+            setText('metricExch2040', '$0');
+            setText('cardExch2035', '$0');
             setHtml('captionExchange', withMag(
-                '2040: ' + fmtMoney(p.gmv2035) + ' GMV × ' + (p.takeRate * 100).toFixed(1) + '% = ' +
-                fmtMoney(series.exchange[i2040]) + ' platform revenue. Each bar is take-rate revenue, not full GMV.'
+                '2040: ' + fmtMoney(p.gmv2035) + ' of jobs cleared. Platform keeps $0. No escrow.'
             ));
 
             // Seats
@@ -2390,7 +2379,7 @@
             if (!el) return;
             el.innerHTML = withMag(
                 '<strong>Live model assumptions</strong><br>' +
-                'GMV path anchors ' + fmtMoney(p.gmv2035) + ' in 2040 at ' + (p.takeRate * 100).toFixed(1) + '% take-rate. ' +
+                'GMV path anchors ' + fmtMoney(p.gmv2035) + ' of jobs cleared in 2040. Job take-rate is 0. No escrow. ' +
                 'Seats: ' + fmtMoney(p.seatPrice) + ' primary × network scale ' + p.network.toFixed(2) + '× (base ~1B seats over 2031–2035). ' +
                 'Hardware: $25k ASP, 3% affiliate, 40% finance attach × 1.5% referral (network-scaled). ' +
                 'Ads, franchise openings, Hyperion AUM, and design services scale with network. ' +
@@ -2425,7 +2414,6 @@
             updateAssumptions(p);
 
             setChartData('chartGmv', [series.gmv]);
-            setChartData('chartExchange', [series.exchange]);
             setChartData('chartSeatsUnits', [series.seatUnits]);
             setChartData('chartSeatsRev', [series.seats]);
             setChartData('chartHardware', [series.hardware]);
@@ -2435,16 +2423,16 @@
             setChartData('chartInsurance', [series.insurance]);
             setChartData('chartDesign', [series.design]);
             setChartData('chartRevenueStacked', [
-                series.exchange, series.seats, series.hardware, series.ads, series.franchise,
+                series.seats, series.hardware, series.ads, series.franchise,
                 series.hyperion, series.insurance, series.design
             ]);
             setChartData('chartRevenueExSeats', [
-                series.exchange, series.hardware, series.ads, series.franchise,
+                series.hardware, series.ads, series.franchise,
                 series.hyperion, series.insurance, series.design
             ]);
             setChartData('chartProfit', [series.revenue, series.cost, series.profit]);
             setChartData('chartProfitStacked', [
-                series.pExchange, series.pSeats, series.pHardware, series.pAds, series.pFranchise,
+                series.pSeats, series.pHardware, series.pAds, series.pFranchise,
                 series.pHyperion, series.pInsurance, series.pDesign
             ]);
         }
@@ -2453,7 +2441,6 @@
             const pr = PRESETS[name];
             if (!pr) return;
             document.getElementById('dialGmv').value = pr.gmv;
-            document.getElementById('dialTake').value = pr.take;
             document.getElementById('dialSeatPrice').value = pr.seatPrice;
             document.getElementById('dialNetwork').value = pr.network;
             document.getElementById('dialCapital').value = pr.capital;
@@ -2464,7 +2451,7 @@
             applyScenario();
         }
 
-        ['dialGmv', 'dialTake', 'dialSeatPrice', 'dialNetwork', 'dialCapital', 'dialPartners'].forEach(id => {
+        ['dialGmv', 'dialSeatPrice', 'dialNetwork', 'dialCapital', 'dialPartners'].forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
             el.addEventListener('input', function () {
@@ -2803,7 +2790,7 @@
                         const p = readParams();
                         body.projection = {
                             gmv2035: p.gmv2035,
-                            takeRate: p.takeRate,
+                            takeRate: 0,
                             seatPrice: p.seatPrice,
                             network: p.network,
                             capital: p.capital,
