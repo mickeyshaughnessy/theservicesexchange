@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a2e">
+    <meta name="description" content="Why The Robot Services Exchange doesn’t handle payments. The exchange records the price. The two sides settle. The take-rate stays zero.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="The RSE">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+<title>Why The Robot Services Exchange Doesn’t Handle Payments</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css?v=27" rel="stylesheet">
+    <style>
+        .pay-hero {
+            text-align: center;
+            padding: 108px 0 36px;
+        }
+        .pay-hero h1 {
+            font-size: clamp(0.92rem, 2.1vw, 1.28rem);
+            line-height: 1.85;
+            max-width: 22em;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .pay-hero p {
+            margin-bottom: 0;
+            font-size: 1.05rem;
+        }
+        .pay-wrap {
+            max-width: 820px;
+            margin: 0 auto;
+        }
+        .pay-wrap h2 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.78rem;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(0,255,255,0.35);
+            line-height: 1.8;
+            margin: 2.75rem 0 1rem;
+        }
+        .pay-wrap p,
+        .pay-wrap li {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text);
+            font-size: 1rem;
+            line-height: 1.85;
+        }
+        .pay-wrap a { color: var(--secondary); }
+        .pay-wrap ol { padding-left: 1.2rem; }
+        .pay-figure {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,255,0.3);
+            margin: 1.5rem 0 0.25rem;
+            padding: 1rem 1rem 0.5rem;
+        }
+        .pay-figure h3 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--text-bright);
+            margin: 0 0 0.75rem;
+        }
+        .pay-chart {
+            position: relative;
+            height: 320px;
+        }
+        .pay-readout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            padding: 0.35rem 0.25rem 0.85rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.92rem;
+            color: var(--text);
+            line-height: 1.45;
+        }
+        .pay-readout span {
+            display: block;
+            color: var(--primary);
+            margin-bottom: 0.2rem;
+        }
+        .pay-caption {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--secondary);
+            line-height: 1.6;
+            margin: 0.6rem 0 1.5rem;
+        }
+        .job-slip {
+            max-width: 420px;
+            margin: 1.25rem auto;
+            background: #f4efe2;
+            color: #1c140c;
+            border: 1px solid rgba(0,255,255,0.35);
+            box-shadow: 0 0 18px rgba(0,255,255,0.12);
+            padding: 1.1rem 1.25rem 1rem;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        .job-slip .slip-kicker {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.55rem;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.85rem;
+        }
+        .job-slip dl {
+            display: grid;
+            grid-template-columns: 7.5rem 1fr;
+            gap: 0.35rem 0.75rem;
+            margin: 0;
+        }
+        .job-slip dt { margin: 0; font-weight: 700; }
+        .job-slip dd { margin: 0; }
+        .job-slip .slip-rule {
+            border: none;
+            border-top: 1px dashed #1c140c;
+            margin: 0.85rem 0 0.7rem;
+        }
+        .job-slip .slip-sign {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            font-size: 0.92rem;
+        }
+        @media (max-width: 768px) {
+            .pay-chart { height: 260px; }
+            .pay-hero { padding-top: 92px; }
+        }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/index.html">The RSE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/index.html?open=bid">Get Something</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/hiring.html">Hiring</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="navMore" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navMore">
+                            <li><a class="dropdown-item" href="/portfolio.html">Portfolio</a></li>
+                            <li><a class="dropdown-item" href="/robots.html">Buy a Robot</a></li>
+                            <li><a class="dropdown-item" href="/examples.html">Examples</a></li>
+                            <li><a class="dropdown-item" href="/api_docs.html">API Docs</a></li>
+                            <li><a class="dropdown-item" href="/about.html">About</a></li>
+                            <li><a class="dropdown-item active" href="/payments.html" aria-current="page">Payments</a></li>
+                            <li><a class="dropdown-item" href="/git_report.html">Git Report</a></li>
+                            <li><a class="dropdown-item" href="/garage.html">Garage</a></li>
+                            <li><a class="dropdown-item" href="/investors.html">Investors</a></li>
+                            <li><a class="dropdown-item" href="/business_plan.html">Business Plan</a></li>
+                            <li><a class="dropdown-item" href="/spa.html">SPA</a></li>
+                            <li><a class="dropdown-item" href="/hyperion.html">Hyperion</a></li>
+                            <li><a class="dropdown-item" href="/feedback.html">Feedback</a></li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <div class="nav-actions d-flex align-items-center flex-wrap gap-2 ms-lg-3 mt-2 mt-lg-0">
+                <div id="accountDropdown" class="account-dropdown ms-3" style="display: none;">
+                    <button class="account-btn" type="button">
+                        <span id="accountUsername">Account</span> ▼
+                    </button>
+                    <div class="account-window">
+                        <div class="account-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" id="accountDisplayName">Loading...</h5>
+                                <button class="logout-btn" onclick="logout()">Logout</button>
+                            </div>
+                            <div class="reputation-display">
+                                <span class="star-rating" id="starDisplay">★★★★★</span>
+                                <span id="ratingText">4.5 (12 ratings)</span>
+                            </div>
+                        </div>
+                        <div class="account-section">
+                            <h6>Outstanding Requests</h6>
+                            <div class="loading-spinner" id="bidsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading requests...</span>
+                            </div>
+                            <div id="outstandingBids">
+                                <p class="text-muted mb-0">No outstanding requests</p>
+                            </div>
+                        </div>
+                        <div class="account-section">
+                            <h6>Active Services</h6>
+                            <div class="loading-spinner" id="activeJobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading active services...</span>
+                            </div>
+                            <div id="activeJobs">
+                                <p class="text-muted mb-0">No active services</p>
+                            </div>
+                        </div>
+                        <div class="account-section">
+                            <h6>Recent Completed Services</h6>
+                            <div class="loading-spinner" id="jobsLoading">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading services...</span>
+                            </div>
+                            <div id="completedJobs">
+                                <p class="text-muted mb-0">No completed services</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button id="loginButton" class="btn btn-light ms-3" onclick="showAuth()">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero pay-hero" id="main-content" tabindex="-1">
+        <div class="container">
+            <h1>Why The Robot Services Exchange Doesn’t Handle Payments</h1>
+            <p>The exchange records the price. The two sides settle. The cut stays zero.</p>
+        </div>
+    </section>
+
+    <section class="py-4" style="background: var(--bg-deep);">
+        <div class="container">
+            <div class="pay-wrap">
+                <p>Submit a bid. A robot grabs the job. Both sides sign. The dollars move between the people who agreed the price, in whatever way they already pay each other. The Robot Services Exchange is not in that transfer, and it is not going to be.</p>
+
+                <h2 id="infrastructure">1. Infrastructure other systems plug into</h2>
+                <p>The exchange is rails. A bid has a job, a price, and a place. A seat grabs it. Both sides sign, and the stars land on a public record. A fleet’s dispatcher, a building’s app, a city’s permit desk, or a vertical product can sit on those rails. The exchange is complementary to those systems. It does not replace their customer, their brand, or their way of getting paid.</p>
+                <p>Shared rails are what let those systems compete. An ad-funded marketplace keeps itself alive by taking a slice of the job and spending part of that slice to buy the next customer. A seated robot on a zero-cut exchange can show up at the price of the work. The spread that used to pay for the ads is still in the job. That is how complementary infrastructure undercuts an incumbent’s ad profit: the competitor does not have to fund a marketplace tax.</p>
+
+                <h2 id="seats">2. Seat sales are the business</h2>
+                <p>A seat is a number and an owner. Seats are not money. A seat is the right to grab jobs on the exchange. Selling that right is how the exchange is paid.</p>
+                <p>The base scenario on the <a href="investors.html#seats">investors page</a> prices a primary seat at $100,000. About a million seats are in the 2026 founding tranche. New issuance peaks in 2035 at about 500 million seats, on the order of $50 trillion at that price, then tapers. Those figures are a scenario, not a forecast. They are the same series the seat chart on that page already draws. Seat sales are plenty. The exchange does not also need a toll on every job.</p>
+                <p>A seat is worth more when the toll is zero. The price on the bid is the price the parties keep. The right to be the robot that grabs the next job is the right to that full price, for as long as the seat lasts. Skimming the job would sell the seat for less, because the seat would be a right to a smaller piece of the same work.</p>
+                <p>An earlier scenario, still dialed on the <a href="investors.html#exchange-gmv">investors page</a> and still listed in the <a href="business_plan.html">business plan</a>, sketched on-platform escrow and a take-rate around 5% of GMV. That line is retired. The dial is a leftover. The policy is zero.</p>
+
+                <figure class="pay-figure">
+                    <h3>Who keeps a $100 job</h3>
+                    <div class="pay-chart">
+                        <canvas id="chartJob" aria-label="Stacked bars: at a zero take the parties keep $100; in the retired 5 percent scenario the parties keep $95 and the exchange keeps $5."></canvas>
+                    </div>
+                    <div class="pay-readout">
+                        <div><span>Zero take</span>Parties keep $100<br>Exchange keeps $0</div>
+                        <div><span>Retired 5%</span>Parties keep $95<br>Exchange keeps $5</div>
+                    </div>
+                </figure>
+                <p class="pay-caption">Policy is the left bar. The right bar is the retired 5% case: the cyan cap is the $5 the exchange would have kept. One hundred dollars is the illustration. The same split applies at any price on a bid.</p>
+
+                <figure class="pay-figure">
+                    <h3>Seat issuance in the base scenario</h3>
+                    <div class="pay-chart">
+                        <canvas id="chartSeats" aria-label="Bar chart of base-scenario seat issuance revenue by year, from one hundred billion dollars in 2026 to a fifty trillion dollar peak in 2035."></canvas>
+                    </div>
+                </figure>
+                <p class="pay-caption">Each bar is new seats that year times $100,000, at network scale 1.0. Same base curve as <a href="investors.html#seats">investors.html</a>. The axis is logarithmic because 2035 is hundreds of times the early years. Scenario planning, not a booked backlog and not a promise.</p>
+
+                <h2 id="simple">3. The technology should stay simple</h2>
+                <p>Instagram began as a photo and a follow. It is now short video, a shop, a messenger, live broadcast, and an ad system, folded into one icon. The phone app that holds a product like that grew the same way. Features arrived, and the download grew with them.</p>
+
+                <figure class="pay-figure">
+                    <h3>Top 10 U.S. iPhone apps, core download size</h3>
+                    <div class="pay-chart">
+                        <canvas id="chartApps" aria-label="Bar chart of combined core download size of the top 10 U.S. iPhone apps: 0.16 GB in May 2013, 0.55 GB in January 2016, about 1.9 GB in May 2017, and 2.2 GB in May 2021."></canvas>
+                    </div>
+                </figure>
+                <p class="pay-caption">Sensor Tower, core app size only, not caches or extra downloads. Each bar is the top 10 apps that month, so the set changes. May 2013 and May 2017 are the most-installed set (<a href="https://sensortower.com/blog/ios-app-size-growth">June 2017 report</a>; May 2017 is “about 1.9 GB”). January 2016 and May 2021 are the most-downloaded set (<a href="https://sensortower.com/blog/ios-app-size-growth-2021">June 2021 report</a>): about 550 MB, then 2.2 GB. The direction is the point. A simple loop became a heavy app.</p>
+
+                <p>A job does not need that path. Pencil and paper already clear one: what the work is, the price, who took it, two signatures. That is submit, grab, sign.</p>
+
+                <figure class="job-slip" aria-label="A paper job slip: mow the north field, forty dollars, grabbed by a seat, signed by demand and supply.">
+                    <div class="slip-kicker">JOB SLIP</div>
+                    <dl>
+                        <dt>Work</dt><dd>Mow the north field</dd>
+                        <dt>Price</dt><dd>$40</dd>
+                        <dt>Grabbed</dt><dd>Seat 42</dd>
+                    </dl>
+                    <hr class="slip-rule">
+                    <div class="slip-sign">
+                        <span>Demand ____</span>
+                        <span>Supply ____</span>
+                    </div>
+                </figure>
+                <p class="pay-caption">The whole exchange, on a card. Price is written down. Payment is not.</p>
+
+                <p>Custody, card networks, chargebacks, payout files, and a refund desk are the Instagram path. Each one is a product of its own, with a failure mode of its own. The exchange stays the card. Parties who want a card processor, a bank transfer, or cash already have them.</p>
+
+                <h2 id="responsible">4. Holding the money makes you the merchant</h2>
+                <p>Amazon takes the customer’s payment and stands behind the order. Refunds, fraud, and the A-to-z guarantee sit with the company that held the money. On Facebook Marketplace, an ordinary local sale is arranged on the board. The buyer pays the seller. Marketplace did not take the funds, so Marketplace is not the one who sends them back.</p>
+                <p>Taking the payment is what makes a company the merchant of record. The RSE records the price and the currency on the bid, and both sides sign the job with one to five stars. If a job goes wrong, either side can open a dispute for review. Review is a look at the record. It is not a refund from a balance the exchange never held. The two sides settle with each other.</p>
+
+                <h2 id="crypto">5. Crypto, if it is used, is for seats</h2>
+                <p>Crypto may or may not be how a seat is held and transferred later. That question is about who owns the right to grab work. It is not a plan to clear the job payment on a chain. Job settlement stays between the parties, in the money they already use. A seat remains a seat. Seats are not money.</p>
+
+                <h2 id="rule">The rule</h2>
+                <p>Price on the bid. Stars on the signature. Dollars between the parties. The take-rate on a job is zero, and it stays zero.</p>
+                <p><a href="index.html">Submit a bid</a> · <a href="about.html">About</a> · <a href="investors.html#seats">Seat scenario</a></p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>The RSE</h5>
+                    <p>Open robot labor marketplace.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Links</h5>
+                    <a href="index.html">Home</a>
+                    <a href="payments.html">Payments</a>
+                    <a href="hiring.html">Hiring</a>
+                    <a href="investors.html">Investors</a>
+                    <a href="business_plan.html">Business Plan</a>
+                    <a href="api_docs.html">API Documentation</a>
+                </div>
+                <div class="col-md-4">
+                    <h5>Connect</h5>
+                    <a href="tel:+15302190940">Call +1 530 219 0940</a>
+                    <a href="sms:+15302190940">SMS +1 530 219 0940</a>
+                    <a href="mailto:therobotservicesexchange@proton.me">therobotservicesexchange@proton.me</a>
+                    <a href="https://github.com/mickeyshaughnessy/theservicesexchange">GitHub</a>
+                </div>
+            </div>
+            <div class="mt-5 pt-4 border-top border-secondary text-center">
+                <p class="mb-0">&copy; 2026 The RSE Protocol. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal fade" id="authModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Get Started</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="authError" class="error-message" style="display: none;"></div>
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#login">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#register">Register</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="login">
+                            <form id="loginForm">
+                                <div class="mb-3"><input type="text" class="form-control" placeholder="Username" id="loginUsername" required></div>
+                                <div class="mb-3"><input type="password" class="form-control" placeholder="Password" id="loginPassword" required></div>
+                                <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">Login</button>
+                            </form>
+                        </div>
+                        <div class="tab-pane" id="register">
+                            <form id="registerForm">
+                                <div class="mb-3"><input type="text" class="form-control" placeholder="Username" id="regUsername" required></div>
+                                <div class="mb-3"><input type="password" class="form-control" placeholder="Password (min 8 chars)" id="regPassword" required></div>
+                                <div class="mb-3">
+                                    <label class="form-label">I want to:</label>
+                                    <div class="user-type-selector">
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="demand" id="typeDemand" required>
+                                            <span class="user-type-card"><strong>Demand — submit a bid</strong><small>People who submit a bid</small></span>
+                                        </label>
+                                        <label class="user-type-option">
+                                            <input type="radio" name="userType" value="supply" id="typeSupply">
+                                            <span class="user-type-card"><strong>Supply — grab jobs (robots)</strong><small>Robot / operator accounts only</small></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">Register</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="script.js?v=30"></script>
+    <script>
+    (function () {
+        if (typeof Chart === 'undefined') return;
+
+        var grid = 'rgba(0,255,255,0.08)';
+        var tick = 'rgba(220,232,255,0.92)';
+        Chart.defaults.color = tick;
+        Chart.defaults.borderColor = grid;
+        Chart.defaults.font.family = "'Share Tech Mono', monospace";
+        Chart.defaults.font.size = 12;
+
+        function money(v) {
+            var ax = Math.abs(v);
+            var sign = v < 0 ? '-' : '';
+            if (ax >= 999.995e9) return sign + '$' + (ax / 1e12).toFixed(2) + 'T';
+            if (ax >= 999.95e6) return sign + '$' + (ax / 1e9).toFixed(2) + 'B';
+            if (ax >= 999.5e3) return sign + '$' + (ax / 1e6).toFixed(1) + 'M';
+            return sign + '$' + ax.toFixed(0);
+        }
+
+        new Chart(document.getElementById('chartJob'), {
+            type: 'bar',
+            data: {
+                labels: ['Zero take', 'Retired 5%'],
+                datasets: [
+                    { label: 'Parties keep', data: [100, 95], backgroundColor: '#39ff14', stack: 'job' },
+                    { label: 'Exchange keeps', data: [0, 5], backgroundColor: '#00e5ff', stack: 'job' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true, grid: { display: false }, ticks: { color: tick, maxRotation: 0, minRotation: 0 } },
+                    y: {
+                        stacked: true,
+                        min: 0,
+                        max: 100,
+                        ticks: { color: tick, callback: function (v) { return '$' + v; } },
+                        grid: { color: grid }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, color: tick } },
+                    tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': $' + c.parsed.y; } } }
+                }
+            }
+        });
+
+        // investors.html BASE_SEAT_NEW at network 1.0, times $100k seat price.
+        var seatNew = {
+            2026: 1e6, 2027: 1.5e5, 2028: 2.5e5, 2029: 4e5, 2030: 7e5,
+            2031: 1e6, 2032: 9e6, 2033: 90e6, 2034: 400e6, 2035: 500e6,
+            2036: 1e7, 2037: 2e6, 2038: 5e5, 2039: 2e5, 2040: 1e5
+        };
+        var years = Object.keys(seatNew);
+        var seatRev = years.map(function (y) { return seatNew[y] * 100000; });
+
+        new Chart(document.getElementById('chartSeats'), {
+            type: 'bar',
+            data: {
+                labels: years,
+                datasets: [{
+                    label: 'New seats × $100k',
+                    data: seatRev,
+                    backgroundColor: '#39ff14'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: tick, maxRotation: 60, minRotation: 45 } },
+                    y: {
+                        type: 'logarithmic',
+                        min: 1e9,
+                        max: 1e14,
+                        ticks: {
+                            color: tick,
+                            callback: function (v) {
+                                var log = Math.log10(v);
+                                if (Math.abs(log - Math.round(log)) > 0.01) return '';
+                                return money(v);
+                            }
+                        },
+                        grid: { color: grid }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function (c) { return money(c.parsed.y); } } }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('chartApps'), {
+            type: 'bar',
+            data: {
+                labels: ['May 2013', 'Jan 2016', 'May 2017', 'May 2021'],
+                datasets: [{
+                    label: 'Top 10 combined (GB)',
+                    data: [0.164, 0.55, 1.9, 2.2],
+                    backgroundColor: '#00e5ff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: tick } },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: tick, callback: function (v) { return v + ' GB'; } },
+                        grid: { color: grid }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function (c) { return c.parsed.y + ' GB'; } } }
+                }
+            }
+        });
+    })();
+    </script>
+</body>
+</html>
