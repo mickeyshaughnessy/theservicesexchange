@@ -69,21 +69,6 @@
             position: relative;
             height: 320px;
         }
-        .pay-readout {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-            padding: 0.35rem 0.25rem 0.85rem;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.92rem;
-            color: var(--text);
-            line-height: 1.45;
-        }
-        .pay-readout span {
-            display: block;
-            color: var(--primary);
-            margin-bottom: 0.2rem;
-        }
         .pay-caption {
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.82rem;
@@ -223,36 +208,24 @@
     <section class="hero pay-hero" id="main-content" tabindex="-1">
         <div class="container">
             <h1>Why The Robot Services Exchange Doesn’t Handle Payments</h1>
-            <p>The exchange records the price. The two sides settle. The cut stays zero.</p>
+            <p>The exchange records the price. The two sides settle. The take-rate on a job is zero.</p>
         </div>
     </section>
 
     <section class="py-4" style="background: var(--bg-deep);">
         <div class="container">
             <div class="pay-wrap">
-                <p>Submit a bid. A robot grabs the job. Both sides sign. The dollars move between the people who agreed the price, in whatever way they already pay each other. The Robot Services Exchange is not in that transfer, and it is not going to be.</p>
+                <p>A demand account posts a bid with a service and a price. A supply account grabs the job. The buyer and the provider each sign with a rating from 1 to 5, and the job is completed only when both have signed. The bid stores a currency and a payment method. Those fields are settlement hints for the two sides, unless a configured provider is told to charge now. The exchange does not add a fee to the price.</p>
 
                 <h2 id="infrastructure">1. Infrastructure other systems plug into</h2>
-                <p>The exchange is rails. A bid has a job, a price, and a place. A seat grabs it. Both sides sign, and the stars land on a public record. A fleet’s dispatcher, a building’s app, a city’s permit desk, or a vertical product can sit on those rails. The exchange is complementary to those systems. It does not replace their customer, their brand, or their way of getting paid.</p>
-                <p>Shared rails are what let those systems compete. An ad-funded marketplace keeps itself alive by taking a slice of the job and spending part of that slice to buy the next customer. A seated robot on a zero-cut exchange can show up at the price of the work. The spread that used to pay for the ads is still in the job. That is how complementary infrastructure undercuts an incumbent’s ad profit: the competitor does not have to fund a marketplace tax.</p>
+                <p>A bid records a service, a price, and a location type of physical, remote, or hybrid. A supply account grabs the job. A seat is required for a physical or hybrid grab only when seat verification is on, and that gate is currently off. A remote grab does not send a seat. The buyer and the provider each sign with a rating from 1 to 5, and the job is completed only when both have signed. The public portfolio then shows a reputation score and completion cards. Any client that can call the API can post a bid or grab a job, and the exchange does not replace that client’s customer, brand, or payment method.</p>
+                <p>A supply account grabs an open bid at the price on that bid. Among matching peers, the higher price is preferred. The exchange does not add a fee to the price.</p>
 
                 <h2 id="seats">2. Seat sales are the business</h2>
                 <p>A seat is a number and an owner. Seats are not money. A seat is the right to grab jobs on the exchange. Selling that right is how the exchange is paid.</p>
                 <p>The base scenario on the <a href="investors.html#seats">investors page</a> prices a primary seat at $100,000. About a million seats are in the 2026 founding tranche. New issuance peaks in 2035 at about 500 million seats, on the order of $50 trillion at that price, then tapers. Those figures are a scenario, not a forecast. They are the same series the seat chart on that page already draws. Seat sales are plenty. The exchange does not also need a toll on every job.</p>
-                <p>A seat is worth more when the toll is zero. The price on the bid is the price the parties keep. The right to be the robot that grabs the next job is the right to that full price, for as long as the seat lasts. Skimming the job would sell the seat for less, because the seat would be a right to a smaller piece of the same work.</p>
-                <p>The <a href="investors.html#exchange-gmv">investors page</a> and the <a href="business_plan.html">business plan</a> both model that zero. GMV is jobs cleared, not a fee. An earlier sketch had on-platform escrow and a take-rate around 5% of GMV. That line is retired.</p>
-
-                <figure class="pay-figure">
-                    <h3>Who keeps a $100 job</h3>
-                    <div class="pay-chart">
-                        <canvas id="chartJob" aria-label="Stacked bars: at a zero take the parties keep $100; in the retired 5 percent scenario the parties keep $95 and the exchange keeps $5."></canvas>
-                    </div>
-                    <div class="pay-readout">
-                        <div><span>Zero take</span>Parties keep $100<br>Exchange keeps $0</div>
-                        <div><span>Retired 5%</span>Parties keep $95<br>Exchange keeps $5</div>
-                    </div>
-                </figure>
-                <p class="pay-caption">Policy is the left bar. The right bar is the retired 5% case: the cyan cap is the $5 the exchange would have kept. One hundred dollars is the illustration. The same split applies at any price on a bid.</p>
+                <p>A seat is worth more when the toll is zero. The price on the bid is the price the parties keep. A seat is the right to grab jobs at that price.</p>
+                <p>The <a href="investors.html#exchange-gmv">investors page</a> and the <a href="business_plan.html">business plan</a> both model a take-rate of zero. GMV is jobs cleared.</p>
 
                 <figure class="pay-figure">
                     <h3>Seat issuance in the base scenario</h3>
@@ -260,10 +233,10 @@
                         <canvas id="chartSeats" aria-label="Bar chart of base-scenario seat issuance revenue by year, from one hundred billion dollars in 2026 to a fifty trillion dollar peak in 2035."></canvas>
                     </div>
                 </figure>
-                <p class="pay-caption">Each bar is new seats that year times $100,000, at network scale 1.0. Same base curve as <a href="investors.html#seats">investors.html</a>. The axis is logarithmic because 2035 is hundreds of times the early years. Scenario planning, not a booked backlog and not a promise.</p>
+                <p class="pay-caption">Each bar is new seats that year times $100,000, at network scale 1.0.</p>
 
                 <h2 id="simple">3. The technology should stay simple</h2>
-                <p>Instagram began as a photo and a follow. It is now short video, a shop, a messenger, live broadcast, and an ad system, folded into one icon. The phone app that holds a product like that grew the same way. Features arrived, and the download grew with them.</p>
+                <p>Instagram began as a photo and a follow. It now includes short video, a shop, a messenger, live broadcast, and an ad system. Over the same years, the top U.S. iPhone apps added features, and the core download grew.</p>
 
                 <figure class="pay-figure">
                     <h3>Top 10 U.S. iPhone apps, core download size</h3>
@@ -271,36 +244,36 @@
                         <canvas id="chartApps" aria-label="Bar chart of combined core download size of the top 10 U.S. iPhone apps: 0.16 GB in May 2013, 0.55 GB in January 2016, about 1.9 GB in May 2017, and 2.2 GB in May 2021."></canvas>
                     </div>
                 </figure>
-                <p class="pay-caption">Sensor Tower, core app size only, not caches or extra downloads. Each bar is the top 10 apps that month, so the set changes. May 2013 and May 2017 are the most-installed set (<a href="https://sensortower.com/blog/ios-app-size-growth">June 2017 report</a>; May 2017 is “about 1.9 GB”). January 2016 and May 2021 are the most-downloaded set (<a href="https://sensortower.com/blog/ios-app-size-growth-2021">June 2021 report</a>): about 550 MB, then 2.2 GB. The direction is the point. A simple loop became a heavy app.</p>
+                <p class="pay-caption">Each bar is the combined core download of that month’s top 10 U.S. iPhone apps, excluding caches and extra downloads. May 2013 and May 2017 count the most-installed apps (<a href="https://sensortower.com/blog/ios-app-size-growth">Sensor Tower, June 2017</a>). January 2016 and May 2021 count the most-downloaded apps (<a href="https://sensortower.com/blog/ios-app-size-growth-2021">Sensor Tower, June 2021</a>). May 2017 is about 1.9 GB.</p>
 
-                <p>A job does not need that path. Pencil and paper already clear one: what the work is, the price, who took it, two signatures. That is submit, grab, sign.</p>
+                <p>A job does not need that path. Pencil and paper already clear one. The slip records the work, the price, and the supply account that grabbed the job. The buyer and the provider each sign.</p>
 
-                <figure class="job-slip" aria-label="A paper job slip: mow the north field, forty dollars, grabbed by a seat, signed by demand and supply.">
+                <figure class="job-slip" aria-label="A paper job slip: mow the north field, forty dollars, grabbed by a supply account, signed by the buyer and the provider.">
                     <div class="slip-kicker">JOB SLIP</div>
                     <dl>
                         <dt>Work</dt><dd>Mow the north field</dd>
                         <dt>Price</dt><dd>$40</dd>
-                        <dt>Grabbed</dt><dd>Seat 42</dd>
+                        <dt>Grabbed</dt><dd>Supply account</dd>
                     </dl>
                     <hr class="slip-rule">
                     <div class="slip-sign">
-                        <span>Demand ____</span>
-                        <span>Supply ____</span>
+                        <span>Buyer ____</span>
+                        <span>Provider ____</span>
                     </div>
                 </figure>
-                <p class="pay-caption">The whole exchange, on a card. Price is written down. Payment is not.</p>
+                <p class="pay-caption">Payment is not on the slip.</p>
 
-                <p>Custody, card networks, chargebacks, payout files, and a refund desk are the Instagram path. Each one is a product of its own, with a failure mode of its own. The exchange stays the card. Parties who want a card processor, a bank transfer, or cash already have them.</p>
+                <p>Custody, card networks, chargebacks, payout files, and a refund desk are each a product of their own. The exchange does not add them. The bid stores a payment method. That field is a settlement hint for the two sides, unless a configured provider is told to charge now. Cash, a bank transfer, or a card processor is already how the two sides pay.</p>
 
                 <h2 id="responsible">4. Holding the money makes you the merchant</h2>
-                <p>Amazon takes the customer’s payment and stands behind the order. Refunds, fraud, and the A-to-z guarantee sit with the company that held the money. On Facebook Marketplace, an ordinary local sale is arranged on the board. The buyer pays the seller. Marketplace did not take the funds, so Marketplace is not the one who sends them back.</p>
-                <p>Taking the payment is what makes a company the merchant of record. The RSE records the price and the currency on the bid, and both sides sign the job with one to five stars. If a job goes wrong, either side can open a dispute for review. Review is a look at the record. It is not a refund from a balance the exchange never held. The two sides settle with each other.</p>
+                <p>Amazon takes the customer’s payment and stands behind the order. Refunds, fraud, and the A-to-z guarantee sit with the company that held the money. On Facebook Marketplace, the buyer and the seller arrange an ordinary local sale. The buyer pays the seller. Marketplace did not take the funds, so Marketplace is not the one who sends them back.</p>
+                <p>Taking the payment is what makes a company the merchant of record. The bid stores a currency and a payment method. Those fields are settlement hints for the two sides, unless a configured provider is told to charge now. The buyer and the provider each sign with a rating from 1 to 5. A party to the job can file a dispute with a reason. The dispute flags the job for admin review. It does not automatically cancel a payment or reverse the ratings. The exchange does not add a fee to the price.</p>
 
                 <h2 id="crypto">5. Crypto, if it is used, is for seats</h2>
-                <p>Crypto may or may not be how a seat is held and transferred later. That question is about who owns the right to grab work. It is not a plan to clear the job payment on a chain. Job settlement stays between the parties, in the money they already use. A seat remains a seat. Seats are not money.</p>
+                <p>Crypto may or may not be how a seat is held and transferred later. That is a question about who owns the right to grab jobs. It is not a plan to settle the job on a chain. The two sides settle the job in the money they already use. Seats are not money.</p>
 
                 <h2 id="rule">The rule</h2>
-                <p>Price on the bid. Stars on the signature. Dollars between the parties. The take-rate on a job is zero, and it stays zero.</p>
+                <p>The bid records the price. The buyer and the provider each sign with a rating from 1 to 5. The two sides settle the job. The take-rate on a job is zero, and it stays zero.</p>
                 <p><a href="index.html">Submit a bid</a> · <a href="about.html">About</a> · <a href="investors.html#seats">Seat scenario</a></p>
             </div>
         </div>
@@ -405,35 +378,6 @@
             if (ax >= 999.5e3) return sign + '$' + (ax / 1e6).toFixed(1) + 'M';
             return sign + '$' + ax.toFixed(0);
         }
-
-        new Chart(document.getElementById('chartJob'), {
-            type: 'bar',
-            data: {
-                labels: ['Zero take', 'Retired 5%'],
-                datasets: [
-                    { label: 'Parties keep', data: [100, 95], backgroundColor: '#39ff14', stack: 'job' },
-                    { label: 'Exchange keeps', data: [0, 5], backgroundColor: '#00e5ff', stack: 'job' }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { stacked: true, grid: { display: false }, ticks: { color: tick, maxRotation: 0, minRotation: 0 } },
-                    y: {
-                        stacked: true,
-                        min: 0,
-                        max: 100,
-                        ticks: { color: tick, callback: function (v) { return '$' + v; } },
-                        grid: { color: grid }
-                    }
-                },
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, color: tick } },
-                    tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': $' + c.parsed.y; } } }
-                }
-            }
-        });
 
         // investors.html BASE_SEAT_NEW at network 1.0, times $100k seat price.
         var seatNew = {
