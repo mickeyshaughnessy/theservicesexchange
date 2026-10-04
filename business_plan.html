@@ -306,8 +306,6 @@
                             <li><a class="dropdown-item" href="/garage.html">Garage</a></li>
                             <li><a class="dropdown-item" href="/investors.html">Investors</a></li>
                             <li><a class="dropdown-item active" href="/business_plan.html" aria-current="page">Business Plan</a></li>
-                            <li><a class="dropdown-item" href="/spa.html">SPA</a></li>
-                            <li><a class="dropdown-item" href="/hyperion.html">Hyperion</a></li>
                             <li><a class="dropdown-item" href="/feedback.html">Feedback</a></li>
                         </ul>
                     </li>
@@ -323,8 +321,6 @@
             <nav class="tab-row" aria-label="Investor documents">
                 <a href="investors.html">Investors</a>
                 <a class="active" aria-current="page" href="business_plan.html">Business Plan</a>
-                <a href="spa.html">SPA</a>
-                <a href="hyperion.html">Hyperion</a>
             </nav>
         </div>
     </div>
@@ -346,10 +342,10 @@
 
   <h2 style="margin-top:0;border:none;padding:0;">1. Executive summary</h2>
   <p class="lede">
-    Permanent / long-dated capital (10–15+ years). Preferred commercial rights deepen only as network metrics improve. Seat and equity dollars participate in the <a href="hyperion.html">Hyperion Fund</a>. Principal stays in; only earned profits transfer out.
+    Permanent or long-dated capital (10–15+ years). Preferred commercial rights deepen only as network metrics improve.
   </p>
   <p>
-    Mickey Shaughnessy (creator) is in and is not seeking a sponsor. Then 3× Founding Partner spots (named individual + sponsor); more may be added. Even equity split among Mickey and the named individuals (10-year vest). Each sponsor buys Golden Seats under the <a href="spa.html">SPA</a>; purchase price goes to Hyperion. Pair terms: <a href="hiring.html">hiring.html</a>.
+    Mickey Shaughnessy (creator) is in and is not seeking a sponsor. Then 3× Founding Partner spots (named individual + sponsor); more may be added. Equity is split evenly among Mickey and the named individuals (10-year vest). A seat is not part of that purchase. The price of a seat is $0. All seats are identical. A demand account or a supply account calls <span class="mono">POST /seats/issue</span> and receives the next seat. Demand-side access and supply-side access are free forever. Pair terms: <a href="hiring.html">hiring.html</a>.
   </p>
 
   <div class="grid-2">
@@ -359,7 +355,7 @@
     </div>
     <div class="box">
       <h3>Use of capital</h3>
-      <p style="margin-bottom:0;font-size:9.2pt;">Exchange reliability and matching, density, seat ops, franchise support, team. Hyperion first wave on p. 3. No escrow.</p>
+      <p style="margin-bottom:0;font-size:9.2pt;">Exchange reliability and matching, density, franchise support, team. No escrow. Seats are issued free.</p>
     </div>
   </div>
 
@@ -370,17 +366,17 @@
 
   <h2>3. Solution</h2>
   <p>
-    Demand submits a bid on the website (job, price, location). Supply grabs the job at rse-api.com (<span class="mono">POST /grab_job</span>). Both sides sign the job (<span class="mono">POST /sign_job</span>). Seats (Exchange registry, assigned by Mickey Shaughnessy; fully transferable) gate grab access when verification is on. Settlement stays between the parties. Website for people; API for machines.
+    A demand account posts a bid with a service and a price. A supply account grabs the job (<span class="mono">POST /grab_job</span>). The buyer and the provider each sign with a rating from 1 to 5 (<span class="mono">POST /sign_job</span>). The exchange does not add a fee to the price. A seat is a number and an owner. All seats are identical. The price is $0. <span class="mono">POST /seats/issue</span> gives the calling account the next seat. A seat is required for a physical or hybrid grab only when seat verification is on, and that gate is currently off. The two sides settle the job.
   </p>
 
   <h2>4. Market</h2>
   <p>
-    Physical work that can be specified, matched, and signed. Base scenario: ~$30T robot-labor GMV in 2040 (~half of ~$60T 2025 human labor). That GMV is recorded, not collected: no escrow, and the take-rate is zero. Seven earning streams. Seat issuance is the bulk of modeled revenue (peak near $50T in 2035 at $100k × 500M new seats). Scenario planning, not a forecast.
+    Physical work that can be specified, matched, and signed. Base scenario: ~$30T robot-labor GMV in 2040 (~half of ~$60T 2025 human labor). That GMV is recorded, not collected: no escrow, and the take-rate is zero. Seat revenue is $0. The earning streams in the model are hardware, attention, franchises, insurance and SLA, and design. Scenario planning, not a forecast.
   </p>
 
   <div class="page-footer">
     <span>therobotservicesexchange.com</span>
-    <span>Page 1 of 5</span>
+    <span>Page 1 of 4</span>
   </div>
 </section>
 
@@ -429,13 +425,12 @@
   <h2>6. Value streams</h2>
   <ul class="stream-list">
     <li><span class="stream-num">01</span><div><strong>No job take</strong> — GMV is jobs cleared. The exchange does not hold the money and does not take a cut. <a href="payments.html">payments.html</a></div></li>
-    <li><span class="stream-num">02</span><div><strong>Eternal seats</strong> — $100k primary. ~1B seats 2031–2035 (peak 2035 · ~500M / ~$50T). 1M founding tranche in 2026 (Golden Seats held by early seat buyers). Bulk of modeled revenue.</div></li>
+    <li><span class="stream-num">02</span><div><strong>Seats</strong> — price $0. All seats are identical. <span class="mono">POST /seats/issue</span> issues the next seat to the calling demand or supply account. Demand-side access and supply-side access are free forever. Seat revenue in the model is $0.</div></li>
     <li><span class="stream-num">03</span><div><strong>Hardware</strong> — Catalog referral + financing ($25k ASP, 3% + 40% attach × 1.5%).</div></li>
     <li><span class="stream-num">04</span><div><strong>/nearby &amp; attention</strong> — Two-sided placement as density rises.</div></li>
     <li><span class="stream-num">05</span><div><strong>Franchises</strong> — Garage + Lighthouse: new-site fees + royalties.</div></li>
-    <li><span class="stream-num">06</span><div><strong>Hyperion fees</strong> — ~2.8% of AUM (1% management + performance). See p. 3.</div></li>
-    <li><span class="stream-num">07</span><div><strong>Insurance &amp; SLA</strong> — Overlay: GMV × 25% institutional × 1.8% premium × 15% cut.</div></li>
-    <li><span class="stream-num">08</span><div><strong>Design</strong> — Overlay: task, workflow, job-party, and capability-package design.</div></li>
+    <li><span class="stream-num">06</span><div><strong>Insurance &amp; SLA</strong> — Overlay: GMV × 25% institutional × 1.8% premium × 15% cut.</div></li>
+    <li><span class="stream-num">07</span><div><strong>Design</strong> — Overlay: task, workflow, job-party, and capability-package design.</div></li>
   </ul>
 
   <h2>7. Go-to-market</h2>
@@ -453,90 +448,23 @@
 
   <div class="page-footer">
     <span>Live model: therobotservicesexchange.com/investors.html</span>
-    <span>Page 2 of 5</span>
+    <span>Page 2 of 4</span>
   </div>
 </section>
 
-<!-- ===================== PAGE 3: HYPERION FUND ===================== -->
-<section class="page">
-  <div class="page-header">
-    <span class="brand">The RSE</span>
-    <span class="doc-label">Hyperion Fund</span>
-  </div>
-
-  <h2 style="margin-top:0;">9. The Hyperion Fund</h2>
-  <p class="muted" style="margin-top:-0.15em;">Mechanics in full: <a href="hyperion.html">therobotservicesexchange.com/hyperion.html</a></p>
-  <p class="lede">
-    One check, two claims. Purchase price = Hyperion basis. Same dollars as the seats or equity. Platform take ≈ 2.8% of AUM (1% management + 15% of ~12% gross). Principal stays in. Only earned profits may transfer out.
-  </p>
-
-  <h3>Mandate</h3>
-  <p>Own physical demand at remnant or value prices. Attach matching, design, franchises, and seated robot labor. Liquid markets keep unused cash invested.</p>
-  <div class="grid-2">
-    <div class="box">
-      <h3>Real estate</h3>
-      <p style="margin-bottom:0;font-size:9pt;">STRs, small hospitality, depots, parking. Some become Garage / Lighthouse nodes; some stay O&amp;O.</p>
-    </div>
-    <div class="box">
-      <h3>SMBs</h3>
-      <p style="margin-bottom:0;font-size:9pt;">Dispatch, routes, turnover, last-mile, companion care. Fund buys the book; seated providers grab the jobs.</p>
-    </div>
-  </div>
-
-  <h3>First wave (planning)</h3>
-  <table>
-    <thead>
-      <tr><th>Sleeve</th><th>Plan</th><th>Playbook</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Residential STR</td>
-        <td>~12 properties</td>
-        <td>Turnover as a hospitality job party: clean, linen, restock, inspect. Franchise once the spec holds.</td>
-      </tr>
-      <tr>
-        <td>Health-aide dispatch</td>
-        <td>~4 books</td>
-        <td>Lakewood, Camas, Destin, Missoula, Austin, Boulder. Clinical work stays human; robots take non-clinical load.</td>
-      </tr>
-      <tr>
-        <td>Cybercab</td>
-        <td>Ground + books</td>
-        <td>Parking, charging, Garage MRO, livery dispatch. Own the ground, not the OEM.</td>
-      </tr>
-      <tr>
-        <td>Trash collection</td>
-        <td>Hauler routes</td>
-        <td>Weekly stops, GPS / photo proof. O&amp;O first; franchise when the spec repeats.</td>
-      </tr>
-      <tr>
-        <td>Liquid + emerging</td>
-        <td>Residual AUM</td>
-        <td>Stocks, crypto, bonds until real-asset deals close.</td>
-      </tr>
-    </tbody>
-  </table>
-  <p class="muted">Counts are a first-wave plan, not specific addresses. Later waves: buy remnant demand, attach robot services, keep or franchise. Asset income stays in the Fund; the exchange earns fees.</p>
-
-  <div class="page-footer">
-    <span>Hyperion: same dollars as seats / equity · principal stays in the Fund</span>
-    <span>Page 3 of 5</span>
-  </div>
-</section>
-
-<!-- ===================== PAGE 4: TEAM, CAPITAL, FINANCIALS ===================== -->
+<!-- ===================== PAGE 3: TEAM, CAPITAL, FINANCIALS ===================== -->
 <section class="page">
   <div class="page-header">
     <span class="brand">The RSE</span>
     <span class="doc-label">Team · Capital · Financials</span>
   </div>
 
-  <h2 style="margin-top:0;">10. Team</h2>
+  <h2 style="margin-top:0;">9. Team</h2>
   <p>
-    Pair map, salary, housing, and the apply form: <a href="hiring.html">hiring.html</a>. Golden Seats: 1M founding tranche at $100k, held by early seat buyers. Non-competes 1–2 years, limited to competing robot-labor exchanges. Termination terms in the <a href="spa.html">SPA</a>.
+    Pair map, salary, housing, and the apply form: <a href="hiring.html">hiring.html</a>. Seats are not compensation and are not purchased. The price of a seat is $0. Non-competes run 1–2 years and are limited to competing robot-labor exchanges.
   </p>
 
-  <h2>11. Permanent capital &amp; preferred partnership</h2>
+  <h2>10. Permanent capital &amp; preferred partnership</h2>
   <p>
     Permanent / evergreen or 15-year+ vehicles. No forced exit clock. Partners get equity plus <strong>preferred commercial rights</strong> that do not freeze the open market:
   </p>
@@ -550,12 +478,12 @@
     <strong>Variable deepening.</strong> Underperformance does not expand rights. Term: 10–15+ years, with performance step-ups.
   </div>
 
-  <h2>12. Why this structure</h2>
+  <h2>11. Why this structure</h2>
   <p>
     Ten-year fund clocks force premature exits. Permanent capital lets the exchange optimize for density over decades. Performance-ratcheted rights align without hard exclusivity.
   </p>
 
-  <h2>13. Financial orientation</h2>
+  <h2>12. Financial orientation</h2>
   <table>
     <thead>
       <tr><th>Dial (investors page)</th><th>Base</th><th>Role</th></tr>
@@ -563,8 +491,8 @@
     <tbody>
       <tr><td>2040 GMV</td><td>$30.0T</td><td>Jobs cleared. Not collected. ~half of ~$60T 2025 human labor.</td></tr>
       <tr><td>Job take</td><td>0%</td><td>No escrow. Parties settle. Not a dial.</td></tr>
-      <tr><td>Seat price</td><td>$100k</td><td>Primary price per eternal seat</td></tr>
-      <tr><td>Network scale</td><td>1.00×</td><td>Multiplies seats, hardware, ads, franchises, Hyperion, design</td></tr>
+      <tr><td>Seat price</td><td>$0</td><td>All seats identical. <span class="mono">POST /seats/issue</span>. Free for demand and supply.</td></tr>
+      <tr><td>Network scale</td><td>1.00×</td><td>Multiplies seats issued, hardware, ads, franchises, and design. It does not change the seat price.</td></tr>
       <tr><td>Raise scenarios</td><td>$0.5T / $1.5T / $2.0T</td><td>Conservative / base / aggressive planning dials</td></tr>
     </tbody>
   </table>
@@ -574,18 +502,18 @@
 
   <div class="page-footer">
     <span>Compensation map: therobotservicesexchange.com/hiring.html</span>
-    <span>Page 4 of 5</span>
+    <span>Page 3 of 4</span>
   </div>
 </section>
 
-<!-- ===================== PAGE 5: RISKS, ASK, NEXT STEPS ===================== -->
+<!-- ===================== PAGE 4: RISKS, ASK, NEXT STEPS ===================== -->
 <section class="page">
   <div class="page-header">
     <span class="brand">The RSE</span>
     <span class="doc-label">Risks · Ask · Next steps</span>
   </div>
 
-  <h2 style="margin-top:0;">14. Key risks</h2>
+  <h2 style="margin-top:0;">13. Key risks</h2>
   <table>
     <thead>
       <tr><th>Risk</th><th>Response</th></tr>
@@ -597,7 +525,7 @@
       </tr>
       <tr>
         <td>No take on jobs</td>
-        <td>Policy. Seats are the bulk of modeled revenue. The other streams recur.</td>
+        <td>Policy. Seat revenue is also $0. The modeled streams are hardware, attention, franchises, insurance, and design.</td>
       </tr>
       <tr>
         <td>Hard exclusivity kills liquidity</td>
@@ -605,7 +533,7 @@
       </tr>
       <tr>
         <td>Talent vs capital horizons</td>
-        <td>10-year vest against 10–15+ year capital. Termination in the SPA.</td>
+        <td>10-year vest against 10–15+ year capital. Pair terms are on the hiring page.</td>
       </tr>
       <tr>
         <td>Regulatory / insurance</td>
@@ -615,33 +543,27 @@
         <td>Ambitious model</td>
         <td>Interactive scenarios; conservative dials exist. Alignment does not require the aggressive case.</td>
       </tr>
-      <tr>
-        <td>Hyperion underperforms</td>
-        <td>Principal locked. Liquid sleeve beside real assets. Exchange earns AUM fees either way.</td>
-      </tr>
     </tbody>
   </table>
 
-  <h2>15. The ask</h2>
+  <h2>14. The ask</h2>
   <p>See §1. Raise size uses the investors-page dials. Final terms are in definitive documents.</p>
 
-  <h2>16. Use of funds</h2>
+  <h2>15. Use of funds</h2>
   <ol style="margin:0.2em 0 0.6em 1.15em;">
     <li>Exchange reliability and matching. No escrow.</li>
-    <li>Density: seats, fleets, buyers, campaigns</li>
-    <li>Hyperion first wave (p. 3)</li>
-    <li>Compliance, seat ops, Hyperion admin, insurance/SLA partners</li>
+    <li>Density: accounts, fleets, buyers, campaigns</li>
+    <li>Compliance and insurance/SLA partners</li>
     <li>Franchise support (Garage, Lighthouse) and hardware referrals</li>
     <li>Design services capacity</li>
     <li>Core team</li>
   </ol>
 
-  <h2>17. Next steps</h2>
+  <h2>16. Next steps</h2>
   <ol style="margin:0.2em 0 0.7em 1.15em;">
     <li>Live 15-year model: <span class="mono">therobotservicesexchange.com/investors.html</span></li>
-    <li>Hyperion Fund: <span class="mono">therobotservicesexchange.com/hyperion.html</span></li>
     <li>Hiring terms: <span class="mono">therobotservicesexchange.com/hiring.html</span></li>
-    <li>SPA template: <span class="mono">therobotservicesexchange.com/spa.html</span></li>
+    <li>Seat issue: <span class="mono">POST /seats/issue</span> on rse-api.com. Price $0.</li>
     <li>Discuss structure, preferred rights, and Founding Partner terms with the creator</li>
   </ol>
 
@@ -654,12 +576,12 @@
   </div>
 
   <p class="muted" style="margin-top:0.9em;font-size:8pt;line-height:1.4;">
-    <strong>Disclaimer.</strong> Discussion and scenario planning only. Not an offer, solicitation, or indication of interest. No commitment is implied. Projections and raise dials are illustrative, from the investors-page model, and not guarantees. Not financial, legal, or tax advice. Preferred rights, seats, equity, vesting, non-competes, and Hyperion terms are subject to definitive documentation and applicable law. Hyperion is described for planning; this document does not offer fund interests.
+    <strong>Disclaimer.</strong> Discussion and scenario planning only. Not an offer, solicitation, or indication of interest. No commitment is implied. Projections and raise dials are illustrative, from the investors-page model, and not guarantees. Not financial, legal, or tax advice. Preferred rights, equity, vesting, and non-competes are subject to definitive documentation and applicable law. The price of a seat is $0. This document does not sell seats.
   </p>
 
   <div class="page-footer">
     <span>© 2026 The RSE Protocol</span>
-    <span>Page 5 of 5</span>
+    <span>Page 4 of 4</span>
   </div>
 </section>
 
@@ -678,8 +600,6 @@
                     <a href="hiring.html">Hiring</a>
                     <a href="investors.html">Investors</a>
                     <a href="business_plan.html">Business Plan</a>
-                    <a href="spa.html">SPA</a>
-                    <a href="hyperion.html">Hyperion</a>
                     <a href="about.html">About</a>
                     <a href="git_report.html">Git Report</a>
                 </div>

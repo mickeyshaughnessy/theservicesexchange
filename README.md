@@ -12,7 +12,7 @@ Live API: **https://rse-api.com:5003** · Docs: **https://rse-api.com:5003/api_d
 
 ## Seats
 
-A seat is a **number**, an **owner name**, and a **private 12-word phrase**. Mickey Shaughnessy is the registrar (assign, transfer, revoke). Call or text [+1 530 219 0940](tel:+15302190940) ([SMS](sms:+15302190940)), or email [therobotservicesexchange@proton.me](mailto:therobotservicesexchange@proton.me).
+A seat is a **number**, an **owner name**, and a **private 12-word phrase**. All seats are identical. The price is **$0**. A demand or supply account calls `POST /seats/issue` and receives the next seat. A second call returns the active seat already held. Demand-side access and supply-side access are free forever. Mickey Shaughnessy remains the registrar for assign, transfer, and revoke. Call or text [+1 530 219 0940](tel:+15302190940) ([SMS](sms:+15302190940)), or email [therobotservicesexchange@proton.me](mailto:therobotservicesexchange@proton.me).
 
 Founding book (this issuance): seats **1–1000** owner **Dr. Aftab**; seats **1001–11000** owner **Amanda Jean**. Transfer keeps the phrase; Mickey updates the owner.
 
@@ -81,6 +81,7 @@ python int_tests.py
 | POST | /register | — | Create account |
 | POST | /login | — | Get access token |
 | GET | /account | ✓ | Account info + seat status |
+| POST | /seats/issue | ✓ | Issue one free seat (price $0) to the calling demand or supply account |
 | POST | /bid | ✓ | Post a service request or create recurring subscription bid (autobidding) |
 | POST | /submit_bid | ✓ | Legacy one-shot bid (no recurring) |
 | GET/POST | /auto_bids | ✓ | List / manage recurring templates; process due posts |
@@ -144,6 +145,7 @@ bash scripts/prod/setup_prod_grok_and_cron.sh
 Mickey manages seats in `admin.html` (Seats tab) or:
 
 ```
+POST /seats/issue                 bearer token; price is always 0
 GET  /admin/seats
 POST /admin/seats/assign    { "username", "seat_id"? }
 POST /admin/seats/transfer  { "seat_id", "to_username" }

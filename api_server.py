@@ -33,6 +33,7 @@ from handlers import (
     admin_get_seat,
     admin_export_seats,
     admin_assign_seat,
+    issue_seat,
     admin_transfer_seat,
     admin_set_seat_revoked,
     nearby_services,
@@ -418,6 +419,13 @@ def login():
 @token_required
 def account(current_user):
     response, status = get_account_info({'username': current_user})
+    return flask.jsonify(response), status
+
+@app.route('/seats/issue', methods=['POST'])
+@token_required
+@limiter.limit(_STRICT_LIMIT)
+def handle_issue_seat(current_user):
+    response, status = issue_seat(current_user)
     return flask.jsonify(response), status
 
 @app.route('/admin/seats', methods=['GET'])

@@ -85,5 +85,106 @@ class ProofTests(unittest.TestCase):
             self.assertFalse(ok)
 
 
+class IssueSeatTests(unittest.TestCase):
+    def _patches(self, store):
+        def get_index(force_refresh=False):
+            return store["index"]
+
+        def get_rec(sid, force_refresh=False):
+            return store["records"].get(int(sid))
+
+        def save_rec(sid, rec):
+            store["records"][int(sid)] = dict(rec)
+            return True
+
+        def save_index(index):
+            store["index"] = index
+            return True
+
+        return (
+            patch("seats.get_seats_index", side_effect=get_index),
+            patch("seats.get_seat_record", side_effect=get_rec),
+            patch("seats.save_seat_record", side_effect=save_rec),
+            patch("seats.save_seats_index", side_effect=save_index),
+            patch("seats._sync_account"),
+        )
+
+    def test_issue_is_free_identical_and_idempotent(self):
+        store = {"index": {"seats": {}, "by_owner": {}, "next_id": 11002}, "records": {}}
+        contexts = self._patches(store)
+        for ctx in contexts:
+            ctx.start()
+        try:
+            body, status = seats.issue_seat("ada")
+            self.assertEqual(status, 200)
+            self.assertTrue(body["issued"])
+            self.assertEqual(body["price"], 0)
+            self.assertEqual(body["currency"], "USD")
+            self.assertEqual(body["access"], "free")
+            self.assertEqual(body["seat"]["seat_id"], 11002)
+            self.assertEqual(body["seat"]["price"], 0)
+            self.assertEqual(body["seat"]["owner"], "ada")
+            self.assertIn("phrase", body)
+            self.assertEqual(store["records"][11002]["price"], 0)
+
+            supply, status = seats.issue_seat("bot")
+            self.assertEqual(status, 200)
+            self.assertTrue(supply["issued"])
+            self.assertEqual(supply["price"], 0)
+            self.assertEqual(supply["seat"]["seat_id"], 11003)
+            self.assertEqual(supply["seat"]["price"], body["seat"]["price"])
+
+            again, status = seats.issue_seat("ada")
+            self.assertEqual(status, 200)
+            self.assertFalse(again["issued"])
+            self.assertEqual(again["message"], "Seat already issued")
+            self.assertEqual(again["seat"]["seat_id"], 11002)
+            self.assertEqual(again["price"], 0)
+            self.assertNotIn("phrase", again)
+            self.assertEqual(len(store["records"]), 2)
+        finally:
+            for ctx in contexts:
+                ctx.stop()
+
+    def test_projection_forces_seat_price_to_zero(self):
+        from handlers import _merge_projection_overrides
+
+        params = _merge_projection_overrides("base", {"seatPrice": 100000, "takeRate": 0.05})
+        self.assertEqual(params["seatPrice"], 0.0)
+        self.assertEqual(params["takeRate"], 0.0)
+        aggressive = _merge_projection_overrides("aggressive", None)
+        self.assertEqual(aggressive["seatPrice"], 0.0)
+
+
+class IssueSeatHandlerTests(unittest.TestCase):
+    def test_demand_and_supply_both_issue_for_free(self):
+        from handlers import issue_seat as handler_issue
+
+        issued = {
+            "message": "Seat issued",
+            "issued": True,
+            "price": 0,
+            "seat": {"seat_id": 12, "owner": "ada", "price": 0},
+        }
+        with patch("handlers.get_account", return_value={"user_type": "demand"}), \
+             patch("seats.issue_seat", return_value=(dict(issued), 200)):
+            body, status = handler_issue("ada")
+        self.assertEqual(status, 200)
+        self.assertEqual(body["user_type"], "demand")
+        self.assertEqual(body["price"], 0)
+        self.assertEqual(body["access"], "free")
+
+        with patch("handlers.get_account", return_value={"user_type": "supply"}), \
+             patch("seats.issue_seat", return_value=(dict(issued), 200)):
+            body, status = handler_issue("bot")
+        self.assertEqual(status, 200)
+        self.assertEqual(body["user_type"], "supply")
+        self.assertEqual(body["price"], 0)
+
+        with patch("handlers.get_account", return_value={"user_type": "observer"}):
+            body, status = handler_issue("nope")
+        self.assertEqual(status, 400)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -6,7 +6,7 @@ Use this for pages, captions, and other prose on the site.
 
 Write complete sentences. Each sentence has to add a fact. Cut a sentence that only restates the one before it.
 
-A scenario paragraph is the exception. Keep the figures, the disclaimer that they are a scenario and not a forecast, the chart the series comes from, and the judgment those figures support. “Seat sales are plenty” stays in that paragraph.
+A scenario paragraph is the exception. Keep the figures, the disclaimer that they are a scenario and not a forecast, the chart the series comes from, and the judgment those figures support. Seat revenue is $0. That sentence stays with the seat chart.
 
 ## The exchange
 
@@ -48,9 +48,9 @@ The price paragraph is the pattern for stopping. A supply account grabs an open 
 
 A definition says what the thing is and what it is for. It stays short. It does not become the procedure.
 
-A seat is a number and an owner. Seats are not money. A seat is the right to grab jobs on the exchange. Selling that right is how the exchange is paid.
+A seat is a number and an owner. Seats are not money. All seats are identical. A seat is the right to grab jobs on the exchange. The price of a seat is zero. Demand-side access and supply-side access are free forever.
 
-Do not put the phrase, the daily hash, physical versus remote, or the fact that the verification gate is currently off into that definition. Those belong in a passage about the grab operation. “Selling that right is how the exchange is paid” is part of the definition.
+Do not put the phrase, the daily hash, physical versus remote, or the fact that the verification gate is currently off into that definition. Those belong in a passage about the grab operation. The price, that all seats are identical, and that both sides are free forever are part of the definition. Name `POST /seats/issue` in a passage about getting a seat, not inside the definition.
 
 ## Arguments
 
@@ -62,7 +62,7 @@ Say the seat is the right to grab jobs at the price on the bid. Leave the charge
 
 Name the pages and the measure, then stop.
 
-The investors page and the business plan both model a take-rate of zero. GMV is jobs cleared.
+The investors page and the business plan both model a take-rate of zero. GMV is jobs cleared. Both pages also model a seat price of zero. Seat revenue is $0.
 
 Leave the retired escrow sketch and the 5% take out of this paragraph. Do not draw the retired 5% take beside the current policy. A side-by-side of who keeps $100 does not help.
 
@@ -70,7 +70,7 @@ Leave the retired escrow sketch and the 5% take out of this paragraph. Do not dr
 
 A caption says what one mark on the chart is.
 
-Each bar is new seats that year times $100,000, at network scale 1.0.
+Each bar is new seats that year times $0, at network scale 1.0.
 
 When the paragraph above the chart already says the figures are a scenario, not a forecast, and names the chart the series comes from, leave that there. Do not repeat it in the caption. Do not explain a logarithmic axis. Do not say how many times larger the peak bar is.
 

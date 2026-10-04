@@ -1024,6 +1024,41 @@ def admin_transfer_seat(data: Dict[str, Any], admin: str = "mickey") -> Tuple[Di
         return {"error": "Internal server error"}, 500
 
 
+def issue_seat(username: str) -> Tuple[Dict[str, Any], int]:
+    """Issue one free seat to the calling demand or supply account."""
+    try:
+        user = get_account(username)
+        if not user:
+            return {"error": "User not found"}, 404
+        user_type = (user.get("user_type") or "").strip().lower()
+        if user_type not in ("demand", "supply"):
+            return {"error": "User type must be demand or supply"}, 400
+        result, status = seats_mod.issue_seat(username)
+        if status == 200:
+            result["user_type"] = user_type
+            result["price"] = seats_mod.SEAT_PRICE
+            result["currency"] = seats_mod.SEAT_CURRENCY
+            result["access"] = "free"
+            if result.get("issued"):
+                seat = result.get("seat") or {}
+                _emit(
+                    "seat.issued",
+                    username=username,
+                    actor=public_actor(username),
+                    payload={
+                        "seat_id": seat.get("seat_id"),
+                        "owner": username,
+                        "price": seats_mod.SEAT_PRICE,
+                        "user_type": user_type,
+                    },
+                    idempotency_key=f"seat.issued:{username}:{seat.get('seat_id')}",
+                )
+        return result, status
+    except Exception as e:
+        logger.error(f"issue_seat error: {e}")
+        return {"error": "Internal server error"}, 500
+
+
 def admin_set_seat_revoked(data: Dict[str, Any], revoked: bool, admin: str = "mickey") -> Tuple[Dict[str, Any], int]:
     try:
         return seats_mod.set_seat_revoked(data.get("seat_id"), revoked, admin=admin)
@@ -6471,7 +6506,7 @@ _PROJECTION_PRESETS = {
         "label": "Conservative",
         "gmv": 25,          # → $7.5T 2040 GMV
         "take": 0,          # retired; model forces a 0 job take
-        "seatPrice": 50,    # → $50k / seat
+        "seatPrice": 0,     # price is zero; model ignores client overrides
         "network": 40,      # → 0.40×
         "capital": 50,      # → $0.5T raise
         "esop_pct": 10.0,
@@ -6481,7 +6516,7 @@ _PROJECTION_PRESETS = {
         "label": "Base",
         "gmv": 100,         # → $30T 2040 GMV
         "take": 0,          # retired; model forces a 0 job take
-        "seatPrice": 100,   # → $100k
+        "seatPrice": 0,     # price is zero; model ignores client overrides
         "network": 100,     # → 1.0×
         "capital": 150,     # → $1.5T raise
         "esop_pct": 12.0,
@@ -6491,7 +6526,7 @@ _PROJECTION_PRESETS = {
         "label": "Aggressive",
         "gmv": 250,         # → $75T 2040 GMV
         "take": 0,          # retired; model forces a 0 job take
-        "seatPrice": 120,   # → $120k
+        "seatPrice": 0,     # price is zero; model ignores client overrides
         "network": 180,     # → 1.8×
         "capital": 200,     # → $2.0T raise
         "esop_pct": 12.0,
@@ -6549,12 +6584,12 @@ _ASP = 25000.0
 _AFF = 0.03
 _FIN_ATTACH = 0.40
 _FIN_FEE = 0.015
-_HYP_RATE = 0.028
+_HYP_RATE = 0.0  # Hyperion Fund retired; the page is gone
 _INS_INST = 0.25
 _INS_PREMIUM = 0.018
 _INS_CUT = 0.15
 _BASE_GMV_2035 = 30e12  # dial 100 → $30T in 2040
-_SEAT_UNIT_COST = (100.0, 25.0)  # $ / new seat: KYC, legal, chain
+_SEAT_UNIT_COST = (0.0, 0.0)  # issued free; no per-seat sale cost
 _COST_BANDS = {
     "exchange": (0.35, 0.12),
     "seats": (0.01, 0.0025),  # thin channel % of seat revenue
@@ -6570,11 +6605,11 @@ _STREAM_KEYS = (
 )
 _STREAM_LABELS = {
     "exchange": "Job take (zero)",
-    "seats": "Eternal seats",
+    "seats": "Seats (price zero)",
     "hardware": "Hardware referrals",
     "ads": "Nearby / ads",
     "franchise": "Franchising",
-    "hyperion": "Hyperion Fund fees",
+    "hyperion": "Hyperion Fund (retired)",
     "insurance": "Insurance & SLA",
     "design": "Design services",
 }
@@ -6668,7 +6703,7 @@ def _dial_params_from_preset(preset: Dict[str, Any]) -> Dict[str, float]:
     return {
         "gmv2035": (float(preset["gmv"]) / 10.0) * 3e12,
         "takeRate": 0.0,  # no escrow, no cut of the job
-        "seatPrice": float(preset["seatPrice"]) * 1000.0,
+        "seatPrice": 0.0,
         "network": float(preset["network"]) / 100.0,
         "capital": (float(preset["capital"]) / 100.0) * 1e12,
     }
@@ -6684,11 +6719,7 @@ def _merge_projection_overrides(preset_key: str, overrides: Optional[Dict[str, A
             base["gmv2035"] = float(overrides["gmv2035"])
         except (TypeError, ValueError):
             pass
-    if overrides.get("seatPrice") is not None:
-        try:
-            base["seatPrice"] = float(overrides["seatPrice"])
-        except (TypeError, ValueError):
-            pass
+    # seatPrice from the client is ignored. The price of a seat is zero.
     if overrides.get("network") is not None:
         try:
             base["network"] = float(overrides["network"])
@@ -6702,7 +6733,7 @@ def _merge_projection_overrides(preset_key: str, overrides: Optional[Dict[str, A
     # Sanity clamps
     base["gmv2035"] = max(1e9, min(100e12, base["gmv2035"]))
     base["takeRate"] = 0.0
-    base["seatPrice"] = max(1000.0, min(1e6, base["seatPrice"]))
+    base["seatPrice"] = 0.0
     base["network"] = max(0.05, min(5.0, base["network"]))
     base["capital"] = max(1e6, min(20e12, base["capital"]))
     return base
@@ -7099,7 +7130,7 @@ def _cap_table_heuristic(
         synergies.append({
             "theme": "Sovereign + institutional scale",
             "strength": "high",
-            "rationale": "Supports Hyperion AUM ramp and multi-region network scale in the model.",
+            "rationale": "Supports multi-region network scale in the model.",
         })
     if has_any("amazon_aws", "caterpillar_ventures", "boston_dynamics_hyundai"):
         synergies.append({

@@ -173,8 +173,6 @@
                             <li><a class="dropdown-item" href="/garage.html">Garage</a></li>
                             <li><a class="dropdown-item" href="/investors.html">Investors</a></li>
                             <li><a class="dropdown-item" href="/business_plan.html">Business Plan</a></li>
-                            <li><a class="dropdown-item" href="/spa.html">SPA</a></li>
-                            <li><a class="dropdown-item" href="/hyperion.html">Hyperion</a></li>
                             <li><a class="dropdown-item" href="/feedback.html">Feedback</a></li>
                         </ul>
                     </li>
@@ -208,7 +206,7 @@
         <span class="mono">theservicesexchange</span> (262 commits, about 176k insertions, 10 August
         2025 through 17 September 2026). It is for physicists and engineers who already have the
         business plan: what shipped, what was tried and deleted, and how the matching loop, seats,
-        demand surfaces, and Hyperion sit relative to one another.
+        and demand surfaces sit relative to one another.
       </p>
     </div>
     <div>
@@ -344,7 +342,7 @@
     <div><strong>Cooperation.</strong> Job parties, campaigns, agent tokens, activity log, job channels, taxi reference client (geohash whitelist).</div>
 
     <div class="tl-date">2026-07–08</div><div><div class="tl-dot"></div></div>
-    <div><strong>Surfaces.</strong> Demand Android app (now 1.5.5), Nearby + DP, catalog, Garage, hiring / investors / SPA / Hyperion.</div>
+    <div><strong>Surfaces.</strong> Demand Android app (now 1.5.5), Nearby + DP, catalog, Garage, hiring / investors. The SPA and Hyperion Fund pages were later removed.</div>
 
     <div class="tl-date">2026-09-10</div><div><div class="tl-dot"></div></div>
     <div><strong>Matching v3.</strong> Integer 0–10, threshold 7. Disjoint domain lexicons score 0 with no LLM call.</div>
@@ -371,12 +369,13 @@
 
   <h2 style="margin-top:0;border:none;padding:0;">4. Seats</h2>
   <p>
-    A seat is a number, an owner, and a private 12-word phrase. Seats are not money. Mickey Shaughnessy is the registrar:
+    A seat is a number, an owner, and a private 12-word phrase. Seats are not money. All seats are identical.
+    The price of a seat is $0. A demand account or a supply account calls <span class="mono">POST /seats/issue</span>
+    and receives the next seat. Mickey Shaughnessy remains the registrar:
     he assigns, transfers, and revokes. Transfer keeps the phrase and updates the owner. With
     <span class="mono">SEAT_VERIFICATION_ENABLED</span> on, physical and hybrid grabs present the
     seat number, the owner name, and a daily hash of the phrase; remote software grabs skip the seat.
-    Production cooldown is 900 seconds per account. The SPA describes one grab per seat per window
-    (see Future work). Three books were used:
+    Production cooldown is 900 seconds per account. Three books were used:
   </p>
 
   <table>
@@ -524,23 +523,19 @@ Score:</div>
     <li>Nearby pins: Gaussian noise, σ from a privacy dial, stable per entity × UTC day</li>
   </ul>
 
-  <h2>7. Hyperion</h2>
+  <h2>7. Seats</h2>
   <p>
-    The Hyperion Fund is the capital vehicle around the exchange. Under the SPA, a sponsor pays a
-    purchase price and receives Golden Seats (15-minute rate limit, eternal modulo abuse,
-    transferable). One hundred percent of that purchase price is contributed to Hyperion as the
-    buyer’s Hyperion Basis. Seat holders share earned profits.
-    Principal stays in the Fund. The Fund buys robot-advantaged demand, routes, books, and enabling
-    capacity; seated providers on The RSE grab the resulting work. Later seat and equity dollars
-    participate on the same contribution rule. Stream 06 on the investors model is an administration
-    fee on AUM (~2.8%/year in the published dials). Pages:
-    <a href="hyperion.html">hyperion.html</a>, <a href="spa.html">spa.html</a>.
+    A seat is a number and an owner. All seats are identical. The price of a seat is $0.
+    A demand account or a supply account calls <span class="mono">POST /seats/issue</span> and
+    receives the next seat. Demand-side access and supply-side access are free forever.
+    The SPA and the Hyperion Fund pages are gone. The investors model records seat revenue at $0
+    and a Hyperion Fund fee of $0.
   </p>
 
   <h2>8. Future work</h2>
   <ul class="clean">
     <li><strong>Seat gate.</strong> Daily hash is implemented. Flip <span class="mono">SEAT_VERIFICATION_ENABLED</span>. Remote software stays ungated. The 11,000 founding seats are for physical and hybrid density.</li>
-    <li><strong>Cooldown per seat.</strong> Cooldown is per account, so many logins on many of Aftab’s or Amanda Jean’s seats can grab in parallel. A <span class="mono">last_grab_at</span> on the seat record would match the SPA’s one grab per seat per window.</li>
+    <li><strong>Cooldown per seat.</strong> Cooldown is per account, so many logins on many of Aftab’s or Amanda Jean’s seats can grab in parallel. A <span class="mono">last_grab_at</span> on the seat record would limit grabs per seat.</li>
     <li><strong>Matching calibration.</strong> 0–10 is ordered. Remaining false positive is adjacent-domain. Next measurement: confusion matrix over the twelve lexicons.</li>
     <li><strong>Store scale.</strong> 11k-seat index is ~500 kB. A billion seats (2035 planning figure on the investors page) needs a different layout.</li>
     <li><strong>Chain as a mirror.</strong> A later chain could copy the registrar. The NFT-as-primary-book run already happened.</li>

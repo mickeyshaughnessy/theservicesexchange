@@ -175,8 +175,6 @@
                             <li><a class="dropdown-item" href="/garage.html">Garage</a></li>
                             <li><a class="dropdown-item" href="/investors.html">Investors</a></li>
                             <li><a class="dropdown-item" href="/business_plan.html">Business Plan</a></li>
-                            <li><a class="dropdown-item" href="/spa.html">SPA</a></li>
-                            <li><a class="dropdown-item" href="/hyperion.html">Hyperion</a></li>
                             <li><a class="dropdown-item" href="/feedback.html">Feedback</a></li>
                         </ul>
                     </li>
@@ -217,12 +215,12 @@
     <section class="py-5" style="background: var(--bg-deep);">
         <div class="container">
             <div class="hire-prose">
-                <p class="lede">Demand submits a bid. Supply grabs the job. Both sides sign the job. This page is the pair that builds that loop: a named individual who commits time, and a sponsor who buys Golden Seats under the <a href="spa.html">SPA</a>.</p>
+                <p class="lede">A demand account posts a bid. A supply account grabs the job. The buyer and the provider each sign. This page is the pair that builds that loop: a named individual who commits time, and a sponsor. A seat is not part of the pair. The price of a seat is $0. All seats are identical. Demand-side access and supply-side access are free forever.</p>
             </div>
 
             <h2 class="hire-section-title">MICKEY + 3× FOUNDING PARTNERS</h2>
             <div class="hire-prose">
-                <p class="lede">Mickey Shaughnessy (creator) is in and is not seeking a sponsor. Then three Founding Partner spots. Additional spots may be added. Equity is divided evenly among Mickey and the named Founding Partner individuals as spots fill. Horizon: 10–15+ years. Individual equity vests over 10 years (1-year cliff, then monthly). The sponsor’s remaining purchases and advisory rights deepen only as exchange GMV grows.</p>
+                <p class="lede">Mickey Shaughnessy (creator) is in and is not seeking a sponsor. Then three Founding Partner spots. Additional spots may be added. Equity is divided evenly among Mickey and the named Founding Partner individuals as spots fill. Horizon: 10–15+ years. Individual equity vests over 10 years (1-year cliff, then monthly). The sponsor’s advisory rights deepen only as exchange GMV grows. The sponsor does not buy a seat.</p>
             </div>
             <div class="row g-4 mb-4" style="max-width:1100px;margin:0 auto 1.5rem;">
                 <div class="col-md-6 col-lg-3">
@@ -262,13 +260,13 @@
                 <div class="col-md-6">
                     <div class="hire-card">
                         <h3>The individual</h3>
-                        <p>Commits time for 10+ years. Even share of the company, plus salary and benefits. Ordinary 1–2 year non-compete, limited to competing robot-labor exchanges. Termination terms are in the <a href="spa.html">SPA</a>.</p>
+                        <p>Commits time for 10+ years. Even share of the company, plus salary and benefits. Ordinary 1–2 year non-compete, limited to competing robot-labor exchanges.</p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="hire-card">
                         <h3>The sponsor</h3>
-                        <p>Buys Golden Seats under the <a href="spa.html">SPA</a> (15-minute rate limit, eternal modulo abuse, fully transferable). Purchase price goes to the <a href="hyperion.html">Hyperion Fund</a>; seat holders share earned profits.</p>
+                        <p>Writes capital for the company. A sponsor does not buy a seat. <code>POST /seats/issue</code> is free for a demand account and for a supply account.</p>
                     </div>
                 </div>
             </div>
@@ -372,8 +370,8 @@
                         <input class="form-control" id="hireSponsorEmail" name="sponsor_email" type="email" required maxlength="160">
                     </div>
                     <div class="col-md-6">
-                        <label for="hireSponsorCommit">Proposed SPA / seat purchase</label>
-                        <input class="form-control" id="hireSponsorCommit" name="sponsor_commitment" maxlength="200" placeholder="Capital or number of seats, if you know it">
+                        <label for="hireSponsorCommit">Proposed capital</label>
+                        <input class="form-control" id="hireSponsorCommit" name="sponsor_commitment" maxlength="200" placeholder="Capital, if you know it">
                     </div>
                     <div class="col-12">
                         <label for="hireExp">The pair</label>
@@ -384,7 +382,7 @@
                 <button type="submit" class="btn btn-primary btn-lg mt-4" id="hireSubmit">Submit pair</button>
                 <div id="hireStatus" role="status"></div>
             </form>
-            <p class="hire-fine">Discussion and planning only. Not an offer of equity, seats, or employment. SPA, advisory, and vesting terms are subject to definitive documents and applicable law. See the <a href="spa.html">SPA</a>, the <a href="hyperion.html">Hyperion Fund</a>, and the <a href="business_plan.html">business plan</a>.</p>
+            <p class="hire-fine">Discussion and planning only. Not an offer of equity or employment. Advisory and vesting terms are subject to definitive documents and applicable law. The price of a seat is $0. See the <a href="business_plan.html">business plan</a>.</p>
         </div>
     </section>
 
@@ -401,8 +399,6 @@
                     <a href="hiring.html">Hiring</a>
                     <a href="investors.html">Investors</a>
                     <a href="business_plan.html">Business Plan</a>
-                    <a href="spa.html">SPA</a>
-                    <a href="hyperion.html">Hyperion</a>
                     <a href="about.html">About</a>
                     <a href="api_docs.html">API Documentation</a>
                 </div>

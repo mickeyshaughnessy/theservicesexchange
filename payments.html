@@ -144,8 +144,6 @@
                             <li><a class="dropdown-item" href="/garage.html">Garage</a></li>
                             <li><a class="dropdown-item" href="/investors.html">Investors</a></li>
                             <li><a class="dropdown-item" href="/business_plan.html">Business Plan</a></li>
-                            <li><a class="dropdown-item" href="/spa.html">SPA</a></li>
-                            <li><a class="dropdown-item" href="/hyperion.html">Hyperion</a></li>
                             <li><a class="dropdown-item" href="/feedback.html">Feedback</a></li>
                         </ul>
                     </li>
@@ -221,19 +219,19 @@
                 <p>A bid records a service, a price, and a location type of physical, remote, or hybrid. A supply account grabs the job. A seat is required for a physical or hybrid grab only when seat verification is on, and that gate is currently off. A remote grab does not send a seat. The buyer and the provider each sign with a rating from 1 to 5, and the job is completed only when both have signed. The public portfolio then shows a reputation score and completion cards. Any client that can call the API can post a bid or grab a job, and the exchange does not replace that client’s customer, brand, or payment method.</p>
                 <p>A supply account grabs an open bid at the price on that bid. Among matching peers, the higher price is preferred. The exchange does not add a fee to the price.</p>
 
-                <h2 id="seats">2. Seat sales are the business</h2>
-                <p>A seat is a number and an owner. Seats are not money. A seat is the right to grab jobs on the exchange. Selling that right is how the exchange is paid.</p>
-                <p>The base scenario on the <a href="investors.html#seats">investors page</a> prices a primary seat at $100,000. About a million seats are in the 2026 founding tranche. New issuance peaks in 2035 at about 500 million seats, on the order of $50 trillion at that price, then tapers. Those figures are a scenario, not a forecast. They are the same series the seat chart on that page already draws. Seat sales are plenty. The exchange does not also need a toll on every job.</p>
-                <p>A seat is worth more when the toll is zero. The price on the bid is the price the parties keep. A seat is the right to grab jobs at that price.</p>
+                <h2 id="seats">2. Seats are free</h2>
+                <p>A seat is a number and an owner. Seats are not money. All seats are identical. A seat is the right to grab jobs on the exchange. The price of a seat is zero.</p>
+                <p>A demand account or a supply account calls <code>POST /seats/issue</code> and receives the next seat. A second call returns the active seat already held. Demand-side access and supply-side access are free forever. The <a href="investors.html#seats">investors page</a> and the <a href="business_plan.html">business plan</a> both model seat revenue at $0.</p>
+                <p>The price on the bid is the price the parties keep. A seat is the right to grab jobs at that price.</p>
                 <p>The <a href="investors.html#exchange-gmv">investors page</a> and the <a href="business_plan.html">business plan</a> both model a take-rate of zero. GMV is jobs cleared.</p>
 
                 <figure class="pay-figure">
-                    <h3>Seat issuance in the base scenario</h3>
+                    <h3>Seat revenue in the base scenario</h3>
                     <div class="pay-chart">
-                        <canvas id="chartSeats" aria-label="Bar chart of base-scenario seat issuance revenue by year, from one hundred billion dollars in 2026 to a fifty trillion dollar peak in 2035."></canvas>
+                        <canvas id="chartSeats" aria-label="Bar chart of seat revenue by year. The price is zero, so every bar is zero."></canvas>
                     </div>
                 </figure>
-                <p class="pay-caption">Each bar is new seats that year times $100,000, at network scale 1.0.</p>
+                <p class="pay-caption">Each bar is new seats that year times $0, at network scale 1.0.</p>
 
                 <h2 id="simple">3. The technology should stay simple</h2>
                 <p>Instagram began as a photo and a follow. It now includes short video, a shop, a messenger, live broadcast, and an ad system. Over the same years, the top U.S. iPhone apps added features, and the core download grew.</p>
@@ -379,21 +377,21 @@
             return sign + '$' + ax.toFixed(0);
         }
 
-        // investors.html BASE_SEAT_NEW at network 1.0, times $100k seat price.
+        // investors.html BASE_SEAT_NEW at network 1.0, times a seat price of $0.
         var seatNew = {
             2026: 1e6, 2027: 1.5e5, 2028: 2.5e5, 2029: 4e5, 2030: 7e5,
             2031: 1e6, 2032: 9e6, 2033: 90e6, 2034: 400e6, 2035: 500e6,
             2036: 1e7, 2037: 2e6, 2038: 5e5, 2039: 2e5, 2040: 1e5
         };
         var years = Object.keys(seatNew);
-        var seatRev = years.map(function (y) { return seatNew[y] * 100000; });
+        var seatRev = years.map(function () { return 0; });
 
         new Chart(document.getElementById('chartSeats'), {
             type: 'bar',
             data: {
                 labels: years,
                 datasets: [{
-                    label: 'New seats × $100k',
+                    label: 'New seats × $0',
                     data: seatRev,
                     backgroundColor: '#39ff14'
                 }]
@@ -404,16 +402,12 @@
                 scales: {
                     x: { grid: { display: false }, ticks: { color: tick, maxRotation: 60, minRotation: 45 } },
                     y: {
-                        type: 'logarithmic',
-                        min: 1e9,
-                        max: 1e14,
+                        min: 0,
+                        max: 1,
                         ticks: {
                             color: tick,
-                            callback: function (v) {
-                                var log = Math.log10(v);
-                                if (Math.abs(log - Math.round(log)) > 0.01) return '';
-                                return money(v);
-                            }
+                            stepSize: 1,
+                            callback: function (v) { return money(v); }
                         },
                         grid: { color: grid }
                     }

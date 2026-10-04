@@ -296,8 +296,6 @@
                             <li><a class="dropdown-item" href="/garage.html">Garage</a></li>
                             <li><a class="dropdown-item" href="/investors.html">Investors</a></li>
                             <li><a class="dropdown-item" href="/business_plan.html">Business Plan</a></li>
-                            <li><a class="dropdown-item" href="/spa.html">SPA</a></li>
-                            <li><a class="dropdown-item" href="/hyperion.html">Hyperion</a></li>
                             <li><a class="dropdown-item" href="/feedback.html">Feedback</a></li>
                         </ul>
                     </li>
@@ -379,7 +377,10 @@
                 <h2 style="font-family:'Press Start 2P',monospace;font-size:0.9rem;color:var(--primary);">Seats</h2>
                 <p style="font-family:'Share Tech Mono',monospace;font-size:0.82rem;color:var(--text);line-height:1.65;margin-bottom:0.75rem;">
                     A seat is a <strong>number</strong>, an <strong>owner name</strong>, and a private <strong>12-word phrase</strong>.
-                    Mickey Shaughnessy is the registrar (<code>/admin/seats*</code>). Founding book: seats <code>1–1000</code> owner
+                    All seats are identical. The price is <strong>$0</strong>. A demand or supply account calls
+                    <code>POST /seats/issue</code> and receives the next seat. A second call returns the active seat already held.
+                    Demand-side access and supply-side access are free forever.
+                    Mickey Shaughnessy remains the registrar (<code>/admin/seats*</code>). Founding book: seats <code>1–1000</code> owner
                     <strong>Dr. Aftab</strong>; <code>1001–11000</code> owner <strong>Amanda Jean</strong>. Transfer keeps the phrase.
                 </p>
                 <p style="font-family:'Share Tech Mono',monospace;font-size:0.82rem;color:var(--text);line-height:1.65;margin-bottom:0.75rem;">

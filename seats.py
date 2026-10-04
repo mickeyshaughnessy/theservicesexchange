@@ -32,6 +32,10 @@ from utils import (
 
 logger = logging.getLogger(__name__)
 
+# Every seat is the same seat. The price is zero. Demand and supply both issue one for free.
+SEAT_PRICE = 0
+SEAT_CURRENCY = "USD"
+
 _SEAT_CONTACT = (
     "Message Mickey Shaughnessy (call or SMS +1 530 219 0940, or email "
     "therobotservicesexchange@proton.me) to get or transfer a seat."
@@ -175,6 +179,8 @@ def public_seat_view(rec: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         "assigned_at": rec.get("assigned_at"),
         "transferred_at": rec.get("transferred_at"),
         "transferred_from": rec.get("transferred_from"),
+        "price": SEAT_PRICE,
+        "currency": SEAT_CURRENCY,
     }
 
 
@@ -327,6 +333,8 @@ def _new_record(seat_id: int, owner: str, admin: str, now: int, *, phrase: str,
         "assigned_by": admin,
         "transferred_at": now if from_owner else None,
         "transferred_from": from_owner,
+        "price": SEAT_PRICE,
+        "currency": SEAT_CURRENCY,
         "history": [{
             "op": "transfer" if from_owner else "assign",
             "at": now,
@@ -369,6 +377,8 @@ def assign_seat(owner: str, *, seat_id: Optional[int] = None, admin: str = "mick
         rec["status"] = rec.get("status") or "active"
         rec["assigned_at"] = rec.get("assigned_at") or now
         rec["assigned_by"] = rec.get("assigned_by") or admin
+        rec["price"] = SEAT_PRICE
+        rec["currency"] = SEAT_CURRENCY
         hist = list(rec.get("history") or [])
         hist.append({"op": "assign", "at": now, "by": admin, "from": prev.get("owner"), "to": owner})
         rec["history"] = hist[-50:]
@@ -391,6 +401,61 @@ def assign_seat(owner: str, *, seat_id: Optional[int] = None, admin: str = "mick
         body["phrase_note"] = (
             "Store this phrase privately. /grab_job sends SHA-256(phrase|YYYY-MM-DD UTC), never the phrase."
         )
+    return body, 200
+
+
+def _active_seat_ids_for_owner(index: Dict[str, Any], owner: str) -> List[int]:
+    seats = index.get("seats") or {}
+    found: List[int] = []
+    for name, raw_ids in (index.get("by_owner") or {}).items():
+        if not owners_match(name, owner):
+            continue
+        for item in raw_ids:
+            sid = parse_seat_id(item)
+            if sid is None:
+                continue
+            meta = seats.get(str(sid)) or {}
+            if (meta.get("status") or "active") != "revoked":
+                found.append(sid)
+    return sorted(set(found))
+
+
+def issue_seat(username: str) -> Tuple[Dict[str, Any], int]:
+    """Issue the next seat to this account at price zero.
+
+    All seats are identical. A second call returns the active seat already held
+    and does not mint another. Demand and supply accounts use the same path.
+    """
+    username = normalize_owner(username)
+    if not username:
+        return {"error": "account required"}, 400
+
+    index = get_seats_index(force_refresh=True)
+    held = _active_seat_ids_for_owner(index, username)
+    if held:
+        sid = held[0]
+        rec = get_seat_record(sid, force_refresh=True) or {
+            "seat_id": sid,
+            "owner": username,
+            "status": "active",
+        }
+        return {
+            "message": "Seat already issued",
+            "issued": False,
+            "price": SEAT_PRICE,
+            "currency": SEAT_CURRENCY,
+            "access": "free",
+            "seat": public_seat_view(rec),
+        }, 200
+
+    body, status = assign_seat(username, seat_id=None, admin=username)
+    if status != 200:
+        return body, status
+    body["message"] = "Seat issued"
+    body["issued"] = True
+    body["price"] = SEAT_PRICE
+    body["currency"] = SEAT_CURRENCY
+    body["access"] = "free"
     return body, 200
 
 
@@ -420,6 +485,8 @@ def transfer_seat(seat_id: int, to_owner: str, *, admin: str = "mickey") -> Tupl
     rec["transferred_from"] = from_owner
     rec["status"] = rec.get("status") or "active"
     rec["phrase"] = rec.get("phrase") or generate_phrase()
+    rec["price"] = SEAT_PRICE
+    rec["currency"] = SEAT_CURRENCY
     hist = list(rec.get("history") or [])
     hist.append({"op": "transfer", "at": now, "by": admin, "from": from_owner, "to": to_owner})
     rec["history"] = hist[-50:]

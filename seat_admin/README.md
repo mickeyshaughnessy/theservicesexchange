@@ -1,10 +1,11 @@
 # Seat registry
 
-Mickey Shaughnessy assigns, transfers, and revokes seats. A seat is a number, an owner name, and a private 12-word phrase.
+Mickey Shaughnessy assigns, transfers, and revokes seats. A seat is a number, an owner name, and a private 12-word phrase. All seats are identical. The price is $0. A demand or supply account can also call `POST /seats/issue` and receive the next seat for free.
 
 Use **admin.html → Seats** (signed in as Mickey) or:
 
 ```
+POST /seats/issue               # caller's own next seat, price 0
 GET  /admin/seats
 GET  /admin/seats/{id}          # includes phrase
 GET  /admin/seats/export?owner=Dr.%20Aftab

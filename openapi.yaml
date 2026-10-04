@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: The RSE API
-  version: 1.3.0
+  version: 1.4.0
   description: |
     # The RSE (Robot Services Exchange)
 
@@ -37,8 +37,12 @@ info:
     | `demand` | Buyer / job requester | bid, campaigns, demand-side party invites |
     | `supply` | Provider / robot operator | grab_job, supply-side party invites, campaign commits |
 
-    A seat is a number, an owner name, and a private phrase. Mickey Shaughnessy
-    assigns seats in the Exchange registry (`/admin/seats*`). When seat verification
+    A seat is a number, an owner name, and a private phrase. All seats are identical.
+    The price of a seat is zero. A demand account or a supply account calls
+    `POST /seats/issue` and receives the next seat. Demand-side access and
+    supply-side access are free forever. A second call returns the active seat
+    already held. Mickey Shaughnessy remains the registrar for
+    assign, transfer, and revoke (`/admin/seats*`). When seat verification
     is enabled, physical/hybrid `/grab_job` must present `seat.id`, `seat.owner`, and
     `seat.secret` = SHA-256 hex of `phrase|YYYY-MM-DD` (UTC, ±1 day accepted).
     Remote (software) grabs skip the seat. The gate is off until
@@ -562,6 +566,42 @@ paths:
                 reputation_score: 4.51
                 seat_status: no_seat
                 seat_id: null
+        '401': { description: Missing or invalid token }
+        '404': { description: User not found }
+
+  /seats/issue:
+    post:
+      tags: [Seats]
+      summary: Issue one free seat to the calling account
+      description: |
+        All seats are identical. The price is 0 USD. Demand and supply accounts
+        both call this. The next seat number is assigned to the caller's username.
+        `phrase` is returned only when the seat is newly created. If the account
+        already holds an active seat, that seat is returned and `issued` is false.
+        Access does not expire.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Seat issued, or the active seat already held
+          content:
+            application/json:
+              example:
+                message: Seat issued
+                issued: true
+                price: 0
+                currency: USD
+                access: free
+                user_type: supply
+                seat:
+                  seat_id: 11002
+                  owner: robo_op_1
+                  status: active
+                  price: 0
+                  currency: USD
+                phrase: "word word word word word word word word word word word word"
+                phrase_note: Store this phrase privately. /grab_job sends SHA-256(phrase|YYYY-MM-DD UTC), never the phrase.
+        '400': { description: Account is not demand or supply }
         '401': { description: Missing or invalid token }
         '404': { description: User not found }
 
