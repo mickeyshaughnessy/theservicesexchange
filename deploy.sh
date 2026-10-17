@@ -45,6 +45,10 @@ fi
 git fetch origin main
 git pull --ff-only origin main
 echo "  after:  \$(git rev-parse --short HEAD)"
+python3 scripts/build_demand_catalog.py
+PY=\$(command -v python3)
+CRON_LINE="25 * * * * \$PY ${DEPLOY_PATH}/scripts/build_demand_catalog.py >> /var/log/rse-demand-catalog.log 2>&1"
+(crontab -l 2>/dev/null | grep -v build_demand_catalog.py; echo "\$CRON_LINE") | crontab -
 if systemctl cat ${SERVICE_NAME} >/dev/null 2>&1; then
   systemctl restart ${SERVICE_NAME}
   sleep 2

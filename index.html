@@ -15,7 +15,7 @@
 
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css?v=27" rel="stylesheet">
+    <link href="styles.css?v=29" rel="stylesheet">
 <title>The RSE — Robot Labor, On Demand</title>
 </head>
 <body>
@@ -143,6 +143,7 @@
                         </a>
                         <a class="btn btn-hero-secondary" href="#post-request">Submit a bid</a>
                         <a class="btn btn-hero-secondary" href="api_docs.html">API Docs</a>
+                        <a class="btn btn-hero-secondary" href="#catalog">Catalog</a>
                     </div>
                     <p class="hero-cta-foot d-none d-lg-block">Already have an account?
                         <button type="button" class="btn btn-link p-0 align-baseline" onclick="showAuth({ defaultTab: 'login' })">Log in</button>
@@ -168,6 +169,54 @@
                 <div class="user-home-checklist" id="userHomeChecklist" style="display: none;"></div>
                 <div class="user-home-bids" id="userHomeBids" style="display: none;"></div>
             </div>
+        </div>
+    </section>
+
+    <section class="home-bid-section" id="catalog">
+        <div class="container">
+            <h2 class="home-bid-section-title text-center">Catalog</h2>
+            <p class="home-bid-section-sub text-center mx-auto">Each link opens a demand-side app. The app posts a bid with POST /submit_bid.</p>
+            <!-- demand-catalog:start -->
+            <div class="demand-catalog">
+  <a class="demand-catalog-link" href="/bashkit.html"><span class="demand-catalog-name">BashKit</span><span class="demand-catalog-job">Party rentals</span></a>
+  <a class="demand-catalog-link" href="/boltup.html"><span class="demand-catalog-name">BoltUp</span><span class="demand-catalog-job">Flat-pack &amp; furniture assembly bids</span></a>
+  <a class="demand-catalog-link" href="/clipyard.html"><span class="demand-catalog-name">ClipYard</span><span class="demand-catalog-job">Lawn &amp; yard work bids</span></a>
+  <a class="demand-catalog-link" href="/cratehaul.html"><span class="demand-catalog-name">CrateHaul</span><span class="demand-catalog-job">Junk removal &amp; haul-away bids</span></a>
+  <a class="demand-catalog-link" href="/draftseal.html"><span class="demand-catalog-name">DraftSeal</span><span class="demand-catalog-job">Door &amp; window draft sealing / weatherstripping</span></a>
+  <a class="demand-catalog-link" href="/driftclear.html"><span class="demand-catalog-name">DriftClear</span><span class="demand-catalog-job">Snow removal &amp; de-icing</span></a>
+  <a class="demand-catalog-link" href="/eavespark.html"><span class="demand-catalog-name">EaveSpark</span><span class="demand-catalog-job">Holiday &amp; string-light installation</span></a>
+  <a class="demand-catalog-link" href="/edgerun.html"><span class="demand-catalog-name">EdgeRun</span><span class="demand-catalog-job">Mobile knife &amp; tool sharpening</span></a>
+  <a class="demand-catalog-link" href="/flagdown.html"><span class="demand-catalog-name">FlagDown</span><span class="demand-catalog-job">Get a ride</span></a>
+  <a class="demand-catalog-link" href="/fluepath.html"><span class="demand-catalog-name">FluePath</span><span class="demand-catalog-job">Chimney &amp; fireplace flue cleaning</span></a>
+  <a class="demand-catalog-link" href="/foamlane.html"><span class="demand-catalog-name">FoamLane</span><span class="demand-catalog-job">Mobile car wash</span></a>
+  <a class="demand-catalog-link" href="/furnacefit.html"><span class="demand-catalog-name">FurnaceFit</span><span class="demand-catalog-job">Fall furnace tune-up &amp; heating safety check</span></a>
+  <a class="demand-catalog-link" href="/glowpane.html"><span class="demand-catalog-name">GlowPane</span><span class="demand-catalog-job">Window washing &amp; exterior glass bids</span></a>
+  <a class="demand-catalog-link" href="/grillglow.html"><span class="demand-catalog-name">GrillGlow</span><span class="demand-catalog-job">Outdoor grill deep cleaning &amp; degreasing bids</span></a>
+  <a class="demand-catalog-link" href="/groutglow.html"><span class="demand-catalog-name">GroutGlow</span><span class="demand-catalog-job">Tile &amp; grout deep cleaning, sealing &amp; recaulk</span></a>
+  <a class="demand-catalog-link" href="/hangtrue.html"><span class="demand-catalog-name">HangTrue</span><span class="demand-catalog-job">TV, art, shelf &amp; mirror wall mounting bids</span></a>
+  <a class="demand-catalog-link" href="/honerun.html"><span class="demand-catalog-name">HoneRun</span><span class="demand-catalog-job">Mobile knife, scissor &amp; garden tool sharpening</span></a>
+  <a class="demand-catalog-link" href="/keytrue.html"><span class="demand-catalog-name">KeyTrue</span><span class="demand-catalog-job">In-home piano tuning &amp; repair</span></a>
+  <a class="demand-catalog-link" href="/latchline.html"><span class="demand-catalog-name">LatchLine</span><span class="demand-catalog-job">Mobile locksmith, rekeys &amp; lock installs</span></a>
+  <a class="demand-catalog-link" href="/leafline.html"><span class="demand-catalog-name">LeafLine</span><span class="demand-catalog-job">Gutter cleaning &amp; downspout flush bids</span></a>
+  <a class="demand-catalog-link" href="/lintlift.html"><span class="demand-catalog-name">LintLift</span><span class="demand-catalog-job">Dryer vent &amp; exhaust duct cleaning</span></a>
+  <a class="demand-catalog-link" href="/meshmend.html"><span class="demand-catalog-name">MeshMend</span><span class="demand-catalog-job">Window &amp; door screen repair, rescreening &amp; pet mesh</span></a>
+  <a class="demand-catalog-link" href="/pawport.html"><span class="demand-catalog-name">PawPort</span><span class="demand-catalog-job">Pet care bids</span></a>
+  <a class="demand-catalog-link" href="/pilefresh.html"><span class="demand-catalog-name">PileFresh</span><span class="demand-catalog-job">Carpet, rugs &amp; upholstery deep cleaning</span></a>
+  <a class="demand-catalog-link" href="/pixelpatch.html"><span class="demand-catalog-name">PixelPatch</span><span class="demand-catalog-job">Phone, tablet &amp; laptop repair at your door</span></a>
+  <a class="demand-catalog-link" href="/presspath.html"><span class="demand-catalog-name">PressPath</span><span class="demand-catalog-job">Driveway, patio &amp; sidewalk pressure washing</span></a>
+  <a class="demand-catalog-link" href="/rayclear.html"><span class="demand-catalog-name">RayClear</span><span class="demand-catalog-job">Residential solar panel cleaning &amp; array rinse</span></a>
+  <a class="demand-catalog-link" href="/rootlift.html"><span class="demand-catalog-name">RootLift</span><span class="demand-catalog-job">Indoor houseplant care, watering &amp; vacation plant-sitting</span></a>
+  <a class="demand-catalog-link" href="/sealside.html"><span class="demand-catalog-name">SealSide</span><span class="demand-catalog-job">Mobile notary &amp; traveling signing agent</span></a>
+  <a class="demand-catalog-link" href="/snack.html"><span class="demand-catalog-name">Snack</span><span class="demand-catalog-job">Craving runs</span></a>
+  <a class="demand-catalog-link" href="/spokerun.html"><span class="demand-catalog-name">SpokeRun</span><span class="demand-catalog-job">Mobile bike tune-up, flat repair &amp; brake/gear adjust</span></a>
+  <a class="demand-catalog-link" href="/stitchdrop.html"><span class="demand-catalog-name">StitchDrop</span><span class="demand-catalog-job">Clothing alterations, hemming &amp; zipper repair with pickup</span></a>
+  <a class="demand-catalog-link" href="/sudsrun.html"><span class="demand-catalog-name">SudsRun</span><span class="demand-catalog-job">Laundry pickup bids</span></a>
+  <a class="demand-catalog-link" href="/tideskim.html"><span class="demand-catalog-name">TideSkim</span><span class="demand-catalog-job">Pool &amp; spa care, on demand</span></a>
+  <a class="demand-catalog-link" href="/treadswap.html"><span class="demand-catalog-name">TreadSwap</span><span class="demand-catalog-job">Mobile winter tire changeover</span></a>
+  <a class="demand-catalog-link" href="/wrenchline.html"><span class="demand-catalog-name">WrenchLine</span><span class="demand-catalog-job">Home maintenance bids</span></a>
+  <a class="demand-catalog-link" href="/zonefrost.html"><span class="demand-catalog-name">ZoneFrost</span><span class="demand-catalog-job">Sprinkler winterization / blowout / freeze prep</span></a>
+</div>
+            <!-- demand-catalog:end -->
         </div>
     </section>
 
@@ -358,6 +407,7 @@
                 <div class="col-md-4">
                     <h5>Links</h5>
                     <a href="index.html">Home</a>
+                    <a href="#catalog">Catalog</a>
                     <a href="hiring.html">Hiring</a>
                     <a href="portfolio.html">Portfolio</a>
                     <a href="robots.html">Buy a Robot</a>
