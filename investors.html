@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a2e">
-    <meta name="description" content="Invest in The RSE — the open exchange for robot labor. Jobs clear with no escrow and no take. Seats are identical and free. Hardware, attention, franchises, insurance, and design, with interactive 15-year projections.">
+    <meta name="description" content="Invest in The RSE — the open exchange for robot labor. Jobs clear with no escrow and no take. Seats and six other streams, with interactive 15-year projections.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="The RSE">
@@ -891,8 +891,8 @@
             <h1>How The RSE works — and how it earns</h1>
             <p class="lede">
                 The exchange records the price of a job. It does not hold the money, and it does not take a cut.
-                The price of a seat is $0. All seats are identical. A demand account or a supply account calls <code>POST /seats/issue</code> and receives the next seat. Demand-side access and supply-side access are free forever.
-                The modeled earning streams are hardware, attention, franchises, insurance, and design.
+                Revenue follows density: seats, hardware, attention, franchises, Hyperion fees, insurance, design.
+                The <a href="#hyperion">Hyperion Fund</a> buys automation-ready, income-producing businesses. Permanent capital; preferred rights that deepen with the network.
                 <a href="payments.html">Why there is no escrow and no take</a>.
             </p>
             <div class="inv-cta-row">
@@ -902,6 +902,7 @@
                 <a class="btn btn-outline-light btn-lg" href="#streams">Revenue streams</a>
                 <a class="btn btn-outline-light btn-lg" href="#projections">15-year model</a>
                 <a class="btn btn-outline-light btn-lg" href="business_plan.html">Business Plan</a>
+                <a class="btn btn-outline-light btn-lg" href="#hyperion">Hyperion Fund</a>
             </div>
             <nav class="inv-toc" aria-label="Page sections">
                 <a href="#snapshot">Live snapshot</a>
@@ -912,9 +913,10 @@
                 <a href="#hardware">3. Hardware</a>
                 <a href="#nearby-ads">4. Nearby / ads</a>
                 <a href="#franchising">5. Franchising</a>
-                <a href="#insurance">6. Insurance / SLA</a>
-                <a href="#design">7. Design services</a>
-                <a href="#costs">8. Costs</a>
+                <a href="#hyperion">6. Hyperion Fund</a>
+                <a href="#insurance">7. Insurance / SLA</a>
+                <a href="#design">8. Design services</a>
+                <a href="#costs">9. Costs</a>
                 <a href="#projections">Projections</a>
                 <a href="#capitaltable">Cap table explorer</a>
                 <a href="#permanent">Permanent partnership</a>
@@ -941,7 +943,7 @@
         <div class="container">
             <h2>What the exchange does</h2>
             <p class="inv-prose">
-                A demand account posts a bid with a service and a price. A supply account grabs the job at rse-api.com (<code>POST /grab_job</code>). The buyer and the provider each sign with a rating from 1 to 5 (<code>POST /sign_job</code>). The exchange does not add a fee to the price. A seat is a number and an owner. All seats are identical. The price is $0. <code>POST /seats/issue</code> gives the calling account the next seat. A seat is required for a physical or hybrid grab only when seat verification is on, and that gate is currently off.
+                Demand submits a bid on the website (job, price, location). Supply grabs the job at rse-api.com (<code>POST /grab_job</code>). Both sides sign the job (<code>POST /sign_job</code>). Settlement stays between the parties. Seats gate grab access when verification is on. Campaigns cover bulk demand; job parties cover multi-agent work. Website for people; API for machines.
             </p>
         </div>
     </section>
@@ -951,9 +953,8 @@
         <div class="container">
             <h2>Revenue streams</h2>
             <p class="inv-stream-lede">
-                The job itself is not an earning stream: no escrow, and the take-rate is zero.
-                Seat revenue is $0. All seats are identical, and demand-side access and supply-side access are free forever.
-                The earning streams in the model are hardware, attention, franchises, insurance, and design.
+                Seven earning streams. The job itself is not one of them: no escrow, and the take-rate is zero.
+                Seat issuance is the bulk of modeled revenue (base peak near $50T in 2035 at $100k × 500M new seats).
                 Figures follow the <a href="#projections">Projections</a> dials.
             </p>
             <div class="row g-3">
@@ -971,11 +972,11 @@
                 <div class="col-md-6 col-lg-4">
                     <div class="inv-card">
                         <span class="inv-pill">02 · Seats</span>
-                        <h3>Identical seats, price zero</h3>
-                        <p class="formula-mini">Revenue = new seats × $0</p>
+                        <h3>Eternal supply seats</h3>
+                        <p class="formula-mini">Revenue = seats sold × seat price</p>
                         <div class="live-num" id="cardSeatsPeak">—</div>
-                        <div class="live-label">Seat revenue · every year</div>
-                        <p class="cost-line"><code>POST /seats/issue</code> · demand and supply · free forever</p>
+                        <div class="live-label">Peak year seat revenue</div>
+                        <p class="cost-line"><strong>Cost load:</strong> $100→$25 / seat + 1.0%→0.25% channel</p>
                         <a class="stream-jump" href="#seats">Details &amp; chart →</a>
                     </div>
                 </div>
@@ -1014,7 +1015,19 @@
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="inv-card">
-                        <span class="inv-pill">06 · Insurance</span>
+                        <span class="inv-pill">06 · Hyperion</span>
+                        <h3>Fund platform fees</h3>
+                        <p class="formula-mini">Same $ as seats / equity · 2.8% × AUM · earned $ only out</p>
+                        <div class="live-num" id="cardHyp2035">—</div>
+                        <div class="live-label">Hyperion revenue · 2035</div>
+                        <p class="cost-line"><strong>Cost load:</strong> 50% → 30% of stream rev</p>
+                        <a class="stream-jump" href="#hyperion">Details &amp; chart →</a>
+                        <a class="stream-jump" href="business_plan.html">Business plan →</a>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="inv-card">
+                        <span class="inv-pill">07 · Insurance</span>
                         <h3>Insurance &amp; SLA</h3>
                         <p class="formula-mini">GMV × 25% inst. × 1.8% premium × 15% cut</p>
                         <div class="live-num" id="cardIns2035">—</div>
@@ -1025,7 +1038,7 @@
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="inv-card">
-                        <span class="inv-pill">07 · Design</span>
+                        <span class="inv-pill">08 · Design</span>
                         <h3>Design services</h3>
                         <p class="formula-mini">Network-scaled professional services</p>
                         <div class="live-num" id="cardDesign2035">—</div>
@@ -1068,29 +1081,29 @@
     <!-- 2. Seats -->
     <section class="inv-section" id="seats">
         <div class="container">
-            <h2>2. Seats</h2>
-            <p class="inv-formula">Revenue = <code>new seats</code> × <code>$0</code>
-                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">All seats are identical. Demand-side access and supply-side access are free forever.</span>
+            <h2>2. Seat sales</h2>
+            <p class="inv-formula">Revenue = <code>new seats sold</code> × <code>seat price</code>
+                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">Seats are eternal · primary issuance ramps then plateaus (not recurring rent)</span>
             </p>
             <p class="inv-stream-lede">
-                A seat is a number and an owner. Seats are not money. A seat is the right to grab jobs on the exchange. The price of a seat is $0. A demand account or a supply account calls <code>POST /seats/issue</code> and receives the next seat. A second call returns the active seat already held. The unit chart below is a scenario of how many seats are issued. It is not a forecast, and it is not revenue.
+                Modeled primary issuance. The price dial runs from $0 to $100k (base $100k). A seat issued with <code>POST /seats/issue</code> is still free. The <a href="#hyperion">Hyperion Fund</a> deploys permanent capital into operating businesses.
             </p>
             <div class="inv-stream-meta">
-                <div class="inv-metric"><div class="n" id="metricSeatPrice">$0</div><div class="l">Price / seat</div></div>
-                <div class="inv-metric"><div class="n" id="metricSeatTarget">—</div><div class="l">Seats issued · 2031–2035</div></div>
-                <div class="inv-metric"><div class="n" id="metricSeatsPeak">$0</div><div class="l">Seat revenue · every year</div></div>
-                <div class="inv-metric"><div class="n" id="metricSeats2035">$0</div><div class="l">Seat revenue · 2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricSeatPrice">—</div><div class="l">Price / seat (dial)</div></div>
+                <div class="inv-metric"><div class="n" id="metricSeatTarget">—</div><div class="l">Seats sold · 2031–2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricSeatsPeak">—</div><div class="l">Peak year revenue</div></div>
+                <div class="inv-metric"><div class="n" id="metricSeats2035">—</div><div class="l">Revenue · 2035 (peak year)</div></div>
             </div>
             <div class="inv-chart-box">
-                <h3 id="titleChartSeatsRev">Seat revenue ($ / year)</h3>
-                <canvas id="chartSeatsRev" aria-label="Bar chart of seat revenue by year. The price is zero, so every bar is zero."></canvas>
+                <h3 id="titleChartSeatsRev">Seat sales revenue ($ / year)</h3>
+                <canvas id="chartSeatsRev" aria-label="Bar chart of seat revenue by year"></canvas>
             </div>
-            <p class="inv-chart-caption" id="captionSeats">Each bar is new seats that year times $0, at network scale 1.0.</p>
+            <p class="inv-chart-caption" id="captionSeats">Each bar = seats sold that year × seat price. Spike = issuance ramp; flat tail = residual only.</p>
             <div class="inv-chart-box">
-                <h3>New seats issued (units / year)</h3>
-                <canvas id="chartSeatsUnits" aria-label="Bar chart of seats issued by year"></canvas>
+                <h3>New seats sold (units / year)</h3>
+                <canvas id="chartSeatsUnits" aria-label="Bar chart of seats sold by year"></canvas>
             </div>
-            <p class="inv-chart-caption">Each bar is new seats issued that year, at the current network scale. The 2026 bar is the founding tranche. The series peaks in 2035, then tapers. It is a scenario, not a forecast.</p>
+            <p class="inv-chart-caption">Founding tranche in 2026, then 1M → 10M → 100M → 500M → 1B cumulative over 2031–2035 (peak 2035), then taper. Scaled by network dial.</p>
         </div>
     </section>
 
@@ -1179,12 +1192,129 @@
         </div>
     </section>
 
+    <!-- 6. Hyperion -->
+    <section class="inv-section" id="hyperion">
+        <div class="container">
+            <h2>6. The Hyperion Fund</h2>
+            <p class="inv-note" style="margin-top:-0.4rem;margin-bottom:1rem;">The same mandate is in the <a href="business_plan.html">business plan</a>, section 9.</p>
+            <p class="inv-formula">Platform revenue ≈ <code>2.8% × AUM</code>
+                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">1% annual management + 15% of ~12% gross performance · only earned money is transferable out</span>
+            </p>
+            <p class="inv-stream-lede">
+                The Fund buys automation-ready, income-producing small businesses. Chart bars are
+                <em>platform fees</em> (~2.8% of AUM), not Fund AUM or participant returns.
+            </p>
+
+            <div class="inv-fact-row">
+                <div class="inv-fact">
+                    <strong>What it buys</strong>
+                    Short-term rental management, landscaping, housekeeping, home services, and home health aides, plus the properties those books run on.
+                </div>
+                <div class="inv-fact">
+                    <strong>Annual management fee</strong>
+                    1% of AUM plus performance participation. Modeled combined take ≈ 2.8%.
+                </div>
+                <div class="inv-fact">
+                    <strong>Principal stays in</strong>
+                    Capital committed to the Fund is not transferable out. Only earned profits may leave.
+                </div>
+                <div class="inv-fact">
+                    <strong>What the exchange earns</strong>
+                    The fee. Asset income stays in the Fund. Seated providers grab the jobs the businesses post.
+                </div>
+            </div>
+
+            <h3>Mandate</h3>
+            <p class="inv-prose">
+                Buy the book of an income-producing service business that robot labor can run.
+                Attach matching, design, franchises, and seated providers.
+                Liquid markets keep unused cash invested.
+            </p>
+            <div class="row g-3 mt-1 mb-3">
+                <div class="col-md-6">
+                    <div class="inv-card">
+                        <h3>Service businesses</h3>
+                        <p>Short-term rental management, landscaping, housekeeping, home services, and home health aides. The Fund buys the book. A supply account grabs the job.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="inv-card">
+                        <h3>Short-term rental properties</h3>
+                        <p>Homes with occupancy already running. Some stay owned and operated. Turnover is the same job party the management company already sells.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>First-wave deployment</h3>
+            <div class="inv-table-wrap mb-3">
+                <table class="inv-table">
+                    <thead>
+                        <tr>
+                            <th>Sleeve</th>
+                            <th>Initial plan</th>
+                            <th>Why these</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>STR management</td>
+                            <td>~12 properties</td>
+                            <td>Buy the homes and the management book. Turnover is a hospitality job party: clean, linen, restock, inspect. Franchise once the spec holds.</td>
+                        </tr>
+                        <tr>
+                            <td>Landscaping</td>
+                            <td>Local route books</td>
+                            <td>Mowing, seasonal cleanup, and recurring contracts. Own and operate first; franchise when the route spec repeats.</td>
+                        </tr>
+                        <tr>
+                            <td>Housekeeping</td>
+                            <td>Recurring home cleans</td>
+                            <td>The same turnover job party, sold to residents who are not on the short-term rental book.</td>
+                        </tr>
+                        <tr>
+                            <td>Home services</td>
+                            <td>Handyman and light repair</td>
+                            <td>Existing dispatch books. The business posts the job; a seated provider grabs it.</td>
+                        </tr>
+                        <tr>
+                            <td>Home health aides</td>
+                            <td>~4 local books</td>
+                            <td>Schedulers and caregiver benches in Lakewood, Camas, Destin, Missoula, Austin, and Boulder. Clinical work stays human; robots take the non-clinical load.</td>
+                        </tr>
+                        <tr>
+                            <td>Liquid + emerging</td>
+                            <td>Residual AUM</td>
+                            <td>Stocks, crypto, bonds, and emerging assets until an operating deal closes; then rebalance in.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="inv-note" style="margin-top:0;">Counts are a first-wave plan, not a commitment to specific addresses. Later waves repeat: buy the book, attach robot services, keep or franchise the playbook.</p>
+            <p class="inv-prose mb-4">
+                The business posts the work. A supply account grabs the job. Other streams fire on the same volume.
+                Asset income stays in the Fund. The exchange earns the fee, not the buildings or the books.
+            </p>
+
+            <div class="inv-stream-meta">
+                <div class="inv-metric"><div class="n" id="metricAum2035">—</div><div class="l">Fund AUM · 2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricHyp2035">—</div><div class="l">Platform fees · 2035</div></div>
+                <div class="inv-metric"><div class="n" id="metricHyp2040">—</div><div class="l">Platform fees · 2040</div></div>
+                <div class="inv-metric"><div class="n">2.8%</div><div class="l">Effective fee on AUM</div></div>
+            </div>
+            <div class="inv-chart-box">
+                <h3>Hyperion platform fee revenue ($ / year)</h3>
+                <canvas id="chartHyperion" aria-label="Bar chart of Hyperion platform revenue by year"></canvas>
+            </div>
+            <p class="inv-chart-caption">Each bar = ~2.8% of year-end AUM (network-scaled). Not an offer to sell securities or Fund interests.</p>
+        </div>
+    </section>
+
     <!-- 7. Insurance -->
     <section class="inv-section" id="insurance">
         <div class="container">
-            <h2>6. Insurance &amp; SLA</h2>
+            <h2>7. Insurance &amp; SLA</h2>
             <p class="inv-formula">Revenue ≈ <code>GMV</code> × <code>25% institutional</code> × <code>1.8% premium</code> × <code>15% platform cut</code>
-                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">A planning overlay, not a priced book</span>
+                <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">Rougher than the first six — a planning overlay, not a priced book</span>
             </p>
             <p class="inv-stream-lede">
                 Platform cut of attached premium on institutional GMV. First-cut overlay; moves with the GMV dial.
@@ -1206,7 +1336,7 @@
     <!-- 8. Design -->
     <section class="inv-section" id="design">
         <div class="container">
-            <h2>7. Design services</h2>
+            <h2>8. Design services</h2>
             <p class="inv-formula">Revenue = network-scaled design / integration services
                 <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">Task, workflow, multi-agent job-party, and capability-package design · rougher path</span>
             </p>
@@ -1230,7 +1360,7 @@
     <!-- 9. Costs -->
     <section class="inv-section" id="costs">
         <div class="container">
-            <h2>8. Cost structure by stream</h2>
+            <h2>9. Cost structure by stream</h2>
             <p class="inv-stream-lede">
                 Profit = stream revenue − (cost % × revenue). Cost ratios fall as fixed platform spend is amortized
                 across growing volume. Combined P&amp;L is in the projections charts below.
@@ -1253,10 +1383,10 @@
                             <td class="num">$0</td>
                         </tr>
                         <tr>
-                            <td>Seats</td>
-                            <td>Issued by <code>POST /seats/issue</code> at $0. No per-seat sale cost in the model.</td>
-                            <td class="num">$0</td>
-                            <td class="num">$0</td>
+                            <td>Seat sales</td>
+                            <td>$ / new seat (KYC, legal, chain) + thin channel % of seat price</td>
+                            <td class="num">$100 + 1.0%</td>
+                            <td class="num">$25 + 0.25%</td>
                         </tr>
                         <tr>
                             <td>Hardware aff + fin</td>
@@ -1278,9 +1408,9 @@
                         </tr>
                         <tr>
                             <td>Hyperion Fund</td>
-                            <td>Retired. The page is gone. The model records no fund fee.</td>
-                            <td class="num">$0</td>
-                            <td class="num">$0</td>
+                            <td>Compliance, risk, execution, research, real-asset &amp; SMB underwriting</td>
+                            <td class="num">50%</td>
+                            <td class="num">30%</td>
                         </tr>
                         <tr>
                             <td>Insurance &amp; SLA</td>
@@ -1297,7 +1427,7 @@
                     </tbody>
                 </table>
             </div>
-            <p class="inv-note mt-3">Cost ratios interpolate linearly from 2026 early rates to 2040 mature rates, then hold. Seat revenue is $0. The Hyperion Fund fee is $0.</p>
+            <p class="inv-note mt-3">Cost ratios interpolate linearly from 2026 early rates to 2040 mature rates, then hold. Seat cost is $ per new seat plus a thin % of seat revenue — not a fat % of the $100k price.</p>
         </div>
     </section>
 
@@ -1306,11 +1436,11 @@
         <div class="container">
             <h2>15-year revenue &amp; profit projections</h2>
             <p class="inv-prose mb-4">
-                Years <strong>2026–2040</strong>. Expand the scenario dials to re-tune GMV, network scale,
+                Years <strong>2026–2040</strong>. Expand the scenario dials to re-tune GMV, seats, network scale,
                 and equity assumptions—charts, the P&amp;L table, stream summaries above, and raise KPIs update live.
                 GMV is jobs cleared. The take on it stays zero, so it is not a revenue line.
-                The price of a seat is $0, so seat revenue stays zero. The Hyperion Fund fee stays zero.
-                The earning lines are hardware, attention, franchises, insurance, and design.
+                Seat primary issuance is the bulk of modeled project revenue (base peak near $50T in 2035),
+                then plateaus. After that, the recurring lines are hardware, attention, franchises, Hyperion, insurance, and design.
             </p>
 
             <div class="inv-dials" id="scenarioDials" aria-label="Scenario tuning dials">
@@ -1318,7 +1448,7 @@
                     <button type="button" class="inv-dials-toggle" id="dialsToggle"
                         aria-expanded="false" aria-controls="scenarioDialsBody">
                         <h3>Scenario dials</h3>
-                        <span class="inv-dials-summary" id="dialsSummary">Base · GMV $30.0T · no take · seats $0 · net 1.00×</span>
+                        <span class="inv-dials-summary" id="dialsSummary">Base · GMV $30.0T · no take · seats $100k · net 1.00×</span>
                         <span class="inv-dials-chevron" id="dialsChevron">Expand</span>
                     </button>
                     <div class="inv-presets" role="group" aria-label="Scenario presets">
@@ -1344,14 +1474,14 @@
                             <div class="hint">Scales the full GMV path. Base = $30T in 2040 (~half of ~$60T 2025 human labor GMV).</div>
                         </div>
                         <div class="inv-dial">
-                            <label for="dialSeatPrice">Seat price <span class="val" id="dialSeatPriceVal">$0</span></label>
-                            <input type="hidden" id="dialSeatPrice" value="0">
-                            <div class="hint">The price of a seat is $0. All seats are identical. <code>POST /seats/issue</code> is free for a demand account and for a supply account. This is not a dial.</div>
+                            <label for="dialSeatPrice">Seat price <span class="val" id="dialSeatPriceVal">$100k</span></label>
+                            <input type="range" id="dialSeatPrice" min="0" max="100000" step="1000" value="100000" aria-valuemin="0" aria-valuemax="100000" aria-valuetext="$100k">
+                            <div class="hint">Modeled price per seat. Set anywhere from $0 to $100k. Base $100k. Issuance on the exchange stays free.</div>
                         </div>
                         <div class="inv-dial">
                             <label for="dialNetwork">Network scale <span class="val" id="dialNetworkVal">1.00×</span></label>
                             <input type="range" id="dialNetwork" min="25" max="300" step="5" value="100">
-                            <div class="hint">Multiplies seats issued, hardware, ads, franchises, and design vs base. Insurance moves with the GMV dial. It does not change the seat price.</div>
+                            <div class="hint">Multiplies seats, hardware, ads, franchises, Hyperion AUM, and design vs base. Insurance moves with the GMV dial.</div>
                         </div>
                     </div>
 
@@ -1414,7 +1544,7 @@
                             <th class="num">Hardware</th>
                             <th class="num">Ads</th>
                             <th class="num">Franchise</th>
-                            <th class="num">Hyperion (retired)</th>
+                            <th class="num">Hyperion</th>
                             <th class="num">Insurance</th>
                             <th class="num">Design</th>
                             <th class="num">Revenue</th>
@@ -1486,7 +1616,7 @@
                 Valuations are a <strong>DCF of the same 15-year projection curves</strong> used above
                 (job take fixed at zero)—not a seed-stage rule of thumb.
                 Cap-table makeup sets a <strong>risk premium per revenue stream</strong> (e.g. NVIDIA/Unitree de-risk
-                hardware; a16z/Sequoia de-risk marketplace density; sovereigns/BlackRock de-risk insurance and scale).
+                hardware; a16z/Sequoia de-risk marketplace density; sovereigns/BlackRock de-risk Hyperion).
                 Live scenario dials under <a href="#projections">Projections</a> are sent for the focus scenario when you run the tool.
             </p>
             <p class="inv-note mb-4">
@@ -1613,7 +1743,7 @@
             <h2 id="permanent">Permanent capital &amp; preferred partnership</h2>
             <p class="inv-lede" style="max-width:44rem;margin-bottom:1.25rem;">
                 Permanent / long-dated capital (10–15+ years). Preferred rights deepen with GMV, density, seats, and jobs — preferential, not territorial monopolies.
-                Pair terms: <a href="hiring.html">hiring</a>. Model narrative: <a href="business_plan.html">business plan</a>. The price of a seat is $0.
+                Pair terms: <a href="hiring.html">hiring</a>. Model narrative: <a href="business_plan.html">business plan</a>.
             </p>
             <p class="inv-lede" style="max-width:44rem;margin-bottom:2rem;color:var(--inv-text-dim);font-size:0.9rem;">
                 Scenario planning only — not an offer, solicitation, or commitment. Not financial or legal advice.
@@ -1719,7 +1849,7 @@
         };
 
         const ASP = 25000, AFF = 0.03, FIN_ATTACH = 0.40, FIN_FEE = 0.015;
-        const HYP_RATE = 0; // Hyperion Fund retired
+        const HYP_RATE = 0.028;
         const INS_INST = 0.25, INS_PREMIUM = 0.018, INS_CUT = 0.15;
         const BASE_GMV_2035 = 30e12; // dial 100 → $30T in 2040
         const COST = {
@@ -1732,14 +1862,14 @@
             insurance: [0.40, 0.22],
             design:    [0.55, 0.32]
         };
-        // Issued free. No per-seat sale cost.
-        const SEAT_UNIT_COST = [0, 0];
+        // $ / new seat: KYC, legal, chain ops (not a % of the $100k price)
+        const SEAT_UNIT_COST = [100, 25];
 
         const PRESETS = {
-            conservative: { gmv: 25, seatPrice: 0, network: 40, capital: 50, partners: 5 },
-            base:         { gmv: 100, seatPrice: 0, network: 100, capital: 150, partners: 7 },
-            aggressive:   { gmv: 250, seatPrice: 0, network: 180, capital: 200, partners: 6 },
-            capital:      { gmv: 100, seatPrice: 0, network: 100, capital: 150, partners: 7 }
+            conservative: { gmv: 25, seatPrice: 50000, network: 40, capital: 50, partners: 5 },
+            base:         { gmv: 100, seatPrice: 100000, network: 100, capital: 150, partners: 7 },
+            aggressive:   { gmv: 250, seatPrice: 100000, network: 180, capital: 200, partners: 6 },
+            capital:      { gmv: 100, seatPrice: 100000, network: 100, capital: 150, partners: 7 }
         };
 
         function costRatio(y, early, late) {
@@ -1756,6 +1886,13 @@
             if (ax >= 999.5e3) return sign + '$' + (ax / 1e6).toFixed(1) + 'M';
             if (ax >= 1e3) return sign + '$' + (ax / 1e3).toFixed(0) + 'K';
             return sign + '$' + ax.toFixed(0);
+        }
+
+        function fmtSeatPrice(x) {
+            const n = Math.round(Number(x) || 0);
+            if (n <= 0) return '$0';
+            if (n % 1000 === 0) return '$' + (n / 1000) + 'k';
+            return '$' + n.toLocaleString('en-US');
         }
 
         function fmtUnits(x) {
@@ -1784,7 +1921,7 @@
             return {
                 gmv2035: (Number(document.getElementById('dialGmv').value) / 10) * 3e12, // 100 → $30T in 2040
                 takeRate: 0, // no escrow, no cut of the job
-                seatPrice: 0, // price is zero; the dial cannot change it
+                seatPrice: Math.min(100000, Math.max(0, Number(document.getElementById('dialSeatPrice').value) || 0)),
                 network: Number(document.getElementById('dialNetwork').value) / 100,      // 100 → 1.0×
                 capital: (Number(document.getElementById('dialCapital').value) / 100) * 1e12, // 150 → $1.5T
                 partners: Number(document.getElementById('dialPartners').value)
@@ -1990,8 +2127,8 @@
 
         // Stream charts (filled by applyScenario from dials)
         makeBar('chartGmv', [{ label: 'GMV — jobs cleared ($)', data: [], backgroundColor: COLORS.gmv }], false);
-        makeBar('chartSeatsRev', [{ label: 'Seat revenue ($)', data: [], backgroundColor: COLORS.seats }], false);
-        makeBar('chartSeatsUnits', [{ label: 'New seats issued (units)', data: [], backgroundColor: COLORS.seats }], false, true);
+        makeBar('chartSeatsRev', [{ label: 'Seat sales revenue ($)', data: [], backgroundColor: COLORS.seats }], false);
+        makeBar('chartSeatsUnits', [{ label: 'New seats sold (units)', data: [], backgroundColor: COLORS.seats }], false, true);
         makeBar('chartHardware', [{ label: 'Affiliate + financing ($)', data: [], backgroundColor: COLORS.hardware }], false);
         makeBar('chartAds', [{ label: 'Nearby / ads revenue ($)', data: [], backgroundColor: COLORS.ads }], false);
         makeBar('chartFranchise', [{ label: 'Franchise fees + royalties ($)', data: [], backgroundColor: COLORS.franchise }], false);
@@ -2003,6 +2140,7 @@
             { label: 'Hardware', data: [], backgroundColor: COLORS.hardware, borderRadius: 0 },
             { label: 'Ads', data: [], backgroundColor: COLORS.ads, borderRadius: 0 },
             { label: 'Franchise', data: [], backgroundColor: COLORS.franchise, borderRadius: 0 },
+            { label: 'Hyperion', data: [], backgroundColor: COLORS.hyperion, borderRadius: 0 },
             { label: 'Insurance', data: [], backgroundColor: COLORS.insurance, borderRadius: 0 },
             { label: 'Design', data: [], backgroundColor: COLORS.design, borderRadius: 0 }
         ], true);
@@ -2010,6 +2148,7 @@
             { label: 'Hardware', data: [], backgroundColor: COLORS.hardware, borderRadius: 0 },
             { label: 'Ads', data: [], backgroundColor: COLORS.ads, borderRadius: 0 },
             { label: 'Franchise', data: [], backgroundColor: COLORS.franchise, borderRadius: 0 },
+            { label: 'Hyperion', data: [], backgroundColor: COLORS.hyperion, borderRadius: 0 },
             { label: 'Insurance', data: [], backgroundColor: COLORS.insurance, borderRadius: 0 },
             { label: 'Design', data: [], backgroundColor: COLORS.design, borderRadius: 0 }
         ], true);
@@ -2023,6 +2162,7 @@
             { label: 'Hardware', data: [], backgroundColor: COLORS.hardware, borderRadius: 0 },
             { label: 'Ads', data: [], backgroundColor: COLORS.ads, borderRadius: 0 },
             { label: 'Franchise', data: [], backgroundColor: COLORS.franchise, borderRadius: 0 },
+            { label: 'Hyperion', data: [], backgroundColor: COLORS.hyperion, borderRadius: 0 },
             { label: 'Insurance', data: [], backgroundColor: COLORS.insurance, borderRadius: 0 },
             { label: 'Design', data: [], backgroundColor: COLORS.design, borderRadius: 0 }
         ], true);
@@ -2034,13 +2174,15 @@
 
         function updateDialLabels(p) {
             setMoney('dialGmvVal', p.gmv2035);
-            setMoney('dialSeatPriceVal', p.seatPrice);
+            setText('dialSeatPriceVal', fmtSeatPrice(p.seatPrice));
             setText('dialNetworkVal', p.network.toFixed(2) + '×');
             setMoney('dialCapitalVal', p.capital);
             setText('dialPartnersVal', String(p.partners));
 
             const gmvEl = document.getElementById('dialGmv');
             if (gmvEl) gmvEl.setAttribute('aria-valuetext', fmtMoney(p.gmv2035));
+            const seatEl = document.getElementById('dialSeatPrice');
+            if (seatEl) seatEl.setAttribute('aria-valuetext', fmtSeatPrice(p.seatPrice));
 
             const activePreset = document.querySelector('.inv-presets button.active');
             const presetName = activePreset
@@ -2049,7 +2191,7 @@
             setHtml('dialsSummary', withMag(
                 presetName + ' · GMV ' + fmtMoney(p.gmv2035) +
                 ' · no take' +
-                ' · seats ' + fmtMoney(p.seatPrice) +
+                ' · seats ' + fmtSeatPrice(p.seatPrice) +
                 ' · net ' + p.network.toFixed(2) + '×'
             ));
         }
@@ -2076,7 +2218,7 @@
             ));
 
             // Seats
-            setMoney('metricSeatPrice', p.seatPrice);
+            setText('metricSeatPrice', fmtSeatPrice(p.seatPrice));
             const i2031 = YEARS.indexOf(2031);
             const seatTarget = series.seatUnits.slice(i2031, i2031 + 5).reduce((a, b) => a + b, 0);
             setUnits('metricSeatTarget', seatTarget);
@@ -2085,11 +2227,11 @@
             setMoney('metricSeats2035', series.seats[i2035]);
             setMoney('cardSeatsPeak', seatPeak.value);
             setHtml('titleChartSeatsRev', withMag(
-                'Seat revenue = new seats × ' + fmtMoney(p.seatPrice) + '  ($ / year)'
+                'Seat revenue = units × ' + fmtSeatPrice(p.seatPrice) + '  ($ / year)'
             ));
             setHtml('captionSeats', withMag(
-                'Each bar is new seats that year times ' + fmtMoney(p.seatPrice) +
-                ', at network scale ' + p.network.toFixed(1) + '.'
+                'Peak ' + seatPeak.year + ': ' + fmtMoney(seatPeak.value) +
+                '. 2031–2035 units: ' + fmtUnits(seatTarget) + ' × price from dial.'
             ));
 
             // Hardware
@@ -2206,14 +2348,15 @@
             el.innerHTML = withMag(
                 '<strong>Live model assumptions</strong><br>' +
                 'GMV path anchors ' + fmtMoney(p.gmv2035) + ' of jobs cleared in 2040. Job take-rate is 0. No escrow. ' +
-                'Seat price is ' + fmtMoney(p.seatPrice) + '. All seats are identical. Network scale ' + p.network.toFixed(2) + '× changes how many seats are issued, not the price. ' +
+                'Seats: ' + fmtSeatPrice(p.seatPrice) + ' primary × network scale ' + p.network.toFixed(2) + '× (base ~1B seats over 2031–2035). The dial runs from $0 to $100k. ' +
                 'Hardware: $25k ASP, 3% affiliate, 40% finance attach × 1.5% referral (network-scaled). ' +
-                'Ads, franchise openings, and design services scale with network. ' +
+                'Ads, franchise openings, Hyperion AUM, and design services scale with network. ' +
                 'Insurance ≈ GMV × 25% institutional × 1.8% premium × 15% platform cut. ' +
-                'The Hyperion Fund fee is $0. ' +
+                'Seat primary issuance is the bulk of project revenue (base peak ~$50T in 2035). ' +
                 'Equity raise: ' + fmtMoney(p.capital) + ' across ' + p.partners + ' partners (~' +
                 fmtMoney(p.capital / p.partners) + ' average check). ' +
-                'Costs: per-stream ratios, linear improvement 2026→2040. Seat issuance cost in the model is $0.' +
+                'Costs: per-stream ratios, linear improvement 2026→2040. ' +
+                'Seat cost is $100→$25 per new seat plus 1.0%→0.25% channel — not 5–15% of seat price.' +
                 '<br><br>Planning model only — not financial advice or a securities offering. ' +
                 'Outcomes depend on adoption, regulation, competition, and execution.'
             );
@@ -2249,16 +2392,16 @@
             setChartData('chartDesign', [series.design]);
             setChartData('chartRevenueStacked', [
                 series.seats, series.hardware, series.ads, series.franchise,
-                series.insurance, series.design
+                series.hyperion, series.insurance, series.design
             ]);
             setChartData('chartRevenueExSeats', [
                 series.hardware, series.ads, series.franchise,
-                series.insurance, series.design
+                series.hyperion, series.insurance, series.design
             ]);
             setChartData('chartProfit', [series.revenue, series.cost, series.profit]);
             setChartData('chartProfitStacked', [
                 series.pSeats, series.pHardware, series.pAds, series.pFranchise,
-                series.pInsurance, series.pDesign
+                series.pHyperion, series.pInsurance, series.pDesign
             ]);
         }
 

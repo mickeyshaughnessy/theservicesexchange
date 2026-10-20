@@ -62,7 +62,7 @@ Say the seat is the right to grab jobs at the price on the bid. Leave the charge
 
 Name the pages and the measure, then stop.
 
-The investors page and the business plan both model a take-rate of zero. GMV is jobs cleared. Both pages also model a seat price of zero. Seat revenue is $0.
+The investors page and the business plan both model a take-rate of zero. GMV is jobs cleared. A seat issued with `POST /seats/issue` costs $0. The investors page models seat revenue with a dial from $0 to $100k per seat. The base case is $100k. The business plan uses that same base. The Hyperion Fund fee in that model is about 2.8% of AUM.
 
 Leave the retired escrow sketch and the 5% take out of this paragraph. Do not draw the retired 5% take beside the current policy. A side-by-side of who keeps $100 does not help.
 
@@ -70,7 +70,7 @@ Leave the retired escrow sketch and the 5% take out of this paragraph. Do not dr
 
 A caption says what one mark on the chart is.
 
-Each bar is new seats that year times $0, at network scale 1.0.
+On payments.html, each bar is new seats that year times $0, at network scale 1.0. On the investors page, each bar is new seats that year times the seat-price dial.
 
 When the paragraph above the chart already says the figures are a scenario, not a forecast, and names the chart the series comes from, leave that there. Do not repeat it in the caption. Do not explain a logarithmic axis. Do not say how many times larger the peak bar is.
 

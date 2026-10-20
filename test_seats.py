@@ -146,14 +146,20 @@ class IssueSeatTests(unittest.TestCase):
             for ctx in contexts:
                 ctx.stop()
 
-    def test_projection_forces_seat_price_to_zero(self):
-        from handlers import _merge_projection_overrides
+    def test_projection_seat_price_follows_the_dial(self):
+        from handlers import _build_projection_series, _merge_projection_overrides
 
         params = _merge_projection_overrides("base", {"seatPrice": 100000, "takeRate": 0.05})
-        self.assertEqual(params["seatPrice"], 0.0)
+        self.assertEqual(params["seatPrice"], 100000.0)
         self.assertEqual(params["takeRate"], 0.0)
+        self.assertEqual(_merge_projection_overrides("base", {"seatPrice": 0})["seatPrice"], 0.0)
+        self.assertEqual(_merge_projection_overrides("base", {"seatPrice": 250000})["seatPrice"], 100000.0)
         aggressive = _merge_projection_overrides("aggressive", None)
-        self.assertEqual(aggressive["seatPrice"], 0.0)
+        self.assertEqual(aggressive["seatPrice"], 100000.0)
+        series = _build_projection_series(params)
+        self.assertGreater(max(series["by_stream_rev"]["seats"]), 0)
+        self.assertGreater(max(series["by_stream_rev"]["hyperion"]), 0)
+        self.assertEqual(max(series["by_stream_rev"]["exchange"]), 0)
 
 
 class IssueSeatHandlerTests(unittest.TestCase):

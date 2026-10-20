@@ -6506,7 +6506,7 @@ _PROJECTION_PRESETS = {
         "label": "Conservative",
         "gmv": 25,          # → $7.5T 2040 GMV
         "take": 0,          # retired; model forces a 0 job take
-        "seatPrice": 0,     # price is zero; model ignores client overrides
+        "seatPrice": 50000,  # dollars; conservative dial
         "network": 40,      # → 0.40×
         "capital": 50,      # → $0.5T raise
         "esop_pct": 10.0,
@@ -6516,7 +6516,7 @@ _PROJECTION_PRESETS = {
         "label": "Base",
         "gmv": 100,         # → $30T 2040 GMV
         "take": 0,          # retired; model forces a 0 job take
-        "seatPrice": 0,     # price is zero; model ignores client overrides
+        "seatPrice": 100000,  # dollars; base dial
         "network": 100,     # → 1.0×
         "capital": 150,     # → $1.5T raise
         "esop_pct": 12.0,
@@ -6526,7 +6526,7 @@ _PROJECTION_PRESETS = {
         "label": "Aggressive",
         "gmv": 250,         # → $75T 2040 GMV
         "take": 0,          # retired; model forces a 0 job take
-        "seatPrice": 0,     # price is zero; model ignores client overrides
+        "seatPrice": 100000,  # dollars; aggressive caps at the $100k dial
         "network": 180,     # → 1.8×
         "capital": 200,     # → $2.0T raise
         "esop_pct": 12.0,
@@ -6584,12 +6584,12 @@ _ASP = 25000.0
 _AFF = 0.03
 _FIN_ATTACH = 0.40
 _FIN_FEE = 0.015
-_HYP_RATE = 0.0  # Hyperion Fund retired; the page is gone
+_HYP_RATE = 0.028  # 1% management + 15% of ~12% gross
 _INS_INST = 0.25
 _INS_PREMIUM = 0.018
 _INS_CUT = 0.15
 _BASE_GMV_2035 = 30e12  # dial 100 → $30T in 2040
-_SEAT_UNIT_COST = (0.0, 0.0)  # issued free; no per-seat sale cost
+_SEAT_UNIT_COST = (100.0, 25.0)  # model only: $ / new seat, KYC and ops. Issuance stays free.
 _COST_BANDS = {
     "exchange": (0.35, 0.12),
     "seats": (0.01, 0.0025),  # thin channel % of seat revenue
@@ -6605,11 +6605,11 @@ _STREAM_KEYS = (
 )
 _STREAM_LABELS = {
     "exchange": "Job take (zero)",
-    "seats": "Seats (price zero)",
+    "seats": "Seats",
     "hardware": "Hardware referrals",
     "ads": "Nearby / ads",
     "franchise": "Franchising",
-    "hyperion": "Hyperion Fund (retired)",
+    "hyperion": "Hyperion Fund fees",
     "insurance": "Insurance & SLA",
     "design": "Design services",
 }
@@ -6703,7 +6703,7 @@ def _dial_params_from_preset(preset: Dict[str, Any]) -> Dict[str, float]:
     return {
         "gmv2035": (float(preset["gmv"]) / 10.0) * 3e12,
         "takeRate": 0.0,  # no escrow, no cut of the job
-        "seatPrice": 0.0,
+        "seatPrice": float(preset["seatPrice"]),
         "network": float(preset["network"]) / 100.0,
         "capital": (float(preset["capital"]) / 100.0) * 1e12,
     }
@@ -6719,7 +6719,11 @@ def _merge_projection_overrides(preset_key: str, overrides: Optional[Dict[str, A
             base["gmv2035"] = float(overrides["gmv2035"])
         except (TypeError, ValueError):
             pass
-    # seatPrice from the client is ignored. The price of a seat is zero.
+    if overrides.get("seatPrice") is not None:
+        try:
+            base["seatPrice"] = float(overrides["seatPrice"])
+        except (TypeError, ValueError):
+            pass
     if overrides.get("network") is not None:
         try:
             base["network"] = float(overrides["network"])
@@ -6733,7 +6737,7 @@ def _merge_projection_overrides(preset_key: str, overrides: Optional[Dict[str, A
     # Sanity clamps
     base["gmv2035"] = max(1e9, min(100e12, base["gmv2035"]))
     base["takeRate"] = 0.0
-    base["seatPrice"] = 0.0
+    base["seatPrice"] = max(0.0, min(100000.0, base["seatPrice"]))
     base["network"] = max(0.05, min(5.0, base["network"]))
     base["capital"] = max(1e6, min(20e12, base["capital"]))
     return base
@@ -7130,7 +7134,7 @@ def _cap_table_heuristic(
         synergies.append({
             "theme": "Sovereign + institutional scale",
             "strength": "high",
-            "rationale": "Supports multi-region network scale in the model.",
+            "rationale": "Supports Hyperion AUM ramp and multi-region network scale in the model.",
         })
     if has_any("amazon_aws", "caterpillar_ventures", "boston_dynamics_hyundai"):
         synergies.append({
@@ -7313,10 +7317,10 @@ def analyze_cap_table_synergy(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int
                 po["takeRate"] = float(po["take"]) / 1000.0
             except (TypeError, ValueError):
                 pass
-        if "seatPrice" in po and po.get("seatPrice") is not None and float(po["seatPrice"]) < 1e4:
-            # dial units ($k)
+        if "seatPrice" in po and po.get("seatPrice") is not None:
+            # Dollars. The investors dial is $0–$100,000. Do not scale.
             try:
-                po["seatPrice"] = float(po["seatPrice"]) * 1000.0
+                po["seatPrice"] = float(po["seatPrice"])
             except (TypeError, ValueError):
                 pass
         if "network" in po and po.get("network") is not None and float(po["network"]) > 5:
