@@ -1457,7 +1457,7 @@
                         <button type="button" data-preset="conservative">Conservative</button>
                         <button type="button" data-preset="base" class="active">Base</button>
                         <button type="button" data-preset="aggressive">Aggressive</button>
-                        <button type="button" data-preset="capital">$1.5T raise</button>
+                        <button type="button" data-preset="capital">$500M raise</button>
                     </div>
                 </div>
 
@@ -1491,9 +1491,9 @@
                         <div class="title">Equity raise scenario · partners</div>
                         <div class="inv-dial-grid">
                             <div class="inv-dial">
-                                <label for="dialCapital">Equity capital <span class="val" id="dialCapitalVal">$1.50T</span></label>
-                                <input type="range" id="dialCapital" min="10" max="300" step="5" value="150">
-                                <div class="hint">Modeled raise size for planning. Default $1.5T across institutional partners.</div>
+                                <label for="dialCapital">Equity capital <span class="val" id="dialCapitalVal">$500.0M</span></label>
+                                <input type="range" id="dialCapital" min="50" max="5000" step="50" value="500">
+                                <div class="hint">Modeled raise size for planning. Default $500M across institutional partners. Each step is $50M.</div>
                             </div>
                             <div class="inv-dial">
                                 <label for="dialPartners">Equity partners <span class="val" id="dialPartnersVal">7</span></label>
@@ -1643,7 +1643,7 @@
                 <p class="inv-stream-lede" style="margin-bottom:0.85rem;">
                     Projection DCF sets valuation scale; syndicate composition adjusts stream risk premia.
                     Optional LLM narrative when configured. Defaults match page presets: capital
-                    <strong>$0.5T / $1.5T / $2.0T</strong> raise for conservative / base / aggressive.
+                    <strong>$100M / $500M / $2B</strong> raise for conservative / base / aggressive.
                 </p>
                 <div class="cap-scenario-pills" role="group" aria-label="Scenario picker">
                     <button type="button" data-scenario="conservative">Conservative</button>
@@ -1652,8 +1652,8 @@
                 </div>
                 <div class="row-fields">
                     <div>
-                        <label for="capRaiseOverride">Raise override ($B, optional)</label>
-                        <input type="number" id="capRaiseOverride" min="1" max="20000" step="1" placeholder="e.g. 1500 = $1.5T">
+                        <label for="capRaiseOverride">Raise override ($M, optional)</label>
+                        <input type="number" id="capRaiseOverride" min="1" max="20000" step="1" placeholder="e.g. 500 = $500M">
                     </div>
                     <div>
                         <label for="capPremoneyOverride">Pre-money override ($B, optional)</label>
@@ -1868,10 +1868,10 @@
         const SEAT_UNIT_COST = [100, 25];
 
         const PRESETS = {
-            conservative: { gmv: 25, seatPrice: 12000, network: 40, capital: 50, partners: 5 },
-            base:         { gmv: 100, seatPrice: 25000, network: 100, capital: 150, partners: 7 },
-            aggressive:   { gmv: 250, seatPrice: 30000, network: 180, capital: 200, partners: 6 },
-            capital:      { gmv: 100, seatPrice: 25000, network: 100, capital: 150, partners: 7 }
+            conservative: { gmv: 25, seatPrice: 12000, network: 40, capital: 100, partners: 5 },
+            base:         { gmv: 100, seatPrice: 25000, network: 100, capital: 500, partners: 7 },
+            aggressive:   { gmv: 250, seatPrice: 30000, network: 180, capital: 2000, partners: 6 },
+            capital:      { gmv: 100, seatPrice: 25000, network: 100, capital: 500, partners: 7 }
         };
 
         function costRatio(y, early, late) {
@@ -1925,7 +1925,7 @@
                 takeRate: 0, // no escrow, no cut of the job
                 seatPrice: Math.min(100000, Math.max(0, Number(document.getElementById('dialSeatPrice').value) || 0)),
                 network: Number(document.getElementById('dialNetwork').value) / 100,      // 100 → 1.0×
-                capital: (Number(document.getElementById('dialCapital').value) / 100) * 1e12, // 150 → $1.5T
+                capital: Number(document.getElementById('dialCapital').value) * 1e6, // 500 → $500M
                 partners: Number(document.getElementById('dialPartners').value)
             };
         }
@@ -2770,7 +2770,7 @@
                 const raiseEl = document.getElementById('capRaiseOverride');
                 const preEl = document.getElementById('capPremoneyOverride');
                 // Overrides are in $B (billions)
-                if (raiseEl && raiseEl.value) body.raise_usd_billions = Number(raiseEl.value);
+                if (raiseEl && raiseEl.value) body.raise_usd_millions = Number(raiseEl.value);
                 if (preEl && preEl.value) body.pre_money_usd_billions = Number(preEl.value);
 
                 try {

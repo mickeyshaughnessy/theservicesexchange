@@ -162,6 +162,28 @@ class IssueSeatTests(unittest.TestCase):
         self.assertGreater(max(series["by_stream_rev"]["hyperion"]), 0)
         self.assertEqual(max(series["by_stream_rev"]["exchange"]), 0)
 
+    def test_projection_raise_dials_are_100m_500m_2b(self):
+        from handlers import (
+            CAP_TABLE_INVESTORS,
+            _cap_table_heuristic,
+            _merge_projection_overrides,
+        )
+
+        self.assertEqual(_merge_projection_overrides("conservative", None)["capital"], 100e6)
+        self.assertEqual(_merge_projection_overrides("base", None)["capital"], 500e6)
+        self.assertEqual(_merge_projection_overrides("aggressive", None)["capital"], 2e9)
+        # A raw dial unit under $1M is millions. Dollars from the page pass through.
+        self.assertEqual(_merge_projection_overrides("base", {"capital": 500e6})["capital"], 500e6)
+
+        result = _cap_table_heuristic(
+            [CAP_TABLE_INVESTORS[0]], "base", "", None, None, {"capital": 500e6}
+        )
+        raised = result["scenarios"]["base"]["raise_usd"]
+        self.assertGreater(raised, 400_000_000)
+        self.assertLess(raised, 800_000_000)
+        self.assertLess(result["scenarios"]["conservative"]["raise_usd"], 200_000_000)
+        self.assertLess(result["scenarios"]["aggressive"]["raise_usd"], 3_000_000_000)
+
 
 class IssueSeatHandlerTests(unittest.TestCase):
     def test_demand_and_supply_both_issue_for_free(self):

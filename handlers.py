@@ -6500,7 +6500,7 @@ _CHECK_WEIGHT = {
 }
 
 # Projection dials — mirrors investors.html PRESETS / readParams()
-# capital dial: value/100 * $1T  → base 150 = $1.5T raise
+# capital dial: value is millions of dollars → base 500 = $500M raise
 _PROJECTION_PRESETS = {
     "conservative": {
         "label": "Conservative",
@@ -6508,7 +6508,7 @@ _PROJECTION_PRESETS = {
         "take": 0,          # retired; model forces a 0 job take
         "seatPrice": 12000,  # dollars; about half the $25k base
         "network": 40,      # → 0.40×
-        "capital": 50,      # → $0.5T raise
+        "capital": 100,     # → $100M raise
         "esop_pct": 10.0,
         "base_discount": 0.34,  # high discount for path uncertainty
     },
@@ -6518,7 +6518,7 @@ _PROJECTION_PRESETS = {
         "take": 0,          # retired; model forces a 0 job take
         "seatPrice": 25000,  # dollars; base dial
         "network": 100,     # → 1.0×
-        "capital": 150,     # → $1.5T raise
+        "capital": 500,     # → $500M raise
         "esop_pct": 12.0,
         "base_discount": 0.28,
     },
@@ -6528,7 +6528,7 @@ _PROJECTION_PRESETS = {
         "take": 0,          # retired; model forces a 0 job take
         "seatPrice": 30000,  # dollars; 1.2× the $25k base, inside the $100k dial
         "network": 180,     # → 1.8×
-        "capital": 200,     # → $2.0T raise
+        "capital": 2000,    # → $2B raise
         "esop_pct": 12.0,
         "base_discount": 0.22,
     },
@@ -6705,7 +6705,7 @@ def _dial_params_from_preset(preset: Dict[str, Any]) -> Dict[str, float]:
         "takeRate": 0.0,  # no escrow, no cut of the job
         "seatPrice": float(preset["seatPrice"]),
         "network": float(preset["network"]) / 100.0,
-        "capital": (float(preset["capital"]) / 100.0) * 1e12,
+        "capital": float(preset["capital"]) * 1e6,  # dial units are $M; 500 → $500M
     }
 
 
@@ -6948,7 +6948,7 @@ def _cap_table_heuristic(
 ) -> Dict[str, Any]:
     """
     Valuation from 15-year projection DCF; cap table sets per-stream risk premia.
-    Raise defaults to scenario capital dial ($0.5T / $1.5T / $2T).
+    Raise defaults to scenario capital dial ($100M / $500M / $2B).
     """
     n = len(selected)
     stream_risk = _stream_risk_from_cap_table(selected)
@@ -6986,15 +6986,17 @@ def _cap_table_heuristic(
 
         # Dilution from this primary
         equity_sold = 100.0 * raise_usd / post_usd if post_usd > 0 else 20.0
-        equity_sold = max(8.0, min(35.0, equity_sold))
-        # If cap hit, reconcile raise to sold% of post (keep post/EV, adjust raise)
-        if equity_sold >= 34.9 or equity_sold <= 8.1:
+        # Cap dilution at 35%. A raise below 8% of enterprise value stays at the
+        # capital dial ($100M / $500M / $2B) instead of being scaled up to 8%.
+        if equity_sold > 35.0:
+            equity_sold = 35.0
             raise_usd = post_usd * (equity_sold / 100.0)
             pre_usd = post_usd - raise_usd
 
         esop = float(preset["esop_pct"])
-        # Crowded tables: slightly larger primary pool
-        if n >= 12:
+        # Crowded tables: slightly larger primary pool, only when the round is
+        # already in the old 8–35% band. Do not turn a $500M dial into a slice of EV.
+        if n >= 12 and equity_sold >= 8.0:
             equity_sold = min(35.0, equity_sold + min(4.0, (n - 11) * 0.35))
             raise_usd = post_usd * (equity_sold / 100.0)
             pre_usd = post_usd - raise_usd
@@ -7269,7 +7271,7 @@ def analyze_cap_table_synergy(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int
             return v * 1e12
         # auto: small numbers are treated as $B (legacy form used $M; projection scale is $B–$T)
         if abs(v) < 1e6:
-            # 1..1e6 → interpret as billions (e.g. 1500 = $1.5T)
+            # 1..1e6 → interpret as billions (e.g. 2 = $2B). The form sends raise_usd_millions.
             return v * 1e9
         return v
 
@@ -7281,13 +7283,8 @@ def analyze_cap_table_synergy(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int
     elif data.get("raise_usd_trillions") is not None:
         raise_override_usd = _parse_money_usd(data.get("raise_usd_trillions"), "trillions")
     elif data.get("raise_usd_millions") is not None:
-        # Legacy field: if value looks like old seed ($M tens/hundreds), upscale is wrong;
-        # treat >= 1000 as millions-of-USD literal, else as $B for projection scale.
-        try:
-            rm = float(data.get("raise_usd_millions"))
-            raise_override_usd = rm * 1e9 if rm < 10000 else rm * 1e6
-        except (TypeError, ValueError):
-            raise_override_usd = None
+        # Dial and the cap-table form send millions. 500 = $500M.
+        raise_override_usd = _parse_money_usd(data.get("raise_usd_millions"), "millions")
 
     premoney_override_usd = None
     if data.get("pre_money_usd") is not None:
@@ -7330,7 +7327,9 @@ def analyze_cap_table_synergy(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int
                 pass
         if "capital" in po and po.get("capital") is not None and float(po["capital"]) < 1e6:
             try:
-                po["capital"] = (float(po["capital"]) / 100.0) * 1e12
+                # Dial units are millions of dollars. 100 / 500 / 2000 → $100M / $500M / $2B.
+                # Dollars from readParams ($100M = 1e8 and up) pass through above.
+                po["capital"] = float(po["capital"]) * 1e6
             except (TypeError, ValueError):
                 pass
         projection_overrides = po
