@@ -852,6 +852,7 @@
                             <li><a class="dropdown-item" href="/payments.html">Payments</a></li>
                             <li><a class="dropdown-item" href="/git_report.html">Git Report</a></li>
                             <li><a class="dropdown-item" href="/garage.html">Garage</a></li>
+                            <li><a class="dropdown-item" href="/summary.html">Summary</a></li>
                             <li><a class="dropdown-item active" href="/investors.html" aria-current="page">Investors</a></li>
                             <li><a class="dropdown-item" href="/business_plan.html">Business Plan</a></li>
                             <li><a class="dropdown-item" href="/feedback.html">Feedback</a></li>
@@ -879,6 +880,7 @@
     <div class="inv-doc-tabs">
         <div class="container">
             <nav class="tab-row" aria-label="Investor documents">
+                <a href="summary.html">Summary</a>
                 <a class="active" href="investors.html" aria-current="page">Investors</a>
                 <a href="business_plan.html">Business Plan</a>
             </nav>
@@ -954,7 +956,7 @@
             <h2>Revenue streams</h2>
             <p class="inv-stream-lede">
                 Seven earning streams. The job itself is not one of them: no escrow, and the take-rate is zero.
-                Seat issuance is the bulk of modeled revenue (base peak near $50T in 2035 at $100k × 500M new seats).
+                Seat issuance is the bulk of modeled revenue (base peak near $12.5T in 2035 at $25k × 500M new seats).
                 Figures follow the <a href="#projections">Projections</a> dials.
             </p>
             <div class="row g-3">
@@ -1086,7 +1088,7 @@
                 <br><span style="color:var(--inv-text-dim);font-size:0.85rem;">Seats are eternal · primary issuance ramps then plateaus (not recurring rent)</span>
             </p>
             <p class="inv-stream-lede">
-                Modeled primary issuance. The price dial runs from $0 to $100k (base $100k). A seat issued with <code>POST /seats/issue</code> is still free. The <a href="#hyperion">Hyperion Fund</a> deploys permanent capital into operating businesses.
+                Modeled primary issuance. The price dial runs from $0 to $100k (base $25k). A seat issued with <code>POST /seats/issue</code> is still free. The <a href="#hyperion">Hyperion Fund</a> deploys permanent capital into operating businesses.
             </p>
             <div class="inv-stream-meta">
                 <div class="inv-metric"><div class="n" id="metricSeatPrice">—</div><div class="l">Price / seat (dial)</div></div>
@@ -1427,7 +1429,7 @@
                     </tbody>
                 </table>
             </div>
-            <p class="inv-note mt-3">Cost ratios interpolate linearly from 2026 early rates to 2040 mature rates, then hold. Seat cost is $ per new seat plus a thin % of seat revenue — not a fat % of the $100k price.</p>
+            <p class="inv-note mt-3">Cost ratios interpolate linearly from 2026 early rates to 2040 mature rates, then hold. Seat cost is $ per new seat plus a thin % of seat revenue — not a fat % of the $25k price.</p>
         </div>
     </section>
 
@@ -1439,7 +1441,7 @@
                 Years <strong>2026–2040</strong>. Expand the scenario dials to re-tune GMV, seats, network scale,
                 and equity assumptions—charts, the P&amp;L table, stream summaries above, and raise KPIs update live.
                 GMV is jobs cleared. The take on it stays zero, so it is not a revenue line.
-                Seat primary issuance is the bulk of modeled project revenue (base peak near $50T in 2035),
+                Seat primary issuance is the bulk of modeled project revenue (base peak near $12.5T in 2035),
                 then plateaus. After that, the recurring lines are hardware, attention, franchises, Hyperion, insurance, and design.
             </p>
 
@@ -1448,7 +1450,7 @@
                     <button type="button" class="inv-dials-toggle" id="dialsToggle"
                         aria-expanded="false" aria-controls="scenarioDialsBody">
                         <h3>Scenario dials</h3>
-                        <span class="inv-dials-summary" id="dialsSummary">Base · GMV $30.0T · no take · seats $100k · net 1.00×</span>
+                        <span class="inv-dials-summary" id="dialsSummary">Base · GMV $30.0T · no take · seats $25k · net 1.00×</span>
                         <span class="inv-dials-chevron" id="dialsChevron">Expand</span>
                     </button>
                     <div class="inv-presets" role="group" aria-label="Scenario presets">
@@ -1474,9 +1476,9 @@
                             <div class="hint">Scales the full GMV path. Base = $30T in 2040 (~half of ~$60T 2025 human labor GMV).</div>
                         </div>
                         <div class="inv-dial">
-                            <label for="dialSeatPrice">Seat price <span class="val" id="dialSeatPriceVal">$100k</span></label>
-                            <input type="range" id="dialSeatPrice" min="0" max="100000" step="1000" value="100000" aria-valuemin="0" aria-valuemax="100000" aria-valuetext="$100k">
-                            <div class="hint">Modeled price per seat. Set anywhere from $0 to $100k. Base $100k. Issuance on the exchange stays free.</div>
+                            <label for="dialSeatPrice">Seat price <span class="val" id="dialSeatPriceVal">$25k</span></label>
+                            <input type="range" id="dialSeatPrice" min="0" max="100000" step="1000" value="25000" aria-valuemin="0" aria-valuemax="100000" aria-valuetext="$25k">
+                            <div class="hint">Modeled price per seat. Set anywhere from $0 to $100k. Base $25k. Issuance on the exchange stays free.</div>
                         </div>
                         <div class="inv-dial">
                             <label for="dialNetwork">Network scale <span class="val" id="dialNetworkVal">1.00×</span></label>
@@ -1862,14 +1864,14 @@
             insurance: [0.40, 0.22],
             design:    [0.55, 0.32]
         };
-        // $ / new seat: KYC, legal, chain ops (not a % of the $100k price)
+        // $ / new seat: KYC, legal, chain ops (not a % of the $25k price)
         const SEAT_UNIT_COST = [100, 25];
 
         const PRESETS = {
-            conservative: { gmv: 25, seatPrice: 50000, network: 40, capital: 50, partners: 5 },
-            base:         { gmv: 100, seatPrice: 100000, network: 100, capital: 150, partners: 7 },
-            aggressive:   { gmv: 250, seatPrice: 100000, network: 180, capital: 200, partners: 6 },
-            capital:      { gmv: 100, seatPrice: 100000, network: 100, capital: 150, partners: 7 }
+            conservative: { gmv: 25, seatPrice: 12000, network: 40, capital: 50, partners: 5 },
+            base:         { gmv: 100, seatPrice: 25000, network: 100, capital: 150, partners: 7 },
+            aggressive:   { gmv: 250, seatPrice: 30000, network: 180, capital: 200, partners: 6 },
+            capital:      { gmv: 100, seatPrice: 25000, network: 100, capital: 150, partners: 7 }
         };
 
         function costRatio(y, early, late) {
@@ -2352,7 +2354,7 @@
                 'Hardware: $25k ASP, 3% affiliate, 40% finance attach × 1.5% referral (network-scaled). ' +
                 'Ads, franchise openings, Hyperion AUM, and design services scale with network. ' +
                 'Insurance ≈ GMV × 25% institutional × 1.8% premium × 15% platform cut. ' +
-                'Seat primary issuance is the bulk of project revenue (base peak ~$50T in 2035). ' +
+                'Seat primary issuance is the bulk of project revenue (base peak ~$12.5T in 2035 at $25k). ' +
                 'Equity raise: ' + fmtMoney(p.capital) + ' across ' + p.partners + ' partners (~' +
                 fmtMoney(p.capital / p.partners) + ' average check). ' +
                 'Costs: per-stream ratios, linear improvement 2026→2040. ' +

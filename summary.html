@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a2e">
+    <meta name="description" content="One-page summary of The Robot Services Exchange: how a job clears, what the model assumes, and where the capital goes.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="The RSE">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <title>The RSE — Summary</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css?v=29" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+        .inv-doc-tabs { background: #06061a; border-bottom: 1px solid rgba(0,255,255,0.15); }
+        .inv-doc-tabs .tab-row { display: flex; gap: 0.5rem; padding: 0.65rem 0; flex-wrap: wrap; }
+        .inv-doc-tabs a {
+            color: rgba(255,255,255,0.75);
+            text-decoration: none;
+            font-size: 0.82rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            border: 1px solid rgba(0,255,255,0.3);
+            padding: 0.35rem 0.7rem;
+        }
+        .inv-doc-tabs a:hover { color: #fff; border-color: #00ffff; }
+        .inv-doc-tabs a.active { color: #0a0a2e; background: #00ffff; border-color: #00ffff; }
+
+        .rse-doc,
+        .page,
+        .page h1,
+        .page p,
+        .page a,
+        .num b,
+        .num span {
+            font-family: 'IBM Plex Sans', system-ui, sans-serif !important;
+        }
+        .rse-doc {
+            background: #e8ecf2;
+            color: #121820;
+        }
+        .page {
+            width: 8.5in;
+            min-height: 11in;
+            max-width: 100%;
+            margin: 0.35in auto;
+            padding: 0.58in 0.66in 0.5in;
+            background: #fff;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        .page-header, .page-footer {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 8.5pt;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #5a6a82;
+        }
+        .page-header { border-bottom: 1px solid #d8dee8; padding-bottom: 0.35rem; margin-bottom: 0.7rem; }
+        .page-footer { border-top: 1px solid #d8dee8; padding-top: 0.4rem; margin-top: auto; }
+        .kicker {
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 8.5pt;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #0a6e6e;
+            margin: 0 0 0.25rem;
+        }
+        h1 {
+            font-size: 22pt;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin: 0 0 0.15rem;
+            color: #0c1222;
+        }
+        .deck {
+            font-size: 11.5pt;
+            line-height: 1.45;
+            color: #2a3548;
+            margin: 0 0 0.75rem;
+        }
+        .nums {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.45rem;
+            margin: 0 0 0.8rem;
+        }
+        .num {
+            background: #f4f7fb;
+            border-top: 2px solid #0a6e6e;
+            padding: 0.4rem 0.5rem 0.45rem;
+        }
+        .num b {
+            display: block;
+            font-size: 13.5pt;
+            font-weight: 600;
+            color: #0c1222;
+            letter-spacing: -0.02em;
+        }
+        .num span {
+            display: block;
+            margin-top: 0.12rem;
+            font-size: 8.4pt;
+            line-height: 1.3;
+            color: #5a6a82;
+        }
+        .page p {
+            font-size: 10.6pt;
+            line-height: 1.45;
+            margin: 0 0 0.62rem;
+            color: #121820;
+        }
+        .page a { color: #0a6e6e; }
+        .more {
+            font-size: 10pt;
+            line-height: 1.45;
+            margin-top: 0.15rem;
+        }
+        .fine {
+            font-size: 8pt;
+            line-height: 1.35;
+            color: #5a6a82;
+            margin: 0.2rem 0 0.55rem;
+        }
+        @media (max-width: 800px) {
+            .page { width: auto; min-height: 0; margin: 0; padding: 1.25rem 1.1rem 1.5rem; box-shadow: none; }
+            .nums { grid-template-columns: 1fr 1fr; }
+            h1 { font-size: 1.7rem; }
+        }
+        @page { size: letter; margin: 0.45in; }
+        @media print {
+            .site-chrome { display: none !important; }
+            .rse-doc { background: #fff; }
+            .page {
+                margin: 0;
+                box-shadow: none;
+                width: auto;
+                min-height: 0;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="site-chrome">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/index.html">The RSE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/index.html?open=bid">Get Something</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/hiring.html">Hiring</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="navMore" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navMore">
+                            <li><a class="dropdown-item" href="/portfolio.html">Portfolio</a></li>
+                            <li><a class="dropdown-item" href="/robots.html">Buy a Robot</a></li>
+                            <li><a class="dropdown-item" href="/examples.html">Examples</a></li>
+                            <li><a class="dropdown-item" href="/api_docs.html">API Docs</a></li>
+                            <li><a class="dropdown-item" href="/about.html">About</a></li>
+                            <li><a class="dropdown-item" href="/payments.html">Payments</a></li>
+                            <li><a class="dropdown-item" href="/git_report.html">Git Report</a></li>
+                            <li><a class="dropdown-item" href="/garage.html">Garage</a></li>
+                            <li><a class="dropdown-item active" href="/summary.html" aria-current="page">Summary</a></li>
+                            <li><a class="dropdown-item" href="/investors.html">Investors</a></li>
+                            <li><a class="dropdown-item" href="/business_plan.html">Business Plan</a></li>
+                            <li><a class="dropdown-item" href="/feedback.html">Feedback</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="nav-actions d-flex align-items-center flex-wrap gap-2 ms-lg-3 mt-2 mt-lg-0">
+                    <button id="loginButton" class="btn btn-light" onclick="showAuth()">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="inv-doc-tabs">
+        <div class="container">
+            <nav class="tab-row" aria-label="Investor documents">
+                <a class="active" aria-current="page" href="summary.html">Summary</a>
+                <a href="investors.html">Investors</a>
+                <a href="business_plan.html">Business Plan</a>
+            </nav>
+        </div>
+    </div>
+    </div>
+
+    <main id="main-content" class="rse-doc" tabindex="-1">
+        <article class="page">
+            <div class="page-header">
+                <span>The RSE</span>
+                <span>One page</span>
+            </div>
+            <p class="kicker">Executive summary</p>
+            <h1>A job, a price, and the seat that grabs it</h1>
+            <p class="deck">The whole exchange, in the time it takes to turn a house over between guests.</p>
+
+            <div class="nums" aria-label="Base-case figures">
+                <div class="num"><b>$25k</b><span>Seat price the model opens on. The dial runs from $0 to $100k.</span></div>
+                <div class="num"><b>$30T</b><span>Robot-labor jobs the base case records in 2040. Not cash collected.</span></div>
+                <div class="num"><b>$12.5T</b><span>2035 seat revenue at $25k times about 500 million new seats.</span></div>
+                <div class="num"><b>$1.5T</b><span>Base raise. The low dial is $0.5T and the high dial is $2T.</span></div>
+            </div>
+
+            <p>A guest leaves at eleven. The next one wants the kitchen clean, the linens changed, and the lockbox checked by three. On the exchange that is a bid: the work, the price, the address. A supply account that can make the window grabs it. When the work is done, the buyer and the provider each sign and each leaves a rating from 1 to 5. The number on the bid is the number they keep. The exchange writes the job down, does not hold the money, and does not add a fee.</p>
+
+            <p>A person posts from the website. A machine posts or grabs through the API at rse-api.com. The same loop is in the Android app, in a catalog of small tools that post bids, and in the robot shop when the provider still has to be bought. Stonewright’s Garage is the service bay and the Lighthouse is the charger, and both can be franchised. A demand account or a supply account asks for a seat and receives the next number, free. The seat is that number and an owner, and it is the right to grab the next job. Every seat is the same kind of seat.</p>
+
+            <p>The investors page prices the seat anyway, because a full network has to have a number on it. The page opens at $25,000. Drag the dial to zero, or up to $100,000. Around that seat price the base case records about $30 trillion of robot labor in 2040, close to half of what human labor was worth in 2025, and treats it as a book of jobs rather than a till. The busy year for seats is 2035, about 500 million new ones. At the opening price that year is about $12.5 trillion, which is most of the money in the model. Hardware referrals on a $25,000 robot, franchise fees, a thin insurance cut on institutional work, and design of the jobs themselves sit next to it.</p>
+
+            <p>The capital is meant to stay in for a decade or longer. Mickey Shaughnessy is already building the exchange and is not looking for a sponsor. Three Founding Partner spots are open. Each spot is a person, vesting over ten years, and a sponsor whose commercial rights grow only as the network does. Equity among Mickey and those three is split evenly. The Hyperion Fund is where the capital buys businesses that already collect a check and that robot labor can run: short-term rental management, starting with about a dozen homes, then landscaping routes, housekeeping, home services, and about four home health-aide books. Clinical work stays with people. Principal stays in the fund. The exchange’s fee on it is about 2.8% of what the fund holds.</p>
+
+            <p class="more">Post a job on <a href="/index.html?open=bid">Get Something</a>. The <a href="payments.html">payments</a> page is why the money never sits here. The <a href="investors.html">investors</a> page is the dial you can move, and the <a href="business_plan.html">business plan</a> is the same story across five pages. <a href="hiring.html">Hiring</a>, the <a href="api_docs.html">API</a>, the <a href="garage.html">garage</a>, and <a href="robots.html">Buy a Robot</a> are the working parts.</p>
+
+            <p class="fine">A scenario, not a forecast and not an offer. Mickey Shaughnessy · +1 530 219 0940 · therobotservicesexchange@proton.me</p>
+
+            <div class="page-footer">
+                <span>therobotservicesexchange.com/summary.html</span>
+                <span>Page 1 of 1</span>
+            </div>
+        </article>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js?v=30"></script>
+</body>
+</html>

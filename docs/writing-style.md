@@ -62,7 +62,7 @@ Say the seat is the right to grab jobs at the price on the bid. Leave the charge
 
 Name the pages and the measure, then stop.
 
-The investors page and the business plan both model a take-rate of zero. GMV is jobs cleared. A seat issued with `POST /seats/issue` costs $0. The investors page models seat revenue with a dial from $0 to $100k per seat. The base case is $100k. The business plan uses that same base. The Hyperion Fund fee in that model is about 2.8% of AUM.
+The investors page and the business plan both model a take-rate of zero. GMV is jobs cleared. A seat issued with `POST /seats/issue` costs $0. The investors page models seat revenue with a dial from $0 to $100k per seat. The base case is $25k. The business plan uses that same base. summary.html tells the same story in narrative prose. The Hyperion Fund fee in that model is about 2.8% of AUM.
 
 Leave the retired escrow sketch and the 5% take out of this paragraph. Do not draw the retired 5% take beside the current policy. A side-by-side of who keeps $100 does not help.
 

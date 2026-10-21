@@ -6506,7 +6506,7 @@ _PROJECTION_PRESETS = {
         "label": "Conservative",
         "gmv": 25,          # → $7.5T 2040 GMV
         "take": 0,          # retired; model forces a 0 job take
-        "seatPrice": 50000,  # dollars; conservative dial
+        "seatPrice": 12000,  # dollars; about half the $25k base
         "network": 40,      # → 0.40×
         "capital": 50,      # → $0.5T raise
         "esop_pct": 10.0,
@@ -6516,7 +6516,7 @@ _PROJECTION_PRESETS = {
         "label": "Base",
         "gmv": 100,         # → $30T 2040 GMV
         "take": 0,          # retired; model forces a 0 job take
-        "seatPrice": 100000,  # dollars; base dial
+        "seatPrice": 25000,  # dollars; base dial
         "network": 100,     # → 1.0×
         "capital": 150,     # → $1.5T raise
         "esop_pct": 12.0,
@@ -6526,7 +6526,7 @@ _PROJECTION_PRESETS = {
         "label": "Aggressive",
         "gmv": 250,         # → $75T 2040 GMV
         "take": 0,          # retired; model forces a 0 job take
-        "seatPrice": 100000,  # dollars; aggressive caps at the $100k dial
+        "seatPrice": 30000,  # dollars; 1.2× the $25k base, inside the $100k dial
         "network": 180,     # → 1.8×
         "capital": 200,     # → $2.0T raise
         "esop_pct": 12.0,
