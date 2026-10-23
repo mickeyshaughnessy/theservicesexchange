@@ -3212,7 +3212,7 @@ def grab_job(data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             if not ok:
                 return {
                     "error": (
-                        f"{message}. Message Mickey Shaughnessy (call or SMS +1 530 219 0940, "
+                        f"{message}. Message Mickey Shaughnessy (Connect on X at @RobotServicesX, "
                         "or email therobotservicesexchange@proton.me) to get a seat."
                     ),
                 }, 403

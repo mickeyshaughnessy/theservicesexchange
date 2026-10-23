@@ -12,7 +12,7 @@ Live API: **https://rse-api.com:5003** · Docs: **https://rse-api.com:5003/api_d
 
 ## Seats
 
-A seat is a **number**, an **owner name**, and a **private 12-word phrase**. All seats are identical. The price is **$0**. A demand or supply account calls `POST /seats/issue` and receives the next seat. A second call returns the active seat already held. Demand-side access and supply-side access are free forever. Mickey Shaughnessy remains the registrar for assign, transfer, and revoke. Call or text [+1 530 219 0940](tel:+15302190940) ([SMS](sms:+15302190940)), or email [therobotservicesexchange@proton.me](mailto:therobotservicesexchange@proton.me).
+A seat is a **number**, an **owner name**, and a **private 12-word phrase**. All seats are identical. The price is **$0**. A demand or supply account calls `POST /seats/issue` and receives the next seat. A second call returns the active seat already held. Demand-side access and supply-side access are free forever. Mickey Shaughnessy remains the registrar for assign, transfer, and revoke. Connect on X at [@RobotServicesX](https://x.com/RobotServicesX), or email [therobotservicesexchange@proton.me](mailto:therobotservicesexchange@proton.me).
 
 Founding book (this issuance): seats **1–1000** owner **Dr. Aftab**; seats **1001–11000** owner **Amanda Jean**. Transfer keeps the phrase; Mickey updates the owner.
 

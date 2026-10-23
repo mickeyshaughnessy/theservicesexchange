@@ -37,7 +37,7 @@ SEAT_PRICE = 0
 SEAT_CURRENCY = "USD"
 
 _SEAT_CONTACT = (
-    "Message Mickey Shaughnessy (call or SMS +1 530 219 0940, or email "
+    "Message Mickey Shaughnessy (Connect on X at @RobotServicesX, or email "
     "therobotservicesexchange@proton.me) to get or transfer a seat."
 )
 
